@@ -61,6 +61,12 @@ export async function payChargeAction(formData: FormData) {
   if (!cobrancaId || !alunoId || !valorPago) redirect("/financeiro?erro=campos");
 
   const supabase = await createServerClient();
+  const { data: cobranca } = await supabase
+    .from("cobrancas")
+    .select("status")
+    .eq("id", cobrancaId)
+    .single();
+  if (!cobranca || cobranca.status === "cancelada") redirect("/financeiro?erro=paga");
   const { error } = await supabase.from("pagamentos").insert({
     escola_id: DEFAULT_SCHOOL_ID,
     cobranca_id: cobrancaId,
