@@ -1,19 +1,22 @@
+import { BiometricEnrollment } from "@/components/students/biometric-enrollment";
 import { StudentEditForm } from "@/components/students/student-edit-form";
 import { StudentDocumentsPanel } from "@/components/students/student-documents-panel";
 import { StudentGatePanel } from "@/components/students/student-gate-panel";
 import { StudentPhotoUpload } from "@/components/students/student-photo-upload";
 import { StudentRelatedPanel } from "@/components/students/student-related-panel";
 import { ButtonLink } from "@/components/ui/button";
+import { getStudentBiometryData } from "@/lib/data/biometrics";
 import { getStudentDocuments } from "@/lib/data/documents";
 import { getStudentGateSettings } from "@/lib/data/gate";
 import { getStudentSheet } from "@/lib/data/students";
 import { getSignedFotoUrl } from "@/lib/storage/photos";
 
 export default async function EditStudentPage({ params }: { params: { id: string } }) {
-  const [student, documents, gateSettings] = await Promise.all([
+  const [student, documents, gateSettings, biometry] = await Promise.all([
     getStudentSheet(params.id),
     getStudentDocuments(params.id),
-    getStudentGateSettings(params.id)
+    getStudentGateSettings(params.id),
+    getStudentBiometryData(params.id)
   ]);
   const fotoSrc = await getSignedFotoUrl(student.foto_url);
 
@@ -34,6 +37,16 @@ export default async function EditStudentPage({ params }: { params: { id: string
       <StudentPhotoUpload alunoId={student.id} fotoUrl={fotoSrc} nome={student.nome} />
       <StudentDocumentsPanel alunoId={student.id} documents={documents} />
       <StudentGatePanel alunoId={student.id} settings={gateSettings} />
+      <section className="rounded-panel border border-line bg-surface p-5">
+        <h2 className="mb-3 font-serif text-2xl text-ink">Biometria facial (LGPD)</h2>
+        <BiometricEnrollment
+          alunoId={student.id}
+          responsaveis={biometry.responsaveis}
+          consentimento={biometry.consentimento}
+          biometriaAtiva={biometry.biometriaAtiva}
+          fotoReferenciaSignedUrl={biometry.fotoReferenciaSignedUrl}
+        />
+      </section>
       <StudentEditForm student={student} />
       <StudentRelatedPanel student={student} />
     </div>
