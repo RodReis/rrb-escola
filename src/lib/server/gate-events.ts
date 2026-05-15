@@ -28,6 +28,7 @@ function gateCooldownSeconds() {
 }
 
 export async function registerGateEvent(input: RegisterGateEventInput) {
+  // service role: invocado pela API /api/portaria/* (autenticada por GATE_API_TOKEN)
   const supabase = createAdminClient();
   const now = new Date();
   const dateReference = now.toISOString().slice(0, 10);
