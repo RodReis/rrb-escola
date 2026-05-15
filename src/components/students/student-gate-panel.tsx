@@ -1,5 +1,4 @@
 import { ShieldCheck } from "lucide-react";
-import { StudentFaceCapture } from "@/components/students/student-face-capture";
 import { Button } from "@/components/ui/button";
 import { Panel } from "@/components/ui/card";
 import { saveStudentGateSettingsAction } from "@/lib/actions/gate";
@@ -37,15 +36,6 @@ type GateSettings = {
     telefone_destino: string | null;
     created_at: string;
   }>;
-  biometrics: Array<{
-    id: string;
-    modelo: string;
-    ativo: boolean;
-    data_cadastro: string;
-    data_revogacao: string | null;
-    observacao: string | null;
-    foto_url: string | null;
-  }>;
 };
 
 function ToggleLabel({ children }: { children: React.ReactNode }) {
@@ -56,7 +46,9 @@ function ToggleLabel({ children }: { children: React.ReactNode }) {
   );
 }
 
-export function StudentGatePanel({ alunoId, settings }: { alunoId: string; settings: GateSettings }) {
+type Props = { alunoId: string; settings: GateSettings };
+
+export function StudentGatePanel({ alunoId, settings }: Props) {
   return (
     <Panel className="grid gap-5">
       <div className="flex items-center gap-3">
@@ -105,8 +97,6 @@ export function StudentGatePanel({ alunoId, settings }: { alunoId: string; setti
           <Button variant="accent">Salvar portaria</Button>
         </div>
       </form>
-
-      <StudentFaceCapture alunoId={alunoId} biometrics={settings.biometrics} />
 
       <div className="grid gap-4 md:grid-cols-2">
         <div>

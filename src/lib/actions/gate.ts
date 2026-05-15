@@ -67,66 +67,6 @@ export async function saveStudentGateSettingsAction(formData: FormData) {
   revalidatePath(`/alunos/${alunoId}/editar`);
 }
 
-export async function uploadStudentFaceReferenceAction(formData: FormData) {
-  await requireSession();
-  const alunoId = formText(formData, "aluno_id");
-  const file = formData.get("foto_referencia");
-  if (!alunoId || !(file instanceof File) || file.size === 0) return;
-
-  const allowedTypes = new Set(["image/jpeg", "image/png", "image/webp"]);
-  if (!allowedTypes.has(file.type)) throw new Error("Envie uma imagem JPG, PNG ou WEBP.");
-
-  const supabase = await createServerClient();
-  const consent = await supabase.from("consentimentos_biometria").select("autorizado").eq("aluno_id", alunoId).maybeSingle();
-  if (consent.error) throw consent.error;
-  if (!consent.data?.autorizado) throw new Error("Autorize a biometria antes de cadastrar a referencia facial.");
-
-  const extension = file.name.split(".").pop()?.toLowerCase() ?? "jpg";
-  const storagePath = `${alunoId}/${Date.now()}-referencia.${extension}`;
-  const bytes = Buffer.from(await file.arrayBuffer());
-
-  const { error: uploadError } = await supabase.storage.from("biometrias-alunos").upload(storagePath, bytes, {
-    contentType: file.type,
-    upsert: false
-  });
-  if (uploadError) throw uploadError;
-
-  const modelo = formText(formData, "modelo") ?? "captura-web-v1";
-
-  const { error: upsertError } = await supabase.from("biometrias_aluno").upsert(
-    {
-      aluno_id: alunoId,
-      modelo,
-      foto_referencia_path: storagePath,
-      ativo: true,
-      criado_por: "operador",
-      data_cadastro: new Date().toISOString(),
-      data_revogacao: null,
-      observacao: formText(formData, "observacao")
-    },
-    { onConflict: "aluno_id,modelo" }
-  );
-  if (upsertError) throw upsertError;
-
-  revalidatePath(`/alunos/${alunoId}/editar`);
-}
-
-export async function deactivateStudentFaceReferenceAction(formData: FormData) {
-  await requireSession();
-  const alunoId = formText(formData, "aluno_id");
-  const id = formText(formData, "biometria_id");
-  if (!alunoId || !id) return;
-
-  const supabase = await createServerClient();
-  await supabase
-    .from("biometrias_aluno")
-    .update({ ativo: false, data_revogacao: new Date().toISOString() })
-    .eq("id", id)
-    .eq("aluno_id", alunoId);
-
-  revalidatePath(`/alunos/${alunoId}/editar`);
-}
-
 export async function createGateDeviceAction(formData: FormData) {
   await requireSession();
   const nome = formText(formData, "nome");
