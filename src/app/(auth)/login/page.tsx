@@ -1,4 +1,4 @@
-import { ensureDefaultAdmin, loginAction } from "@/lib/actions/auth";
+import { loginAction } from "@/lib/actions/auth";
 import { ThemeToggle } from "@/components/ui/theme-toggle";
 import { ArrowRight, Database, School, ShieldCheck, Sparkles } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
@@ -21,7 +21,6 @@ function BrandMark() {
 }
 
 export default async function LoginPage({ searchParams }: { searchParams: { erro?: string } }) {
-  await ensureDefaultAdmin();
   const error = searchParams.erro;
 
   return (
@@ -57,7 +56,15 @@ export default async function LoginPage({ searchParams }: { searchParams: { erro
             <h2 className="mt-2 font-serif text-3xl text-ink">Entrar no sistema</h2>
             <p className="mt-2 text-sm font-medium text-muted">Login validado pelo Supabase Auth local.</p>
           </div>
-          {error ? <p className="mb-4 rounded-ui bg-clay/10 p-3 text-sm font-bold text-clay">Credenciais invalidas.</p> : null}
+          {error ? (
+            <p className="mb-4 rounded-ui bg-clay/10 p-3 text-sm font-bold text-clay">
+              {error === "perfil"
+                ? "Sem perfil ativo. Solicite acesso ao administrador."
+                : error === "credenciais"
+                  ? "Informe email e senha."
+                  : "Credenciais invalidas."}
+            </p>
+          ) : null}
           <form action={loginAction} className="grid gap-4">
             <label>
               Email
