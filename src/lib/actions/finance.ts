@@ -53,24 +53,26 @@ export async function updateChargeAction(formData: FormData) {
 }
 
 export async function payChargeAction(formData: FormData) {
-  await requireSession();
+  const session = await requireSession();
   const cobrancaId = formText(formData, "cobranca_id");
   const alunoId = formText(formData, "aluno_id");
   const valorPago = formNumber(formData, "valor_pago");
-  if (!cobrancaId || !alunoId || !valorPago) return;
+  if (!cobrancaId || !alunoId || !valorPago) redirect("/financeiro?erro=campos");
 
   const supabase = await createServerClient();
-  await supabase.from("pagamentos").insert({
+  const { error } = await supabase.from("pagamentos").insert({
     escola_id: DEFAULT_SCHOOL_ID,
     cobranca_id: cobrancaId,
     aluno_id: alunoId,
     data_pagamento: formText(formData, "data_pagamento") ?? new Date().toISOString().slice(0, 10),
     valor_pago: valorPago,
     forma_pagamento: formText(formData, "forma_pagamento") ?? "pix",
-    observacao: formText(formData, "observacao")
+    observacao: formText(formData, "observacao"),
+    registrado_por: session.profile.id
   });
-  await supabase.from("cobrancas").update({ status: "paga" }).eq("id", cobrancaId);
 
+  if (error) redirect("/financeiro?erro=pagamento");
+  // Trigger pagamentos_recalc_status atualiza cobrancas.status automaticamente.
   revalidatePath("/financeiro");
 }
 
