@@ -1,10 +1,12 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { createAdminClient } from "@/lib/supabase/admin";
+import { requireSession } from "@/lib/auth/session";
+import { createServerClient } from "@/lib/supabase/server";
 import { formText } from "@/lib/utils";
 
 export async function uploadStudentDocumentAction(formData: FormData) {
+  await requireSession();
   const alunoId = formText(formData, "aluno_id");
   const tipoDocumento = formText(formData, "tipo_documento") ?? "outro";
   const file = formData.get("documento");
@@ -14,7 +16,7 @@ export async function uploadStudentDocumentAction(formData: FormData) {
   const allowedTypes = new Set(["application/pdf", "image/jpeg", "image/png", "image/webp"]);
   if (!allowedTypes.has(file.type)) throw new Error("Envie PDF, JPG, PNG ou WEBP.");
 
-  const supabase = createAdminClient();
+  const supabase = await createServerClient();
   const safeName = file.name.normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^a-zA-Z0-9._-]/g, "-");
   const storagePath = `${alunoId}/${Date.now()}-${safeName}`;
   const bytes = Buffer.from(await file.arrayBuffer());
@@ -42,12 +44,13 @@ export async function uploadStudentDocumentAction(formData: FormData) {
 }
 
 export async function removeStudentDocumentAction(formData: FormData) {
+  await requireSession();
   const alunoId = formText(formData, "aluno_id");
   const documentoId = formText(formData, "documento_id");
   const storagePath = formText(formData, "storage_path");
   if (!alunoId || !documentoId || !storagePath) return;
 
-  const supabase = createAdminClient();
+  const supabase = await createServerClient();
   await supabase.storage.from("documentos-alunos").remove([storagePath]);
   await supabase.from("documentos_aluno").delete().eq("id", documentoId).eq("aluno_id", alunoId);
 
