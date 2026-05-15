@@ -13,6 +13,22 @@ export async function getFinanceData() {
   return data ?? [];
 }
 
+export async function getChargeWithPayments(cobrancaId: string) {
+  const supabase = await createServerClient();
+  const { data, error } = await supabase
+    .from("cobrancas")
+    .select(`
+      *,
+      alunos(id, nome, matricula_codigo),
+      pagamentos(id, valor_pago, data_pagamento, forma_pagamento, observacao, cancelado_em, cancelado_por, motivo_cancelamento, registrado_por, perfis:registrado_por(nome))
+    `)
+    .eq("id", cobrancaId)
+    .single();
+
+  if (error) throw error;
+  return data;
+}
+
 export async function getDelinquencyReport() {
   const today = new Date().toISOString().slice(0, 10);
   const supabase = await createServerClient();
