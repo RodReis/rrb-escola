@@ -1,15 +1,18 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { requireSession } from "@/lib/auth/session";
 import { DEFAULT_SCHOOL_ID } from "@/lib/constants";
-import { createAdminClient } from "@/lib/supabase/admin";
+import { createServerClient } from "@/lib/supabase/server";
 import { formBoolean, formText } from "@/lib/utils";
 
 export async function createAttendanceAction(formData: FormData) {
+  await requireSession();
   const alunoId = formText(formData, "aluno_id");
   if (!alunoId) return;
 
-  await createAdminClient().from("frequencias").upsert(
+  const supabase = await createServerClient();
+  await supabase.from("frequencias").upsert(
     {
       escola_id: DEFAULT_SCHOOL_ID,
       aluno_id: alunoId,
@@ -24,6 +27,7 @@ export async function createAttendanceAction(formData: FormData) {
 }
 
 export async function saveClassAttendanceAction(formData: FormData) {
+  await requireSession();
   const date = formText(formData, "data_aula") ?? new Date().toISOString().slice(0, 10);
   const turmaId = formText(formData, "turma_id");
   const alunoIds = formData.getAll("aluno_id").filter((value): value is string => typeof value === "string");
@@ -39,7 +43,8 @@ export async function saveClassAttendanceAction(formData: FormData) {
     justificativa: formText(formData, `justificativa_${alunoId}`)
   }));
 
-  await createAdminClient().from("frequencias").upsert(rows, { onConflict: "aluno_id,data_aula" });
+  const supabase = await createServerClient();
+  await supabase.from("frequencias").upsert(rows, { onConflict: "aluno_id,data_aula" });
 
   revalidatePath("/frequencias");
   revalidatePath("/frequencias/chamada");
