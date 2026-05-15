@@ -8,7 +8,7 @@
     "start": "next start",
     "lint": "next lint",
     "typecheck": "tsc --noEmit",
-    "seed:auth": "node scripts/create-admin.mjs"
+    "seed:auth": "node scripts/seed-admin.mjs"
   },
   "dependencies": {
     "@supabase/ssr": "^0.10.3",
