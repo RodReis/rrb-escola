@@ -2,13 +2,15 @@
 
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
+import { requireSession } from "@/lib/auth/session";
 import { DEFAULT_SCHOOL_ID } from "@/lib/constants";
 import { generateChargesForEnrollment } from "@/lib/server/generate-charges";
-import { createAdminClient } from "@/lib/supabase/admin";
+import { createServerClient } from "@/lib/supabase/server";
 import { formBoolean, formNumber, formText } from "@/lib/utils";
 
 export async function createStudentAction(formData: FormData) {
-  const supabase = createAdminClient();
+  await requireSession();
+  const supabase = await createServerClient();
   const nome = formText(formData, "nome");
   const matricula = formText(formData, "matricula_codigo");
 
@@ -133,7 +135,8 @@ export async function createStudentAction(formData: FormData) {
 }
 
 export async function updateStudentAction(formData: FormData) {
-  const supabase = createAdminClient();
+  await requireSession();
+  const supabase = await createServerClient();
   const alunoId = formText(formData, "aluno_id");
   const nome = formText(formData, "nome");
   const matricula = formText(formData, "matricula_codigo");
@@ -247,11 +250,13 @@ export async function updateStudentAction(formData: FormData) {
 }
 
 export async function toggleStudentAction(formData: FormData) {
+  await requireSession();
   const alunoId = formText(formData, "aluno_id");
   const ativo = formBoolean(formData, "ativo");
   if (!alunoId) return;
 
-  await createAdminClient()
+  const supabase = await createServerClient();
+  await supabase
     .from("alunos")
     .update({ ativo })
     .eq("id", alunoId)
@@ -262,11 +267,13 @@ export async function toggleStudentAction(formData: FormData) {
 }
 
 export async function addStudentAddressAction(formData: FormData) {
+  await requireSession();
   const alunoId = formText(formData, "aluno_id");
   const logradouro = formText(formData, "logradouro");
   if (!alunoId || !logradouro) return;
 
-  await createAdminClient().from("enderecos_aluno").insert({
+  const supabase = await createServerClient();
+  await supabase.from("enderecos_aluno").insert({
     aluno_id: alunoId,
     logradouro,
     numero: formText(formData, "numero"),
@@ -283,11 +290,13 @@ export async function addStudentAddressAction(formData: FormData) {
 }
 
 export async function addStudentContactAction(formData: FormData) {
+  await requireSession();
   const alunoId = formText(formData, "aluno_id");
   const nome = formText(formData, "nome");
   if (!alunoId || !nome) return;
 
-  await createAdminClient().from("contatos_aluno").insert({
+  const supabase = await createServerClient();
+  await supabase.from("contatos_aluno").insert({
     aluno_id: alunoId,
     nome,
     telefone: formText(formData, "telefone"),
@@ -302,11 +311,13 @@ export async function addStudentContactAction(formData: FormData) {
 }
 
 export async function addStudentGuardianAction(formData: FormData) {
+  await requireSession();
   const alunoId = formText(formData, "aluno_id");
   const nome = formText(formData, "nome");
   if (!alunoId || !nome) return;
 
-  await createAdminClient().from("responsaveis_aluno").insert({
+  const supabase = await createServerClient();
+  await supabase.from("responsaveis_aluno").insert({
     aluno_id: alunoId,
     nome,
     cpf: formText(formData, "cpf"),
@@ -323,11 +334,13 @@ export async function addStudentGuardianAction(formData: FormData) {
 }
 
 export async function addStudentAuthorizedPersonAction(formData: FormData) {
+  await requireSession();
   const alunoId = formText(formData, "aluno_id");
   const nome = formText(formData, "nome");
   if (!alunoId || !nome) return;
 
-  await createAdminClient().from("pessoas_autorizadas").insert({
+  const supabase = await createServerClient();
+  await supabase.from("pessoas_autorizadas").insert({
     aluno_id: alunoId,
     nome,
     telefone: formText(formData, "telefone"),
@@ -341,6 +354,7 @@ export async function addStudentAuthorizedPersonAction(formData: FormData) {
 }
 
 export async function removeStudentRelatedRecordAction(formData: FormData) {
+  await requireSession();
   const alunoId = formText(formData, "aluno_id");
   const table = formText(formData, "table");
   const id = formText(formData, "id");
@@ -349,13 +363,15 @@ export async function removeStudentRelatedRecordAction(formData: FormData) {
   const allowedTables = new Set(["enderecos_aluno", "contatos_aluno", "responsaveis_aluno", "pessoas_autorizadas"]);
   if (!allowedTables.has(table)) return;
 
-  await createAdminClient().from(table).delete().eq("id", id).eq("aluno_id", alunoId);
+  const supabase = await createServerClient();
+  await supabase.from(table).delete().eq("id", id).eq("aluno_id", alunoId);
 
   revalidatePath(`/alunos/${alunoId}`);
   revalidatePath(`/alunos/${alunoId}/editar`);
 }
 
 export async function uploadStudentPhotoAction(formData: FormData) {
+  await requireSession();
   const alunoId = formText(formData, "aluno_id");
   const file = formData.get("foto");
   if (!alunoId || !(file instanceof File) || file.size === 0) return;
@@ -363,7 +379,7 @@ export async function uploadStudentPhotoAction(formData: FormData) {
   const allowedTypes = new Set(["image/jpeg", "image/png", "image/webp"]);
   if (!allowedTypes.has(file.type)) throw new Error("Envie uma imagem JPG, PNG ou WEBP.");
 
-  const supabase = createAdminClient();
+  const supabase = await createServerClient();
   const extension = file.name.split(".").pop()?.toLowerCase() ?? "jpg";
   const storagePath = `${alunoId}/${Date.now()}.${extension}`;
   const bytes = Buffer.from(await file.arrayBuffer());
