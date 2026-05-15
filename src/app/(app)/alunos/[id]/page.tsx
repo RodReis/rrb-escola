@@ -1,3 +1,4 @@
+import { StudentStatementSection } from "@/components/finance/student-statement-section";
 import { ExportStudentButton } from "@/components/pdf/export-student-button";
 import { StudentSheetView } from "@/components/students/student-sheet";
 import { ButtonLink } from "@/components/ui/button";
@@ -5,7 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { getStudentSheet } from "@/lib/data/students";
 import { getSignedFotoUrl } from "@/lib/storage/photos";
 
-export default async function StudentPage({ params }: { params: { id: string } }) {
+export default async function StudentPage({ params, searchParams }: { params: { id: string }; searchParams: { ext_de?: string; ext_ate?: string } }) {
   const student = await getStudentSheet(params.id);
   const fotoSrc = await getSignedFotoUrl(student.foto_url);
   const activeEnrollment = student.matriculas.find((item) => item.status === "ativa") ?? student.matriculas[0];
@@ -30,6 +31,7 @@ export default async function StudentPage({ params }: { params: { id: string } }
         </div>
       </header>
       <StudentSheetView student={student} fotoSrc={fotoSrc} />
+      <StudentStatementSection alunoId={params.id} searchParams={searchParams} />
     </div>
   );
 }

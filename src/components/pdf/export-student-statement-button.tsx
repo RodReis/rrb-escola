@@ -10,7 +10,7 @@ type Pagamento = {
   data_pagamento: string;
   forma_pagamento: string;
   cancelado_em: string | null;
-  perfis: { nome: string } | null;
+  perfis: { nome: string } | { nome: string }[] | null;
 };
 
 type Charge = {
@@ -85,13 +85,16 @@ export function ExportStudentStatementButton({ aluno, de, ate, charges }: Props)
     doc.text(`Saldo devedor: ${fmt(saldoDevedor)}`, 12, finalY + 10);
 
     const paymentsBody = charges.flatMap((c) =>
-      c.pagamentos.filter((p) => !p.cancelado_em).map((p) => [
-        dateText(p.data_pagamento),
-        c.descricao,
-        fmt(p.valor_pago),
-        p.forma_pagamento,
-        p.perfis?.nome ?? "-"
-      ])
+      c.pagamentos.filter((p) => !p.cancelado_em).map((p) => {
+        const perfil = Array.isArray(p.perfis) ? p.perfis[0] : p.perfis;
+        return [
+          dateText(p.data_pagamento),
+          c.descricao,
+          fmt(p.valor_pago),
+          p.forma_pagamento,
+          perfil?.nome ?? "-"
+        ];
+      })
     );
 
     autoTable(doc, {
