@@ -164,6 +164,7 @@ export async function updateStudentAction(formData: FormData) {
       codigo_inep: formText(formData, "codigo_inep"),
       etnia: formText(formData, "etnia"),
       informacoes_adicionais: formText(formData, "informacoes_adicionais"),
+      disciplina_eletiva: formText(formData, "disciplina_eletiva"),
       foto_url: formText(formData, "foto_url")
     })
     .eq("id", alunoId)
