@@ -1,15 +1,18 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { requireSession } from "@/lib/auth/session";
 import { DEFAULT_SCHOOL_ID } from "@/lib/constants";
 import { generateChargesForEnrollment } from "@/lib/server/generate-charges";
-import { createAdminClient } from "@/lib/supabase/admin";
+import { createServerClient } from "@/lib/supabase/server";
 import { formBoolean, formNumber, formText } from "@/lib/utils";
 
 export async function createSerieAction(formData: FormData) {
+  await requireSession();
   const nome = formText(formData, "nome");
   if (!nome) return;
-  await createAdminClient().from("series").insert({
+  const supabase = await createServerClient();
+  await supabase.from("series").insert({
     escola_id: DEFAULT_SCHOOL_ID,
     nome,
     ordem: formNumber(formData, "ordem") ?? 0
@@ -18,11 +21,13 @@ export async function createSerieAction(formData: FormData) {
 }
 
 export async function updateSerieAction(formData: FormData) {
+  await requireSession();
   const id = formText(formData, "id");
   const nome = formText(formData, "nome");
   if (!id || !nome) return;
 
-  await createAdminClient()
+  const supabase = await createServerClient();
+  await supabase
     .from("series")
     .update({
       nome,
@@ -38,10 +43,12 @@ export async function updateSerieAction(formData: FormData) {
 }
 
 export async function createTurmaAction(formData: FormData) {
+  await requireSession();
   const nome = formText(formData, "nome");
   const serieId = formText(formData, "serie_id");
   if (!nome || !serieId) return;
-  await createAdminClient().from("turmas").insert({
+  const supabase = await createServerClient();
+  await supabase.from("turmas").insert({
     escola_id: DEFAULT_SCHOOL_ID,
     serie_id: serieId,
     nome,
@@ -53,12 +60,14 @@ export async function createTurmaAction(formData: FormData) {
 }
 
 export async function updateTurmaAction(formData: FormData) {
+  await requireSession();
   const id = formText(formData, "id");
   const nome = formText(formData, "nome");
   const serieId = formText(formData, "serie_id");
   if (!id || !nome || !serieId) return;
 
-  await createAdminClient()
+  const supabase = await createServerClient();
+  await supabase
     .from("turmas")
     .update({
       serie_id: serieId,
@@ -76,9 +85,11 @@ export async function updateTurmaAction(formData: FormData) {
 }
 
 export async function createPlanAction(formData: FormData) {
+  await requireSession();
   const nome = formText(formData, "nome");
   if (!nome) return;
-  await createAdminClient().from("planos").insert({
+  const supabase = await createServerClient();
+  await supabase.from("planos").insert({
     escola_id: DEFAULT_SCHOOL_ID,
     nome,
     descricao: formText(formData, "descricao"),
@@ -91,11 +102,13 @@ export async function createPlanAction(formData: FormData) {
 }
 
 export async function updatePlanAction(formData: FormData) {
+  await requireSession();
   const id = formText(formData, "id");
   const nome = formText(formData, "nome");
   if (!id || !nome) return;
 
-  await createAdminClient()
+  const supabase = await createServerClient();
+  await supabase
     .from("planos")
     .update({
       nome,
@@ -115,12 +128,13 @@ export async function updatePlanAction(formData: FormData) {
 }
 
 export async function createEnrollmentAction(formData: FormData) {
+  await requireSession();
   const alunoId = formText(formData, "aluno_id");
   const serieId = formText(formData, "serie_id");
   const turmaId = formText(formData, "turma_id");
   if (!alunoId || !serieId || !turmaId) return;
 
-  const supabase = createAdminClient();
+  const supabase = await createServerClient();
   const planoId = formText(formData, "plano_id");
   const dataMatricula = formText(formData, "data_matricula") ?? new Date().toISOString().slice(0, 10);
   const anoLetivo = formNumber(formData, "ano_letivo") ?? new Date().getFullYear();
@@ -156,13 +170,15 @@ export async function createEnrollmentAction(formData: FormData) {
 }
 
 export async function updateEnrollmentAction(formData: FormData) {
+  await requireSession();
   const id = formText(formData, "id");
   const alunoId = formText(formData, "aluno_id");
   const serieId = formText(formData, "serie_id");
   const turmaId = formText(formData, "turma_id");
   if (!id || !alunoId || !serieId || !turmaId) return;
 
-  await createAdminClient()
+  const supabase = await createServerClient();
+  await supabase
     .from("matriculas")
     .update({
       aluno_id: alunoId,
@@ -186,12 +202,14 @@ export async function updateEnrollmentAction(formData: FormData) {
 }
 
 export async function updateEnrollmentStatusAction(formData: FormData) {
+  await requireSession();
   const id = formText(formData, "id");
   const alunoId = formText(formData, "aluno_id");
   const status = formText(formData, "status");
   if (!id || !status) return;
 
-  await createAdminClient()
+  const supabase = await createServerClient();
+  await supabase
     .from("matriculas")
     .update({ status, observacoes: formText(formData, "observacoes") })
     .eq("id", id)
@@ -206,9 +224,11 @@ export async function updateEnrollmentStatusAction(formData: FormData) {
 }
 
 export async function toggleSerieAction(formData: FormData) {
+  await requireSession();
   const id = formText(formData, "id");
   if (!id) return;
-  await createAdminClient()
+  const supabase = await createServerClient();
+  await supabase
     .from("series")
     .update({ ativo: formBoolean(formData, "ativo") })
     .eq("id", id)
@@ -217,9 +237,11 @@ export async function toggleSerieAction(formData: FormData) {
 }
 
 export async function toggleTurmaAction(formData: FormData) {
+  await requireSession();
   const id = formText(formData, "id");
   if (!id) return;
-  await createAdminClient()
+  const supabase = await createServerClient();
+  await supabase
     .from("turmas")
     .update({ ativo: formBoolean(formData, "ativo") })
     .eq("id", id)
@@ -228,9 +250,11 @@ export async function toggleTurmaAction(formData: FormData) {
 }
 
 export async function togglePlanAction(formData: FormData) {
+  await requireSession();
   const id = formText(formData, "id");
   if (!id) return;
-  await createAdminClient()
+  const supabase = await createServerClient();
+  await supabase
     .from("planos")
     .update({ ativo: formBoolean(formData, "ativo") })
     .eq("id", id)
