@@ -1,0 +1,42 @@
+{
+  "name": "rrb-escola",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "next lint",
+    "typecheck": "tsc --noEmit",
+    "seed:auth": "node scripts/create-admin.mjs"
+  },
+  "dependencies": {
+    "@supabase/supabase-js": "^2.43.4",
+    "autoprefixer": "^10.4.19",
+    "clsx": "^2.1.1",
+    "exceljs": "^4.4.0",
+    "jspdf": "^4.2.1",
+    "jspdf-autotable": "^5.0.7",
+    "lucide-react": "^0.468.0",
+    "next": "^14.2.35",
+    "pdf-parse": "^2.4.5",
+    "postcss": "^8.5.14",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
+    "recharts": "^2.12.7",
+    "tailwind-merge": "^2.3.0",
+    "tailwindcss": "^3.4.4",
+    "typescript": "^5.4.5",
+    "zod": "^3.23.8"
+  },
+  "devDependencies": {
+    "@types/node": "^20.14.2",
+    "@types/react": "^18.3.3",
+    "@types/react-dom": "^18.3.0",
+    "eslint": "^8.57.0",
+    "eslint-config-next": "^14.2.35"
+  },
+  "overrides": {
+    "postcss": "$postcss"
+  }
+}
