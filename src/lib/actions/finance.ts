@@ -1,8 +1,10 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { redirect } from "next/navigation";
 import { requireSession } from "@/lib/auth/session";
 import { DEFAULT_SCHOOL_ID } from "@/lib/constants";
+import { generateChargesForEnrollment } from "@/lib/server/generate-charges";
 import { createServerClient } from "@/lib/supabase/server";
 import { formNumber, formText } from "@/lib/utils";
 
@@ -64,4 +66,32 @@ export async function cancelChargeAction(formData: FormData) {
     .eq("escola_id", DEFAULT_SCHOOL_ID);
 
   revalidatePath("/financeiro");
+}
+
+export async function generateChargesForEnrollmentAction(formData: FormData) {
+  await requireSession();
+  const matriculaId = formText(formData, "matricula_id");
+  if (!matriculaId) redirect("/matriculas?erro=id");
+
+  const supabase = await createServerClient();
+  const { data: matricula } = await supabase
+    .from("matriculas")
+    .select("id, escola_id, aluno_id, plano_id, data_matricula, ano_letivo")
+    .eq("id", matriculaId)
+    .single();
+
+  if (!matricula?.plano_id) redirect(`/matriculas/${matriculaId}?erro=plano`);
+
+  await generateChargesForEnrollment({
+    supabase,
+    escolaId: matricula.escola_id,
+    alunoId: matricula.aluno_id,
+    matriculaId: matricula.id,
+    planoId: matricula.plano_id,
+    dataMatricula: matricula.data_matricula,
+    anoLetivo: matricula.ano_letivo
+  });
+
+  revalidatePath(`/matriculas/${matriculaId}`);
+  redirect(`/matriculas/${matriculaId}?gerado=1`);
 }
