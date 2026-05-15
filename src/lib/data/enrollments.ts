@@ -64,7 +64,7 @@ export async function getEnrollmentDetail(id: string) {
     totals: {
       cobrancas: charges.data?.length ?? 0,
       valorCobrado: (charges.data ?? []).reduce((sum, item) => sum + Number(item.valor_total ?? 0), 0),
-      valorPago: (charges.data ?? []).reduce((sum, item) => sum + Number(item.valor_pago ?? 0), 0),
+      valorPago: (payments.data ?? []).filter((p) => !p.cancelado_em).reduce((sum, p) => sum + Number(p.valor_pago ?? 0), 0),
       presencas: (attendance.data ?? []).filter((item) => item.presente).length,
       faltas: (attendance.data ?? []).filter((item) => !item.presente).length
     }
