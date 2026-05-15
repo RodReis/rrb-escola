@@ -8,6 +8,7 @@ export async function GET(request: NextRequest) {
     return unauthorizedGateResponse();
   }
 
+  // service role: chamada pela API /api/portaria/* (autenticada por GATE_API_TOKEN)
   const supabase = createAdminClient();
   const { data: biometrics, error } = await supabase
     .from("biometrias_aluno")
