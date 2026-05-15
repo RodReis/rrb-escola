@@ -1,8 +1,9 @@
-import { createAdminClient } from "@/lib/supabase/admin";
+import { createServerClient } from "@/lib/supabase/server";
 import { DEFAULT_SCHOOL_ID } from "@/lib/constants";
 
 export async function getEnrollments() {
-  const { data, error } = await createAdminClient()
+  const supabase = await createServerClient();
+  const { data, error } = await supabase
     .from("matriculas")
     .select("*, alunos(nome, matricula_codigo), series(nome), turmas(nome), planos(nome)")
     .eq("escola_id", DEFAULT_SCHOOL_ID)
@@ -13,7 +14,7 @@ export async function getEnrollments() {
 }
 
 export async function getEnrollmentDetail(id: string) {
-  const supabase = createAdminClient();
+  const supabase = await createServerClient();
   const [enrollment, charges, payments, attendance, history] = await Promise.all([
     supabase
       .from("matriculas")
