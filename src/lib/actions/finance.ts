@@ -31,6 +31,27 @@ export async function createChargeAction(formData: FormData) {
   revalidatePath("/financeiro");
 }
 
+export async function updateChargeAction(formData: FormData) {
+  await requireSession();
+  const cobrancaId = formText(formData, "cobranca_id");
+  if (!cobrancaId) redirect("/financeiro?erro=id");
+
+  const supabase = await createServerClient();
+  const { error } = await supabase
+    .from("cobrancas")
+    .update({
+      descricao: formText(formData, "descricao") ?? undefined,
+      data_vencimento: formText(formData, "data_vencimento") ?? undefined,
+      valor_desconto: formNumber(formData, "valor_desconto") ?? 0,
+      valor_acrescimo: formNumber(formData, "valor_acrescimo") ?? 0
+    })
+    .eq("id", cobrancaId)
+    .neq("status", "paga");
+
+  if (error) redirect(`/financeiro?erro=editar`);
+  revalidatePath("/financeiro");
+}
+
 export async function payChargeAction(formData: FormData) {
   await requireSession();
   const cobrancaId = formText(formData, "cobranca_id");
