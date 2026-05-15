@@ -49,6 +49,7 @@ export async function updateChargeAction(formData: FormData) {
     .neq("status", "paga");
 
   if (error) redirect(`/financeiro?erro=editar`);
+  await supabase.rpc("recalc_cobranca_status", { p_cobranca_id: cobrancaId });
   revalidatePath("/financeiro");
 }
 
