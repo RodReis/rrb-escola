@@ -29,6 +29,38 @@ export async function getChargeWithPayments(cobrancaId: string) {
   return data;
 }
 
+export async function getStudentStatement(alunoId: string, de: string, ate: string) {
+  const supabase = await createServerClient();
+
+  const charges = await supabase
+    .from("cobrancas")
+    .select(`
+      id, descricao, competencia, numero_parcela, valor_final, data_vencimento, status,
+      pagamentos(id, valor_pago, data_pagamento, forma_pagamento, cancelado_em, registrado_por, perfis:registrado_por(nome))
+    `)
+    .eq("aluno_id", alunoId)
+    .gte("data_vencimento", de)
+    .lte("data_vencimento", ate)
+    .order("data_vencimento", { ascending: true });
+
+  if (charges.error) throw charges.error;
+
+  const aluno = await supabase
+    .from("alunos")
+    .select("id, nome, matricula_codigo")
+    .eq("id", alunoId)
+    .single();
+
+  if (aluno.error) throw aluno.error;
+
+  return {
+    aluno: aluno.data,
+    de,
+    ate,
+    charges: charges.data ?? []
+  };
+}
+
 export async function getDelinquencyReport() {
   const today = new Date().toISOString().slice(0, 10);
   const supabase = await createServerClient();
