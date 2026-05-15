@@ -2,7 +2,7 @@
 
 /* eslint-disable @next/next/no-img-element */
 
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { extractEmbedding } from "@/lib/face/extract-embedding";
 import type { CaptureResult } from "./face-capture-step";
 
@@ -28,6 +28,13 @@ export function FaceUploadFallback({ onComplete }: Props) {
   ]);
   const inputs = useRef<Array<HTMLInputElement | null>>([null, null, null]);
 
+  useEffect(() => {
+    return () => {
+      slots.forEach((s) => { if (s.previewUrl) URL.revokeObjectURL(s.previewUrl); });
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   async function handleFile(idx: number, file: File) {
     const url = URL.createObjectURL(file);
     const img = new Image();
@@ -38,6 +45,7 @@ export function FaceUploadFallback({ onComplete }: Props) {
     });
     const r = await extractEmbedding(img);
     setSlots((prev) => {
+      if (prev[idx].previewUrl) URL.revokeObjectURL(prev[idx].previewUrl!);
       const next = [...prev];
       if (r.ok) {
         const fotoBase64 = toDataUrl(img);
