@@ -2,7 +2,7 @@
 
 /* eslint-disable @next/next/no-img-element */
 
-import { useState, useTransition } from "react";
+import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { BiometricConsentForm } from "./biometric-consent-form";
 import { FaceCaptureStep, type CaptureResult } from "./face-capture-step";
@@ -33,7 +33,6 @@ export function BiometricEnrollment({ alunoId, responsaveis, consentimento, biom
   const [stepIndex, setStepIndex] = useState(0);
   const [captures, setCaptures] = useState<CaptureResult[]>([]);
   const [error, setError] = useState<string | null>(null);
-  const [pending, startTransition] = useTransition();
 
   function handleCaptured(r: CaptureResult) {
     const next = [...captures, r];
@@ -70,14 +69,19 @@ export function BiometricEnrollment({ alunoId, responsaveis, consentimento, biom
     setError(null);
   }
 
-  function revoke() {
-    const fd = new FormData();
-    fd.set("aluno_id", alunoId);
-    fd.set("autorizado", "false");
-    fd.set("observacao", "Revogado pelo operador");
-    startTransition(() => {
-      setConsentAction(fd);
-    });
+  async function revoke() {
+    setError(null);
+    try {
+      const fd = new FormData();
+      fd.set("aluno_id", alunoId);
+      fd.set("autorizado", "false");
+      fd.set("observacao", "Revogado pelo operador");
+      await setConsentAction(fd);
+      router.refresh();
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Falha ao revogar consentimento");
+      setPhase("error");
+    }
   }
 
   if (phase === "consent" || !consentAtivo) {
@@ -98,7 +102,7 @@ export function BiometricEnrollment({ alunoId, responsaveis, consentimento, biom
           </div>
           <div className="grid gap-2">
             <button className="ds-button ds-button-secondary" type="button" onClick={() => setPhase("capturing")}>Refazer cadastro</button>
-            <button className="ds-button ds-button-ghost text-clay" type="button" onClick={revoke} disabled={pending}>Revogar consentimento</button>
+            <button className="ds-button ds-button-ghost text-clay" type="button" onClick={revoke}>Revogar consentimento</button>
           </div>
         </div>
       ) : null}
@@ -109,7 +113,7 @@ export function BiometricEnrollment({ alunoId, responsaveis, consentimento, biom
           <div className="flex flex-wrap gap-2">
             <button className="ds-button ds-button-primary" type="button" onClick={() => setPhase("capturing")}>Iniciar cadastro com camera</button>
             <button className="ds-button ds-button-secondary" type="button" onClick={() => setPhase("uploading")}>Usar upload de fotos</button>
-            <button className="ds-button ds-button-ghost text-clay" type="button" onClick={revoke} disabled={pending}>Revogar consentimento</button>
+            <button className="ds-button ds-button-ghost text-clay" type="button" onClick={revoke}>Revogar consentimento</button>
           </div>
         </div>
       ) : null}
