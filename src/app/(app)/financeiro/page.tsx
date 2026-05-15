@@ -181,14 +181,20 @@ export default async function FinanceiroPage() {
                   </div>
                 ) : (
                   <div className="grid gap-2">
-                    <form action={payChargeAction} className="grid grid-cols-[1fr_110px_96px] gap-2">
+                    <form action={payChargeAction} className="grid gap-2">
                       <input type="hidden" name="cobranca_id" value={item.id} />
                       <input type="hidden" name="aluno_id" value={item.aluno_id} />
-                      <input name="valor_pago" defaultValue={saldo.toFixed(2)} inputMode="decimal" />
-                      <select name="forma_pagamento" defaultValue="pix">
-                        {formasPagamento.map((f) => <option key={f} value={f}>{f}</option>)}
-                      </select>
-                      <button className="ds-button ds-button-primary min-h-0 px-3 py-2 text-xs" type="submit">Pagar</button>
+                      <div className="grid grid-cols-[1fr_110px] gap-2">
+                        <input name="valor_pago" defaultValue={saldo.toFixed(2)} inputMode="decimal" placeholder="Valor" />
+                        <select name="forma_pagamento" defaultValue="pix">
+                          {formasPagamento.map((f) => <option key={f} value={f}>{f}</option>)}
+                        </select>
+                      </div>
+                      <div className="grid grid-cols-[140px_1fr_96px] gap-2">
+                        <input name="data_pagamento" type="date" defaultValue={new Date().toISOString().slice(0, 10)} />
+                        <input name="observacao" placeholder="Observacao" />
+                        <button className="ds-button ds-button-primary min-h-0 px-3 py-2 text-xs" type="submit">Pagar</button>
+                      </div>
                     </form>
                     <details className="text-xs">
                       <summary className="cursor-pointer text-ink/60">Editar valores</summary>
