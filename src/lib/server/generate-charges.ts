@@ -101,14 +101,17 @@ export async function generateChargesForEnrollment(input: GenerateChargesInput) 
   // Idempotência: filtra linhas que já existem para esta matrícula.
   type ExistingChargeQuery = {
     select: (columns: string) => {
-      eq: (column: string, value: string) => Promise<{ data: Array<{ competencia: string; numero_parcela: number | null }> | null; error: unknown }>;
+      eq: (column: string, value: string) => {
+        neq: (column: string, value: string) => Promise<{ data: Array<{ competencia: string; numero_parcela: number | null }> | null; error: unknown }>;
+      };
     };
   };
 
   const existingQuery = input.supabase.from("cobrancas") as ExistingChargeQuery;
   const { data: existing } = await existingQuery
     .select("competencia, numero_parcela")
-    .eq("matricula_id", input.matriculaId);
+    .eq("matricula_id", input.matriculaId)
+    .neq("status", "cancelada");
 
   const seen = new Set<string>(
     (existing ?? []).map((row) => `${row.competencia}#${row.numero_parcela ?? 0}`)

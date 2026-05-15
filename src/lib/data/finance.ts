@@ -74,7 +74,8 @@ export async function getEnrollmentChargesPreview(matriculaId: string) {
   const existing = await supabase
     .from("cobrancas")
     .select("id, competencia, numero_parcela", { count: "exact", head: false })
-    .eq("matricula_id", matriculaId);
+    .eq("matricula_id", matriculaId)
+    .neq("status", "cancelada");
 
   if (existing.error) throw existing.error;
 
