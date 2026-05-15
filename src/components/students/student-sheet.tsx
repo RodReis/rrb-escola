@@ -10,7 +10,7 @@ function date(value: string | null) {
   return value ? dateFormat.format(new Date(`${value}T00:00:00Z`)) : "";
 }
 
-export function StudentSheetView({ student }: { student: StudentSheet }) {
+export function StudentSheetView({ student, fotoSrc }: { student: StudentSheet; fotoSrc?: string | null }) {
   const endereco = student.enderecos_aluno[0];
   const medica = student.informacoes_medicas;
   const autorizacoes = student.autorizacoes_aluno;
@@ -26,8 +26,8 @@ export function StudentSheetView({ student }: { student: StudentSheet }) {
           </tr>
           <tr>
             <td rowSpan={7} className="w-[125px] text-center">
-              {student.foto_url ? (
-                <img src={student.foto_url} alt={student.nome} width={105} height={135} className="mx-auto object-cover" />
+              {fotoSrc ? (
+                <img src={fotoSrc} alt={student.nome} width={105} height={135} className="mx-auto object-cover" />
               ) : (
                 <div className="mx-auto grid h-[135px] w-[105px] place-items-center border border-black bg-gray-100 text-[9px]">Foto</div>
               )}

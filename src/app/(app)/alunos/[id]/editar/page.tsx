@@ -7,6 +7,7 @@ import { ButtonLink } from "@/components/ui/button";
 import { getStudentDocuments } from "@/lib/data/documents";
 import { getStudentGateSettings } from "@/lib/data/gate";
 import { getStudentSheet } from "@/lib/data/students";
+import { getSignedFotoUrl } from "@/lib/storage/photos";
 
 export default async function EditStudentPage({ params }: { params: { id: string } }) {
   const [student, documents, gateSettings] = await Promise.all([
@@ -14,6 +15,7 @@ export default async function EditStudentPage({ params }: { params: { id: string
     getStudentDocuments(params.id),
     getStudentGateSettings(params.id)
   ]);
+  const fotoSrc = await getSignedFotoUrl(student.foto_url);
 
   return (
     <div className="grid gap-6">
@@ -29,7 +31,7 @@ export default async function EditStudentPage({ params }: { params: { id: string
           Voltar para ficha
         </ButtonLink>
       </header>
-      <StudentPhotoUpload alunoId={student.id} fotoUrl={student.foto_url} nome={student.nome} />
+      <StudentPhotoUpload alunoId={student.id} fotoUrl={fotoSrc} nome={student.nome} />
       <StudentDocumentsPanel alunoId={student.id} documents={documents} />
       <StudentGatePanel alunoId={student.id} settings={gateSettings} />
       <StudentEditForm student={student} />

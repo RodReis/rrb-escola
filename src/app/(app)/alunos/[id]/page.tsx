@@ -3,9 +3,11 @@ import { StudentSheetView } from "@/components/students/student-sheet";
 import { ButtonLink } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { getStudentSheet } from "@/lib/data/students";
+import { getSignedFotoUrl } from "@/lib/storage/photos";
 
 export default async function StudentPage({ params }: { params: { id: string } }) {
   const student = await getStudentSheet(params.id);
+  const fotoSrc = await getSignedFotoUrl(student.foto_url);
   const activeEnrollment = student.matriculas.find((item) => item.status === "ativa") ?? student.matriculas[0];
 
   return (
@@ -27,7 +29,7 @@ export default async function StudentPage({ params }: { params: { id: string } }
           <ExportStudentButton student={student} />
         </div>
       </header>
-      <StudentSheetView student={student} />
+      <StudentSheetView student={student} fotoSrc={fotoSrc} />
     </div>
   );
 }
