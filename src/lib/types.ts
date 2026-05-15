@@ -18,6 +18,7 @@ export type StudentSheet = {
   etnia: string | null;
   informacoes_adicionais: string | null;
   foto_url: string | null;
+  disciplina_eletiva: string | null;
   enderecos_aluno: Array<{
     id: string;
     logradouro: string;
