@@ -1,8 +1,9 @@
-import { createAdminClient } from "@/lib/supabase/admin";
+import { createServerClient } from "@/lib/supabase/server";
 import { DEFAULT_SCHOOL_ID } from "@/lib/constants";
 
 export async function getAttendanceData() {
-  const { data, error } = await createAdminClient()
+  const supabase = await createServerClient();
+  const { data, error } = await supabase
     .from("frequencias")
     .select("*, alunos(nome, matricula_codigo)")
     .eq("escola_id", DEFAULT_SCHOOL_ID)
@@ -14,7 +15,7 @@ export async function getAttendanceData() {
 }
 
 export async function getClassAttendanceData(turmaId?: string, date?: string) {
-  const supabase = createAdminClient();
+  const supabase = await createServerClient();
   const today = date ?? new Date().toISOString().slice(0, 10);
 
   const { data: turmas, error: turmasError } = await supabase
@@ -79,7 +80,8 @@ export async function getAttendanceReport(start?: string, end?: string) {
   const dateStart = start || defaultStart;
   const dateEnd = end || today;
 
-  const { data, error } = await createAdminClient()
+  const supabase = await createServerClient();
+  const { data, error } = await supabase
     .from("frequencias")
     .select("id, data_aula, presente, justificativa, alunos(id, matricula_codigo, nome)")
     .eq("escola_id", DEFAULT_SCHOOL_ID)
