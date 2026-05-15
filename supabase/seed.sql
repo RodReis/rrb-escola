@@ -12,6 +12,10 @@ values (
 )
 on conflict (id) do nothing;
 
+insert into dispositivos_acesso (id, escola_id, nome, local, tipo)
+values ('50000000-0000-0000-0000-000000000001', '00000000-0000-0000-0000-000000000001', 'Portaria Principal', 'Entrada principal', 'portaria')
+on conflict (escola_id, nome) do nothing;
+
 insert into series (id, escola_id, nome, ordem)
 values
   ('10000000-0000-0000-0000-000000000001', '00000000-0000-0000-0000-000000000001', '1º Ano', 1),
