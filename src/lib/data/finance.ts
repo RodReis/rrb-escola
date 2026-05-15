@@ -5,7 +5,7 @@ export async function getFinanceData() {
   const supabase = await createServerClient();
   const { data, error } = await supabase
     .from("cobrancas")
-    .select("*, alunos(nome), pagamentos(valor_pago, data_pagamento, forma_pagamento)")
+    .select("*, alunos(nome, matricula_codigo), pagamentos(id, valor_pago, data_pagamento, forma_pagamento, observacao, cancelado_em, cancelado_por, motivo_cancelamento, registrado_por, perfis:registrado_por(nome))")
     .eq("escola_id", DEFAULT_SCHOOL_ID)
     .order("data_vencimento", { ascending: false });
 
