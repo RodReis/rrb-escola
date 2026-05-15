@@ -1,9 +1,10 @@
-import { createAdminClient } from "@/lib/supabase/admin";
+import { createServerClient } from "@/lib/supabase/server";
 import { DEFAULT_SCHOOL_ID } from "@/lib/constants";
 import type { StudentSheet } from "@/lib/types";
 
 export async function listStudents() {
-  const { data, error } = await createAdminClient()
+  const supabase = await createServerClient();
+  const { data, error } = await supabase
     .from("alunos")
     .select("id, matricula_codigo, nome, cpf, celular, ativo, matriculas(status, series(nome), turmas(nome))")
     .eq("escola_id", DEFAULT_SCHOOL_ID)
@@ -14,7 +15,8 @@ export async function listStudents() {
 }
 
 export async function getStudentSheet(id: string) {
-  const { data, error } = await createAdminClient()
+  const supabase = await createServerClient();
+  const { data, error } = await supabase
     .from("alunos")
     .select(`
       *,
@@ -34,7 +36,7 @@ export async function getStudentSheet(id: string) {
 }
 
 export async function getStudentFormOptions() {
-  const supabase = createAdminClient();
+  const supabase = await createServerClient();
   const [series, turmas, planos] = await Promise.all([
     supabase.from("series").select("id, nome").eq("escola_id", DEFAULT_SCHOOL_ID).eq("ativo", true).order("ordem"),
     supabase.from("turmas").select("id, nome, ano_letivo, serie_id").eq("escola_id", DEFAULT_SCHOOL_ID).eq("ativo", true).order("nome"),
@@ -53,7 +55,8 @@ export async function getStudentFormOptions() {
 }
 
 export async function getStudentsReport() {
-  const { data, error } = await createAdminClient()
+  const supabase = await createServerClient();
+  const { data, error } = await supabase
     .from("alunos")
     .select(`
       id,
