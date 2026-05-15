@@ -100,7 +100,11 @@ export async function saveBiometryAction(input: SaveBiometryInput) {
     ativo: true,
     criado_por: "operador-web"
   });
-  if (insertError) throw insertError;
+  if (insertError) {
+    // cleanup orphan
+    await supabase.storage.from("biometrias-alunos").remove([path]);
+    throw insertError;
+  }
 
   revalidatePath(`/alunos/${input.alunoId}/editar`);
   return { ok: true };

@@ -48,3 +48,8 @@ returns table (
 $$ language sql stable security definer set search_path = public, extensions;
 
 grant execute on function match_biometria(vector, numeric, uuid) to authenticated, service_role;
+
+-- Re-enrollment fix: previous active is set to ativo=false but stays in the table.
+-- The (aluno_id, modelo) unique constraint from 202605140003 prevents re-insert.
+alter table biometrias_aluno
+  drop constraint if exists biometrias_aluno_aluno_id_modelo_key;
