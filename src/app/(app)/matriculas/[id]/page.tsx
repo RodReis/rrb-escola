@@ -1,9 +1,11 @@
 import { Badge } from "@/components/ui/badge";
 import { ButtonLink } from "@/components/ui/button";
 import { Card, Panel } from "@/components/ui/card";
+import { GenerateChargesButton } from "@/components/finance/generate-charges-button";
 import { updateEnrollmentAction, updateEnrollmentStatusAction } from "@/lib/actions/academics";
 import { money } from "@/lib/constants";
 import { getEnrollmentDetail } from "@/lib/data/enrollments";
+import { getEnrollmentChargesPreview } from "@/lib/data/finance";
 import { getAcademicData } from "@/lib/data/lookups";
 
 const statuses = ["ativa", "cancelada", "transferida", "concluida"];
@@ -25,7 +27,11 @@ function statusTone(status: string): "green" | "red" | "gold" | "gray" {
 }
 
 export default async function EnrollmentDetailPage({ params }: { params: { id: string } }) {
-  const [{ alunos, series, turmas, planos }, detail] = await Promise.all([getAcademicData(), getEnrollmentDetail(params.id)]);
+  const [{ alunos, series, turmas, planos }, detail, chargesPreview] = await Promise.all([
+    getAcademicData(),
+    getEnrollmentDetail(params.id),
+    getEnrollmentChargesPreview(params.id)
+  ]);
   const enrollment = detail.enrollment;
   const student = one(enrollment.alunos);
   const serie = one(enrollment.series);
@@ -133,6 +139,7 @@ export default async function EnrollmentDetailPage({ params }: { params: { id: s
           <div>
             <p className="ds-kicker">Financeiro</p>
             <h2 className="mt-2 font-serif text-2xl text-ink">Historico financeiro</h2>
+            <GenerateChargesButton matriculaId={enrollment.id} preview={chargesPreview} />
           </div>
           <div className="grid gap-2">
             {detail.charges.length === 0 ? <p className="text-sm text-muted">Nenhuma cobranca vinculada.</p> : null}
