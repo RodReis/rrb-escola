@@ -1,8 +1,8 @@
-import { createAdminClient } from "@/lib/supabase/admin";
+import { createServerClient } from "@/lib/supabase/server";
 import { DEFAULT_SCHOOL_ID } from "@/lib/constants";
 
 export async function getDashboard() {
-  const supabase = createAdminClient();
+  const supabase = await createServerClient();
 
   const [alunos, matriculas, abertas, pagas, chartRows] = await Promise.all([
     supabase.from("alunos").select("id", { count: "exact", head: true }).eq("escola_id", DEFAULT_SCHOOL_ID),
