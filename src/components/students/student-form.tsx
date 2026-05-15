@@ -37,6 +37,7 @@ export function StudentForm({ options }: { options: Options }) {
           <label>No.<input name="certidao_numero" /></label>
           <label>Cartorio<input name="certidao_cartorio" /></label>
           <label className="md:col-span-2">E-mail<input name="email" type="email" /></label>
+          <label className="md:col-span-2">Disciplina eletiva<input name="disciplina_eletiva" /></label>
           <label className="md:col-span-2">Informacoes adicionais<input name="informacoes_adicionais" /></label>
         </div>
       </Section>
