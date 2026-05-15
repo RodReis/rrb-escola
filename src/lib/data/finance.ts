@@ -91,20 +91,52 @@ export async function getEnrollmentChargesPreview(matriculaId: string) {
   };
 }
 
-export async function getDelinquencyReport() {
+export type DelinquencyFilters = {
+  de: string;
+  ate: string;
+  statuses: string[];
+  aluno: string | null;
+};
+
+export async function getDelinquencyReport(filters: DelinquencyFilters) {
   const today = new Date().toISOString().slice(0, 10);
   const supabase = await createServerClient();
-  const { data, error } = await supabase
-    .from("cobrancas")
-    .select("id, descricao, competencia, data_vencimento, status, valor_final, alunos(id, matricula_codigo, nome)")
-    .eq("escola_id", DEFAULT_SCHOOL_ID)
-    .in("status", ["aberta", "parcial", "vencida"])
-    .lte("data_vencimento", today)
-    .order("data_vencimento", { ascending: true });
 
+  const dbStatuses = filters.statuses.filter((s) => s !== "vencida");
+  const includeVencida = filters.statuses.includes("vencida");
+  if (dbStatuses.length === 0 && !includeVencida) {
+    return { date: today, filters, rows: [], total: 0, byStudent: [] };
+  }
+
+  let query = supabase
+    .from("cobrancas")
+    .select(`
+      id, descricao, competencia, data_vencimento, status, valor_final,
+      alunos!inner(id, matricula_codigo, nome),
+      pagamentos(valor_pago, cancelado_em)
+    `)
+    .eq("escola_id", DEFAULT_SCHOOL_ID)
+    .gte("data_vencimento", filters.de)
+    .lte("data_vencimento", filters.ate);
+
+  if (filters.aluno) {
+    const term = `%${filters.aluno}%`;
+    query = query.or(`nome.ilike.${term},matricula_codigo.ilike.${term}`, { foreignTable: "alunos" });
+  }
+
+  query = query.in("status", ["aberta", "parcial"]);
+
+  const { data, error } = await query.order("data_vencimento", { ascending: true });
   if (error) throw error;
 
-  const rows = data ?? [];
+  const rows = (data ?? []).filter((item) => {
+    const isVencida = item.data_vencimento < today;
+    const want = includeVencida && isVencida
+      ? true
+      : dbStatuses.includes(item.status as string) && !isVencida;
+    return want;
+  });
+
   const total = rows.reduce((sum, item) => sum + Number(item.valor_final ?? 0), 0);
   const byStudent = new Map<string, { aluno: string; matricula: string; total: number; quantidade: number }>();
 
@@ -124,6 +156,7 @@ export async function getDelinquencyReport() {
 
   return {
     date: today,
+    filters,
     rows,
     total,
     byStudent: Array.from(byStudent.values()).sort((a, b) => b.total - a.total)
