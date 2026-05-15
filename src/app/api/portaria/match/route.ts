@@ -16,7 +16,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "embedding invalido (esperado array 128)" }, { status: 400 });
   }
 
-  const threshold = Number(process.env.GATE_MATCH_THRESHOLD ?? 0.6);
+  const threshold = Number(process.env.GATE_MATCH_THRESHOLD || "0.6");
   const vector = `[${payload.embedding.map((v) => Number(v).toFixed(6)).join(",")}]`;
 
   const supabase = createAdminClient();
