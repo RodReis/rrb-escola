@@ -10,12 +10,13 @@ export async function loginAction(formData: FormData) {
   if (!email || !password) redirect("/login?erro=credenciais");
 
   const supabase = await createServerClient();
-  const { error } = await supabase.auth.signInWithPassword({ email, password });
-  if (error) redirect("/login?erro=auth");
+  const { data: authData, error } = await supabase.auth.signInWithPassword({ email, password });
+  if (error || !authData.user) redirect("/login?erro=auth");
 
   const { data: perfil } = await supabase
     .from("perfis")
     .select("ativo")
+    .eq("user_id", authData.user.id)
     .maybeSingle();
 
   if (!perfil?.ativo) {

@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { requireAdmin } from "@/lib/auth/session";
 import { createAdminClient } from "@/lib/supabase/admin"; // service role: supabase.auth.admin.createUser requer
+import { setUserCreatedFlash } from "@/lib/actions/user-flash";
 import { formText } from "@/lib/utils";
 
 function generatePassword() {
@@ -42,14 +43,16 @@ export async function createUserAction(formData: FormData) {
     redirect(`/usuarios/novo?erro=perfil`);
   }
 
+  setUserCreatedFlash(email, password);
   revalidatePath("/usuarios");
-  redirect(`/usuarios?criado=${encodeURIComponent(email)}&senha=${encodeURIComponent(password)}`);
+  redirect("/usuarios?criado=1");
 }
 
 export async function deactivateUserAction(formData: FormData) {
-  await requireAdmin();
+  const session = await requireAdmin();
   const perfilId = formText(formData, "perfilId");
   if (!perfilId) redirect("/usuarios?erro=id");
+  if (perfilId === session.profile.id) redirect("/usuarios?erro=self");
 
   const admin = createAdminClient(); // service role: atualização de perfil admin
   const { error } = await admin
