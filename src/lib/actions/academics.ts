@@ -3,7 +3,6 @@
 import { revalidatePath } from "next/cache";
 import { requireSession } from "@/lib/auth/session";
 import { DEFAULT_SCHOOL_ID } from "@/lib/constants";
-import { generateChargesForEnrollment } from "@/lib/server/generate-charges";
 import { createServerClient } from "@/lib/supabase/server";
 import { formBoolean, formNumber, formText } from "@/lib/utils";
 
@@ -139,7 +138,7 @@ export async function createEnrollmentAction(formData: FormData) {
   const dataMatricula = formText(formData, "data_matricula") ?? new Date().toISOString().slice(0, 10);
   const anoLetivo = formNumber(formData, "ano_letivo") ?? new Date().getFullYear();
 
-  const { data: matricula } = await supabase.from("matriculas").insert({
+  await supabase.from("matriculas").insert({
     escola_id: DEFAULT_SCHOOL_ID,
     aluno_id: alunoId,
     serie_id: serieId,
@@ -151,19 +150,7 @@ export async function createEnrollmentAction(formData: FormData) {
     idade_na_matricula: formNumber(formData, "idade_na_matricula"),
     status: "ativa",
     observacoes: formText(formData, "observacoes")
-  }).select("id").single();
-
-  if (matricula) {
-    await generateChargesForEnrollment({
-      supabase,
-      escolaId: DEFAULT_SCHOOL_ID,
-      alunoId,
-      matriculaId: matricula.id,
-      planoId,
-      dataMatricula,
-      anoLetivo
-    });
-  }
+  });
 
   revalidatePath("/matriculas");
   revalidatePath("/financeiro");
