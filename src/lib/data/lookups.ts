@@ -1,8 +1,8 @@
-import { createAdminClient } from "@/lib/supabase/admin";
+import { createServerClient } from "@/lib/supabase/server";
 import { DEFAULT_SCHOOL_ID } from "@/lib/constants";
 
 export async function getAcademicData() {
-  const supabase = createAdminClient();
+  const supabase = await createServerClient();
   const [series, turmas, planos, alunos] = await Promise.all([
     supabase.from("series").select("*").eq("escola_id", DEFAULT_SCHOOL_ID).order("ordem"),
     supabase.from("turmas").select("*, series(nome)").eq("escola_id", DEFAULT_SCHOOL_ID).order("ano_letivo", { ascending: false }),
