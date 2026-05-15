@@ -55,6 +55,7 @@ export function StudentEditForm({ student }: { student: StudentSheet }) {
           <label>No.<input name="certidao_numero" defaultValue={student.certidao_numero ?? ""} /></label>
           <label>Cartorio<input name="certidao_cartorio" defaultValue={student.certidao_cartorio ?? ""} /></label>
           <label className="md:col-span-2">E-mail<input name="email" type="email" defaultValue={student.email ?? ""} /></label>
+          <label className="md:col-span-2">Disciplina eletiva<input name="disciplina_eletiva" defaultValue={student.disciplina_eletiva ?? ""} /></label>
           <label className="md:col-span-2">Informacoes adicionais<input name="informacoes_adicionais" defaultValue={student.informacoes_adicionais ?? ""} /></label>
         </div>
       </Section>
