@@ -1,13 +1,15 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { requireSession } from "@/lib/auth/session";
 import { DEFAULT_SCHOOL_ID } from "@/lib/constants";
 import { registerGateEvent } from "@/lib/server/gate-events";
 import { sendGuardianNotification } from "@/lib/server/guardian-notifications";
-import { createAdminClient } from "@/lib/supabase/admin";
+import { createServerClient } from "@/lib/supabase/server";
 import { formBoolean, formNumber, formText } from "@/lib/utils";
 
 export async function registerGateEventAction(formData: FormData) {
+  await requireSession();
   const alunoId = formText(formData, "aluno_id");
   const deviceId = formText(formData, "dispositivo_id");
   const type = formText(formData, "tipo");
@@ -29,10 +31,11 @@ export async function registerGateEventAction(formData: FormData) {
 }
 
 export async function saveStudentGateSettingsAction(formData: FormData) {
+  await requireSession();
   const alunoId = formText(formData, "aluno_id");
   if (!alunoId) return;
 
-  const supabase = createAdminClient();
+  const supabase = await createServerClient();
   const authorized = formBoolean(formData, "autorizado");
   const guardianId = formText(formData, "responsavel_id");
 
@@ -65,6 +68,7 @@ export async function saveStudentGateSettingsAction(formData: FormData) {
 }
 
 export async function uploadStudentFaceReferenceAction(formData: FormData) {
+  await requireSession();
   const alunoId = formText(formData, "aluno_id");
   const file = formData.get("foto_referencia");
   if (!alunoId || !(file instanceof File) || file.size === 0) return;
@@ -72,7 +76,7 @@ export async function uploadStudentFaceReferenceAction(formData: FormData) {
   const allowedTypes = new Set(["image/jpeg", "image/png", "image/webp"]);
   if (!allowedTypes.has(file.type)) throw new Error("Envie uma imagem JPG, PNG ou WEBP.");
 
-  const supabase = createAdminClient();
+  const supabase = await createServerClient();
   const consent = await supabase.from("consentimentos_biometria").select("autorizado").eq("aluno_id", alunoId).maybeSingle();
   if (consent.error) throw consent.error;
   if (!consent.data?.autorizado) throw new Error("Autorize a biometria antes de cadastrar a referencia facial.");
@@ -108,11 +112,13 @@ export async function uploadStudentFaceReferenceAction(formData: FormData) {
 }
 
 export async function deactivateStudentFaceReferenceAction(formData: FormData) {
+  await requireSession();
   const alunoId = formText(formData, "aluno_id");
   const id = formText(formData, "biometria_id");
   if (!alunoId || !id) return;
 
-  await createAdminClient()
+  const supabase = await createServerClient();
+  await supabase
     .from("biometrias_aluno")
     .update({ ativo: false, data_revogacao: new Date().toISOString() })
     .eq("id", id)
@@ -122,10 +128,12 @@ export async function deactivateStudentFaceReferenceAction(formData: FormData) {
 }
 
 export async function createGateDeviceAction(formData: FormData) {
+  await requireSession();
   const nome = formText(formData, "nome");
   if (!nome) return;
 
-  await createAdminClient().from("dispositivos_acesso").insert({
+  const supabase = await createServerClient();
+  await supabase.from("dispositivos_acesso").insert({
     escola_id: DEFAULT_SCHOOL_ID,
     nome,
     local: formText(formData, "local"),
@@ -138,11 +146,13 @@ export async function createGateDeviceAction(formData: FormData) {
 }
 
 export async function updateGateDeviceAction(formData: FormData) {
+  await requireSession();
   const id = formText(formData, "id");
   const nome = formText(formData, "nome");
   if (!id || !nome) return;
 
-  await createAdminClient()
+  const supabase = await createServerClient();
+  await supabase
     .from("dispositivos_acesso")
     .update({
       nome,
@@ -159,10 +169,12 @@ export async function updateGateDeviceAction(formData: FormData) {
 }
 
 export async function toggleGateDeviceAction(formData: FormData) {
+  await requireSession();
   const id = formText(formData, "id");
   if (!id) return;
 
-  await createAdminClient()
+  const supabase = await createServerClient();
+  await supabase
     .from("dispositivos_acesso")
     .update({ ativo: formBoolean(formData, "ativo") })
     .eq("id", id)
@@ -174,10 +186,11 @@ export async function toggleGateDeviceAction(formData: FormData) {
 }
 
 export async function retryGuardianNotificationAction(formData: FormData) {
+  await requireSession();
   const id = formText(formData, "notificacao_id");
   if (!id) return;
 
-  const supabase = createAdminClient();
+  const supabase = await createServerClient();
   const { data: notification, error } = await supabase
     .from("notificacoes_responsavel")
     .select("id, canal, telefone_destino, mensagem, aluno_id, evento_acesso_id")
