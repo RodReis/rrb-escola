@@ -6,6 +6,7 @@ import {
   School,
 } from "lucide-react";
 import { logoutAction } from "@/lib/actions/auth";
+import type { SessionProfile } from "@/lib/auth/session";
 
 const primaryItems: Array<{ href: string; label: string; icon: TopbarIconName }> = [
   { href: "/", label: "Dashboard", icon: "LayoutDashboard" },
@@ -16,6 +17,7 @@ const primaryItems: Array<{ href: string; label: string; icon: TopbarIconName }>
 ];
 
 const secondaryItems: Array<{ href: string; label: string; icon: TopbarIconName }> = [
+  { href: "/usuarios", label: "Usuarios", icon: "UsersRound" },
   { href: "/series", label: "Series", icon: "Layers3" },
   { href: "/turmas", label: "Turmas", icon: "GraduationCap" },
   { href: "/planos", label: "Planos", icon: "CreditCard" },
@@ -35,7 +37,7 @@ function BrandMark() {
   );
 }
 
-export function Topbar() {
+export function Topbar({ perfil }: { perfil: SessionProfile }) {
   return (
     <header className="sticky top-0 z-30 border-b border-line bg-surface/90 backdrop-blur-xl">
       <div className="mx-auto flex min-h-[72px] max-w-7xl items-center gap-4 px-4 sm:px-6 lg:px-8">
@@ -69,6 +71,10 @@ export function Topbar() {
           ))}
         </nav>
         <ThemeToggle className="shrink-0" />
+        <div className="hidden text-right text-xs leading-tight md:block">
+          <strong className="block font-bold text-ink">{perfil.nome}</strong>
+          <span className="block font-medium text-muted">{perfil.email}</span>
+        </div>
         <form action={logoutAction} className="shrink-0">
           <button className="ds-button ds-button-secondary h-10 min-h-10 px-3" title="Sair do sistema" aria-label="Sair do sistema">
             <LogOut size={16} />
