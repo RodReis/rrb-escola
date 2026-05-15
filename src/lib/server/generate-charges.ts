@@ -32,6 +32,8 @@ type GenerateChargesInput = {
   anoLetivo: number;
 };
 
+// generateChargesForEnrollment: geração sob demanda. Filtra duplicatas (matricula_id + competencia + numero_parcela) para ser idempotente.
+
 function lastDayOfMonth(year: number, monthIndex: number) {
   return new Date(Date.UTC(year, monthIndex + 1, 0)).getUTCDate();
 }
@@ -94,8 +96,27 @@ export async function generateChargesForEnrollment(input: GenerateChargesInput) 
     });
   }
 
-  if (rows.length > 0) {
-    const insertQuery = input.supabase.from("cobrancas") as InsertQuery;
-    await insertQuery.insert(rows);
-  }
+  if (rows.length === 0) return;
+
+  // Idempotência: filtra linhas que já existem para esta matrícula.
+  type ExistingChargeQuery = {
+    select: (columns: string) => {
+      eq: (column: string, value: string) => Promise<{ data: Array<{ competencia: string; numero_parcela: number | null }> | null; error: unknown }>;
+    };
+  };
+
+  const existingQuery = input.supabase.from("cobrancas") as ExistingChargeQuery;
+  const { data: existing } = await existingQuery
+    .select("competencia, numero_parcela")
+    .eq("matricula_id", input.matriculaId);
+
+  const seen = new Set<string>(
+    (existing ?? []).map((row) => `${row.competencia}#${row.numero_parcela ?? 0}`)
+  );
+  const filtered = rows.filter((row) => !seen.has(`${row.competencia}#${row.numero_parcela ?? 0}`));
+
+  if (filtered.length === 0) return;
+
+  const insertQuery = input.supabase.from("cobrancas") as InsertQuery;
+  await insertQuery.insert(filtered);
 }
