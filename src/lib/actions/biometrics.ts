@@ -13,6 +13,7 @@ export async function setConsentAction(formData: FormData) {
   const autorizado = formText(formData, "autorizado") === "true";
   const observacao = formText(formData, "observacao");
   if (!alunoId) redirect(`/alunos?erro=id`);
+  if (autorizado && !responsavelId) redirect(`/alunos/${alunoId}/editar?erro=responsavel`);
 
   const supabase = await createServerClient();
   await supabase.from("consentimentos_biometria").upsert(
