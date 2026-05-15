@@ -384,19 +384,16 @@ export async function uploadStudentPhotoAction(formData: FormData) {
   const storagePath = `${alunoId}/${Date.now()}.${extension}`;
   const bytes = Buffer.from(await file.arrayBuffer());
 
-  const { error: uploadError } = await supabase.storage.from("alunos-fotos").upload(storagePath, bytes, {
+  const { data: uploaded, error: uploadError } = await supabase.storage.from("alunos-fotos").upload(storagePath, bytes, {
     contentType: file.type,
     upsert: false
   });
 
   if (uploadError) throw uploadError;
 
-  const { data } = supabase.storage.from("alunos-fotos").getPublicUrl(storagePath);
-  const fotoUrl = data.publicUrl;
-
   await supabase
     .from("alunos")
-    .update({ foto_url: fotoUrl })
+    .update({ foto_url: uploaded?.path ?? storagePath })
     .eq("id", alunoId)
     .eq("escola_id", DEFAULT_SCHOOL_ID);
 
