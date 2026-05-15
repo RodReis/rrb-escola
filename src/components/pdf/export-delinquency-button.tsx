@@ -13,15 +13,36 @@ type DelinquencyRow = {
   alunos: { matricula_codigo: string; nome: string } | { matricula_codigo: string; nome: string }[] | null;
 };
 
-export function ExportDelinquencyButton({ rows }: { rows: DelinquencyRow[] }) {
+type Filters = { de: string; ate: string; statuses: string[]; aluno: string | null };
+
+type Props = {
+  rows: DelinquencyRow[];
+  filters?: Filters;
+};
+
+function dateText(value: string) {
+  return new Date(`${value}T00:00:00`).toLocaleDateString("pt-BR");
+}
+
+export function ExportDelinquencyButton({ rows, filters }: Props) {
   function exportPdf() {
     const doc = new jsPDF({ orientation: "landscape", unit: "mm", format: "a4" });
     doc.setFont("helvetica", "bold");
     doc.setFontSize(14);
     doc.text("Relatorio de Inadimplencia", 148, 12, { align: "center" });
 
+    let startY = 18;
+    if (filters) {
+      doc.setFont("helvetica", "normal");
+      doc.setFontSize(9);
+      doc.text(`Periodo: ${dateText(filters.de)} a ${dateText(filters.ate)}`, 12, 20);
+      doc.text(`Status: ${filters.statuses.join(", ") || "-"}`, 12, 25);
+      doc.text(`Aluno: ${filters.aluno || "Todos"}`, 12, 30);
+      startY = 35;
+    }
+
     autoTable(doc, {
-      startY: 18,
+      startY,
       theme: "grid",
       head: [["Matricula", "Aluno", "Descricao", "Competencia", "Vencimento", "Status", "Valor"]],
       body: rows.map((row) => {

@@ -1,19 +1,36 @@
+import { DelinquencyFilters } from "@/components/finance/delinquency-filters";
 import { ExportDelinquencyButton } from "@/components/pdf/export-delinquency-button";
 import { Badge } from "@/components/ui/badge";
 import { Card, Panel } from "@/components/ui/card";
 import { money } from "@/lib/constants";
-import { getDelinquencyReport } from "@/lib/data/finance";
+import { getDelinquencyReport, type DelinquencyFilters as Filters } from "@/lib/data/finance";
+
+export const dynamic = "force-dynamic";
 
 function dateText(value: string | null | undefined) {
   if (!value) return "-";
   return new Date(`${value}T00:00:00`).toLocaleDateString("pt-BR");
 }
 
-export default async function InadimplenciaPage() {
-  const report = await getDelinquencyReport();
+function parseFilters(sp: { de?: string; ate?: string; status?: string | string[]; aluno?: string }): Filters {
+  const today = new Date().toISOString().slice(0, 10);
+  const thirtyAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString().slice(0, 10);
+  const statusParam = sp.status;
+  const statuses = Array.isArray(statusParam) ? statusParam : statusParam ? [statusParam] : ["parcial", "vencida"];
+  return {
+    de: sp.de || thirtyAgo,
+    ate: sp.ate || today,
+    statuses,
+    aluno: sp.aluno?.trim() || null
+  };
+}
+
+export default async function InadimplenciaPage({ searchParams }: { searchParams: { de?: string; ate?: string; status?: string | string[]; aluno?: string } }) {
+  const filters = parseFilters(searchParams);
+  const report = await getDelinquencyReport(filters);
 
   const summary = [
-    ["Total vencido", money.format(report.total)],
+    ["Total no filtro", money.format(report.total)],
     ["Cobrancas", String(report.rows.length)],
     ["Alunos", String(report.byStudent.length)],
     ["Data base", dateText(report.date)]
@@ -29,29 +46,18 @@ export default async function InadimplenciaPage() {
               <span className="text-line">/</span>
               <span className="text-brand">Inadimplencia</span>
             </p>
-            <h1 className="mt-8 text-4xl font-black leading-none text-brand md:text-5xl">
-              Inadimplencia
-            </h1>
+            <h1 className="mt-8 text-4xl font-black leading-none text-brand md:text-5xl">Inadimplencia</h1>
             <p className="mt-4 max-w-2xl text-sm font-medium leading-6 text-ink/68">
-              Cobrancas vencidas ou em aberto agrupadas por aluno.
+              Cobrancas por periodo, status e aluno.
             </p>
           </div>
-
-          <div className="grid gap-7">
-            <div className="flex flex-wrap gap-2 xl:justify-end">
-              <ExportDelinquencyButton rows={report.rows} />
-            </div>
-            <dl className="grid gap-0 sm:grid-cols-4">
-              {summary.map(([label, value]) => (
-                <div key={label} className="border-line py-1 sm:border-l sm:px-6 first:sm:border-l-0">
-                  <dt className="text-xs font-medium text-ink/62">{label}</dt>
-                  <dd className="mt-1 font-serif text-2xl italic leading-none text-brand">{value}</dd>
-                </div>
-              ))}
-            </dl>
+          <div className="flex flex-wrap gap-2 xl:justify-end">
+            <ExportDelinquencyButton rows={report.rows} filters={filters} />
           </div>
         </div>
       </section>
+
+      <DelinquencyFilters defaults={{ de: filters.de, ate: filters.ate, statuses: filters.statuses, aluno: filters.aluno ?? "" }} />
 
       <section className="grid gap-4 md:grid-cols-4">
         {summary.map(([label, value]) => (
@@ -66,7 +72,7 @@ export default async function InadimplenciaPage() {
         <h2 className="text-lg font-black text-ink">Resumo por aluno</h2>
         <div className="grid gap-2">
           {report.byStudent.length === 0 ? (
-            <p className="text-sm text-ink/65">Nenhuma cobranca vencida em aberto.</p>
+            <p className="text-sm text-ink/65">Nenhuma cobranca no filtro selecionado.</p>
           ) : (
             report.byStudent.map((item) => (
               <div key={`${item.matricula}-${item.aluno}`} className="grid gap-2 rounded-ui border border-line p-3 text-sm md:grid-cols-[1fr_150px_100px]">
@@ -95,13 +101,16 @@ export default async function InadimplenciaPage() {
             <tbody>
               {report.rows.map((item) => {
                 const aluno = Array.isArray(item.alunos) ? item.alunos[0] : item.alunos;
+                const isVencida = item.data_vencimento < report.date;
+                const display = isVencida ? "vencida" : item.status;
+                const tone = display === "vencida" ? "red" : display === "parcial" ? "gold" : "gray";
                 return (
                   <tr key={item.id} className="border-t border-line transition hover:bg-muted/60">
                     <td className="px-5 py-4 font-black text-ink">{aluno?.nome}</td>
                     <td className="px-5 py-4 text-ink/70">{item.descricao}</td>
                     <td className="px-5 py-4 text-ink/70">{item.competencia}</td>
                     <td className="px-5 py-4 text-ink/70">{dateText(item.data_vencimento)}</td>
-                    <td className="px-5 py-4"><Badge tone="red">{item.status}</Badge></td>
+                    <td className="px-5 py-4"><Badge tone={tone}>{display}</Badge></td>
                     <td className="px-5 py-4 font-black text-brand">{money.format(Number(item.valor_final))}</td>
                   </tr>
                 );
