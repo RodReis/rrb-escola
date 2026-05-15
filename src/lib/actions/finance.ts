@@ -1,16 +1,19 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { requireSession } from "@/lib/auth/session";
 import { DEFAULT_SCHOOL_ID } from "@/lib/constants";
-import { createAdminClient } from "@/lib/supabase/admin";
+import { createServerClient } from "@/lib/supabase/server";
 import { formNumber, formText } from "@/lib/utils";
 
 export async function createChargeAction(formData: FormData) {
+  await requireSession();
   const alunoId = formText(formData, "aluno_id");
   const descricao = formText(formData, "descricao");
   if (!alunoId || !descricao) return;
 
-  await createAdminClient().from("cobrancas").insert({
+  const supabase = await createServerClient();
+  await supabase.from("cobrancas").insert({
     escola_id: DEFAULT_SCHOOL_ID,
     aluno_id: alunoId,
     descricao,
@@ -27,12 +30,13 @@ export async function createChargeAction(formData: FormData) {
 }
 
 export async function payChargeAction(formData: FormData) {
+  await requireSession();
   const cobrancaId = formText(formData, "cobranca_id");
   const alunoId = formText(formData, "aluno_id");
   const valorPago = formNumber(formData, "valor_pago");
   if (!cobrancaId || !alunoId || !valorPago) return;
 
-  const supabase = createAdminClient();
+  const supabase = await createServerClient();
   await supabase.from("pagamentos").insert({
     escola_id: DEFAULT_SCHOOL_ID,
     cobranca_id: cobrancaId,
@@ -48,10 +52,12 @@ export async function payChargeAction(formData: FormData) {
 }
 
 export async function cancelChargeAction(formData: FormData) {
+  await requireSession();
   const cobrancaId = formText(formData, "cobranca_id");
   if (!cobrancaId) return;
 
-  await createAdminClient()
+  const supabase = await createServerClient();
+  await supabase
     .from("cobrancas")
     .update({ status: "cancelada" })
     .eq("id", cobrancaId)
