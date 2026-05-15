@@ -1,4 +1,4 @@
-import { createAdminClient } from "@/lib/supabase/admin";
+import { createServerClient } from "@/lib/supabase/server";
 
 export type StudentDocument = {
   id: string;
@@ -13,7 +13,7 @@ export type StudentDocument = {
 };
 
 export async function getStudentDocuments(alunoId: string): Promise<StudentDocument[]> {
-  const supabase = createAdminClient();
+  const supabase = await createServerClient();
   const { data, error } = await supabase
     .from("documentos_aluno")
     .select("*")
