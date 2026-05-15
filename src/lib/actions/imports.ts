@@ -2,10 +2,11 @@
 
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
+import { requireSession } from "@/lib/auth/session";
 import { DEFAULT_SCHOOL_ID } from "@/lib/constants";
 import { generateChargesForEnrollment } from "@/lib/server/generate-charges";
 import { parsePdfStudents, parseSpreadsheetStudents, type StudentImportData } from "@/lib/server/student-import-parser";
-import { createAdminClient } from "@/lib/supabase/admin";
+import { createServerClient } from "@/lib/supabase/server";
 import { formNumber, formText } from "@/lib/utils";
 
 const readyStatus = "pronto";
@@ -35,7 +36,7 @@ function normalize(value: string | null | undefined) {
 }
 
 async function validateImportRows(
-  supabase: ReturnType<typeof createAdminClient>,
+  supabase: Awaited<ReturnType<typeof createServerClient>>,
   rows: Array<{ line: number; data: StudentImportData }>
 ) {
   const [students, series, turmas, planos] = await Promise.all([
@@ -87,11 +88,12 @@ async function validateImportRows(
 }
 
 export async function uploadStudentImportAction(formData: FormData) {
+  await requireSession();
   const file = formData.get("arquivo");
   if (!(file instanceof File) || file.size === 0) return;
   if (!isPdf(file) && !isSpreadsheet(file)) throw new Error("Envie um PDF, XLSX, XLS ou CSV.");
 
-  const supabase = createAdminClient();
+  const supabase = await createServerClient();
   const bytes = Buffer.from(await file.arrayBuffer());
   const storagePath = `alunos/${Date.now()}-${safeFileName(file.name)}`;
   const contentType = isPdf(file) ? "application/pdf" : file.type || "application/octet-stream";
@@ -153,6 +155,7 @@ export async function uploadStudentImportAction(formData: FormData) {
 export const uploadStudentPdfAction = uploadStudentImportAction;
 
 export async function updateImportStudentRowAction(formData: FormData) {
+  await requireSession();
   const id = formText(formData, "id");
   const arquivoId = formText(formData, "arquivo_id");
   if (!id || !arquivoId) return;
@@ -186,7 +189,7 @@ export async function updateImportStudentRowAction(formData: FormData) {
     idade_na_matricula: formNumber(formData, "idade_na_matricula")
   };
 
-  const supabase = createAdminClient();
+  const supabase = await createServerClient();
   const [validated] = await validateImportRows(supabase, [{ line: 1, data }]);
 
   await supabase
@@ -205,10 +208,11 @@ export async function updateImportStudentRowAction(formData: FormData) {
 }
 
 export async function processImportStudentBatchAction(formData: FormData) {
+  await requireSession();
   const arquivoId = formText(formData, "arquivo_id");
   if (!arquivoId) return;
 
-  const supabase = createAdminClient();
+  const supabase = await createServerClient();
   const { data: rows, error } = await supabase
     .from("importacao_alunos_linhas")
     .select("*")
@@ -360,11 +364,13 @@ export async function processImportStudentBatchAction(formData: FormData) {
 }
 
 export async function markImportProcessedAction(formData: FormData) {
+  await requireSession();
   const id = formText(formData, "id");
   const status = formText(formData, "status");
   if (!id || !status) return;
 
-  await createAdminClient()
+  const supabase = await createServerClient();
+  await supabase
     .from("arquivos_importados")
     .update({ status })
     .eq("id", id)
