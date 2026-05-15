@@ -1,4 +1,5 @@
 /* eslint-disable @next/next/no-img-element */
+import { CheckSquare, Square } from "lucide-react";
 import type { StudentSheet } from "@/lib/types";
 import { dateFormat } from "@/lib/constants";
 
@@ -10,14 +11,47 @@ function date(value: string | null) {
   return value ? dateFormat.format(new Date(`${value}T00:00:00Z`)) : "";
 }
 
-export function StudentSheetView({ student, fotoSrc }: { student: StudentSheet; fotoSrc?: string | null }) {
+function generatedAt(value: Date) {
+  return new Intl.DateTimeFormat("pt-BR", {
+    timeZone: "America/Sao_Paulo",
+    day: "2-digit",
+    month: "2-digit",
+    year: "numeric",
+    hour: "2-digit",
+    minute: "2-digit"
+  }).format(value);
+}
+
+function CheckBoxItem({ label, checked }: { label: string; checked: boolean }) {
+  return (
+    <span className="inline-flex items-center gap-1">
+      {checked ? <CheckSquare size={14} className="text-ink" /> : <Square size={14} className="text-ink/60" />}
+      <span>{label}</span>
+    </span>
+  );
+}
+
+export function StudentSheetView({
+  student,
+  fotoSrc,
+  geradoEm
+}: {
+  student: StudentSheet;
+  fotoSrc?: string | null;
+  geradoEm?: Date;
+}) {
   const endereco = student.enderecos_aluno[0];
   const medica = student.informacoes_medicas;
   const autorizacoes = student.autorizacoes_aluno;
+  const matriculasOrdenadas = [...student.matriculas].sort((a, b) => (b.data_matricula ?? "").localeCompare(a.data_matricula ?? ""));
 
   return (
     <div className="mx-auto max-w-[900px] bg-white p-4 shadow-soft">
-      <h1 className="mb-1 text-center font-sans text-xl font-black text-black">Ficha do Aluno</h1>
+      <header className="mb-3 border-b border-ink/30 pb-2 text-center">
+        <p className="text-xs font-bold uppercase tracking-wide text-ink">RRB Escola</p>
+        <p className="text-[0.65rem] text-muted">Goiânia / GO · Gerado em {generatedAt(geradoEm ?? new Date())}</p>
+        <h1 className="mt-2 text-lg font-black text-ink">Ficha do Aluno</h1>
+      </header>
 
       <table className="sheet-table">
         <tbody>
@@ -59,7 +93,7 @@ export function StudentSheetView({ student, fotoSrc }: { student: StudentSheet; 
           </tr>
           <tr>
             <td colSpan={2}><span className="sheet-label">Certidão Nasc.</span>Livro: {text(student.certidao_livro)} Folha: {text(student.certidao_folha)} Nº: {text(student.certidao_numero)} Cartório: {text(student.certidao_cartorio)}</td>
-            <td colSpan={2}><span className="sheet-label">Disciplina Eletiva</span></td>
+            <td colSpan={2}><span className="sheet-label">Disciplina Eletiva</span>{text(student.disciplina_eletiva)}</td>
             <td><span className="sheet-label">Cód. INEP</span>{text(student.codigo_inep)}</td>
           </tr>
           <tr>
@@ -72,13 +106,15 @@ export function StudentSheetView({ student, fotoSrc }: { student: StudentSheet; 
         </tbody>
       </table>
 
-      <div className="h-4" />
+      <div className="h-3" />
 
       <table className="sheet-table">
         <tbody>
           <tr><th colSpan={3}>Telefones de Contato</th></tr>
-          {student.contatos_aluno.map((item) => (
-            <tr key={item.nome}>
+          {student.contatos_aluno.length === 0 ? (
+            <tr><td colSpan={3} className="text-muted">—</td></tr>
+          ) : student.contatos_aluno.map((item) => (
+            <tr key={item.id}>
               <td>{item.nome}</td>
               <td>{text(item.celular || item.telefone)}</td>
               <td>{text(item.parentesco)}</td>
@@ -87,7 +123,7 @@ export function StudentSheetView({ student, fotoSrc }: { student: StudentSheet; 
         </tbody>
       </table>
 
-      <div className="h-4" />
+      <div className="h-3" />
 
       <table className="sheet-table">
         <thead>
@@ -95,8 +131,10 @@ export function StudentSheetView({ student, fotoSrc }: { student: StudentSheet; 
           <tr><th>Nome</th><th>CPF</th><th>Telefone</th><th>Celular</th><th>Parentesco</th><th>E-Mail</th></tr>
         </thead>
         <tbody>
-          {student.responsaveis_aluno.map((item) => (
-            <tr key={item.nome}>
+          {student.responsaveis_aluno.length === 0 ? (
+            <tr><td colSpan={6} className="text-muted">—</td></tr>
+          ) : student.responsaveis_aluno.map((item) => (
+            <tr key={item.id}>
               <td>{item.nome}</td>
               <td>{text(item.cpf)}</td>
               <td>{text(item.telefone)}</td>
@@ -108,49 +146,26 @@ export function StudentSheetView({ student, fotoSrc }: { student: StudentSheet; 
         </tbody>
       </table>
 
-      <div className="h-4" />
+      <div className="h-3" />
 
       <table className="sheet-table">
         <thead>
-          <tr><th colSpan={4}>Relação de Matrículas</th></tr>
-          <tr><th>Série</th><th>Turma</th><th>Data Matrícula</th><th>Idade na Matrícula</th></tr>
+          <tr><th colSpan={6}>Relação de Matrículas</th></tr>
+          <tr><th>Ano</th><th>Série</th><th>Turma</th><th>Data Matrícula</th><th>Idade na Matrícula</th><th>Status</th></tr>
         </thead>
         <tbody>
-          {student.matriculas.map((item) => (
-            <tr key={`${item.series?.nome}-${item.data_matricula}`}>
+          {matriculasOrdenadas.length === 0 ? (
+            <tr><td colSpan={6} className="text-muted">—</td></tr>
+          ) : matriculasOrdenadas.map((item) => (
+            <tr key={item.id}>
+              <td className="text-center">{text(item.ano_letivo)}</td>
               <td>{text(item.series?.nome)}</td>
               <td className="text-center">{text(item.turmas?.nome)}</td>
               <td className="text-center">{date(item.data_matricula)}</td>
               <td className="text-center">{text(item.idade_na_matricula)}</td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
-
-      <table className="sheet-table">
-        <thead>
-          <tr><th colSpan={6}>Historico Completo de Matriculas</th></tr>
-          <tr><th>Codigo</th><th>Ano</th><th>Serie</th><th>Turma</th><th>Plano</th><th>Status</th></tr>
-        </thead>
-        <tbody>
-          {student.matriculas.map((item) => (
-            <tr key={`hist-${item.id}`}>
-              <td>{text(item.codigo)}</td>
-              <td className="text-center">{text(item.ano_letivo)}</td>
-              <td>{text(item.series?.nome)}</td>
-              <td className="text-center">{text(item.turmas?.nome)}</td>
-              <td>{text(item.planos?.nome)}</td>
               <td className="text-center">{text(item.status)}</td>
             </tr>
           ))}
-        </tbody>
-      </table>
-
-      <div className="h-4" />
-
-      <table className="sheet-table">
-        <tbody>
-          <tr><th>Atributos Adicionais</th></tr>
         </tbody>
       </table>
 
@@ -162,8 +177,10 @@ export function StudentSheetView({ student, fotoSrc }: { student: StudentSheet; 
           <tr><th>Nome</th><th>Telefone</th><th>Obs</th></tr>
         </thead>
         <tbody>
-          {student.pessoas_autorizadas.map((item) => (
-            <tr key={item.nome}>
+          {student.pessoas_autorizadas.length === 0 ? (
+            <tr><td colSpan={3} className="text-muted">—</td></tr>
+          ) : student.pessoas_autorizadas.map((item) => (
+            <tr key={item.id}>
               <td>{item.nome}</td>
               <td>{text(item.telefone)}</td>
               <td>{text(item.observacao)}</td>
@@ -172,37 +189,43 @@ export function StudentSheetView({ student, fotoSrc }: { student: StudentSheet; 
         </tbody>
       </table>
 
+      <div className="h-3" />
+
       <table className="sheet-table">
         <tbody>
           <tr><th colSpan={4}>Informações Médicas</th></tr>
           <tr>
             <td colSpan={4}>
-              Alergia: {medica?.alergia ? "( X )" : "(  )"}<br />
-              Portador Nec. Especiais: {medica?.necessidade_especial ? "( X )" : "(  )"}<br />
-              Nec. Apoio/Recurso: {medica?.necessita_apoio ? "( X )" : "(  )"}<br />
-              Possui Doença Grave: {medica?.doenca_grave ? "( X )" : "(  )"}<br />
-              Algum Remédio Especial: {medica?.remedio_especial ? "( X )" : "(  )"}<br />
-              Tipo Sanguíneo: {text(medica?.tipo_sanguineo)}
+              <div className="grid grid-cols-2 gap-1 md:grid-cols-4">
+                <CheckBoxItem label="Alergia" checked={medica?.alergia ?? false} />
+                <CheckBoxItem label="Portador Nec. Especiais" checked={medica?.necessidade_especial ?? false} />
+                <CheckBoxItem label="Nec. Apoio/Recurso" checked={medica?.necessita_apoio ?? false} />
+                <CheckBoxItem label="Possui Doença Grave" checked={medica?.doenca_grave ?? false} />
+              </div>
+              <div className="mt-1 grid grid-cols-2 gap-1">
+                <CheckBoxItem label="Algum Remédio Especial" checked={medica?.remedio_especial ?? false} />
+                <span>Tipo Sanguíneo: {text(medica?.tipo_sanguineo)}</span>
+              </div>
             </td>
           </tr>
           <tr>
             <td><span className="sheet-label">Médico</span>{text(medica?.medico)}</td>
             <td><span className="sheet-label">Telefone</span>{text(medica?.telefone_medico)}</td>
             <td><span className="sheet-label">Plano de Saúde</span>{text(medica?.plano_saude)}</td>
-            <td><span className="sheet-label">Telefone</span>{text(medica?.telefone_plano)}</td>
+            <td><span className="sheet-label">Telefone Plano</span>{text(medica?.telefone_plano)}</td>
           </tr>
         </tbody>
       </table>
 
-      <div className="h-4" />
+      <div className="h-3" />
 
       <table className="sheet-table">
         <tbody>
           <tr><th>Autorizações do Aluno</th></tr>
           <tr><td><strong>O aluno está autorizado a:</strong></td></tr>
-          <tr><td>{autorizacoes?.nao_entregar_boletim ? "( X )" : "(  )"} Na entrega do boletim, a assinar o canhoto</td></tr>
-          <tr><td>{autorizacoes?.assinar_comunicados ? "( X )" : "(  )"} Assinar todos os comunicados enviados aos pais</td></tr>
-          <tr><td>{autorizacoes?.requerer_prova_substitutiva ? "( X )" : "(  )"} Quando necessário, requerer prova substitutiva na secretaria</td></tr>
+          <tr><td><CheckBoxItem label="Na entrega do boletim, a assinar o canhoto" checked={autorizacoes?.nao_entregar_boletim ?? false} /></td></tr>
+          <tr><td><CheckBoxItem label="Assinar todos os comunicados enviados aos pais" checked={autorizacoes?.assinar_comunicados ?? false} /></td></tr>
+          <tr><td><CheckBoxItem label="Quando necessário, requerer prova substitutiva na secretaria" checked={autorizacoes?.requerer_prova_substitutiva ?? false} /></td></tr>
         </tbody>
       </table>
     </div>
