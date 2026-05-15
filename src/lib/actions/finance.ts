@@ -76,6 +76,28 @@ export async function payChargeAction(formData: FormData) {
   revalidatePath("/financeiro");
 }
 
+export async function cancelPaymentAction(formData: FormData) {
+  const session = await requireSession();
+  const pagamentoId = formText(formData, "pagamento_id");
+  const motivo = formText(formData, "motivo") ?? "Sem motivo informado";
+  if (!pagamentoId) redirect("/financeiro?erro=id");
+
+  const supabase = await createServerClient();
+  const { error } = await supabase
+    .from("pagamentos")
+    .update({
+      cancelado_em: new Date().toISOString(),
+      cancelado_por: session.profile.id,
+      motivo_cancelamento: motivo
+    })
+    .eq("id", pagamentoId)
+    .is("cancelado_em", null);
+
+  if (error) redirect("/financeiro?erro=estornar");
+  // Trigger recalcula status da cobranca.
+  revalidatePath("/financeiro");
+}
+
 export async function cancelChargeAction(formData: FormData) {
   await requireSession();
   const cobrancaId = formText(formData, "cobranca_id");
