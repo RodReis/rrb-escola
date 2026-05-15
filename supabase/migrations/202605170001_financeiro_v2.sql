@@ -53,3 +53,11 @@ drop trigger if exists pagamentos_recalc_status on pagamentos;
 create trigger pagamentos_recalc_status
   after insert or update or delete on pagamentos
   for each row execute function trg_pagamento_status();
+
+update cobrancas c
+set status = (case
+  when c.status = 'cancelada' then 'cancelada'
+  when coalesce((select sum(valor_pago) from pagamentos p where p.cobranca_id = c.id and p.cancelado_em is null), 0) <= 0 then 'aberta'
+  when coalesce((select sum(valor_pago) from pagamentos p where p.cobranca_id = c.id and p.cancelado_em is null), 0) < c.valor_final then 'parcial'
+  else 'paga'
+end)::status_cobranca;
