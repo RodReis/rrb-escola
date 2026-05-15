@@ -16,8 +16,8 @@ alter table consentimentos_biometria
 
 create or replace function match_biometria(
   p_embedding vector(128),
-  p_threshold numeric default 0.6,
-  p_escola_id uuid default null
+  p_escola_id uuid,
+  p_threshold numeric default 0.6
 )
 returns table (
   biometria_id uuid,
@@ -41,13 +41,13 @@ returns table (
     and b.embedding is not null
     and a.ativo = true
     and c.autorizado = true
-    and (p_escola_id is null or a.escola_id = p_escola_id)
+    and a.escola_id = p_escola_id
     and (b.embedding <-> p_embedding) < p_threshold
   order by b.embedding <-> p_embedding asc
   limit 1;
 $$ language sql stable security definer set search_path = public, extensions;
 
-grant execute on function match_biometria(vector, numeric, uuid) to authenticated, service_role;
+grant execute on function match_biometria(vector, uuid, numeric) to authenticated, service_role;
 
 -- Re-enrollment fix: previous active is set to ativo=false but stays in the table.
 -- The (aluno_id, modelo) unique constraint from 202605140003 prevents re-insert.
