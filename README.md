@@ -36,3 +36,31 @@ Todos os cadastros, relatorios, pagamentos e frequencias sao lidos e gravados no
 - Cobrancas, pagamentos e exportacao PDF financeira
 - Frequencia
 - Importacoes de PDF de alunos para o Supabase Storage
+
+## Autenticacao
+
+App usa Supabase Auth com cookies HTTP-only via `@supabase/ssr`. Toda rota `(app)/*` exige usuario com perfil ativo.
+
+### Variaveis de ambiente
+
+| Variavel | Origem | Uso |
+|----------|--------|-----|
+| `NEXT_PUBLIC_SUPABASE_URL` | publico | client + server |
+| `NEXT_PUBLIC_SUPABASE_ANON_KEY` | publico | client + server |
+| `SUPABASE_SERVICE_ROLE_KEY` | secreto | server only (criacao de user, batch jobs, API portaria) |
+| `APP_DEFAULT_ADMIN_EMAIL` | secreto | seed admin |
+| `APP_DEFAULT_ADMIN_PASSWORD` | secreto | seed admin |
+| `GATE_API_TOKEN` | secreto | autenticacao da API `/api/portaria/*` |
+
+### Fluxo
+
+1. `npm run seed:auth` cria admin default e linha em `perfis`.
+2. Login em `/login` cria cookies de sessao.
+3. `src/middleware.ts` refresca cookies em toda request e redireciona para `/login` se sem sessao.
+4. `(app)/layout.tsx` valida perfil ativo.
+5. Server actions e data fetchers usam `createServerClient()` (SSR + RLS).
+6. Service role permitido apenas em criacao de user, seed admin, processamento batch e API portaria.
+
+### Criar novo usuario
+
+Logado como admin: acessar `/usuarios/novo`. Senha gerada e exibida uma vez.
