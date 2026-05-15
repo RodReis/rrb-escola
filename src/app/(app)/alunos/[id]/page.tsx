@@ -30,7 +30,7 @@ export default async function StudentPage({ params, searchParams }: { params: { 
           <ExportStudentButton student={student} />
         </div>
       </header>
-      <StudentSheetView student={student} fotoSrc={fotoSrc} />
+      <StudentSheetView student={student} fotoSrc={fotoSrc} geradoEm={new Date()} />
       <StudentStatementSection alunoId={params.id} searchParams={searchParams} />
     </div>
   );
