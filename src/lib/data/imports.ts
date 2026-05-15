@@ -1,5 +1,5 @@
 import { DEFAULT_SCHOOL_ID } from "@/lib/constants";
-import { createAdminClient } from "@/lib/supabase/admin";
+import { createServerClient } from "@/lib/supabase/server";
 import type { StudentImportData } from "@/lib/server/student-import-parser";
 
 export type ImportedFile = {
@@ -41,7 +41,7 @@ function summarize(rows: Array<{ status: string }>) {
   };
 }
 
-async function withSignedUrl<T extends { storage_path: string }>(supabase: ReturnType<typeof createAdminClient>, item: T) {
+async function withSignedUrl<T extends { storage_path: string }>(supabase: Awaited<ReturnType<typeof createServerClient>>, item: T) {
   const { data: signed } = await supabase.storage.from("importacoes").createSignedUrl(item.storage_path, 60 * 30);
   return {
     ...item,
@@ -50,7 +50,7 @@ async function withSignedUrl<T extends { storage_path: string }>(supabase: Retur
 }
 
 export async function getImportedFiles(): Promise<ImportedFile[]> {
-  const supabase = createAdminClient();
+  const supabase = await createServerClient();
   const { data, error } = await supabase
     .from("arquivos_importados")
     .select("*, importacao_alunos_linhas(status)")
@@ -72,7 +72,7 @@ export async function getImportedFiles(): Promise<ImportedFile[]> {
 }
 
 export async function getImportDetail(id: string): Promise<{ file: ImportedFile; rows: ImportStudentLine[] }> {
-  const supabase = createAdminClient();
+  const supabase = await createServerClient();
   const [fileResult, rowsResult] = await Promise.all([
     supabase
       .from("arquivos_importados")
