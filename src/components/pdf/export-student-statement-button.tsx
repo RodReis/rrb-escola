@@ -3,6 +3,7 @@
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
 import { FileText } from "lucide-react";
+import { displayStatus } from "@/lib/finance/charge-status";
 
 type Pagamento = {
   id: string;
@@ -41,6 +42,7 @@ function dateText(value: string) {
 
 export function ExportStudentStatementButton({ aluno, de, ate, charges }: Props) {
   function exportPdf() {
+    const today = new Date().toISOString().slice(0, 10);
     const doc = new jsPDF({ orientation: "portrait", unit: "mm", format: "a4" });
     doc.setFont("helvetica", "bold");
     doc.setFontSize(13);
@@ -59,7 +61,7 @@ export function ExportStudentStatementButton({ aluno, de, ate, charges }: Props)
         fmt(c.valor_final),
         fmt(pago),
         fmt(saldo),
-        c.status
+        displayStatus(c.status, c.data_vencimento, today)
       ];
     });
 

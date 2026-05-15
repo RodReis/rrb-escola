@@ -1,6 +1,7 @@
 import { ExportStudentStatementButton } from "@/components/pdf/export-student-statement-button";
 import { Panel } from "@/components/ui/card";
 import { getStudentStatement } from "@/lib/data/finance";
+import { displayStatus } from "@/lib/finance/charge-status";
 
 export async function StudentStatementSection({ alunoId, searchParams }: {
   alunoId: string;
@@ -35,7 +36,7 @@ export async function StudentStatementSection({ alunoId, searchParams }: {
             <strong className="text-ink">{c.descricao}</strong>
             <span>Vence {new Date(`${c.data_vencimento}T00:00:00`).toLocaleDateString("pt-BR")}</span>
             <span className="font-bold">{Number(c.valor_final).toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}</span>
-            <span className="text-muted">{c.status}</span>
+            <span className="text-muted">{displayStatus(c.status, c.data_vencimento)}</span>
           </div>
         ))}
       </div>
