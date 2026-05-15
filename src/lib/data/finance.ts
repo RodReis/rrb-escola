@@ -1,8 +1,9 @@
-import { createAdminClient } from "@/lib/supabase/admin";
+import { createServerClient } from "@/lib/supabase/server";
 import { DEFAULT_SCHOOL_ID } from "@/lib/constants";
 
 export async function getFinanceData() {
-  const { data, error } = await createAdminClient()
+  const supabase = await createServerClient();
+  const { data, error } = await supabase
     .from("cobrancas")
     .select("*, alunos(nome), pagamentos(valor_pago, data_pagamento, forma_pagamento)")
     .eq("escola_id", DEFAULT_SCHOOL_ID)
@@ -14,7 +15,8 @@ export async function getFinanceData() {
 
 export async function getDelinquencyReport() {
   const today = new Date().toISOString().slice(0, 10);
-  const { data, error } = await createAdminClient()
+  const supabase = await createServerClient();
+  const { data, error } = await supabase
     .from("cobrancas")
     .select("id, descricao, competencia, data_vencimento, status, valor_final, alunos(id, matricula_codigo, nome)")
     .eq("escola_id", DEFAULT_SCHOOL_ID)
