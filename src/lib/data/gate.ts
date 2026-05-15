@@ -1,8 +1,8 @@
 import { DEFAULT_SCHOOL_ID } from "@/lib/constants";
-import { createAdminClient } from "@/lib/supabase/admin";
+import { createServerClient } from "@/lib/supabase/server";
 
 export async function getGateData() {
-  const supabase = createAdminClient();
+  const supabase = await createServerClient();
   const [students, devices, events, notifications] = await Promise.all([
     supabase
       .from("alunos")
@@ -44,7 +44,8 @@ export async function getGateData() {
 }
 
 export async function getGateDevices() {
-  const { data, error } = await createAdminClient()
+  const supabase = await createServerClient();
+  const { data, error } = await supabase
     .from("dispositivos_acesso")
     .select("*")
     .eq("escola_id", DEFAULT_SCHOOL_ID)
@@ -56,7 +57,8 @@ export async function getGateDevices() {
 
 export async function getGateNotifications(status?: string) {
   const allowedStatuses = new Set(["simulada", "pendente", "enviada", "erro"]);
-  let query = createAdminClient()
+  const supabase = await createServerClient();
+  let query = supabase
     .from("notificacoes_responsavel")
     .select("*, alunos(nome, matricula_codigo), responsaveis_aluno(nome, parentesco)")
     .eq("escola_id", DEFAULT_SCHOOL_ID)
@@ -74,7 +76,7 @@ export async function getGateNotifications(status?: string) {
 
 export async function getGateDailyStatus(date?: string) {
   const selectedDate = date || new Date().toISOString().slice(0, 10);
-  const supabase = createAdminClient();
+  const supabase = await createServerClient();
   const [students, events] = await Promise.all([
     supabase
       .from("alunos")
@@ -137,7 +139,7 @@ export async function getGateDailyStatus(date?: string) {
 }
 
 export async function getStudentGateSettings(alunoId: string) {
-  const supabase = createAdminClient();
+  const supabase = await createServerClient();
   const [consent, preferences, notifications, events, guardians, biometrics] = await Promise.all([
     supabase.from("consentimentos_biometria").select("*").eq("aluno_id", alunoId).maybeSingle(),
     supabase
