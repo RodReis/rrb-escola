@@ -32,6 +32,8 @@ export type PayrollInput = {
   advance: number;
   uniform_value: number;
   dependentes: number;
+  salario_sem_dsr?: number;
+  aplica_dobra?: boolean;
 };
 
 export type ComputedPayroll = {
@@ -44,6 +46,21 @@ export type ComputedPayroll = {
 
 function round2(n: number): number {
   return Math.round(n * 100) / 100;
+}
+
+export function calcDSR(salarioSemDsr: number): number {
+  if (salarioSemDsr <= 0) return 0;
+  return round2(salarioSemDsr / 5);
+}
+
+export function calcBaseFromSemDsr(salarioSemDsr: number): number {
+  if (salarioSemDsr <= 0) return 0;
+  return round2(salarioSemDsr + calcDSR(salarioSemDsr));
+}
+
+export function calcProventosBase(salarioSemDsr: number, aplicaDobra: boolean): number {
+  const base = calcBaseFromSemDsr(salarioSemDsr);
+  return aplicaDobra ? round2(base * 2) : base;
 }
 
 export function calcINSS(base: number, brackets: InssBracket[]): number {
@@ -112,6 +129,9 @@ export function calcAll(
   brackets: { inss: InssBracket[]; ir: IrBracket[] },
   opts: { manualInss?: number; manualIr?: number } = {}
 ): ComputedPayroll {
+  if (input.salario_sem_dsr != null && input.salario_sem_dsr > 0) {
+    input = { ...input, base_salary: calcProventosBase(input.salario_sem_dsr, input.aplica_dobra ?? false) };
+  }
   const total_earnings = calcTotalEarnings(input);
   const baseInss = total_earnings - input.family_allowance;
   const autoInss = calcINSS(baseInss, brackets.inss);
