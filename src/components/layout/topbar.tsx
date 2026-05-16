@@ -46,12 +46,12 @@ export function Topbar({ perfil }: { perfil: SessionProfile }) {
           {primaryItems.map((item) => (
             <TopbarNavLink key={item.href} href={item.href} label={item.label} icon={item.icon} variant="primary" />
           ))}
-          <SecretariaDropdown />
           <span className="mx-2 h-7 w-px shrink-0 bg-line" />
           {secondaryItems.map((item) => (
             <TopbarNavLink key={item.href} href={item.href} label={item.label} icon={item.icon} variant="secondary" />
           ))}
         </nav>
+        <SecretariaDropdown />
 
         <ThemeToggle className="shrink-0" />
         <div className="hidden text-right text-xs leading-tight md:block">
