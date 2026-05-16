@@ -77,6 +77,7 @@ export type Employee = {
   ativo: boolean;
   salario_sem_dsr: number | null;
   aplica_dobra: boolean | null;
+  gps_default: number | null;
   companies?: { id: string; name: string; cnpj: string } | null;
 };
 
@@ -92,7 +93,7 @@ export async function listEmployees(filters: EmployeeFilters = {}): Promise<Empl
   const supabase = await createServerClient();
   let query = supabase
     .from("employees")
-    .select("id, company_id, cpf, name, birth_date, hire_date, school_category, email, telefone, cargo, status_contrato, ativo, salario_sem_dsr, aplica_dobra, companies(id, name, cnpj)")
+    .select("id, company_id, cpf, name, birth_date, hire_date, school_category, email, telefone, cargo, status_contrato, ativo, salario_sem_dsr, aplica_dobra, gps_default, companies(id, name, cnpj)")
     .order("name");
 
   if (!filters.includeInactive) query = query.eq("ativo", true);
@@ -116,7 +117,7 @@ export async function getEmployeeById(id: string): Promise<Employee | null> {
   const supabase = await createServerClient();
   const { data, error } = await supabase
     .from("employees")
-    .select("id, company_id, cpf, name, birth_date, hire_date, school_category, email, telefone, cargo, status_contrato, ativo, salario_sem_dsr, aplica_dobra, companies(id, name, cnpj)")
+    .select("id, company_id, cpf, name, birth_date, hire_date, school_category, email, telefone, cargo, status_contrato, ativo, salario_sem_dsr, aplica_dobra, gps_default, companies(id, name, cnpj)")
     .eq("id", id)
     .maybeSingle();
   if (error) throw error;

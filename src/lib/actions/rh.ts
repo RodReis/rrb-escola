@@ -98,7 +98,8 @@ function readEmployeeForm(formData: FormData) {
     birth_date: String(formData.get("birth_date") ?? "").trim(),
     hire_date: String(formData.get("hire_date") ?? "").trim(),
     salario_sem_dsr: formData.get("salario_sem_dsr"),
-    aplica_dobra: formData.get("aplica_dobra")
+    aplica_dobra: formData.get("aplica_dobra"),
+    gps_default: formData.get("gps_default")
   };
 }
 
@@ -123,7 +124,8 @@ export async function createEmployeeAction(formData: FormData) {
     birth_date: parsed.data.birth_date || null,
     hire_date: parsed.data.hire_date || null,
     salario_sem_dsr: parsed.data.salario_sem_dsr ?? 0,
-    aplica_dobra: parsed.data.aplica_dobra ?? false
+    aplica_dobra: parsed.data.aplica_dobra ?? false,
+    gps_default: parsed.data.gps_default ?? 0
   });
 
   if (error) {
@@ -165,7 +167,8 @@ export async function updateEmployeeAction(formData: FormData) {
       hire_date: parsed.data.hire_date || null,
       ativo: parsed.data.ativo,
       salario_sem_dsr: parsed.data.salario_sem_dsr ?? 0,
-      aplica_dobra: parsed.data.aplica_dobra ?? false
+      aplica_dobra: parsed.data.aplica_dobra ?? false,
+      gps_default: parsed.data.gps_default ?? 0
     })
     .eq("id", parsed.data.id);
 

@@ -20,6 +20,9 @@ export function EmployeeForm({ action, employee, companies, defaultCompanyId, su
   const [salarioSemDsr, setSalarioSemDsr] = useState<string>(
     employee?.salario_sem_dsr != null ? String(employee.salario_sem_dsr) : ""
   );
+  const [gpsDefault, setGpsDefault] = useState<string>(
+    employee?.gps_default != null ? String(employee.gps_default) : ""
+  );
 
   return (
     <form action={action} className="grid gap-4 md:grid-cols-2">
@@ -114,6 +117,19 @@ export function EmployeeForm({ action, employee, companies, defaultCompanyId, su
           className="h-4 w-4"
         />
         Aplica dobra mensal
+      </label>
+
+      <label>
+        GPS padrão
+        <input
+          name="gps_default"
+          type="number"
+          step="0.01"
+          min="0"
+          value={gpsDefault}
+          onChange={(e) => setGpsDefault(e.target.value)}
+          placeholder="0,00"
+        />
       </label>
 
       <label>
