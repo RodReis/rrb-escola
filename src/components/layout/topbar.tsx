@@ -1,31 +1,24 @@
 import Link from "next/link";
 import { TopbarNavLink, type TopbarIconName } from "@/components/layout/topbar-nav-link";
+import { SecretariaDropdown } from "@/components/layout/secretaria-dropdown";
 import { ThemeToggle } from "@/components/ui/theme-toggle";
-import {
-  LogOut,
-  School,
-} from "lucide-react";
+import { LogOut, School } from "lucide-react";
 import { logoutAction } from "@/lib/actions/auth";
 import type { SessionProfile } from "@/lib/auth/session";
 
 const primaryItems: Array<{ href: string; label: string; icon: TopbarIconName }> = [
   { href: "/", label: "Dashboard", icon: "LayoutDashboard" },
-  { href: "/alunos", label: "Alunos", icon: "UsersRound" },
-  { href: "/matriculas", label: "Matriculas", icon: "FileText" },
   { href: "/financeiro", label: "Financeiro", icon: "BarChart3" },
   { href: "/portaria", label: "Portaria", icon: "DoorOpen" }
 ];
 
 const secondaryItems: Array<{ href: string; label: string; icon: TopbarIconName }> = [
-  { href: "/usuarios", label: "Usuarios", icon: "UsersRound" },
-  { href: "/series", label: "Series", icon: "Layers3" },
-  { href: "/turmas", label: "Turmas", icon: "GraduationCap" },
+  { href: "/usuarios", label: "Usuários", icon: "UsersRound" },
   { href: "/planos", label: "Planos", icon: "CreditCard" },
-  { href: "/frequencias", label: "Frequencia", icon: "CalendarCheck" },
+  { href: "/frequencias", label: "Frequência", icon: "CalendarCheck" },
   { href: "/relatorios/alunos", label: "Rel. Alunos", icon: "UsersRound" },
-  { href: "/relatorios/inadimplencia", label: "Inadimplencia", icon: "ReceiptText" },
-  { href: "/relatorios/frequencia", label: "Rel. Frequencia", icon: "CalendarCheck" },
-  { href: "/importacoes", label: "Importacoes", icon: "Inbox" }
+  { href: "/relatorios/inadimplencia", label: "Inadimplência", icon: "ReceiptText" },
+  { href: "/relatorios/frequencia", label: "Rel. Frequência", icon: "CalendarCheck" }
 ];
 
 function BrandMark() {
@@ -51,25 +44,15 @@ export function Topbar({ perfil }: { perfil: SessionProfile }) {
 
         <nav className="no-scrollbar flex min-w-0 flex-1 items-center gap-1 overflow-x-auto py-3">
           {primaryItems.map((item) => (
-            <TopbarNavLink
-              key={item.href}
-              href={item.href}
-              label={item.label}
-              icon={item.icon}
-              variant="primary"
-            />
+            <TopbarNavLink key={item.href} href={item.href} label={item.label} icon={item.icon} variant="primary" />
           ))}
+          <SecretariaDropdown />
           <span className="mx-2 h-7 w-px shrink-0 bg-line" />
           {secondaryItems.map((item) => (
-            <TopbarNavLink
-              key={item.href}
-              href={item.href}
-              label={item.label}
-              icon={item.icon}
-              variant="secondary"
-            />
+            <TopbarNavLink key={item.href} href={item.href} label={item.label} icon={item.icon} variant="secondary" />
           ))}
         </nav>
+
         <ThemeToggle className="shrink-0" />
         <div className="hidden text-right text-xs leading-tight md:block">
           <strong className="block font-bold text-ink">{perfil.nome}</strong>

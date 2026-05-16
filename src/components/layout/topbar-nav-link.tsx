@@ -4,6 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
   BarChart3,
+  BookOpen,
   CalendarCheck,
   CreditCard,
   DoorOpen,
@@ -12,6 +13,7 @@ import {
   Inbox,
   Layers3,
   LayoutDashboard,
+  Network,
   ReceiptText,
   UsersRound
 } from "lucide-react";
@@ -19,6 +21,7 @@ import { cn } from "@/lib/utils";
 
 const icons = {
   BarChart3,
+  BookOpen,
   CalendarCheck,
   CreditCard,
   DoorOpen,
@@ -27,6 +30,7 @@ const icons = {
   Inbox,
   Layers3,
   LayoutDashboard,
+  Network,
   ReceiptText,
   UsersRound
 };
