@@ -5,7 +5,7 @@ import { revalidatePath } from "next/cache";
 import { requirePerfil } from "@/lib/auth/session";
 import { createServerClient } from "@/lib/supabase/server";
 import { PayrollSchema } from "@/lib/validation/payroll";
-import { calcAll, type PayrollInput as CalcInput } from "@/lib/payroll/calculators";
+import { calcAll, calcProventosBase, type PayrollInput as CalcInput } from "@/lib/payroll/calculators";
 import { getBracketsForMonth } from "@/lib/data/brackets";
 import { dbToUrlMonth, urlToDbMonth, shiftUrlMonth } from "@/lib/payroll/date-utils";
 
@@ -40,7 +40,9 @@ function readPayrollForm(formData: FormData) {
     ir_manual: get("ir_manual"),
     inss: get("inss"),
     ir: get("ir"),
-    observations: get("observations")
+    observations: get("observations"),
+    salario_sem_dsr: get("salario_sem_dsr"),
+    aplica_dobra: get("aplica_dobra")
   };
 }
 
@@ -70,8 +72,14 @@ export async function upsertPayrollAction(formData: FormData) {
 
   // Recalc server-side
   const brackets = await getBracketsForMonth(data.reference_month);
+  const semDsr = data.salario_sem_dsr ?? 0;
+  const dobra = data.aplica_dobra ?? false;
+  const baseDerivada = semDsr > 0 ? calcProventosBase(semDsr, dobra) : data.base_salary;
+
   const calcInput: CalcInput = {
-    base_salary: data.base_salary,
+    base_salary: baseDerivada,
+    salario_sem_dsr: semDsr,
+    aplica_dobra: dobra,
     horas_extras: data.horas_extras,
     gratificacao: data.gratificacao,
     comissao: data.comissao,
@@ -100,7 +108,9 @@ export async function upsertPayrollAction(formData: FormData) {
       {
         employee_id: data.employee_id,
         reference_month: data.reference_month,
-        base_salary: data.base_salary,
+        base_salary: baseDerivada,
+        salario_sem_dsr: semDsr,
+        aplica_dobra: dobra,
         horas_extras: data.horas_extras,
         gratificacao: data.gratificacao,
         comissao: data.comissao,
