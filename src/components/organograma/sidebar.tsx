@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useMemo } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useRouter } from "next/navigation";
 import { ChevronDown, ChevronRight, Search } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -18,15 +18,15 @@ const segmentoBulletColor: Record<string, string> = {
 export function OrganogramaSidebar({
   tree,
   totalAlunos,
-  escolaNome
+  escolaNome,
+  turmaAtiva
 }: {
   tree: Segmento[];
   totalAlunos: number;
   escolaNome: string;
+  turmaAtiva: string | null;
 }) {
   const router = useRouter();
-  const searchParams = useSearchParams();
-  const turmaAtiva = searchParams.get("turma");
 
   const [expanded, setExpanded] = useState<Record<string, boolean>>({});
   const [busca, setBusca] = useState("");

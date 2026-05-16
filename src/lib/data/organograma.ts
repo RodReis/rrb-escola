@@ -58,6 +58,7 @@ export async function getOrganogramaTree() {
 
   const turmasBySerie = new Map<string, Array<{ id: string; nome: string; alunos: number }>>();
   for (const t of turmas ?? []) {
+    if (!t.serie_id) continue;  // null guard
     const arr = turmasBySerie.get(t.serie_id) ?? [];
     arr.push({ id: t.id, nome: t.nome, alunos: countByTurma.get(t.id) ?? 0 });
     turmasBySerie.set(t.serie_id, arr);
@@ -86,8 +87,8 @@ export async function getOrganogramaTree() {
 
 export async function getOrganogramaDrill(turmaId: string) {
   const supabase = await createServerClient();
-  const now = new Date();
-  const competencia = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`;
+  const now = new Date(Date.now() - 3 * 60 * 60 * 1000);
+  const competencia = `${now.getUTCFullYear()}-${String(now.getUTCMonth() + 1).padStart(2, "0")}`;
 
   const { data: matriculas, error: matErr } = await supabase
     .from("matriculas")

@@ -13,7 +13,7 @@ export function OrganogramaDrillPanel({ data }: { data: DrillData }) {
     );
   }
 
-  const { turma, alunos, somaSala, ticketMedio } = data;
+  const { turma, alunos, somaSala, ticketMedio, competencia } = data;
 
   return (
     <div className="flex flex-1 flex-col gap-6 min-w-0">
@@ -29,7 +29,7 @@ export function OrganogramaDrillPanel({ data }: { data: DrillData }) {
           <p className="text-sm text-ink/55">{turma.segmentoNome}</p>
         </div>
         <p className="text-xs text-ink/40 text-right">
-          {turma.segmentoNome} · {turma.serieNome} - {turma.nome}
+          {competencia}
         </p>
       </div>
 
