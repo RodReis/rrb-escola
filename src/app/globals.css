@@ -19,7 +19,7 @@
   --radius-panel: 8px;
   --shadow-soft: 0 18px 45px rgba(11, 27, 74, 0.08);
   --shadow-lift: 0 22px 70px rgba(11, 27, 74, 0.16);
-  --topbar-height: 72px;
+  --topbar-height: 56px;
 }
 
 @media (prefers-color-scheme: dark) {
@@ -78,9 +78,7 @@ html[data-theme="dark"] {
 body {
   margin: 0;
   min-height: 100vh;
-  background:
-    linear-gradient(135deg, rgba(var(--color-accent), 0.06), transparent 28rem),
-    rgb(var(--color-paper));
+  background: rgb(var(--color-paper));
   color: rgb(var(--color-ink));
   font-feature-settings: "cv02", "cv03", "cv04", "cv11";
   text-rendering: geometricPrecision;
@@ -138,9 +136,7 @@ textarea {
 @layer components {
   .ds-shell {
     min-height: 100vh;
-    background:
-      radial-gradient(circle at top left, rgba(var(--color-accent), 0.09), transparent 22rem),
-      rgb(var(--color-paper));
+    background: rgb(var(--color-paper));
   }
 
   .ds-topbar {
