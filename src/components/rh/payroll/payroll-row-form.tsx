@@ -4,7 +4,7 @@ import { useMemo, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Panel } from "@/components/ui/card";
 import { money } from "@/lib/constants";
-import { calcAll, type InssBracket, type IrBracket, type PayrollInput as CalcInput } from "@/lib/payroll/calculators";
+import { calcAll, calcDSR, calcBaseFromSemDsr, calcProventosBase, type InssBracket, type IrBracket, type PayrollInput as CalcInput } from "@/lib/payroll/calculators";
 import type { PayrollRowJoined } from "@/lib/data/payroll";
 import { upsertPayrollAction } from "@/lib/actions/payroll";
 
@@ -31,6 +31,8 @@ type FormState = {
   advance: number;
   uniform_value: number;
   dependentes: number;
+  salario_sem_dsr: number;
+  aplica_dobra: boolean;
   inss_manual: boolean;
   ir_manual: boolean;
   inss: number;
@@ -65,6 +67,11 @@ export function PayrollRowForm({ row, brackets, disabled }: Props) {
       advance: num(row.advance),
       uniform_value: num(row.uniform_value),
       dependentes: num(row.dependentes),
+      salario_sem_dsr: num(
+        row.salario_sem_dsr ?? row.employees?.salario_sem_dsr ?? 0
+      ),
+      aplica_dobra:
+        row.aplica_dobra ?? row.employees?.aplica_dobra ?? false,
       inss_manual: !!row.inss_manual,
       ir_manual: !!row.ir_manual,
       inss: num(row.inss),
@@ -77,8 +84,15 @@ export function PayrollRowForm({ row, brackets, disabled }: Props) {
   );
   const [state, setState] = useState<FormState>(initial);
 
+  const derivedBase =
+    state.salario_sem_dsr > 0
+      ? calcProventosBase(state.salario_sem_dsr, state.aplica_dobra)
+      : state.base_salary;
+
   const calcInput: CalcInput = {
-    base_salary: state.base_salary,
+    base_salary: derivedBase,
+    salario_sem_dsr: state.salario_sem_dsr,
+    aplica_dobra: state.aplica_dobra,
     horas_extras: state.horas_extras,
     gratificacao: state.gratificacao,
     comissao: state.comissao,
@@ -117,7 +131,39 @@ export function PayrollRowForm({ row, brackets, disabled }: Props) {
       <div className="grid gap-3 lg:grid-cols-3">
         <Panel className="grid gap-3 p-5">
           <h3 className="text-sm font-bold text-ink uppercase tracking-[0.1em]">Proventos</h3>
-          <NumberField label="Salário base" name="base_salary" value={state.base_salary} onChange={setNum("base_salary")} disabled={disabled} required />
+          <NumberField
+            label="Salário s/ DSR"
+            name="salario_sem_dsr"
+            value={state.salario_sem_dsr}
+            onChange={setNum("salario_sem_dsr")}
+            disabled={disabled}
+          />
+          <div className="grid gap-1 text-xs text-ink/65">
+            <div className="flex justify-between">
+              <span>DSR (1/5)</span>
+              <span className="tabular-nums">{money.format(calcDSR(state.salario_sem_dsr))}</span>
+            </div>
+            <div className="flex justify-between">
+              <span>Salário base</span>
+              <span className="tabular-nums">{money.format(calcBaseFromSemDsr(state.salario_sem_dsr))}</span>
+            </div>
+          </div>
+          <label className="inline-flex items-center gap-2 text-sm mt-1">
+            <input
+              name="aplica_dobra"
+              type="checkbox"
+              checked={state.aplica_dobra}
+              onChange={(e) => set("aplica_dobra", e.target.checked)}
+              disabled={disabled}
+              className="h-4 w-4 accent-brand"
+            />
+            Aplica dobra mensal
+          </label>
+          <div className="flex justify-between text-sm font-bold border-t border-line pt-2 mt-1">
+            <span className="text-ink/70">Total base</span>
+            <span className="text-success tabular-nums">{money.format(derivedBase)}</span>
+          </div>
+          <input type="hidden" name="base_salary" value={derivedBase} />
           <NumberField label="Horas extras" name="horas_extras" value={state.horas_extras} onChange={setNum("horas_extras")} disabled={disabled} />
           <NumberField label="Gratificação" name="gratificacao" value={state.gratificacao} onChange={setNum("gratificacao")} disabled={disabled} />
           <NumberField label="Comissão" name="comissao" value={state.comissao} onChange={setNum("comissao")} disabled={disabled} />
