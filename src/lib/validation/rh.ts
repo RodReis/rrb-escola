@@ -38,7 +38,16 @@ export const EmployeeSchema = z.object({
     StatusContratoEnum.optional()
   ),
   birth_date: optionalString,
-  hire_date: optionalString
+  hire_date: optionalString,
+  salario_sem_dsr: z.preprocess(
+    (v) => {
+      if (v === "" || v == null) return 0;
+      if (typeof v === "string") return Number(v.replace(",", "."));
+      return v;
+    },
+    z.number().min(0)
+  ).optional(),
+  aplica_dobra: z.preprocess((v) => v === "on" || v === true, z.boolean()).optional()
 });
 
 export const EmployeeUpdateSchema = EmployeeSchema.extend({
