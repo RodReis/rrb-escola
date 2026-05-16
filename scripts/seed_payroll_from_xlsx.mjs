@@ -154,4 +154,21 @@ async function parseFile(filePath) {
   return { rows: out, skippedSheets };
 }
 
+async function loadEmployees() {
+  const { data, error } = await supabase.from("employees").select("id, name");
+  if (error) {
+    console.error("Falha ao carregar employees:", error.message);
+    process.exit(1);
+  }
+  const map = new Map();
+  for (const e of data) {
+    if (!e.name) continue;
+    const key = normalizeName(e.name);
+    const arr = map.get(key) ?? [];
+    arr.push({ id: e.id, name: e.name });
+    map.set(key, arr);
+  }
+  return map;
+}
+
 console.log("Seed payroll: iniciando.");
