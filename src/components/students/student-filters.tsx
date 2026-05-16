@@ -2,26 +2,18 @@
 
 import { useRouter, useSearchParams, usePathname } from "next/navigation";
 import { useCallback } from "react";
+import { FilterChips } from "@/components/ui/filter-chips";
+import { SearchInline } from "@/components/ui/search-inline";
 
-type Serie = { id: string; nome: string; segmento: string | null };
-type Turma = { id: string; nome: string; serie_id: string };
+type Counts = { all: number; infantil: number; fund1: number; fund2: number; medio: number };
 
-const SEGMENTOS = [
-  { value: "INFANTIL",     label: "Infantil" },
-  { value: "FUNDAMENTAL1", label: "Fundamental I" },
-  { value: "FUNDAMENTAL2", label: "Fundamental II" },
-  { value: "MEDIO",        label: "Médio" },
-];
-
-export function StudentFilters({ series, turmas }: { series: Serie[]; turmas: Turma[] }) {
+export function StudentFilters({ counts }: { counts?: Counts }) {
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
 
-  const nome      = searchParams.get("nome") ?? "";
-  const segmento  = searchParams.get("segmento") ?? "";
-  const serieId   = searchParams.get("serie") ?? "";
-  const turmaId   = searchParams.get("turma") ?? "";
+  const nome     = searchParams.get("nome") ?? "";
+  const segmento = searchParams.get("segmento") ?? "";
 
   const update = useCallback(
     (key: string, value: string, clear?: string[]) => {
@@ -31,71 +23,44 @@ export function StudentFilters({ series, turmas }: { series: Serie[]; turmas: Tu
       for (const k of clear ?? []) params.delete(k);
       router.push(`${pathname}?${params.toString()}`);
     },
-    [router, pathname, searchParams],
+    [router, pathname, searchParams]
   );
 
-  const filteredSeries = segmento
-    ? series.filter((s) => s.segmento === segmento)
-    : series;
-
-  const filteredTurmas = serieId
-    ? turmas.filter((t) => t.serie_id === serieId)
-    : segmento
-      ? turmas.filter((t) => filteredSeries.some((s) => s.id === t.serie_id))
-      : turmas;
+  const chips = [
+    { value: "",             label: "Todos",    count: counts?.all },
+    { value: "INFANTIL",     label: "Infantil", count: counts?.infantil },
+    { value: "FUNDAMENTAL1", label: "Fund. I",  count: counts?.fund1 },
+    { value: "FUNDAMENTAL2", label: "Fund. II", count: counts?.fund2 },
+    { value: "MEDIO",        label: "Médio",    count: counts?.medio }
+  ];
 
   return (
-    <div className="flex flex-wrap gap-3">
-      <input
-        type="search"
-        placeholder="Buscar por nome..."
-        defaultValue={nome}
-        className="min-w-[200px] flex-1"
-        onChange={(e) => {
-          clearTimeout((window as unknown as Record<string, ReturnType<typeof setTimeout>>)._nomeTimer);
-          (window as unknown as Record<string, ReturnType<typeof setTimeout>>)._nomeTimer = setTimeout(
-            () => update("nome", e.target.value),
-            350,
-          );
-        }}
+    <div className="flex w-full flex-wrap items-center gap-4">
+      <FilterChips
+        items={chips}
+        value={segmento}
+        onChange={(v) => update("segmento", v, ["serie", "turma"])}
       />
 
-      <select
-        value={segmento}
-        onChange={(e) => update("segmento", e.target.value, ["serie", "turma"])}
-        className="min-w-[160px]"
-      >
-        <option value="">Segmento</option>
-        {SEGMENTOS.map((s) => (
-          <option key={s.value} value={s.value}>{s.label}</option>
-        ))}
-      </select>
+      <div className="flex flex-1 min-w-[280px] items-center gap-2 rounded-ui border border-line bg-paper px-3 py-1.5 focus-within:border-brand/60 focus-within:bg-surface focus-within:shadow-ring transition">
+        <SearchInline
+          defaultValue={nome}
+          placeholder="Buscar por nome, matrícula ou responsável..."
+          onChange={(e) => {
+            const value = (e.target as HTMLInputElement).value;
+            clearTimeout((window as unknown as Record<string, ReturnType<typeof setTimeout>>)._nomeTimer);
+            (window as unknown as Record<string, ReturnType<typeof setTimeout>>)._nomeTimer = setTimeout(
+              () => update("nome", value),
+              300
+            );
+          }}
+        />
+      </div>
 
-      <select
-        value={serieId}
-        onChange={(e) => update("serie", e.target.value, ["turma"])}
-        className="min-w-[140px]"
-      >
-        <option value="">Série</option>
-        {filteredSeries.map((s) => (
-          <option key={s.id} value={s.id}>{s.nome}</option>
-        ))}
-      </select>
-
-      <select
-        value={turmaId}
-        onChange={(e) => update("turma", e.target.value)}
-        className="min-w-[140px]"
-      >
-        <option value="">Turma</option>
-        {filteredTurmas.map((t) => (
-          <option key={t.id} value={t.id}>{t.nome}</option>
-        ))}
-      </select>
-
-      {(nome || segmento || serieId || turmaId) && (
+      {(nome || segmento) && (
         <button
-          className="ds-button ds-button-secondary min-h-0 px-3 py-2 text-xs"
+          type="button"
+          className="text-xs font-semibold text-ink/55 hover:text-brand"
           onClick={() => router.push(pathname)}
         >
           Limpar

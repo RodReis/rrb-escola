@@ -39,7 +39,7 @@ function BrandBlock() {
 export function Topbar({ perfil }: { perfil: SessionProfile }) {
   return (
     <header
-      className="sticky top-0 z-30 flex items-center gap-3.5 px-[18px] border-b border-black/20"
+      className="sticky top-0 z-50 flex items-center gap-3.5 px-[18px] border-b border-black/20"
       style={{
         height: 56,
         background: "linear-gradient(180deg, #1B3FB8 0%, #15349E 100%)",
@@ -50,7 +50,10 @@ export function Topbar({ perfil }: { perfil: SessionProfile }) {
         <BrandBlock />
       </Link>
 
-      <nav className="no-scrollbar flex min-w-0 flex-1 items-center gap-0.5 overflow-x-auto py-2">
+      <nav
+        className="no-scrollbar flex min-w-0 flex-1 items-center gap-0.5 overflow-x-auto overflow-y-hidden h-full py-0"
+        style={{ scrollbarWidth: "none" }}
+      >
         {primaryItems.map((item) => (
           <TopbarNavLink key={item.href} href={item.href} label={item.label} icon={item.icon} variant="primary" />
         ))}

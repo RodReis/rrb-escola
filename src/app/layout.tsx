@@ -1,5 +1,21 @@
 import type { Metadata } from "next";
+import { Inter, Instrument_Serif } from "next/font/google";
 import "./globals.css";
+
+const sans = Inter({
+  subsets: ["latin"],
+  display: "swap",
+  variable: "--font-sans",
+  weight: ["400", "500", "600", "700", "800", "900"]
+});
+
+const serif = Instrument_Serif({
+  subsets: ["latin"],
+  display: "swap",
+  variable: "--font-serif",
+  weight: ["400"],
+  style: ["normal", "italic"]
+});
 
 export const metadata: Metadata = {
   title: "RRB Escola",
@@ -10,12 +26,11 @@ const themeScript = `(function(){try{var t=localStorage.getItem('theme');if(t===
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="pt-BR">
+    <html lang="pt-BR" suppressHydrationWarning className={`${sans.variable} ${serif.variable}`}>
       <head>
-        {/* Apply saved theme before first paint to avoid flash */}
         <script dangerouslySetInnerHTML={{ __html: themeScript }} />
       </head>
-      <body className="antialiased">{children}</body>
+      <body className="antialiased font-sans">{children}</body>
     </html>
   );
 }

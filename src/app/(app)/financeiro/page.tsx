@@ -2,9 +2,10 @@ import { ChevronLeft, ChevronRight, CreditCard, Plus } from "lucide-react";
 import { ExportFinanceButton } from "@/components/pdf/export-finance-button";
 import { ChargeEditForm } from "@/components/finance/charge-edit-form";
 import { PaymentRow } from "@/components/finance/payment-row";
-import { Badge } from "@/components/ui/badge";
 import { ButtonLink } from "@/components/ui/button";
-import { Card, Panel } from "@/components/ui/card";
+import { Panel } from "@/components/ui/card";
+import { PageHeader } from "@/components/ui/page-header";
+import { StatusPill, type StatusTone } from "@/components/ui/status-pill";
 import { cancelChargeAction, createChargeAction, payChargeAction } from "@/lib/actions/finance";
 import { money } from "@/lib/constants";
 import { getFinanceData } from "@/lib/data/finance";
@@ -12,13 +13,13 @@ import { getAcademicData } from "@/lib/data/lookups";
 import { displayStatus, isUnpaid } from "@/lib/finance/charge-status";
 import { saldoDevedor, totalPago } from "@/lib/finance/charge-totals";
 
-const statusTone = {
-  aberta: "gold",
-  vencida: "red",
-  parcial: "gold",
-  paga: "green",
-  cancelada: "gray"
-} as const;
+const statusTone: Record<string, StatusTone> = {
+  aberta: "warning",
+  vencida: "danger",
+  parcial: "warning",
+  paga: "success",
+  cancelada: "neutral"
+};
 
 const formasPagamento = ["pix", "dinheiro", "cartao", "boleto", "transferencia"];
 
@@ -71,61 +72,38 @@ export default async function FinanceiroPage({ searchParams }: { searchParams: P
 
   const emAbertoTotal = aVencer + vencido;
 
-  const summary = [
-    ["Cobrancas", String(cobrancas.length)],
-    ["A vencer", money.format(aVencer)],
-    ["Vencido", money.format(vencido)],
-    ["Em aberto", money.format(emAbertoTotal)],
-    ["Pago", money.format(pago)],
-    ["Cancelado", money.format(cancelado)]
-  ];
-
   return (
-    <div className="grid gap-6">
-      <section className="-mx-4 -mt-6 border-b border-line bg-surface px-4 py-8 sm:-mx-6 sm:px-6 lg:-mx-8 lg:px-8">
-        <div className="mx-auto flex max-w-7xl flex-col gap-8 xl:flex-row xl:items-end xl:justify-between">
-          <div>
-            <p className="flex items-center gap-3 text-[0.66rem] font-black uppercase tracking-[0.16em] text-ink/58">
-              <span>Gestao</span>
-              <span className="text-line">/</span>
-              <span className="text-brand">Financeiro</span>
-            </p>
-            <h1 className="mt-8 text-4xl font-black leading-none text-brand md:text-5xl">
-              Cobrancas <span className="font-serif italic text-ink/42">{mesLabel(competencia)}</span>
-            </h1>
-            <p className="mt-4 max-w-2xl text-sm font-medium leading-6 text-ink/68">
-              Lancamento, baixa parcial, estorno e exportacao de cobrancas escolares.
-            </p>
+    <div className="grid gap-8">
+      <PageHeader
+        breadcrumb={[{ label: "Gestão", href: "/" }, { label: "Financeiro" }]}
+        title="Cobranças"
+        counter={mesLabel(competencia)}
+        description="Lançamento, baixa parcial, estorno e exportação de cobranças escolares."
+        actions={
+          <div className="flex flex-wrap items-center gap-2">
+            <ButtonLink href={`/financeiro?mes=${adjacentMes(competencia, -1)}`} variant="secondary" className="px-2">
+              <ChevronLeft size={14} />
+            </ButtonLink>
+            <span className="min-w-[140px] text-center text-sm font-semibold text-ink">{mesLabel(competencia)}</span>
+            <ButtonLink href={`/financeiro?mes=${adjacentMes(competencia, 1)}`} variant="secondary" className="px-2">
+              <ChevronRight size={14} />
+            </ButtonLink>
+            <span className="mx-2 h-5 w-px bg-line" />
+            <ExportFinanceButton rows={cobrancas} />
+            <ButtonLink href="/planos" variant="secondary">
+              <CreditCard size={14} /> Planos
+            </ButtonLink>
           </div>
-
-          <div className="grid gap-7">
-            <div className="flex flex-wrap gap-2 xl:justify-end">
-              <ExportFinanceButton rows={cobrancas} />
-              <ButtonLink href="/planos" variant="secondary">
-                <CreditCard size={16} /> Planos
-              </ButtonLink>
-            </div>
-            <div className="flex items-center gap-2 xl:justify-end">
-              <ButtonLink href={`/financeiro?mes=${adjacentMes(competencia, -1)}`} variant="secondary" className="px-2">
-                <ChevronLeft size={16} />
-              </ButtonLink>
-              <span className="min-w-[160px] text-center text-sm font-black text-ink">{mesLabel(competencia)}</span>
-              <ButtonLink href={`/financeiro?mes=${adjacentMes(competencia, 1)}`} variant="secondary" className="px-2">
-                <ChevronRight size={16} />
-              </ButtonLink>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      <section className="grid gap-4 md:grid-cols-6">
-        {summary.map(([label, value]) => (
-          <Card key={label} className="p-5">
-            <p className="ds-kicker">{label}</p>
-            <strong className="mt-3 block text-2xl font-black text-ink">{value}</strong>
-          </Card>
-        ))}
-      </section>
+        }
+        kpis={[
+          { label: "Cobranças", value: cobrancas.length.toLocaleString("pt-BR") },
+          { label: "A vencer",  value: money.format(aVencer) },
+          { label: "Vencido",   value: money.format(vencido), tone: "danger" },
+          { label: "Em aberto", value: money.format(emAbertoTotal), tone: "warning" },
+          { label: "Pago",      value: money.format(pago), tone: "success" },
+          { label: "Cancelado", value: money.format(cancelado) }
+        ]}
+      />
 
       <Panel className="grid gap-5">
         <div>
@@ -186,7 +164,7 @@ export default async function FinanceiroPage({ searchParams }: { searchParams: P
                 <div>
                   <div className="flex flex-wrap items-center gap-2">
                     <strong className="text-ink">{item.descricao}</strong>
-                    <Badge tone={tone}>{display}</Badge>
+                    <StatusPill tone={tone}>{display}</StatusPill>
                   </div>
                   <p className="mt-1 text-sm text-ink/65">
                     {alunoInfo.nome} - vence em {dateText(item.data_vencimento)} - {item.competencia}
@@ -201,9 +179,9 @@ export default async function FinanceiroPage({ searchParams }: { searchParams: P
 
                 {settled ? (
                   <div className="justify-self-start lg:justify-self-end">
-                    <Badge tone={display === "paga" ? "green" : "gray"}>
+                    <StatusPill tone={display === "paga" ? "success" : "neutral"}>
                       {display === "paga" ? "Pago" : "Cancelada"}
-                    </Badge>
+                    </StatusPill>
                   </div>
                 ) : (
                   <div className="grid gap-2">

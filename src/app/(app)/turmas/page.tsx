@@ -1,7 +1,8 @@
 import { GraduationCap, Plus } from "lucide-react";
-import { Badge } from "@/components/ui/badge";
 import { ButtonLink } from "@/components/ui/button";
-import { Card, Panel } from "@/components/ui/card";
+import { Panel } from "@/components/ui/card";
+import { PageHeader } from "@/components/ui/page-header";
+import { StatusPill } from "@/components/ui/status-pill";
 import { createTurmaAction, toggleTurmaAction, updateTurmaAction } from "@/lib/actions/academics";
 import { getAcademicData } from "@/lib/data/lookups";
 
@@ -11,57 +12,25 @@ export default async function TurmasPage() {
   const currentYear = new Date().getFullYear();
   const currentYearClasses = turmas.filter((item) => Number(item.ano_letivo) === currentYear).length;
 
-  const summary = [
-    ["Total", String(turmas.length)],
-    ["Ativas", String(activeClasses)],
-    ["Ano atual", String(currentYearClasses)],
-    ["Series", String(series.length)]
-  ];
-
   return (
-    <div className="grid gap-6">
-      <section className="-mx-4 -mt-6 border-b border-line bg-surface px-4 py-8 sm:-mx-6 sm:px-6 lg:-mx-8 lg:px-8">
-        <div className="mx-auto flex max-w-7xl flex-col gap-8 xl:flex-row xl:items-end xl:justify-between">
-          <div>
-            <p className="flex items-center gap-3 text-[0.66rem] font-black uppercase tracking-[0.16em] text-ink/58">
-              <span>Academico</span>
-              <span className="text-line">/</span>
-              <span className="text-brand">Turmas</span>
-            </p>
-            <h1 className="mt-8 text-4xl font-black leading-none text-brand md:text-5xl">
-              Turmas <span className="font-serif italic text-ink/42">{turmas.length}</span>
-            </h1>
-            <p className="mt-4 max-w-2xl text-sm font-medium leading-6 text-ink/68">
-              Organizacao das salas por serie, turno, capacidade e ano letivo.
-            </p>
-          </div>
-
-          <div className="grid gap-7">
-            <div className="flex flex-wrap gap-2 xl:justify-end">
-              <ButtonLink href="/series" variant="secondary">
-                <GraduationCap size={16} /> Ver series
-              </ButtonLink>
-            </div>
-            <dl className="grid gap-0 sm:grid-cols-4">
-              {summary.map(([label, value]) => (
-                <div key={label} className="border-line py-1 sm:border-l sm:px-6 first:sm:border-l-0">
-                  <dt className="text-xs font-medium text-ink/62">{label}</dt>
-                  <dd className="mt-1 font-serif text-2xl italic leading-none text-brand">{value}</dd>
-                </div>
-              ))}
-            </dl>
-          </div>
-        </div>
-      </section>
-
-      <section className="grid gap-4 md:grid-cols-4">
-        {summary.map(([label, value]) => (
-          <Card key={label} className="p-5">
-            <p className="ds-kicker">{label}</p>
-            <strong className="mt-3 block text-3xl font-black text-ink">{value}</strong>
-          </Card>
-        ))}
-      </section>
+    <div className="grid gap-8">
+      <PageHeader
+        breadcrumb={[{ label: "Acadêmico" }, { label: "Turmas" }]}
+        title="Turmas"
+        counter={turmas.length.toLocaleString("pt-BR")}
+        description="Organização das salas por série, turno, capacidade e ano letivo."
+        actions={
+          <ButtonLink href="/series" variant="secondary">
+            <GraduationCap size={14} /> Ver séries
+          </ButtonLink>
+        }
+        kpis={[
+          { label: "Total",     value: turmas.length.toLocaleString("pt-BR") },
+          { label: "Ativas",    value: activeClasses.toLocaleString("pt-BR"), tone: "success" },
+          { label: "Ano atual", value: currentYearClasses.toLocaleString("pt-BR") },
+          { label: "Séries",    value: series.length.toLocaleString("pt-BR") }
+        ]}
+      />
 
       <Panel className="grid gap-5">
         <div>
@@ -98,8 +67,8 @@ export default async function TurmasPage() {
             Capacidade
             <input name="capacidade" type="number" defaultValue={30} />
           </label>
-          <button className="ds-button ds-button-accent self-end">
-            <Plus size={16} /> Adicionar
+          <button className="ds-button ds-button-primary self-end">
+            <Plus size={14} /> Adicionar
           </button>
         </form>
       </Panel>
@@ -151,7 +120,7 @@ export default async function TurmasPage() {
             </form>
 
             <div className="flex flex-wrap items-center justify-between gap-3 border-t border-line pt-3">
-              <Badge tone={item.ativo ? "green" : "red"}>{item.ativo ? "Ativa" : "Inativa"}</Badge>
+              <StatusPill tone={item.ativo ? "success" : "danger"}>{item.ativo ? "Ativa" : "Inativa"}</StatusPill>
               <span className="text-sm font-medium text-ink/60">{item.series?.nome} - {item.ano_letivo}</span>
               <form action={toggleTurmaAction}>
                 <input type="hidden" name="id" value={item.id} />

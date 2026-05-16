@@ -6,13 +6,14 @@ export type StudentFilters = {
   nome?: string;
   serieId?: string;
   turmaId?: string;
+  segmento?: string;
 };
 
 export async function listStudents(filters?: StudentFilters) {
   const supabase = await createServerClient();
   let query = supabase
     .from("alunos")
-    .select("id, matricula_codigo, nome, cpf, celular, ativo, foto_url, matriculas(status, serie_id, turma_id, series(id, nome), turmas(id, nome)), responsaveis_aluno(nome, celular, telefone, parentesco)")
+    .select("id, matricula_codigo, nome, cpf, celular, ativo, foto_url, matriculas(status, serie_id, turma_id, series(id, nome, segmento), turmas(id, nome)), responsaveis_aluno(nome, celular, telefone, parentesco)")
     .eq("escola_id", DEFAULT_SCHOOL_ID)
     .order("nome");
 
@@ -25,7 +26,7 @@ export async function listStudents(filters?: StudentFilters) {
 
   let rows = data ?? [];
 
-  if (filters?.serieId || filters?.turmaId) {
+  if (filters?.serieId || filters?.turmaId || filters?.segmento) {
     rows = rows.filter((student) => {
       const enrollment = student.matriculas?.find((m) => m.status === "ativa") ?? student.matriculas?.[0];
       if (!enrollment) return false;
@@ -33,11 +34,33 @@ export async function listStudents(filters?: StudentFilters) {
       const turma = Array.isArray(enrollment.turmas) ? enrollment.turmas[0] : enrollment.turmas;
       if (filters.serieId && serie?.id !== filters.serieId) return false;
       if (filters.turmaId && turma?.id !== filters.turmaId) return false;
+      if (filters.segmento && (serie as { segmento?: string | null })?.segmento !== filters.segmento) return false;
       return true;
     });
   }
 
   return rows;
+}
+
+export async function getStudentSegmentCounts() {
+  const supabase = await createServerClient();
+  const { data, error } = await supabase
+    .from("alunos")
+    .select("id, matriculas(status, series(segmento))")
+    .eq("escola_id", DEFAULT_SCHOOL_ID);
+  if (error) throw error;
+  const counts = { all: 0, infantil: 0, fund1: 0, fund2: 0, medio: 0 };
+  for (const row of data ?? []) {
+    counts.all += 1;
+    const enr = (row.matriculas ?? []).find((m: { status?: string | null }) => m.status === "ativa") ?? row.matriculas?.[0];
+    const series = enr ? (Array.isArray(enr.series) ? enr.series[0] : enr.series) : null;
+    const seg = (series as { segmento?: string | null } | null)?.segmento ?? null;
+    if (seg === "INFANTIL") counts.infantil += 1;
+    else if (seg === "FUNDAMENTAL1") counts.fund1 += 1;
+    else if (seg === "FUNDAMENTAL2") counts.fund2 += 1;
+    else if (seg === "MEDIO") counts.medio += 1;
+  }
+  return counts;
 }
 
 export async function getStudentFilterOptions() {

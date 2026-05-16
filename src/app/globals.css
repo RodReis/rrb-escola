@@ -80,8 +80,16 @@ body {
   min-height: 100vh;
   background: rgb(var(--color-paper));
   color: rgb(var(--color-ink));
-  font-feature-settings: "cv02", "cv03", "cv04", "cv11";
+  font-family: var(--font-sans, ui-sans-serif, system-ui, sans-serif);
+  font-feature-settings: "cv02", "cv03", "cv04", "cv11", "ss01";
   text-rendering: geometricPrecision;
+  -webkit-font-smoothing: antialiased;
+}
+
+.font-display {
+  font-family: var(--font-serif, ui-serif, Georgia, serif);
+  font-style: italic;
+  letter-spacing: -0.01em;
 }
 
 input,
@@ -119,6 +127,12 @@ label {
 button,
 a {
   -webkit-tap-highlight-color: transparent;
+  text-decoration: none;
+}
+
+a:hover,
+button:hover {
+  text-decoration: none;
 }
 
 button,
@@ -161,34 +175,36 @@ textarea {
 
   .ds-button {
     display: inline-flex;
-    min-height: 2.5rem;
+    min-height: 2.25rem;
     align-items: center;
     justify-content: center;
-    gap: 0.5rem;
+    gap: 0.45rem;
     border: 1px solid transparent;
-    padding: 0.65rem 1rem;
-    font-size: 0.875rem;
-    font-weight: 900;
+    padding: 0.5rem 0.95rem;
+    font-size: 0.82rem;
+    font-weight: 600;
     line-height: 1;
+    border-radius: var(--radius-ui);
     transition:
-      transform 160ms ease,
-      border-color 160ms ease,
-      background-color 160ms ease,
-      color 160ms ease;
+      box-shadow 140ms ease,
+      border-color 140ms ease,
+      background-color 140ms ease,
+      color 140ms ease;
   }
 
-  .ds-button:hover {
-    transform: translateY(-1px);
-  }
+  .ds-button:hover { filter: brightness(1.04); }
 
   .ds-button-primary {
     background: rgb(var(--color-primary));
     color: white;
+    box-shadow: 0 4px 12px rgba(27, 79, 216, 0.25);
   }
+  .ds-button-primary:hover { box-shadow: 0 6px 16px rgba(27, 79, 216, 0.32); }
 
   .ds-button-accent {
-    background: rgb(var(--color-accent));
+    background: rgb(var(--color-primary));
     color: white;
+    box-shadow: 0 4px 12px rgba(27, 79, 216, 0.25);
   }
 
   .ds-button-secondary {
@@ -196,6 +212,7 @@ textarea {
     background: rgb(var(--color-surface));
     color: rgb(var(--color-ink));
   }
+  .ds-button-secondary:hover { background: rgba(var(--color-ink), 0.03); }
 
   .ds-kicker {
     font-size: 0.72rem;
@@ -234,6 +251,283 @@ textarea {
 
   .no-scrollbar::-webkit-scrollbar {
     display: none;
+    width: 0;
+    height: 0;
+  }
+
+  .no-scrollbar::-webkit-scrollbar-track,
+  .no-scrollbar::-webkit-scrollbar-thumb {
+    display: none;
+  }
+
+  /* ============ NEW DESIGN-SYSTEM PRIMITIVES ============ */
+
+  .ds-breadcrumb {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.6rem;
+    font-size: 0.68rem;
+    font-weight: 700;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: rgba(var(--color-ink), 0.45);
+  }
+  .ds-breadcrumb a:hover { color: rgb(var(--color-primary)); }
+  .ds-breadcrumb .sep { color: rgba(var(--color-ink), 0.22); }
+  .ds-breadcrumb .current { color: rgba(var(--color-ink), 0.85); }
+
+  .ds-heading {
+    font-family: var(--font-sans);
+    font-weight: 800;
+    font-size: clamp(2rem, 3vw, 2.6rem);
+    letter-spacing: -0.025em;
+    line-height: 1.05;
+    color: rgb(var(--color-ink));
+  }
+  .ds-heading-counter {
+    font-family: var(--font-serif);
+    font-style: italic;
+    font-weight: 400;
+    color: rgba(var(--color-ink), 0.38);
+    letter-spacing: -0.01em;
+    margin-left: 0.4rem;
+  }
+  .ds-subhead {
+    margin-top: 0.55rem;
+    max-width: 38rem;
+    font-size: 0.875rem;
+    line-height: 1.55;
+    color: rgba(var(--color-ink), 0.62);
+    font-weight: 500;
+  }
+
+  .ds-kpi-grid {
+    display: grid;
+    grid-auto-flow: column;
+    align-items: end;
+    gap: 0;
+  }
+  .ds-kpi-cell {
+    padding: 0 1.25rem;
+    border-left: 1px solid rgba(var(--color-line), 1);
+    min-width: 0;
+  }
+  .ds-kpi-cell:first-child { border-left: none; padding-left: 0; }
+  .ds-kpi-cell:last-child { padding-right: 0; }
+  .ds-kpi-label {
+    display: block;
+    font-size: 0.72rem;
+    font-weight: 500;
+    color: rgba(var(--color-ink), 0.58);
+    line-height: 1.2;
+  }
+  .ds-kpi-value {
+    margin-top: 0.35rem;
+    font-size: 1.5rem;
+    font-weight: 800;
+    color: rgb(var(--color-ink));
+    line-height: 1.05;
+    letter-spacing: -0.02em;
+  }
+  .ds-kpi-value-accent { color: rgb(var(--color-success)); }
+  .ds-kpi-value-warn { color: rgb(var(--color-warning)); }
+  .ds-kpi-value-danger { color: rgb(var(--color-danger)); }
+
+  /* Filter chips (segment pills with counter) */
+  .ds-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    height: 2.25rem;
+    padding: 0 0.95rem;
+    border-radius: 9999px;
+    font-size: 0.82rem;
+    font-weight: 600;
+    color: rgba(var(--color-ink), 0.72);
+    background: transparent;
+    border: 1px solid transparent;
+    cursor: pointer;
+    transition: background 140ms ease, color 140ms ease, border-color 140ms ease;
+  }
+  .ds-chip:hover {
+    background: rgba(var(--color-ink), 0.04);
+    color: rgb(var(--color-ink));
+  }
+  .ds-chip-count {
+    font-size: 0.7rem;
+    font-weight: 700;
+    color: rgba(var(--color-ink), 0.45);
+    background: rgba(var(--color-ink), 0.06);
+    padding: 0.1rem 0.45rem;
+    border-radius: 9999px;
+    line-height: 1.2;
+  }
+  .ds-chip[data-active="true"] {
+    background: rgb(var(--color-primary));
+    color: white;
+    box-shadow: 0 4px 12px rgba(27, 79, 216, 0.22);
+  }
+  .ds-chip[data-active="true"] .ds-chip-count {
+    background: rgba(255, 255, 255, 0.22);
+    color: white;
+  }
+
+  /* Inline search */
+  .ds-search-inline {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.55rem;
+    min-width: 240px;
+    flex: 1;
+    color: rgba(var(--color-ink), 0.5);
+  }
+  .ds-search-inline input {
+    border: none;
+    background: transparent;
+    padding: 0.5rem 0;
+    box-shadow: none;
+    font-size: 0.875rem;
+    color: rgb(var(--color-ink));
+  }
+  .ds-search-inline input::placeholder { color: rgba(var(--color-ink), 0.42); font-weight: 500; }
+  .ds-search-inline input:focus { box-shadow: none; border: none; outline: none; }
+
+  /* Compact dropdown trigger */
+  .ds-dropdown {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    height: 2.25rem;
+    padding: 0 0.85rem;
+    border-radius: var(--radius-ui);
+    background: rgb(var(--color-surface));
+    border: 1px solid rgb(var(--color-line));
+    font-size: 0.82rem;
+    font-weight: 500;
+    color: rgba(var(--color-ink), 0.85);
+    cursor: pointer;
+    transition: border-color 140ms ease, background 140ms ease;
+  }
+  .ds-dropdown:hover { border-color: rgba(var(--color-ink), 0.25); }
+  .ds-dropdown-label { color: rgba(var(--color-ink), 0.55); font-weight: 500; }
+  .ds-dropdown-value { color: rgb(var(--color-ink)); font-weight: 600; }
+
+  /* Status pill (dot + label) */
+  .ds-status {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.45rem;
+    font-size: 0.8rem;
+    font-weight: 500;
+    color: rgba(var(--color-ink), 0.85);
+    white-space: nowrap;
+  }
+  .ds-status::before {
+    content: "";
+    width: 0.45rem;
+    height: 0.45rem;
+    border-radius: 9999px;
+    background: rgb(var(--color-ink));
+    flex-shrink: 0;
+  }
+  .ds-status-success { color: rgb(var(--color-success)); }
+  .ds-status-success::before { background: rgb(var(--color-success)); box-shadow: 0 0 0 3px rgba(var(--color-success), 0.15); }
+  .ds-status-warning { color: rgb(var(--color-warning)); }
+  .ds-status-warning::before { background: rgb(var(--color-warning)); box-shadow: 0 0 0 3px rgba(var(--color-warning), 0.18); }
+  .ds-status-danger { color: rgb(var(--color-danger)); }
+  .ds-status-danger::before { background: rgb(var(--color-danger)); box-shadow: 0 0 0 3px rgba(var(--color-danger), 0.18); }
+  .ds-status-neutral { color: rgba(var(--color-ink), 0.7); }
+  .ds-status-neutral::before { background: rgba(var(--color-ink), 0.4); }
+
+  /* DataTable v2 */
+  .ds-dt {
+    width: 100%;
+    border-collapse: separate;
+    border-spacing: 0;
+    background: rgb(var(--color-surface));
+    font-size: 0.875rem;
+  }
+  .ds-dt thead th {
+    position: sticky;
+    top: 0;
+    background: rgba(var(--color-muted), 0.6);
+    color: rgba(var(--color-ink), 0.55);
+    font-size: 0.66rem;
+    font-weight: 700;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    text-align: left;
+    padding: 0.85rem 1rem;
+    border-bottom: 1px solid rgb(var(--color-line));
+  }
+  .ds-dt tbody tr {
+    position: relative;
+    transition: background 120ms ease;
+  }
+  .ds-dt tbody tr:hover { background: rgba(var(--color-muted), 0.5); }
+  .ds-dt tbody td {
+    padding: 0.95rem 1rem;
+    border-bottom: 1px solid rgba(var(--color-line), 0.7);
+    vertical-align: middle;
+  }
+  .ds-dt tbody tr[data-selected="true"] {
+    background: rgba(var(--color-primary), 0.06);
+  }
+  .ds-dt tbody tr[data-selected="true"] td:first-child {
+    box-shadow: inset 3px 0 0 rgb(var(--color-primary));
+  }
+  .ds-dt-foot {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0.85rem 1rem;
+    background: rgba(var(--color-muted), 0.35);
+    border-top: 1px solid rgb(var(--color-line));
+    font-size: 0.8rem;
+    color: rgba(var(--color-ink), 0.62);
+  }
+
+  /* Avatar */
+  .ds-avatar {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 2rem;
+    height: 2rem;
+    border-radius: 9999px;
+    background: rgba(var(--color-primary), 0.10);
+    color: rgb(var(--color-primary));
+    font-size: 0.72rem;
+    font-weight: 700;
+    letter-spacing: 0.02em;
+    flex-shrink: 0;
+    overflow: hidden;
+  }
+  .ds-avatar img { width: 100%; height: 100%; object-fit: cover; }
+
+  /* Pagination */
+  .ds-pager {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.15rem;
+  }
+  .ds-pager button {
+    min-width: 1.85rem;
+    height: 1.85rem;
+    padding: 0 0.5rem;
+    border-radius: var(--radius-ui);
+    background: transparent;
+    border: none;
+    color: rgba(var(--color-ink), 0.6);
+    font-size: 0.78rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 120ms ease, color 120ms ease;
+  }
+  .ds-pager button:hover { background: rgba(var(--color-ink), 0.05); color: rgb(var(--color-ink)); }
+  .ds-pager button[data-active="true"] {
+    background: rgb(var(--color-primary));
+    color: white;
   }
 }
 

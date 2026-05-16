@@ -1,15 +1,16 @@
 import { DoorOpen } from "lucide-react";
-import { Badge } from "@/components/ui/badge";
 import { Button, ButtonLink } from "@/components/ui/button";
 import { Panel } from "@/components/ui/card";
+import { PageHeader } from "@/components/ui/page-header";
+import { StatusPill, type StatusTone } from "@/components/ui/status-pill";
 import { registerGateEventAction } from "@/lib/actions/gate";
 import { getGateData } from "@/lib/data/gate";
 
-function statusTone(status: string): "green" | "red" | "gold" | "gray" {
-  if (status === "enviada") return "green";
-  if (status === "erro") return "red";
-  if (status === "pendente") return "gold";
-  return "gray";
+function statusTone(status: string): StatusTone {
+  if (status === "enviada") return "success";
+  if (status === "erro") return "danger";
+  if (status === "pendente") return "warning";
+  return "neutral";
 }
 
 export default async function PortariaPage() {
@@ -17,22 +18,20 @@ export default async function PortariaPage() {
   const defaultDevice = data.devices[0]?.id ?? "";
 
   return (
-    <div className="grid gap-6">
-      <header className="flex flex-wrap items-end justify-between gap-4 border-b border-line bg-paper px-6 py-7">
-        <div>
-          <p className="ds-kicker">Gestao / Entrada e saida</p>
-          <h1 className="mt-7 font-serif text-4xl text-ink">Portaria</h1>
-          <p className="mt-3 max-w-2xl text-sm text-muted">
-            Registre entrada e saida, acompanhe eventos recentes e confira as notificacoes enviadas aos responsaveis.
-          </p>
-        </div>
-        <div className="flex flex-wrap gap-2">
-          <ButtonLink href="/portaria/painel" variant="primary">Painel diario</ButtonLink>
-          <ButtonLink href="/portaria/camera" variant="accent">Camera</ButtonLink>
-          <ButtonLink href="/portaria/notificacoes" variant="secondary">Notificacoes</ButtonLink>
-          <ButtonLink href="/portaria/dispositivos" variant="secondary">Dispositivos</ButtonLink>
-        </div>
-      </header>
+    <div className="grid gap-8">
+      <PageHeader
+        breadcrumb={[{ label: "Gestão", href: "/" }, { label: "Portaria" }]}
+        title="Portaria"
+        description="Registre entrada e saída, acompanhe eventos recentes e confira as notificações enviadas aos responsáveis."
+        actions={
+          <>
+            <ButtonLink href="/portaria/painel" variant="primary">Painel diário</ButtonLink>
+            <ButtonLink href="/portaria/camera" variant="secondary">Câmera</ButtonLink>
+            <ButtonLink href="/portaria/notificacoes" variant="secondary">Notificações</ButtonLink>
+            <ButtonLink href="/portaria/dispositivos" variant="secondary">Dispositivos</ButtonLink>
+          </>
+        }
+      />
 
       <Panel className="grid gap-5">
         <div className="flex items-center gap-3">
@@ -67,8 +66,8 @@ export default async function PortariaPage() {
           </label>
           <label>Confianca<input name="confianca" inputMode="decimal" placeholder="98.5" /></label>
           <label className="md:col-span-3">Observacao<input name="observacao" /></label>
-          <Button name="tipo" value="entrada" variant="accent" className="self-end">Registrar entrada</Button>
-          <Button name="tipo" value="saida" className="self-end border-clay bg-clay text-white hover:bg-clay/90">Registrar saida</Button>
+          <Button name="tipo" value="entrada" variant="primary" className="self-end">Registrar entrada</Button>
+          <Button name="tipo" value="saida" className="self-end border-danger bg-danger text-white hover:bg-danger/90">Registrar saída</Button>
         </form>
       </Panel>
 
@@ -97,7 +96,7 @@ export default async function PortariaPage() {
               <div key={notification.id} className="border-b border-line py-3 text-sm last:border-b-0">
                 <strong>{notification.alunos?.nome}</strong>
                 <span className="mt-2 flex flex-wrap items-center gap-2 text-muted">
-                  <Badge tone={statusTone(notification.status)}>{notification.status}</Badge>
+                  <StatusPill tone={statusTone(notification.status)}>{notification.status}</StatusPill>
                   <span>{notification.telefone_destino}</span>
                 </span>
                 <p className="mt-2">{notification.mensagem}</p>

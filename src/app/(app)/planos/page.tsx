@@ -1,8 +1,9 @@
 import { CreditCard, Plus } from "lucide-react";
 import { createPlanAction, togglePlanAction, updatePlanAction } from "@/lib/actions/academics";
-import { Badge } from "@/components/ui/badge";
 import { ButtonLink } from "@/components/ui/button";
-import { Card, Panel } from "@/components/ui/card";
+import { Panel } from "@/components/ui/card";
+import { PageHeader } from "@/components/ui/page-header";
+import { StatusPill } from "@/components/ui/status-pill";
 import { money } from "@/lib/constants";
 import { getAcademicData } from "@/lib/data/lookups";
 
@@ -13,57 +14,25 @@ export default async function PlanosPage() {
     ? planos.reduce((sum, item) => sum + Number(item.valor_mensalidade ?? 0), 0) / planos.length
     : 0;
 
-  const summary = [
-    ["Total", String(planos.length)],
-    ["Ativos", String(activePlans)],
-    ["Inativos", String(planos.length - activePlans)],
-    ["Media mensal", money.format(monthlyAverage)]
-  ];
-
   return (
-    <div className="grid gap-6">
-      <section className="-mx-4 -mt-6 border-b border-line bg-surface px-4 py-8 sm:-mx-6 sm:px-6 lg:-mx-8 lg:px-8">
-        <div className="mx-auto flex max-w-7xl flex-col gap-8 xl:flex-row xl:items-end xl:justify-between">
-          <div>
-            <p className="flex items-center gap-3 text-[0.66rem] font-black uppercase tracking-[0.16em] text-ink/58">
-              <span>Financeiro</span>
-              <span className="text-line">/</span>
-              <span className="text-brand">Planos</span>
-            </p>
-            <h1 className="mt-8 text-4xl font-black leading-none text-brand md:text-5xl">
-              Planos <span className="font-serif italic text-ink/42">{planos.length}</span>
-            </h1>
-            <p className="mt-4 max-w-2xl text-sm font-medium leading-6 text-ink/68">
-              Regras de matricula, mensalidade, parcelas e vencimento usadas na geracao de cobrancas.
-            </p>
-          </div>
-
-          <div className="grid gap-7">
-            <div className="flex flex-wrap gap-2 xl:justify-end">
-              <ButtonLink href="/financeiro" variant="secondary">
-                <CreditCard size={16} /> Financeiro
-              </ButtonLink>
-            </div>
-            <dl className="grid gap-0 sm:grid-cols-4">
-              {summary.map(([label, value]) => (
-                <div key={label} className="border-line py-1 sm:border-l sm:px-6 first:sm:border-l-0">
-                  <dt className="text-xs font-medium text-ink/62">{label}</dt>
-                  <dd className="mt-1 font-serif text-2xl italic leading-none text-brand">{value}</dd>
-                </div>
-              ))}
-            </dl>
-          </div>
-        </div>
-      </section>
-
-      <section className="grid gap-4 md:grid-cols-4">
-        {summary.map(([label, value]) => (
-          <Card key={label} className="p-5">
-            <p className="ds-kicker">{label}</p>
-            <strong className="mt-3 block text-3xl font-black text-ink">{value}</strong>
-          </Card>
-        ))}
-      </section>
+    <div className="grid gap-8">
+      <PageHeader
+        breadcrumb={[{ label: "Financeiro" }, { label: "Planos" }]}
+        title="Planos"
+        counter={planos.length.toLocaleString("pt-BR")}
+        description="Regras de matrícula, mensalidade, parcelas e vencimento."
+        actions={
+          <ButtonLink href="/financeiro" variant="secondary">
+            <CreditCard size={14} /> Financeiro
+          </ButtonLink>
+        }
+        kpis={[
+          { label: "Total",        value: planos.length.toLocaleString("pt-BR") },
+          { label: "Ativos",       value: activePlans.toLocaleString("pt-BR"), tone: "success" },
+          { label: "Inativos",     value: (planos.length - activePlans).toLocaleString("pt-BR"), tone: "danger" },
+          { label: "Média mensal", value: money.format(monthlyAverage) }
+        ]}
+      />
 
       <Panel className="grid gap-5">
         <div>
@@ -95,8 +64,8 @@ export default async function PlanosPage() {
             Descricao
             <input name="descricao" />
           </label>
-          <button className="ds-button ds-button-accent self-end">
-            <Plus size={16} /> Adicionar
+          <button className="ds-button ds-button-primary self-end">
+            <Plus size={14} /> Adicionar
           </button>
         </form>
       </Panel>
@@ -114,7 +83,7 @@ export default async function PlanosPage() {
                 <h2 className="text-lg font-black text-ink">{item.nome}</h2>
                 <p className="mt-1 text-sm text-ink/65">{item.descricao || "Sem descricao"}</p>
               </div>
-              <Badge tone={item.ativo ? "green" : "red"}>{item.ativo ? "Ativo" : "Inativo"}</Badge>
+              <StatusPill tone={item.ativo ? "success" : "danger"}>{item.ativo ? "Ativo" : "Inativo"}</StatusPill>
             </div>
 
             <form action={updatePlanAction} className="grid gap-3">
