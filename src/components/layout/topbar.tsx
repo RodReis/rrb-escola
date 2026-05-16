@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { TopbarNavLink, type TopbarIconName } from "@/components/layout/topbar-nav-link";
 import { SecretariaDropdown } from "@/components/layout/secretaria-dropdown";
+import { RhDropdown } from "@/components/layout/rh-dropdown";
 import { TopbarUserCard } from "@/components/layout/topbar-user-card";
 import { logoutAction } from "@/lib/actions/auth";
 import type { SessionProfile } from "@/lib/auth/session";
@@ -39,13 +40,14 @@ function BrandBlock() {
 export function Topbar({ perfil }: { perfil: SessionProfile }) {
   return (
     <header
-      className="sticky top-0 z-50 flex items-center gap-3.5 px-[18px] border-b border-black/20"
+      className="sticky top-0 z-50 border-b border-black/20"
       style={{
         height: 56,
         background: "linear-gradient(180deg, #1B3FB8 0%, #15349E 100%)",
         boxShadow: "inset 0 1px 0 rgba(255,255,255,0.04)",
       }}
     >
+      <div className="mx-auto flex h-full max-w-7xl items-center gap-3.5 px-4 sm:px-6 lg:px-8">
       <Link href="/" className="shrink-0">
         <BrandBlock />
       </Link>
@@ -61,8 +63,12 @@ export function Topbar({ perfil }: { perfil: SessionProfile }) {
         {secondaryItems.map((item) => (
           <TopbarNavLink key={item.href} href={item.href} label={item.label} icon={item.icon} variant="secondary" />
         ))}
-        <SecretariaDropdown />
       </nav>
+
+      <div className="flex items-center gap-0.5 shrink-0">
+        <SecretariaDropdown />
+        <RhDropdown />
+      </div>
 
       <div className="flex items-center gap-2 shrink-0">
         {/* Year picker */}
@@ -90,6 +96,7 @@ export function Topbar({ perfil }: { perfil: SessionProfile }) {
 
         {/* User card */}
         <TopbarUserCard perfil={perfil} logoutAction={logoutAction} />
+      </div>
       </div>
     </header>
   );
