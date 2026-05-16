@@ -17,6 +17,9 @@ type Props = {
 export function EmployeeForm({ action, employee, companies, defaultCompanyId, submitLabel = "Salvar" }: Props) {
   const [cpf, setCpf] = useState(employee?.cpf ?? "");
   const [telefone, setTelefone] = useState(employee?.telefone ?? "");
+  const [salarioSemDsr, setSalarioSemDsr] = useState<string>(
+    employee?.salario_sem_dsr != null ? String(employee.salario_sem_dsr) : ""
+  );
 
   return (
     <form action={action} className="grid gap-4 md:grid-cols-2">
@@ -88,6 +91,29 @@ export function EmployeeForm({ action, employee, companies, defaultCompanyId, su
           <option value="Estagio">Estágio</option>
           <option value="Temporario">Temporário</option>
         </select>
+      </label>
+
+      <label>
+        Salário s/ DSR
+        <input
+          name="salario_sem_dsr"
+          type="number"
+          step="0.01"
+          min="0"
+          value={salarioSemDsr}
+          onChange={(e) => setSalarioSemDsr(e.target.value)}
+          placeholder="0,00"
+        />
+      </label>
+
+      <label className="flex grid-cols-none items-center gap-2 self-end pb-3">
+        <input
+          name="aplica_dobra"
+          type="checkbox"
+          defaultChecked={employee?.aplica_dobra ?? false}
+          className="h-4 w-4"
+        />
+        Aplica dobra mensal
       </label>
 
       <label>
