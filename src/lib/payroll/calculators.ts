@@ -31,6 +31,7 @@ export type PayrollInput = {
   loan_deduction: number;
   advance: number;
   uniform_value: number;
+  gps: number;
   dependentes: number;
   salario_sem_dsr?: number;
   aplica_dobra?: boolean;
@@ -120,7 +121,8 @@ export function calcTotalDeductions(input: PayrollInput, inss: number, ir: numbe
     input.vale_transporte +
     input.vale_alimentacao +
     input.outros_descontos +
-    input.uniform_value
+    input.uniform_value +
+    input.gps
   );
 }
 
