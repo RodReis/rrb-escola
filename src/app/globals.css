@@ -4,13 +4,13 @@
 
 :root {
   color-scheme: light;
-  --color-paper: 253 251 246;
+  --color-paper: 248 250 252;
   --color-surface: 255 255 255;
-  --color-muted: 245 241 232;
-  --color-ink: 11 27 74;
-  --color-line: 222 216 203;
-  --color-brand: 11 27 74;
-  --color-primary: 11 27 74;
+  --color-muted: 241 245 249;
+  --color-ink: 15 23 42;
+  --color-line: 214 225 237;
+  --color-brand: 27 79 216;
+  --color-primary: 27 79 216;
   --color-accent: 255 36 36;
   --color-danger: 190 50 50;
   --color-warning: 201 151 54;
@@ -43,13 +43,13 @@
 
 html[data-theme="light"] {
   color-scheme: light;
-  --color-paper: 253 251 246;
+  --color-paper: 248 250 252;
   --color-surface: 255 255 255;
-  --color-muted: 245 241 232;
-  --color-ink: 11 27 74;
-  --color-line: 222 216 203;
-  --color-brand: 11 27 74;
-  --color-primary: 11 27 74;
+  --color-muted: 241 245 249;
+  --color-ink: 15 23 42;
+  --color-line: 214 225 237;
+  --color-brand: 27 79 216;
+  --color-primary: 27 79 216;
   --color-accent: 255 36 36;
   --color-danger: 190 50 50;
   --color-warning: 201 151 54;
