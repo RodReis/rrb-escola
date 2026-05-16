@@ -1,4 +1,5 @@
 import Link from "next/link";
+import Image from "next/image";
 import { Eye, Plus, Upload } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { ButtonLink } from "@/components/ui/button";
@@ -7,6 +8,7 @@ import { ExportStudentsReportButton } from "@/components/pdf/export-students-rep
 import { StudentFilters } from "@/components/students/student-filters";
 import { getStudentsReport, listStudents, getStudentFilterOptions } from "@/lib/data/students";
 import { toggleStudentAction } from "@/lib/actions/students";
+import { getSignedFotoUrls } from "@/lib/storage/photos";
 
 type EnrollmentRef = {
   status?: string | null;
@@ -39,6 +41,11 @@ export default async function StudentsPage({
     getStudentsReport(),
     getStudentFilterOptions(),
   ]);
+
+  const signedFotos = await getSignedFotoUrls(
+    students.map((s) => "foto_url" in s ? (s.foto_url as string | null) : null),
+  );
+
   const activeStudents = students.filter((student) => student.ativo).length;
   const inactiveStudents = students.length - activeStudents;
   const activeEnrollments = students.filter((student) => student.matriculas?.some((item) => item.status === "ativa")).length;
@@ -137,16 +144,34 @@ export default async function StudentsPage({
                 const series = one(enrollment?.series);
                 const turma = one(enrollment?.turmas);
 
+                const fotoUrl = signedFotos.get(("foto_url" in student ? (student.foto_url as string | null) : null) ?? "");
+
                 return (
                   <tr key={student.id} className="border-t border-line transition hover:bg-muted/60">
                     <td className="whitespace-nowrap px-5 py-4 font-black text-brand">{student.matricula_codigo}</td>
                     <td className="px-5 py-4">
-                      <Link href={`/alunos/${student.id}`} className="font-black uppercase text-ink hover:text-brand">
-                        {student.nome}
+                      <Link href={`/alunos/${student.id}`} className="flex items-center gap-3 font-black uppercase text-ink hover:text-brand">
+                        {fotoUrl ? (
+                          <Image
+                            src={fotoUrl}
+                            alt={student.nome}
+                            width={36}
+                            height={36}
+                            className="h-9 w-9 shrink-0 rounded-full object-cover"
+                            unoptimized
+                          />
+                        ) : (
+                          <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-muted text-xs font-black text-ink/40">
+                            {student.nome.charAt(0)}
+                          </span>
+                        )}
+                        <span>
+                          {student.nome}
+                          {student.cpf && (
+                            <span className="block text-xs font-medium text-ink/45">{student.cpf}</span>
+                          )}
+                        </span>
                       </Link>
-                      {student.cpf && (
-                        <span className="block text-xs font-medium text-ink/45">{student.cpf}</span>
-                      )}
                     </td>
                     <td className="px-5 py-4">
                       {series?.nome || turma?.nome ? (

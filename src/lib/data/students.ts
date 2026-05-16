@@ -12,7 +12,7 @@ export async function listStudents(filters?: StudentFilters) {
   const supabase = await createServerClient();
   let query = supabase
     .from("alunos")
-    .select("id, matricula_codigo, nome, cpf, celular, ativo, matriculas(status, serie_id, turma_id, series(id, nome), turmas(id, nome)), responsaveis_aluno(nome, celular, telefone, parentesco)")
+    .select("id, matricula_codigo, nome, cpf, celular, ativo, foto_url, matriculas(status, serie_id, turma_id, series(id, nome), turmas(id, nome)), responsaveis_aluno(nome, celular, telefone, parentesco)")
     .eq("escola_id", DEFAULT_SCHOOL_ID)
     .order("nome");
 

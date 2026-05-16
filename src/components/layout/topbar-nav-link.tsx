@@ -61,7 +61,7 @@ export function TopbarNavLink({
         "inline-flex h-10 shrink-0 items-center gap-2 rounded-ui px-3 text-sm transition",
         variant === "primary" ? "font-black" : "font-bold",
         active
-          ? "bg-primary text-white shadow-soft hover:bg-primary hover:text-white"
+          ? "bg-brand text-paper shadow-soft hover:bg-brand hover:text-paper"
           : variant === "primary"
             ? "text-ink hover:bg-muted"
             : "text-ink/70 hover:bg-muted hover:text-ink"
