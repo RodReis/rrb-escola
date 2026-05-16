@@ -1,12 +1,11 @@
 import Link from "next/link";
-import { Trash2 } from "lucide-react";
 import { Panel } from "@/components/ui/card";
 import { PageHeader } from "@/components/ui/page-header";
 import { BracketsTable } from "@/components/rh/brackets/brackets-table";
 import { NewVigenciaButton } from "@/components/rh/brackets/new-vigencia-button";
 import { VigenciaSelect } from "@/components/rh/brackets/vigencia-select";
+import { DeleteVigenciaButton } from "@/components/rh/brackets/delete-vigencia-button";
 import { listBracketVigencias, listBracketsByVigencia } from "@/lib/data/brackets";
-import { deleteVigenciaAction } from "@/lib/actions/brackets";
 import { requirePerfil } from "@/lib/auth/session";
 import type { InssBracketRow, IrBracketRow } from "@/lib/data/brackets";
 
@@ -58,21 +57,7 @@ export default async function BracketsPage({
               <span className="text-sm text-ink/55">Nenhuma vigência</span>
             )}
             <NewVigenciaButton table="inss" vigencias={inssVigencias} />
-            {inssVigSel ? (
-              <form
-                action={deleteVigenciaAction}
-                onSubmit={(e) => {
-                  if (!confirm(`Excluir vigência INSS ${inssVigSel}?`)) e.preventDefault();
-                }}
-                className="inline"
-              >
-                <input type="hidden" name="table" value="inss" />
-                <input type="hidden" name="vigencia" value={inssVigSel} />
-                <button type="submit" className="ds-button ds-button-secondary text-danger">
-                  <Trash2 size={14} /> Excluir vigência
-                </button>
-              </form>
-            ) : null}
+            {inssVigSel ? <DeleteVigenciaButton table="inss" vigencia={inssVigSel} /> : null}
           </div>
         </div>
         {inssVigSel ? (
@@ -92,21 +77,7 @@ export default async function BracketsPage({
               <span className="text-sm text-ink/55">Nenhuma vigência</span>
             )}
             <NewVigenciaButton table="ir" vigencias={irVigencias} />
-            {irVigSel ? (
-              <form
-                action={deleteVigenciaAction}
-                onSubmit={(e) => {
-                  if (!confirm(`Excluir vigência IR ${irVigSel}?`)) e.preventDefault();
-                }}
-                className="inline"
-              >
-                <input type="hidden" name="table" value="ir" />
-                <input type="hidden" name="vigencia" value={irVigSel} />
-                <button type="submit" className="ds-button ds-button-secondary text-danger">
-                  <Trash2 size={14} /> Excluir vigência
-                </button>
-              </form>
-            ) : null}
+            {irVigSel ? <DeleteVigenciaButton table="ir" vigencia={irVigSel} /> : null}
           </div>
         </div>
         {irVigSel ? (
