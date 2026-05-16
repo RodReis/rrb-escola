@@ -79,4 +79,79 @@ function normalizeHeader(s) {
     .trim();
 }
 
+const HEADER_MAP = {
+  FUNCIONARIOS: "nome",
+  ADICIONAL: "additional",
+  INSS: "inss",
+  IR: "ir",
+  SIND: "loan_deduction",
+  EMPRESTIMO: "loan_deduction",
+  EMPREST: "loan_deduction",
+  ADIANT: "advance",
+  DEDUCOES: "total_deductions",
+  FAMILIA: "family_allowance"
+};
+
+async function parseFile(filePath) {
+  const wb = new ExcelJS.Workbook();
+  await wb.xlsx.readFile(filePath);
+  const out = [];
+  const skippedSheets = [];
+
+  for (const ws of wb.worksheets) {
+    if (/desconto/i.test(ws.name)) {
+      skippedSheets.push({ sheet: ws.name, reason: "desconto" });
+      continue;
+    }
+
+    const colMap = {};
+    let headerRow = -1;
+    const scanLimit = Math.min(20, ws.rowCount);
+
+    for (let r = 1; r <= scanLimit; r++) {
+      const row = ws.getRow(r);
+      const localMap = {};
+      row.eachCell({ includeEmpty: true }, (cell, n) => {
+        const key = normalizeHeader(cellText(cell.value));
+        if (HEADER_MAP[key] && localMap[HEADER_MAP[key]] === undefined) {
+          localMap[HEADER_MAP[key]] = n;
+        }
+      });
+      if (localMap.nome !== undefined && (localMap.additional !== undefined || localMap.inss !== undefined)) {
+        Object.assign(colMap, localMap);
+        headerRow = r;
+        break;
+      }
+    }
+
+    if (headerRow < 0) {
+      skippedSheets.push({ sheet: ws.name, reason: "no header" });
+      continue;
+    }
+
+    for (let r = headerRow + 1; r <= ws.rowCount; r++) {
+      const row = ws.getRow(r);
+      const nome = cellText(row.getCell(colMap.nome).value).trim();
+      if (!nome) continue;
+      if (/^\d+$/.test(nome)) continue;
+
+      const rec = {
+        file: basename(filePath),
+        sheet: ws.name,
+        nome,
+        additional: round2(colMap.additional ? cellNumber(row.getCell(colMap.additional).value) : 0),
+        inss: round2(colMap.inss ? cellNumber(row.getCell(colMap.inss).value) : 0),
+        ir: round2(colMap.ir ? cellNumber(row.getCell(colMap.ir).value) : 0),
+        loan_deduction: round2(colMap.loan_deduction ? cellNumber(row.getCell(colMap.loan_deduction).value) : 0),
+        advance: round2(colMap.advance ? cellNumber(row.getCell(colMap.advance).value) : 0),
+        total_deductions: round2(colMap.total_deductions ? cellNumber(row.getCell(colMap.total_deductions).value) : 0),
+        family_allowance: round2(colMap.family_allowance ? cellNumber(row.getCell(colMap.family_allowance).value) : 0)
+      };
+      out.push(rec);
+    }
+  }
+
+  return { rows: out, skippedSheets };
+}
+
 console.log("Seed payroll: iniciando.");
