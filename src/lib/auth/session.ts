@@ -45,3 +45,11 @@ export async function requireAdmin(): Promise<Session> {
   if (session.profile.perfil !== "admin") redirect("/login?erro=perfil");
   return session;
 }
+
+export async function requirePerfil(perfis: Array<SessionProfile["perfil"]>): Promise<Session> {
+  const session = await requireSession();
+  if (!perfis.includes(session.profile.perfil)) {
+    redirect("/acesso-negado");
+  }
+  return session;
+}
