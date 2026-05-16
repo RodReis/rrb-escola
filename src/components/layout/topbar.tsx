@@ -50,19 +50,16 @@ export function Topbar({ perfil }: { perfil: SessionProfile }) {
         <BrandBlock />
       </Link>
 
-      <div className="flex min-w-0 flex-1 items-center gap-0.5">
-        <div className="no-scrollbar flex min-w-0 flex-1 items-center gap-0.5 overflow-x-auto">
-          {primaryItems.map((item) => (
-            <TopbarNavLink key={item.href} href={item.href} label={item.label} icon={item.icon} variant="primary" />
-          ))}
-          <span className="mx-1 h-5 w-px shrink-0 bg-white/20" />
-          {secondaryItems.map((item) => (
-            <TopbarNavLink key={item.href} href={item.href} label={item.label} icon={item.icon} variant="secondary" />
-          ))}
-        </div>
+      <nav className="no-scrollbar flex min-w-0 flex-1 items-center gap-0.5 overflow-x-auto py-2">
+        {primaryItems.map((item) => (
+          <TopbarNavLink key={item.href} href={item.href} label={item.label} icon={item.icon} variant="primary" />
+        ))}
         <span className="mx-1 h-5 w-px shrink-0 bg-white/20" />
+        {secondaryItems.map((item) => (
+          <TopbarNavLink key={item.href} href={item.href} label={item.label} icon={item.icon} variant="secondary" />
+        ))}
         <SecretariaDropdown />
-      </div>
+      </nav>
 
       <div className="flex items-center gap-2 shrink-0">
         {/* Year picker */}
