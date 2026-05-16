@@ -1,3 +1,8 @@
+// Seed payroll from xlsx — one-shot script.
+// Reads public/*.xlsx, matches by employee name, UPDATEs all payroll rows.
+// Spec: docs/2026-05-16-payroll-seed-from-xlsx-design.md
+// Usage: node scripts/seed_payroll_from_xlsx.mjs
+
 import { createClient } from "@supabase/supabase-js";
 import ExcelJS from "exceljs";
 import { readFileSync, existsSync, writeFileSync } from "node:fs";
