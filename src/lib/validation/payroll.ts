@@ -39,7 +39,9 @@ export const PayrollSchema = z.object({
   ir_manual: boolFromForm.optional(),
   inss: numericNonNeg.optional(),
   ir: numericNonNeg.optional(),
-  observations: z.preprocess((v) => (v === "" ? undefined : v), z.string().optional())
+  observations: z.preprocess((v) => (v === "" ? undefined : v), z.string().optional()),
+  salario_sem_dsr: numericNonNeg.optional(),
+  aplica_dobra: boolFromForm.optional()
 });
 
 export const BracketSchema = z.object({
