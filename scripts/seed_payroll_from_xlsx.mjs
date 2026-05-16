@@ -171,4 +171,53 @@ async function loadEmployees() {
   return map;
 }
 
+async function processRow(rec, employeeMap, log, stats) {
+  stats.rowsParsed++;
+  const key = normalizeName(rec.nome);
+  const candidates = employeeMap.get(key) ?? [];
+
+  if (candidates.length === 0) {
+    stats.notFound++;
+    log.push(`  NOT_FOUND: "${rec.nome}" (file=${rec.file}, sheet=${rec.sheet})`);
+    return;
+  }
+  if (candidates.length > 1) {
+    stats.ambiguous++;
+    log.push(`  AMBIGUOUS: "${rec.nome}" → ids=[${candidates.map((c) => c.id).join(", ")}]`);
+    return;
+  }
+
+  const target = candidates[0];
+  const { data, error } = await supabase
+    .from("payroll")
+    .update({
+      additional: rec.additional,
+      inss: rec.inss,
+      ir: rec.ir,
+      loan_deduction: rec.loan_deduction,
+      advance: rec.advance,
+      total_deductions: rec.total_deductions,
+      family_allowance: rec.family_allowance
+    })
+    .eq("employee_id", target.id)
+    .select("id");
+
+  if (error) {
+    stats.errors++;
+    log.push(`  ERROR: "${rec.nome}" (employee_id=${target.id}): ${error.message}`);
+    return;
+  }
+
+  const n = data?.length ?? 0;
+  if (n === 0) {
+    stats.warnings++;
+    log.push(`  WARNING: "${target.name}" matched but 0 payroll rows`);
+    return;
+  }
+
+  stats.matched++;
+  stats.payrollRowsUpdated += n;
+  log.push(`  MATCHED: "${target.name}" <- "${rec.nome}" → updated ${n} rows`);
+}
+
 console.log("Seed payroll: iniciando.");
