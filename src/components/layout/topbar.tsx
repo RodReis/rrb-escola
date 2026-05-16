@@ -50,19 +50,21 @@ export function Topbar({ perfil }: { perfil: SessionProfile }) {
         <BrandBlock />
       </Link>
 
-      <nav className="no-scrollbar flex min-w-0 flex-1 items-center gap-0.5 overflow-x-auto">
-        {primaryItems.map((item) => (
-          <TopbarNavLink key={item.href} href={item.href} label={item.label} icon={item.icon} variant="primary" />
-        ))}
+      <div className="flex min-w-0 flex-1 items-center gap-0.5">
+        <div className="no-scrollbar flex min-w-0 flex-1 items-center gap-0.5 overflow-x-auto">
+          {primaryItems.map((item) => (
+            <TopbarNavLink key={item.href} href={item.href} label={item.label} icon={item.icon} variant="primary" />
+          ))}
+          <span className="mx-1 h-5 w-px shrink-0 bg-white/20" />
+          {secondaryItems.map((item) => (
+            <TopbarNavLink key={item.href} href={item.href} label={item.label} icon={item.icon} variant="secondary" />
+          ))}
+        </div>
         <span className="mx-1 h-5 w-px shrink-0 bg-white/20" />
-        {secondaryItems.map((item) => (
-          <TopbarNavLink key={item.href} href={item.href} label={item.label} icon={item.icon} variant="secondary" />
-        ))}
-      </nav>
+        <SecretariaDropdown />
+      </div>
 
-      <SecretariaDropdown />
-
-      <div className="flex items-center gap-2 ml-auto shrink-0">
+      <div className="flex items-center gap-2 shrink-0">
         {/* Year picker */}
         <button className="inline-flex items-center gap-1.5 h-[30px] px-2.5 rounded-[7px] text-[11.5px] font-medium text-white/70 bg-white/10 border border-white/[0.12] cursor-pointer">
           <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
