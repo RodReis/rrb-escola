@@ -28,6 +28,7 @@ export type PayrollRow = {
   loan_deduction: number | null;
   advance: number | null;
   uniform_value: number | null;
+  gps: number | null;
   dependentes: number | null;
   salario_sem_dsr: number | null;
   aplica_dobra: boolean | null;
@@ -54,6 +55,7 @@ export type PayrollRowJoined = PayrollRow & {
     company_id: string;
     salario_sem_dsr: number | null;
     aplica_dobra: boolean | null;
+    gps_default: number | null;
     companies: { id: string; name: string; cnpj: string } | null;
   } | null;
 };
@@ -75,10 +77,10 @@ export async function listPayrollByMonth(
     .select(`
       id, employee_id, reference_month, base_salary, additional,
       horas_extras, gratificacao, comissao, adicional_noturno, periculosidade, insalubridade, outros_proventos,
-      family_allowance, vale_transporte, vale_alimentacao, outros_descontos, loan_deduction, advance, uniform_value,
+      family_allowance, vale_transporte, vale_alimentacao, outros_descontos, loan_deduction, advance, uniform_value, gps,
       dependentes, salario_sem_dsr, aplica_dobra, total_earnings, inss, ir, inss_manual, ir_manual, total_deductions, net_amount,
       consider_decimo_terceiro, considera_um_tercio_ferias, observations,
-      employees!inner(id, name, cpf, cargo, school_category, ativo, company_id, salario_sem_dsr, aplica_dobra, companies(id, name, cnpj))
+      employees!inner(id, name, cpf, cargo, school_category, ativo, company_id, salario_sem_dsr, aplica_dobra, gps_default, companies(id, name, cnpj))
     `)
     .eq("reference_month", dbMonth);
 
@@ -122,10 +124,10 @@ export async function getPayrollByEmployeeMonth(
     .select(`
       id, employee_id, reference_month, base_salary, additional,
       horas_extras, gratificacao, comissao, adicional_noturno, periculosidade, insalubridade, outros_proventos,
-      family_allowance, vale_transporte, vale_alimentacao, outros_descontos, loan_deduction, advance, uniform_value,
+      family_allowance, vale_transporte, vale_alimentacao, outros_descontos, loan_deduction, advance, uniform_value, gps,
       dependentes, salario_sem_dsr, aplica_dobra, total_earnings, inss, ir, inss_manual, ir_manual, total_deductions, net_amount,
       consider_decimo_terceiro, considera_um_tercio_ferias, observations,
-      employees!inner(id, name, cpf, cargo, school_category, ativo, company_id, hire_date, birth_date, salario_sem_dsr, aplica_dobra, companies(id, name, cnpj))
+      employees!inner(id, name, cpf, cargo, school_category, ativo, company_id, hire_date, birth_date, salario_sem_dsr, aplica_dobra, gps_default, companies(id, name, cnpj))
     `)
     .eq("employee_id", employeeId)
     .eq("reference_month", dbMonth)
