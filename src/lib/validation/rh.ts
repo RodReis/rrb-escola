@@ -47,7 +47,15 @@ export const EmployeeSchema = z.object({
     },
     z.number().min(0)
   ).optional(),
-  aplica_dobra: z.preprocess((v) => v === "on" || v === true, z.boolean()).optional()
+  aplica_dobra: z.preprocess((v) => v === "on" || v === true, z.boolean()).optional(),
+  gps_default: z.preprocess(
+    (v) => {
+      if (v === "" || v == null) return 0;
+      if (typeof v === "string") return Number(v.replace(",", "."));
+      return v;
+    },
+    z.number().min(0)
+  ).optional()
 });
 
 export const EmployeeUpdateSchema = EmployeeSchema.extend({

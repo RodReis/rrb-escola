@@ -29,6 +29,7 @@ export const PayrollSchema = z.object({
   loan_deduction: numericNonNeg,
   advance: numericNonNeg,
   uniform_value: numericNonNeg,
+  gps: numericNonNeg,
   dependentes: z.preprocess(
     (v) => (v === "" || v == null ? 0 : Number(v)),
     z.number().int().min(0)
