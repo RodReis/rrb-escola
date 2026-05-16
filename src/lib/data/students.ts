@@ -2,16 +2,70 @@ import { createServerClient } from "@/lib/supabase/server";
 import { DEFAULT_SCHOOL_ID } from "@/lib/constants";
 import type { StudentSheet } from "@/lib/types";
 
-export async function listStudents() {
+export type StudentFilters = {
+  nome?: string;
+  serieId?: string;
+  turmaId?: string;
+};
+
+export async function listStudents(filters?: StudentFilters) {
   const supabase = await createServerClient();
-  const { data, error } = await supabase
+  let query = supabase
     .from("alunos")
-    .select("id, matricula_codigo, nome, cpf, celular, ativo, matriculas(status, series(nome), turmas(nome))")
+    .select("id, matricula_codigo, nome, cpf, celular, ativo, matriculas(status, serie_id, turma_id, series(id, nome), turmas(id, nome)), responsaveis_aluno(nome, celular, telefone, parentesco)")
     .eq("escola_id", DEFAULT_SCHOOL_ID)
     .order("nome");
 
+  if (filters?.nome) {
+    query = query.ilike("nome", `%${filters.nome}%`);
+  }
+
+  const { data, error } = await query;
   if (error) throw error;
-  return data ?? [];
+
+  let rows = data ?? [];
+
+  if (filters?.serieId || filters?.turmaId) {
+    rows = rows.filter((student) => {
+      const enrollment = student.matriculas?.find((m) => m.status === "ativa") ?? student.matriculas?.[0];
+      if (!enrollment) return false;
+      const serie = Array.isArray(enrollment.series) ? enrollment.series[0] : enrollment.series;
+      const turma = Array.isArray(enrollment.turmas) ? enrollment.turmas[0] : enrollment.turmas;
+      if (filters.serieId && serie?.id !== filters.serieId) return false;
+      if (filters.turmaId && turma?.id !== filters.turmaId) return false;
+      return true;
+    });
+  }
+
+  return rows;
+}
+
+export async function getStudentFilterOptions() {
+  const supabase = await createServerClient();
+  const [seriesRes, turmasRes] = await Promise.all([
+    supabase
+      .from("series")
+      .select("id, nome, segmento, ordem")
+      .eq("escola_id", DEFAULT_SCHOOL_ID)
+      .eq("ativo", true)
+      .not("segmento", "is", null)
+      .order("ordem"),
+    supabase
+      .from("turmas")
+      .select("id, nome, serie_id, ano_letivo")
+      .eq("escola_id", DEFAULT_SCHOOL_ID)
+      .eq("ativo", true)
+      .eq("ano_letivo", new Date().getFullYear())
+      .order("nome"),
+  ]);
+
+  if (seriesRes.error) throw seriesRes.error;
+  if (turmasRes.error) throw turmasRes.error;
+
+  return {
+    series: seriesRes.data ?? [],
+    turmas: turmasRes.data ?? [],
+  };
 }
 
 export async function getStudentSheet(id: string) {

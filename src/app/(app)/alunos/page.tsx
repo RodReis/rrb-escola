@@ -4,7 +4,8 @@ import { Badge } from "@/components/ui/badge";
 import { ButtonLink } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { ExportStudentsReportButton } from "@/components/pdf/export-students-report-button";
-import { getStudentsReport, listStudents } from "@/lib/data/students";
+import { StudentFilters } from "@/components/students/student-filters";
+import { getStudentsReport, listStudents, getStudentFilterOptions } from "@/lib/data/students";
 import { toggleStudentAction } from "@/lib/actions/students";
 
 type EnrollmentRef = {
@@ -21,8 +22,23 @@ function activeEnrollment(enrollments: EnrollmentRef[] | null | undefined) {
   return enrollments?.find((item) => item.status === "ativa") ?? enrollments?.[0] ?? null;
 }
 
-export default async function StudentsPage() {
-  const [students, reportRows] = await Promise.all([listStudents(), getStudentsReport()]);
+export default async function StudentsPage({
+  searchParams,
+}: {
+  searchParams: Promise<Record<string, string>>;
+}) {
+  const params = await searchParams;
+  const filters = {
+    nome:    params.nome    || undefined,
+    serieId: params.serie   || undefined,
+    turmaId: params.turma   || undefined,
+  };
+
+  const [students, reportRows, filterOptions] = await Promise.all([
+    listStudents(filters),
+    getStudentsReport(),
+    getStudentFilterOptions(),
+  ]);
   const activeStudents = students.filter((student) => student.ativo).length;
   const inactiveStudents = students.length - activeStudents;
   const activeEnrollments = students.filter((student) => student.matriculas?.some((item) => item.status === "ativa")).length;
@@ -85,30 +101,33 @@ export default async function StudentsPage() {
       </section>
 
       <section className="overflow-hidden rounded-panel border border-line bg-surface shadow-soft">
-        <div className="flex flex-col gap-2 border-b border-line px-5 py-4 sm:flex-row sm:items-center sm:justify-between">
-          <div>
-            <h2 className="text-lg font-black text-ink">Lista de alunos</h2>
-            <p className="text-sm text-ink/60">Consulta rapida e acesso direto a ficha cadastral.</p>
+        <div className="flex flex-col gap-4 border-b border-line px-5 py-4">
+          <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+            <div>
+              <h2 className="text-lg font-black text-ink">Lista de alunos</h2>
+              <p className="text-sm text-ink/60">Consulta rapida e acesso direto a ficha cadastral.</p>
+            </div>
+            <span className="text-sm font-medium text-ink/50">{students.length} aluno{students.length !== 1 ? "s" : ""}</span>
           </div>
+          <StudentFilters series={filterOptions.series} turmas={filterOptions.turmas} />
         </div>
 
         <div className="overflow-x-auto">
-          <table className="w-full min-w-[900px] text-left text-sm">
+          <table className="w-full min-w-[780px] text-left text-sm">
             <thead className="bg-muted text-xs font-black uppercase tracking-[0.1em] text-ink/62">
               <tr>
-                <th className="px-5 py-3">Matricula</th>
+                <th className="w-[110px] px-5 py-3">Matricula</th>
                 <th className="px-5 py-3">Aluno</th>
-                <th className="px-5 py-3">Serie / Turma</th>
-                <th className="px-5 py-3">CPF</th>
-                <th className="px-5 py-3">Celular</th>
-                <th className="px-5 py-3">Status</th>
-                <th className="px-5 py-3 text-right">Acoes</th>
+                <th className="w-[180px] px-5 py-3">Serie / Turma</th>
+                <th className="w-[160px] whitespace-nowrap px-5 py-3">Responsável</th>
+                <th className="w-[90px] px-5 py-3">Status</th>
+                <th className="w-[120px] px-5 py-3 text-right">Acoes</th>
               </tr>
             </thead>
             <tbody>
               {students.length === 0 ? (
                 <tr>
-                  <td colSpan={7} className="px-5 py-8 text-center text-sm font-medium text-ink/60">
+                  <td colSpan={6} className="px-5 py-8 text-center text-sm font-medium text-ink/60">
                     Nenhum aluno cadastrado.
                   </td>
                 </tr>
@@ -120,23 +139,39 @@ export default async function StudentsPage() {
 
                 return (
                   <tr key={student.id} className="border-t border-line transition hover:bg-muted/60">
-                    <td className="px-5 py-4 font-black text-brand">{student.matricula_codigo}</td>
+                    <td className="whitespace-nowrap px-5 py-4 font-black text-brand">{student.matricula_codigo}</td>
                     <td className="px-5 py-4">
-                      <Link href={`/alunos/${student.id}`} className="font-black text-ink hover:text-brand">
+                      <Link href={`/alunos/${student.id}`} className="font-black uppercase text-ink hover:text-brand">
                         {student.nome}
                       </Link>
+                      {student.cpf && (
+                        <span className="block text-xs font-medium text-ink/45">{student.cpf}</span>
+                      )}
                     </td>
-                    <td className="px-5 py-4 text-ink/70">
+                    <td className="px-5 py-4">
                       {series?.nome || turma?.nome ? (
-                        <span>
-                          {series?.nome ?? "Sem serie"} <span className="text-ink/35">/</span> {turma?.nome ?? "Sem turma"}
+                        <span className="flex flex-col gap-0.5">
+                          <span className="font-medium uppercase text-ink/80">{series?.nome ?? "Sem serie"}</span>
+                          <span className="text-xs uppercase text-ink/45">{turma?.nome ?? "Sem turma"}</span>
                         </span>
                       ) : (
                         <span className="text-ink/38">Sem matricula ativa</span>
                       )}
                     </td>
-                    <td className="px-5 py-4 text-ink/70">{student.cpf || "-"}</td>
-                    <td className="px-5 py-4 text-ink/70">{student.celular || "-"}</td>
+                    <td className="px-5 py-4">
+                      {(() => {
+                        const resp = Array.isArray(student.responsaveis_aluno)
+                          ? student.responsaveis_aluno[0]
+                          : null;
+                        if (!resp) return <span className="text-ink/38">-</span>;
+                        return (
+                          <span className="flex flex-col gap-0.5">
+                            <span className="font-medium uppercase text-ink/80">{resp.nome}</span>
+                            <span className="whitespace-nowrap text-xs text-ink/50">{resp.celular || resp.telefone || "-"}</span>
+                          </span>
+                        );
+                      })()}
+                    </td>
                     <td className="px-5 py-4">
                       <Badge tone={student.ativo ? "green" : "red"}>{student.ativo ? "Ativo" : "Inativo"}</Badge>
                     </td>
