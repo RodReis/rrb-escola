@@ -220,4 +220,55 @@ async function processRow(rec, employeeMap, log, stats) {
   log.push(`  MATCHED: "${target.name}" <- "${rec.nome}" → updated ${n} rows`);
 }
 
-console.log("Seed payroll: iniciando.");
+const startedAt = new Date().toISOString();
+const log = [`[${startedAt}] START`];
+const stats = {
+  filesProcessed: 0,
+  rowsParsed: 0,
+  matched: 0,
+  notFound: 0,
+  ambiguous: 0,
+  warnings: 0,
+  errors: 0,
+  payrollRowsUpdated: 0
+};
+
+const employeeMap = await loadEmployees();
+log.push(`Employees carregados: ${employeeMap.size} chaves únicas.`);
+
+for (const filePath of FILES) {
+  if (!existsSync(resolve(process.cwd(), filePath))) {
+    console.error(`Arquivo ausente: ${filePath}`);
+    process.exit(1);
+  }
+  log.push(`FILE: ${basename(filePath)}`);
+  const { rows, skippedSheets } = await parseFile(filePath);
+  for (const s of skippedSheets) {
+    log.push(`  SHEET_SKIPPED: "${s.sheet}" (${s.reason})`);
+  }
+  let currentSheet = "";
+  for (const rec of rows) {
+    if (rec.sheet !== currentSheet) {
+      log.push(`  SHEET: "${rec.sheet}"`);
+      currentSheet = rec.sheet;
+    }
+    await processRow(rec, employeeMap, log, stats);
+  }
+  stats.filesProcessed++;
+}
+
+const doneAt = new Date().toISOString();
+log.push("SUMMARY:");
+log.push(`  filesProcessed=${stats.filesProcessed}`);
+log.push(`  rowsParsed=${stats.rowsParsed}`);
+log.push(`  matched=${stats.matched}`);
+log.push(`  notFound=${stats.notFound}`);
+log.push(`  ambiguous=${stats.ambiguous}`);
+log.push(`  warnings=${stats.warnings}`);
+log.push(`  errors=${stats.errors}`);
+log.push(`  payrollRowsUpdated=${stats.payrollRowsUpdated}`);
+log.push(`[${doneAt}] DONE`);
+
+writeFileSync("scripts/payroll_seed_log.txt", log.join("\n") + "\n", "utf8");
+console.log(log.slice(-11).join("\n"));
+console.log("Log gravado em scripts/payroll_seed_log.txt");

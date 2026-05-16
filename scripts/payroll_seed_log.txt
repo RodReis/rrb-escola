@@ -1,0 +1,101 @@
+[2026-05-16T18:40:42.857Z] START
+Employees carregados: 61 chaves únicas.
+FILE: 04º F. pg 2026 (Escola Pinguinho ).xlsx
+  SHEET_SKIPPED: "DESCONTOS" (desconto)
+  SHEET: "Professores"
+  MATCHED: "Ana Flávia de Jesus Luciano" <- "Ana Flávia de Jesus Luciano" → updated 2 rows
+  MATCHED: "Ângela Maria dos S. Gonçalves" <- "Ângela Maria dos S. Gonçalves" → updated 2 rows
+  MATCHED: "Carlene R. da Cunha Manrique" <- "Carlene R. da Cunha Manrique" → updated 2 rows
+  AMBIGUOUS: "Elaine Batista Oliveira" → ids=[36dc92b1-40c6-49a6-82ac-a239cc2db3fe, e5e22848-3a0f-4850-b8f7-32ae3b60c936]
+  MATCHED: "Ellizainne Janine Silva" <- "Ellizainne Janine Silva" → updated 2 rows
+  MATCHED: "Evelyn Emylly Moreira dos Reis" <- "Evelyn Emylly Moreira dos Reis" → updated 2 rows
+  MATCHED: "Hellen Alves Lemes" <- "Hellen Alves Lemes" → updated 2 rows
+  MATCHED: "Janete de Freitas Rodrigues" <- "Janete de Freitas Rodrigues" → updated 2 rows
+  MATCHED: "Lucilene Maria Montelo" <- "Lucilene Maria Montelo" → updated 2 rows
+  AMBIGUOUS: "Maria Angélica de Araújo" → ids=[4bd36eba-f30d-4131-8c0d-19092c412a16, f2876b31-360a-47c8-9dc2-3d1828c177fa]
+  MATCHED: "Maria da Conceição Bezerra da Silva" <- "Maria da Conceição Bezerra da Silva" → updated 2 rows
+  MATCHED: "Mariana Alves de Deus" <- "Mariana Alves de Deus" → updated 2 rows
+  MATCHED: "Mayara Lorrayne da Silva" <- "Mayara Lorrayne da Silva" → updated 2 rows
+  NOT_FOUND: "Sthéfanny Guimarães" (file=04º F. pg 2026 (Escola Pinguinho ).xlsx, sheet=Professores)
+  NOT_FOUND: "Victória Karoline de Oliveira Menezes" (file=04º F. pg 2026 (Escola Pinguinho ).xlsx, sheet=Professores)
+  NOT_FOUND: "TOTAL = = >" (file=04º F. pg 2026 (Escola Pinguinho ).xlsx, sheet=Professores)
+  SHEET: "Funcionários"
+  NOT_FOUND: "Joseane Silva Leite" (file=04º F. pg 2026 (Escola Pinguinho ).xlsx, sheet=Funcionários)
+  MATCHED: "Keila Regina de Oliveira" <- "Keila Regina de Oliveira" → updated 2 rows
+  MATCHED: "Luciany Maria da Silva" <- "Luciany Maria da Silva" → updated 2 rows
+  MATCHED: "Maria Márcia B. Souza" <- "Maria Márcia B. Souza" → updated 2 rows
+  MATCHED: "Reginalda Canuto Machado Silva" <- "Reginalda Canuto Machado Silva" → updated 2 rows
+  MATCHED: "Rossania Brigida R.Ribeiro" <- "Rossania Brigida R.Ribeiro" → updated 2 rows
+  MATCHED: "Selma dos Reis Teixeira Gonçalves" <- "Selma dos Reis Teixeira Gonçalves" → updated 2 rows
+  MATCHED: "Solange Jesus Koga Lima" <- "Solange Jesus Koga Lima" → updated 2 rows
+  MATCHED: "Wânia Marques Silva" <- "Wânia Marques Silva" → updated 2 rows
+  NOT_FOUND: "TOTAL = = >" (file=04º F. pg 2026 (Escola Pinguinho ).xlsx, sheet=Funcionários)
+  NOT_FOUND: "Selma 1 hora extra por dia" (file=04º F. pg 2026 (Escola Pinguinho ).xlsx, sheet=Funcionários)
+  SHEET: "F. FUND. II"
+  MATCHED: "Aurio Velozo dos Santos Godoy" <- "Aurio Velozo dos Santos Godoy" → updated 2 rows
+  AMBIGUOUS: "Elaine Batista Oliveira" → ids=[36dc92b1-40c6-49a6-82ac-a239cc2db3fe, e5e22848-3a0f-4850-b8f7-32ae3b60c936]
+  MATCHED: "Jean Divino de Jesus" <- "Jean Divino de Jesus" → updated 2 rows
+  AMBIGUOUS: "Maria Angélica de Araújo" → ids=[4bd36eba-f30d-4131-8c0d-19092c412a16, f2876b31-360a-47c8-9dc2-3d1828c177fa]
+  MATCHED: "Pedro Leandro Oliveira Souza" <- "Pedro Leandro Oliveira Souza" → updated 2 rows
+  MATCHED: "Tatiana Vieira da Silva" <- "Tatiana Vieira da Silva" → updated 2 rows
+  NOT_FOUND: "Valdirene da Silva Cunha" (file=04º F. pg 2026 (Escola Pinguinho ).xlsx, sheet=F. FUND. II)
+  NOT_FOUND: "TOTAIS = = >" (file=04º F. pg 2026 (Escola Pinguinho ).xlsx, sheet=F. FUND. II)
+FILE: 04ºF. pg 2026 (Colegio Integrado).xlsx
+  SHEET_SKIPPED: "DESCONTOS" (desconto)
+  SHEET: "PROFESSORES"
+  AMBIGUOUS: "Carolina Cardoso Miranda" → ids=[3bfd931a-93a5-4998-bff1-37142d88f329, 55c62250-1b2d-4d0c-8172-168edce94c06]
+  MATCHED: "Inês Vieira de Souza" <- "Inês Vieira de Souza" → updated 2 rows
+  MATCHED: "Janaína Maria Nunes" <- "Janaína Maria Nunes" → updated 2 rows
+  MATCHED: "Juliana Vieira Jorge" <- "Juliana Vieira Jorge" → updated 2 rows
+  MATCHED: "Laís Ramos Fernandes" <- "Laís Ramos Fernandes" → updated 2 rows
+  MATCHED: "Láyslla Roberta dos Santos Gonçalves" <- "Láyslla Roberta dos Santos Gonçalves" → updated 2 rows
+  MATCHED: "Leia Damasceno de Andrade Apolinario" <- "Leia Damasceno de Andrade Apolinario" → updated 2 rows
+  MATCHED: "Miramar Barbosa Silva" <- "Miramar Barbosa Silva" → updated 2 rows
+  MATCHED: "Samantha Silva Amorim" <- "Samantha Silva Amorim" → updated 2 rows
+  NOT_FOUND: "TOTAL" (file=04ºF. pg 2026 (Colegio Integrado).xlsx, sheet=PROFESSORES)
+  SHEET: "ADMINISTRATIVO"
+  MATCHED: "Benedito Rodrigues borges" <- "Benedito Rodrigues borges" → updated 2 rows
+  MATCHED: "Bruna Rocha Ferreira" <- "Bruna Rocha Ferreira" → updated 2 rows
+  MATCHED: "Eduarda Lais Silva Candido" <- "Eduarda Lais Silva Candido" → updated 2 rows
+  MATCHED: "Lucimar Souza Silva" <- "Lucimar Souza Silva" → updated 2 rows
+  MATCHED: "Rosângela Maria Dias" <- "Rosângela Maria Dias" → updated 2 rows
+  MATCHED: "Selma Luiz de Paula" <- "Selma Luiz de Paula" → updated 2 rows
+  MATCHED: "Vanessa Alves Soares" <- "Vanessa Alves Soares" → updated 2 rows
+  MATCHED: "Any Karolliny Rodrigues Siqueira" <- "Any Karolliny Rodrigues Siqueira" → updated 2 rows
+  MATCHED: "Suzane dos Santos Martins" <- "Suzane dos Santos Martins" → updated 2 rows
+  NOT_FOUND: "TOTAL" (file=04ºF. pg 2026 (Colegio Integrado).xlsx, sheet=ADMINISTRATIVO)
+  NOT_FOUND: "Luiza Taveira (professora de música)" (file=04ºF. pg 2026 (Colegio Integrado).xlsx, sheet=ADMINISTRATIVO)
+  NOT_FOUND: "Graziela nova aux Jean PIX CPF 010.029.231-31" (file=04ºF. pg 2026 (Colegio Integrado).xlsx, sheet=ADMINISTRATIVO)
+  NOT_FOUND: "Luciany PIX CEL 62 99647-6893" (file=04ºF. pg 2026 (Colegio Integrado).xlsx, sheet=ADMINISTRATIVO)
+  NOT_FOUND: "Thais (nova prof apoio Inf 1) PIX e-mail thaisprissouza@gmail.com" (file=04ºF. pg 2026 (Colegio Integrado).xlsx, sheet=ADMINISTRATIVO)
+  NOT_FOUND: "KATIA REGINA PEREIRA MARTINS (prof 2º A e reforço) PIX CPF 043.523.374-20" (file=04ºF. pg 2026 (Colegio Integrado).xlsx, sheet=ADMINISTRATIVO)
+  NOT_FOUND: "PIX POLIANA DA CRUZ SILVA CPF 036.332.201-94" (file=04ºF. pg 2026 (Colegio Integrado).xlsx, sheet=ADMINISTRATIVO)
+  NOT_FOUND: "PIX BENEDITO RODRIGUES CEL 62 99105-7639" (file=04ºF. pg 2026 (Colegio Integrado).xlsx, sheet=ADMINISTRATIVO)
+  NOT_FOUND: "PIX DEBORA MARTINS CEL: 62991012036" (file=04ºF. pg 2026 (Colegio Integrado).xlsx, sheet=ADMINISTRATIVO)
+  SHEET: "ENSINO MÉDIO"
+  MATCHED: "Ana Livia Lourenço Ferreira" <- "Ana Livia Lourenço Ferreira" → updated 2 rows
+  MATCHED: "Carlos Henrique Camilo de Matos" <- "Carlos Henrique Camilo de Matos" → updated 2 rows
+  MATCHED: "Fernando Silva Olimpio" <- "Fernando Silva Olimpio" → updated 2 rows
+  MATCHED: "Flancley da Silva Sá" <- "Flancley da Silva Sá" → updated 2 rows
+  MATCHED: "Gabriel Ferreira e Silva" <- "Gabriel Ferreira e Silva" → updated 2 rows
+  MATCHED: "Haniery Marques Fernandes" <- "Haniery Marques Fernandes" → updated 2 rows
+  MATCHED: "Jordana Cristina Silava Gaioso" <- "Jordana Cristina Silava Gaioso" → updated 2 rows
+  MATCHED: "Letícia Dias de Castro" <- "Letícia Dias de Castro" → updated 2 rows
+  MATCHED: "Pedro Junio Dias Rosa" <- "Pedro Junio Dias Rosa" → updated 2 rows
+  MATCHED: "Renato Dias de Oliveira" <- "Renato Dias de Oliveira" → updated 2 rows
+  MATCHED: "Ricardo Alves Martins" <- "Ricardo Alves Martins" → updated 2 rows
+  MATCHED: "Saillen Christinna Pereira Couto" <- "Saillen Christinna Pereira Couto" → updated 2 rows
+  MATCHED: "Thais Priscilla Souza" <- "Thais Priscilla Souza" → updated 2 rows
+  MATCHED: "Vinicius Ferreira Barbosa" <- "Vinicius Ferreira Barbosa" → updated 2 rows
+  MATCHED: "CARLOS LEONARDO ALVES SOARES" <- "CARLOS LEONARDO ALVES SOARES" → updated 2 rows
+  NOT_FOUND: "TOTAL" (file=04ºF. pg 2026 (Colegio Integrado).xlsx, sheet=ENSINO MÉDIO)
+SUMMARY:
+  filesProcessed=2
+  rowsParsed=79
+  matched=55
+  notFound=19
+  ambiguous=5
+  warnings=0
+  errors=0
+  payrollRowsUpdated=110
+[2026-05-16T18:40:43.305Z] DONE
