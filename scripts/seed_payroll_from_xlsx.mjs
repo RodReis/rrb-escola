@@ -139,13 +139,13 @@ async function parseFile(filePath) {
         file: basename(filePath),
         sheet: ws.name,
         nome,
-        additional: round2(colMap.additional ? cellNumber(row.getCell(colMap.additional).value) : 0),
-        inss: round2(colMap.inss ? cellNumber(row.getCell(colMap.inss).value) : 0),
-        ir: round2(colMap.ir ? cellNumber(row.getCell(colMap.ir).value) : 0),
-        loan_deduction: round2(colMap.loan_deduction ? cellNumber(row.getCell(colMap.loan_deduction).value) : 0),
-        advance: round2(colMap.advance ? cellNumber(row.getCell(colMap.advance).value) : 0),
-        total_deductions: round2(colMap.total_deductions ? cellNumber(row.getCell(colMap.total_deductions).value) : 0),
-        family_allowance: round2(colMap.family_allowance ? cellNumber(row.getCell(colMap.family_allowance).value) : 0)
+        additional: round2(colMap.additional !== undefined ? cellNumber(row.getCell(colMap.additional).value) : 0),
+        inss: round2(colMap.inss !== undefined ? cellNumber(row.getCell(colMap.inss).value) : 0),
+        ir: round2(colMap.ir !== undefined ? cellNumber(row.getCell(colMap.ir).value) : 0),
+        loan_deduction: round2(colMap.loan_deduction !== undefined ? cellNumber(row.getCell(colMap.loan_deduction).value) : 0),
+        advance: round2(colMap.advance !== undefined ? cellNumber(row.getCell(colMap.advance).value) : 0),
+        total_deductions: round2(colMap.total_deductions !== undefined ? cellNumber(row.getCell(colMap.total_deductions).value) : 0),
+        family_allowance: round2(colMap.family_allowance !== undefined ? cellNumber(row.getCell(colMap.family_allowance).value) : 0)
       };
       out.push(rec);
     }
