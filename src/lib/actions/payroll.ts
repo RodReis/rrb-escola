@@ -32,6 +32,7 @@ function readPayrollForm(formData: FormData) {
     outros_descontos: get("outros_descontos"),
     loan_deduction: get("loan_deduction"),
     advance: get("advance"),
+    gps: get("gps"),
     uniform_value: get("uniform_value"),
     dependentes: get("dependentes"),
     consider_decimo_terceiro: get("consider_decimo_terceiro"),
@@ -93,6 +94,7 @@ export async function upsertPayrollAction(formData: FormData) {
     outros_descontos: data.outros_descontos,
     loan_deduction: data.loan_deduction,
     advance: data.advance,
+    gps: data.gps,
     uniform_value: data.uniform_value,
     dependentes: data.dependentes
   };
@@ -124,6 +126,7 @@ export async function upsertPayrollAction(formData: FormData) {
         outros_descontos: data.outros_descontos,
         loan_deduction: data.loan_deduction,
         advance: data.advance,
+        gps: data.gps,
         uniform_value: data.uniform_value,
         dependentes: data.dependentes,
         inss: computed.inss,
