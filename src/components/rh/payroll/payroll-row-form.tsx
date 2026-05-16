@@ -29,6 +29,7 @@ type FormState = {
   outros_descontos: number;
   loan_deduction: number;
   advance: number;
+  gps: number;
   uniform_value: number;
   dependentes: number;
   salario_sem_dsr: number;
@@ -65,6 +66,7 @@ export function PayrollRowForm({ row, brackets, disabled }: Props) {
       outros_descontos: num(row.outros_descontos),
       loan_deduction: num(row.loan_deduction),
       advance: num(row.advance),
+      gps: num(row.gps ?? row.employees?.gps_default ?? 0),
       uniform_value: num(row.uniform_value),
       dependentes: num(row.dependentes),
       salario_sem_dsr: num(
@@ -106,6 +108,7 @@ export function PayrollRowForm({ row, brackets, disabled }: Props) {
     outros_descontos: state.outros_descontos,
     loan_deduction: state.loan_deduction,
     advance: state.advance,
+    gps: state.gps,
     uniform_value: state.uniform_value,
     dependentes: state.dependentes
   };
@@ -250,6 +253,7 @@ export function PayrollRowForm({ row, brackets, disabled }: Props) {
           <NumberField label="Dependentes (IR)" name="dependentes" value={state.dependentes} onChange={setNum("dependentes")} step={1} integer disabled={disabled} />
           <NumberField label="Empréstimo" name="loan_deduction" value={state.loan_deduction} onChange={setNum("loan_deduction")} disabled={disabled} />
           <NumberField label="Adiantamento" name="advance" value={state.advance} onChange={setNum("advance")} disabled={disabled} />
+          <NumberField label="GPS" name="gps" value={state.gps} onChange={setNum("gps")} disabled={disabled} />
           <NumberField label="Vale transporte" name="vale_transporte" value={state.vale_transporte} onChange={setNum("vale_transporte")} disabled={disabled} />
           <NumberField label="Vale alimentação" name="vale_alimentacao" value={state.vale_alimentacao} onChange={setNum("vale_alimentacao")} disabled={disabled} />
           <NumberField label="Outros descontos" name="outros_descontos" value={state.outros_descontos} onChange={setNum("outros_descontos")} disabled={disabled} />
