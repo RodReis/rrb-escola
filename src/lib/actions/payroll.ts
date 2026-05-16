@@ -1,0 +1,296 @@
+"use server";
+
+import { redirect } from "next/navigation";
+import { revalidatePath } from "next/cache";
+import { requirePerfil } from "@/lib/auth/session";
+import { createServerClient } from "@/lib/supabase/server";
+import { PayrollSchema } from "@/lib/validation/payroll";
+import { calcAll, type PayrollInput as CalcInput } from "@/lib/payroll/calculators";
+import { getBracketsForMonth } from "@/lib/data/brackets";
+import { dbToUrlMonth, urlToDbMonth, shiftUrlMonth } from "@/lib/payroll/date-utils";
+
+function firstError(error: { issues: { message: string }[] }) {
+  return encodeURIComponent(error.issues[0]?.message ?? "Dados inválidos");
+}
+
+function readPayrollForm(formData: FormData) {
+  const get = (k: string) => formData.get(k);
+  return {
+    employee_id: String(get("employee_id") ?? ""),
+    reference_month: String(get("reference_month") ?? ""),
+    base_salary: get("base_salary"),
+    horas_extras: get("horas_extras"),
+    gratificacao: get("gratificacao"),
+    comissao: get("comissao"),
+    adicional_noturno: get("adicional_noturno"),
+    periculosidade: get("periculosidade"),
+    insalubridade: get("insalubridade"),
+    outros_proventos: get("outros_proventos"),
+    family_allowance: get("family_allowance"),
+    vale_transporte: get("vale_transporte"),
+    vale_alimentacao: get("vale_alimentacao"),
+    outros_descontos: get("outros_descontos"),
+    loan_deduction: get("loan_deduction"),
+    advance: get("advance"),
+    uniform_value: get("uniform_value"),
+    dependentes: get("dependentes"),
+    consider_decimo_terceiro: get("consider_decimo_terceiro"),
+    considera_um_tercio_ferias: get("considera_um_tercio_ferias"),
+    inss_manual: get("inss_manual"),
+    ir_manual: get("ir_manual"),
+    inss: get("inss"),
+    ir: get("ir"),
+    observations: get("observations")
+  };
+}
+
+export async function upsertPayrollAction(formData: FormData) {
+  await requirePerfil(["admin", "financeiro"]);
+
+  const parsed = PayrollSchema.safeParse(readPayrollForm(formData));
+  if (!parsed.success) {
+    const urlMonth = dbToUrlMonth(String(formData.get("reference_month") ?? ""));
+    const empId = String(formData.get("employee_id") ?? "");
+    redirect(`/rh/folha/${urlMonth}/${empId}?erro=${firstError(parsed.error)}`);
+  }
+  const data = parsed.data;
+
+  const supabase = await createServerClient();
+
+  // Verifica period status
+  const { data: period } = await supabase
+    .from("payroll_periods")
+    .select("status")
+    .eq("reference_month", data.reference_month)
+    .maybeSingle();
+  if (period?.status === "fechado") {
+    const urlMonth = dbToUrlMonth(data.reference_month);
+    redirect(`/rh/folha/${urlMonth}/${data.employee_id}?erro=${encodeURIComponent("Período fechado")}`);
+  }
+
+  // Recalc server-side
+  const brackets = await getBracketsForMonth(data.reference_month);
+  const calcInput: CalcInput = {
+    base_salary: data.base_salary,
+    horas_extras: data.horas_extras,
+    gratificacao: data.gratificacao,
+    comissao: data.comissao,
+    adicional_noturno: data.adicional_noturno,
+    periculosidade: data.periculosidade,
+    insalubridade: data.insalubridade,
+    outros_proventos: data.outros_proventos,
+    family_allowance: data.family_allowance,
+    vale_transporte: data.vale_transporte,
+    vale_alimentacao: data.vale_alimentacao,
+    outros_descontos: data.outros_descontos,
+    loan_deduction: data.loan_deduction,
+    advance: data.advance,
+    uniform_value: data.uniform_value,
+    dependentes: data.dependentes
+  };
+  const computed = calcAll(calcInput, brackets, {
+    manualInss: data.inss_manual && data.inss != null ? data.inss : undefined,
+    manualIr: data.ir_manual && data.ir != null ? data.ir : undefined
+  });
+
+  // Upsert via unique (employee_id, reference_month)
+  const { error } = await supabase
+    .from("payroll")
+    .upsert(
+      {
+        employee_id: data.employee_id,
+        reference_month: data.reference_month,
+        base_salary: data.base_salary,
+        horas_extras: data.horas_extras,
+        gratificacao: data.gratificacao,
+        comissao: data.comissao,
+        adicional_noturno: data.adicional_noturno,
+        periculosidade: data.periculosidade,
+        insalubridade: data.insalubridade,
+        outros_proventos: data.outros_proventos,
+        family_allowance: data.family_allowance,
+        vale_transporte: data.vale_transporte,
+        vale_alimentacao: data.vale_alimentacao,
+        outros_descontos: data.outros_descontos,
+        loan_deduction: data.loan_deduction,
+        advance: data.advance,
+        uniform_value: data.uniform_value,
+        dependentes: data.dependentes,
+        inss: computed.inss,
+        ir: computed.ir,
+        inss_manual: data.inss_manual ?? false,
+        ir_manual: data.ir_manual ?? false,
+        total_earnings: computed.total_earnings,
+        total_deductions: computed.total_deductions,
+        net_amount: computed.net_amount,
+        consider_decimo_terceiro: data.consider_decimo_terceiro ?? false,
+        considera_um_tercio_ferias: data.considera_um_tercio_ferias ?? false,
+        observations: data.observations ?? null
+      },
+      { onConflict: "employee_id,reference_month" }
+    );
+
+  if (error) {
+    const urlMonth = dbToUrlMonth(data.reference_month);
+    redirect(`/rh/folha/${urlMonth}/${data.employee_id}?erro=${encodeURIComponent(error.message)}`);
+  }
+
+  const urlMonth = dbToUrlMonth(data.reference_month);
+  revalidatePath(`/rh/folha/${urlMonth}`);
+  revalidatePath(`/rh/folha/${urlMonth}/${data.employee_id}`);
+  redirect(`/rh/folha/${urlMonth}/${data.employee_id}?ok=salvo`);
+}
+
+export async function closePeriodAction(formData: FormData) {
+  const session = await requirePerfil(["admin"]);
+  const dbMonth = urlToDbMonth(String(formData.get("mes") ?? ""));
+  const supabase = await createServerClient();
+
+  const { error } = await supabase
+    .from("payroll_periods")
+    .upsert(
+      {
+        reference_month: dbMonth,
+        status: "fechado",
+        closed_at: new Date().toISOString(),
+        closed_by: session.user.id
+      },
+      { onConflict: "reference_month" }
+    );
+  if (error) {
+    redirect(`/rh/folha/${dbToUrlMonth(dbMonth)}?erro=${encodeURIComponent(error.message)}`);
+  }
+  revalidatePath(`/rh/folha/${dbToUrlMonth(dbMonth)}`);
+  redirect(`/rh/folha/${dbToUrlMonth(dbMonth)}?ok=fechado`);
+}
+
+export async function reopenPeriodAction(formData: FormData) {
+  await requirePerfil(["admin"]);
+  const dbMonth = urlToDbMonth(String(formData.get("mes") ?? ""));
+  const supabase = await createServerClient();
+
+  const { error } = await supabase
+    .from("payroll_periods")
+    .update({ status: "aberto", closed_at: null, closed_by: null })
+    .eq("reference_month", dbMonth);
+  if (error) {
+    redirect(`/rh/folha/${dbToUrlMonth(dbMonth)}?erro=${encodeURIComponent(error.message)}`);
+  }
+  revalidatePath(`/rh/folha/${dbToUrlMonth(dbMonth)}`);
+  redirect(`/rh/folha/${dbToUrlMonth(dbMonth)}?ok=reaberto`);
+}
+
+export async function generateMonthAction(formData: FormData) {
+  await requirePerfil(["admin", "financeiro"]);
+  const urlMonth = String(formData.get("mes") ?? "");
+  const dbMonth = urlToDbMonth(urlMonth);
+  const prevDbMonth = urlToDbMonth(shiftUrlMonth(urlMonth, -1));
+
+  const supabase = await createServerClient();
+
+  // Ensure period row + check status
+  const { data: period } = await supabase
+    .from("payroll_periods")
+    .select("status")
+    .eq("reference_month", dbMonth)
+    .maybeSingle();
+  if (period?.status === "fechado") {
+    redirect(`/rh/folha/${urlMonth}?erro=${encodeURIComponent("Mês está fechado")}`);
+  }
+  if (!period) {
+    await supabase.from("payroll_periods").insert({ reference_month: dbMonth, status: "aberto" });
+  }
+
+  const { data: employees, error: empErr } = await supabase
+    .from("employees")
+    .select("id")
+    .eq("ativo", true);
+  if (empErr) redirect(`/rh/folha/${urlMonth}?erro=${encodeURIComponent(empErr.message)}`);
+
+  // Pull prev payrolls in one query
+  const { data: prevRows } = await supabase
+    .from("payroll")
+    .select("employee_id, base_salary, dependentes, vale_transporte, vale_alimentacao")
+    .eq("reference_month", prevDbMonth);
+  const prevMap = new Map<string, { base_salary: number; dependentes: number; vale_transporte: number; vale_alimentacao: number }>();
+  for (const p of prevRows ?? []) {
+    prevMap.set(p.employee_id, {
+      base_salary: Number(p.base_salary ?? 0),
+      dependentes: Number(p.dependentes ?? 0),
+      vale_transporte: Number(p.vale_transporte ?? 0),
+      vale_alimentacao: Number(p.vale_alimentacao ?? 0)
+    });
+  }
+
+  const rows = (employees ?? []).map((e) => {
+    const prev = prevMap.get(e.id);
+    return {
+      employee_id: e.id,
+      reference_month: dbMonth,
+      base_salary: prev?.base_salary ?? 0,
+      dependentes: prev?.dependentes ?? 0,
+      vale_transporte: prev?.vale_transporte ?? 0,
+      vale_alimentacao: prev?.vale_alimentacao ?? 0,
+      total_earnings: prev?.base_salary ?? 0,
+      total_deductions: 0,
+      net_amount: prev?.base_salary ?? 0
+    };
+  });
+
+  if (rows.length > 0) {
+    const { error } = await supabase
+      .from("payroll")
+      .upsert(rows, { onConflict: "employee_id,reference_month", ignoreDuplicates: true });
+    if (error) redirect(`/rh/folha/${urlMonth}?erro=${encodeURIComponent(error.message)}`);
+  }
+
+  revalidatePath(`/rh/folha/${urlMonth}`);
+  redirect(`/rh/folha/${urlMonth}?ok=gerada`);
+}
+
+export async function syncNewEmployeesAction(formData: FormData) {
+  await requirePerfil(["admin", "financeiro"]);
+  const urlMonth = String(formData.get("mes") ?? "");
+  const dbMonth = urlToDbMonth(urlMonth);
+
+  const supabase = await createServerClient();
+
+  const { data: period } = await supabase
+    .from("payroll_periods")
+    .select("status")
+    .eq("reference_month", dbMonth)
+    .maybeSingle();
+  if (period?.status === "fechado") {
+    redirect(`/rh/folha/${urlMonth}?erro=${encodeURIComponent("Mês está fechado")}`);
+  }
+
+  const { data: existing } = await supabase
+    .from("payroll")
+    .select("employee_id")
+    .eq("reference_month", dbMonth);
+  const existingIds = new Set((existing ?? []).map((r) => r.employee_id));
+
+  const { data: actives } = await supabase
+    .from("employees")
+    .select("id")
+    .eq("ativo", true);
+
+  const newRows = (actives ?? [])
+    .filter((e) => !existingIds.has(e.id))
+    .map((e) => ({
+      employee_id: e.id,
+      reference_month: dbMonth,
+      base_salary: 0,
+      total_earnings: 0,
+      total_deductions: 0,
+      net_amount: 0
+    }));
+
+  if (newRows.length > 0) {
+    const { error } = await supabase.from("payroll").insert(newRows);
+    if (error) redirect(`/rh/folha/${urlMonth}?erro=${encodeURIComponent(error.message)}`);
+  }
+
+  revalidatePath(`/rh/folha/${urlMonth}`);
+  redirect(`/rh/folha/${urlMonth}?ok=sincronizado`);
+}
