@@ -96,7 +96,9 @@ function readEmployeeForm(formData: FormData) {
     school_category: String(formData.get("school_category") ?? "").trim(),
     status_contrato: String(formData.get("status_contrato") ?? "").trim(),
     birth_date: String(formData.get("birth_date") ?? "").trim(),
-    hire_date: String(formData.get("hire_date") ?? "").trim()
+    hire_date: String(formData.get("hire_date") ?? "").trim(),
+    salario_sem_dsr: formData.get("salario_sem_dsr"),
+    aplica_dobra: formData.get("aplica_dobra")
   };
 }
 
@@ -119,7 +121,9 @@ export async function createEmployeeAction(formData: FormData) {
     school_category: parsed.data.school_category ?? null,
     status_contrato: parsed.data.status_contrato ?? null,
     birth_date: parsed.data.birth_date || null,
-    hire_date: parsed.data.hire_date || null
+    hire_date: parsed.data.hire_date || null,
+    salario_sem_dsr: parsed.data.salario_sem_dsr ?? 0,
+    aplica_dobra: parsed.data.aplica_dobra ?? false
   });
 
   if (error) {
@@ -159,7 +163,9 @@ export async function updateEmployeeAction(formData: FormData) {
       status_contrato: parsed.data.status_contrato ?? null,
       birth_date: parsed.data.birth_date || null,
       hire_date: parsed.data.hire_date || null,
-      ativo: parsed.data.ativo
+      ativo: parsed.data.ativo,
+      salario_sem_dsr: parsed.data.salario_sem_dsr ?? 0,
+      aplica_dobra: parsed.data.aplica_dobra ?? false
     })
     .eq("id", parsed.data.id);
 
