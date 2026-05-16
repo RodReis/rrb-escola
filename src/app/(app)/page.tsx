@@ -8,11 +8,21 @@ import { money } from "@/lib/constants";
 export default async function DashboardPage() {
   const dashboard = await getDashboard();
 
+  const mesLabel = dashboard.mesCompetencia.replace(/^(\d{4})-(\d{2})$/, (_, y, m) => {
+    const meses = ["Jan","Fev","Mar","Abr","Mai","Jun","Jul","Ago","Set","Out","Nov","Dez"];
+    return `${meses[Number(m) - 1]}/${y}`;
+  });
+
   const headerMetrics = [
     ["Alunos", String(dashboard.alunos)],
     ["Matriculas ativas", String(dashboard.matriculas)],
-    ["Em aberto", money.format(dashboard.totalAberto)],
-    ["Pago", money.format(dashboard.totalPago)]
+    [`A vencer ${mesLabel}`, money.format(dashboard.totalAberto)],
+    ["Pago total", money.format(dashboard.totalPago)]
+  ];
+
+  const monthMetrics = [
+    [`Previsto ${mesLabel}`, money.format(dashboard.previstoMes)],
+    [`Recebido ${mesLabel}`, money.format(dashboard.recebidoMes)],
   ];
 
   return (
@@ -63,6 +73,15 @@ export default async function DashboardPage() {
           <Card key={label} className="p-5">
             <p className="ds-kicker">{label}</p>
             <strong className="mt-3 block text-3xl font-black text-ink">{value}</strong>
+          </Card>
+        ))}
+      </section>
+
+      <section className="grid gap-4 md:grid-cols-2">
+        {monthMetrics.map(([label, value]) => (
+          <Card key={label} className="p-5">
+            <p className="ds-kicker">{label}</p>
+            <strong className="mt-3 block text-3xl font-black text-brand">{value}</strong>
           </Card>
         ))}
       </section>

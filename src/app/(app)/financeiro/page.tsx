@@ -1,4 +1,4 @@
-import { CreditCard, Plus } from "lucide-react";
+import { ChevronLeft, ChevronRight, CreditCard, Plus } from "lucide-react";
 import { ExportFinanceButton } from "@/components/pdf/export-finance-button";
 import { ChargeEditForm } from "@/components/finance/charge-edit-form";
 import { PaymentRow } from "@/components/finance/payment-row";
@@ -27,8 +27,25 @@ function dateText(value: string | null | undefined) {
   return new Date(`${value}T00:00:00`).toLocaleDateString("pt-BR");
 }
 
-export default async function FinanceiroPage() {
-  const [{ alunos }, cobrancas] = await Promise.all([getAcademicData(), getFinanceData()]);
+function mesLabel(competencia: string) {
+  const [y, m] = competencia.split("-");
+  const meses = ["Janeiro","Fevereiro","Março","Abril","Maio","Junho","Julho","Agosto","Setembro","Outubro","Novembro","Dezembro"];
+  return `${meses[Number(m) - 1]} ${y}`;
+}
+
+function adjacentMes(competencia: string, delta: number) {
+  const [y, m] = competencia.split("-").map(Number);
+  const d = new Date(Date.UTC(y, m - 1 + delta, 1));
+  return `${d.getUTCFullYear()}-${String(d.getUTCMonth() + 1).padStart(2, "0")}`;
+}
+
+export default async function FinanceiroPage({ searchParams }: { searchParams: Promise<{ mes?: string }> }) {
+  const params = await searchParams;
+  const now = new Date();
+  const defaultMes = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`;
+  const competencia = params.mes ?? defaultMes;
+
+  const [{ alunos }, cobrancas] = await Promise.all([getAcademicData(), getFinanceData(competencia)]);
   const today = new Date().toISOString().slice(0, 10);
 
   let aVencer = 0;
@@ -74,7 +91,7 @@ export default async function FinanceiroPage() {
               <span className="text-brand">Financeiro</span>
             </p>
             <h1 className="mt-8 text-4xl font-black leading-none text-brand md:text-5xl">
-              Cobrancas <span className="font-serif italic text-ink/42">{cobrancas.length}</span>
+              Cobrancas <span className="font-serif italic text-ink/42">{mesLabel(competencia)}</span>
             </h1>
             <p className="mt-4 max-w-2xl text-sm font-medium leading-6 text-ink/68">
               Lancamento, baixa parcial, estorno e exportacao de cobrancas escolares.
@@ -86,6 +103,15 @@ export default async function FinanceiroPage() {
               <ExportFinanceButton rows={cobrancas} />
               <ButtonLink href="/planos" variant="secondary">
                 <CreditCard size={16} /> Planos
+              </ButtonLink>
+            </div>
+            <div className="flex items-center gap-2 xl:justify-end">
+              <ButtonLink href={`/financeiro?mes=${adjacentMes(competencia, -1)}`} variant="secondary" className="px-2">
+                <ChevronLeft size={16} />
+              </ButtonLink>
+              <span className="min-w-[160px] text-center text-sm font-black text-ink">{mesLabel(competencia)}</span>
+              <ButtonLink href={`/financeiro?mes=${adjacentMes(competencia, 1)}`} variant="secondary" className="px-2">
+                <ChevronRight size={16} />
               </ButtonLink>
             </div>
           </div>

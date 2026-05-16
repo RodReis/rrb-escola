@@ -1,14 +1,19 @@
 import { createServerClient } from "@/lib/supabase/server";
 import { DEFAULT_SCHOOL_ID } from "@/lib/constants";
 
-export async function getFinanceData() {
+export async function getFinanceData(competencia?: string) {
   const supabase = await createServerClient();
-  const { data, error } = await supabase
+  let query = supabase
     .from("cobrancas")
     .select("*, alunos(nome, matricula_codigo), pagamentos(id, valor_pago, data_pagamento, forma_pagamento, observacao, cancelado_em, cancelado_por, motivo_cancelamento, registrado_por, perfis:registrado_por(nome))")
     .eq("escola_id", DEFAULT_SCHOOL_ID)
-    .order("data_vencimento", { ascending: false });
+    .order("data_vencimento", { ascending: true });
 
+  if (competencia) {
+    query = query.eq("competencia", competencia);
+  }
+
+  const { data, error } = await query;
   if (error) throw error;
   return data ?? [];
 }
