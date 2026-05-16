@@ -4,7 +4,7 @@ import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import { requirePerfil } from "@/lib/auth/session";
 import { createServerClient } from "@/lib/supabase/server";
-import { CompanySchema, CompanyUpdateSchema } from "@/lib/validation/rh";
+import { CompanySchema, CompanyUpdateSchema, EmployeeSchema, EmployeeUpdateSchema } from "@/lib/validation/rh";
 
 function firstError(error: { issues: { message: string }[] }) {
   return encodeURIComponent(error.issues[0]?.message ?? "Dados inválidos");
@@ -83,4 +83,107 @@ export async function toggleCompanyAction(formData: FormData) {
 
   revalidatePath("/rh/empresas");
   redirect(`/rh/empresas?ok=${ativo ? "ativada" : "desativada"}`);
+}
+
+function readEmployeeForm(formData: FormData) {
+  return {
+    company_id: String(formData.get("company_id") ?? ""),
+    name: String(formData.get("name") ?? "").trim(),
+    cpf: String(formData.get("cpf") ?? "").trim(),
+    email: String(formData.get("email") ?? "").trim(),
+    telefone: String(formData.get("telefone") ?? "").trim(),
+    cargo: String(formData.get("cargo") ?? "").trim(),
+    school_category: String(formData.get("school_category") ?? "").trim(),
+    status_contrato: String(formData.get("status_contrato") ?? "").trim(),
+    birth_date: String(formData.get("birth_date") ?? "").trim(),
+    hire_date: String(formData.get("hire_date") ?? "").trim()
+  };
+}
+
+export async function createEmployeeAction(formData: FormData) {
+  await requirePerfil(["admin", "secretaria"]);
+
+  const parsed = EmployeeSchema.safeParse(readEmployeeForm(formData));
+  if (!parsed.success) {
+    redirect(`/rh/funcionarios/novo?erro=${firstError(parsed.error)}`);
+  }
+
+  const supabase = await createServerClient();
+  const { error } = await supabase.from("employees").insert({
+    company_id: parsed.data.company_id,
+    name: parsed.data.name,
+    cpf: parsed.data.cpf,
+    email: parsed.data.email ?? null,
+    telefone: parsed.data.telefone ?? null,
+    cargo: parsed.data.cargo ?? null,
+    school_category: parsed.data.school_category ?? null,
+    status_contrato: parsed.data.status_contrato ?? null,
+    birth_date: parsed.data.birth_date || null,
+    hire_date: parsed.data.hire_date || null
+  });
+
+  if (error) {
+    const msg = error.code === "23505" ? "CPF já cadastrado" : error.message;
+    redirect(`/rh/funcionarios/novo?erro=${encodeURIComponent(msg)}`);
+  }
+
+  revalidatePath("/rh/funcionarios");
+  revalidatePath(`/rh/empresas/${parsed.data.company_id}`);
+  redirect("/rh/funcionarios?ok=criado");
+}
+
+export async function updateEmployeeAction(formData: FormData) {
+  await requirePerfil(["admin", "secretaria"]);
+
+  const id = String(formData.get("id") ?? "");
+  const parsed = EmployeeUpdateSchema.safeParse({
+    id,
+    ...readEmployeeForm(formData),
+    ativo: formData.get("ativo")
+  });
+  if (!parsed.success) {
+    redirect(`/rh/funcionarios/${id}/editar?erro=${firstError(parsed.error)}`);
+  }
+
+  const supabase = await createServerClient();
+  const { error } = await supabase
+    .from("employees")
+    .update({
+      company_id: parsed.data.company_id,
+      name: parsed.data.name,
+      cpf: parsed.data.cpf,
+      email: parsed.data.email ?? null,
+      telefone: parsed.data.telefone ?? null,
+      cargo: parsed.data.cargo ?? null,
+      school_category: parsed.data.school_category ?? null,
+      status_contrato: parsed.data.status_contrato ?? null,
+      birth_date: parsed.data.birth_date || null,
+      hire_date: parsed.data.hire_date || null,
+      ativo: parsed.data.ativo
+    })
+    .eq("id", parsed.data.id);
+
+  if (error) {
+    const msg = error.code === "23505" ? "CPF já cadastrado" : error.message;
+    redirect(`/rh/funcionarios/${parsed.data.id}/editar?erro=${encodeURIComponent(msg)}`);
+  }
+
+  revalidatePath("/rh/funcionarios");
+  revalidatePath(`/rh/empresas/${parsed.data.company_id}`);
+  redirect("/rh/funcionarios?ok=editado");
+}
+
+export async function toggleEmployeeAction(formData: FormData) {
+  await requirePerfil(["admin", "secretaria"]);
+  const id = String(formData.get("id") ?? "");
+  const ativo = formData.get("ativo") === "on";
+
+  if (!id) redirect("/rh/funcionarios?erro=ID inválido");
+
+  const supabase = await createServerClient();
+  const { error } = await supabase.from("employees").update({ ativo }).eq("id", id);
+  if (error) redirect(`/rh/funcionarios?erro=${encodeURIComponent(error.message)}`);
+
+  revalidatePath("/rh/funcionarios");
+  redirect(`/rh/funcionarios?ok=${ativo ? "ativado" : "desativado"}`);
 }
