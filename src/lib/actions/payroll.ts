@@ -184,7 +184,6 @@ export async function generateMonthAction(formData: FormData) {
   await requirePerfil(["admin", "financeiro"]);
   const urlMonth = String(formData.get("mes") ?? "");
   const dbMonth = urlToDbMonth(urlMonth);
-  const prevDbMonth = urlToDbMonth(shiftUrlMonth(urlMonth, -1));
 
   const supabase = await createServerClient();
 
@@ -207,13 +206,16 @@ export async function generateMonthAction(formData: FormData) {
     .eq("ativo", true);
   if (empErr) redirect(`/rh/folha/${urlMonth}?erro=${encodeURIComponent(empErr.message)}`);
 
-  // Pull prev payrolls in one query
-  const { data: prevRows } = await supabase
+  // Pull most recent prior payroll for each employee (any prior month, not just last month)
+  const { data: priorRows } = await supabase
     .from("payroll")
-    .select("employee_id, base_salary, dependentes, vale_transporte, vale_alimentacao")
-    .eq("reference_month", prevDbMonth);
+    .select("employee_id, reference_month, base_salary, dependentes, vale_transporte, vale_alimentacao")
+    .lt("reference_month", dbMonth)
+    .order("reference_month", { ascending: false });
+
   const prevMap = new Map<string, { base_salary: number; dependentes: number; vale_transporte: number; vale_alimentacao: number }>();
-  for (const p of prevRows ?? []) {
+  for (const p of priorRows ?? []) {
+    if (prevMap.has(p.employee_id)) continue; // já tem (mais recente)
     prevMap.set(p.employee_id, {
       base_salary: Number(p.base_salary ?? 0),
       dependentes: Number(p.dependentes ?? 0),
