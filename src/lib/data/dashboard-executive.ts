@@ -158,23 +158,56 @@ export async function getRevenueTrend(
 ): Promise<RevenueTrendPoint[]> {
   const supabase = await createServerClient();
   const competencias = rollingCompetencias(months);
+  const first = monthRange(competencias[0]).first;
+  const last = monthRange(competencias[competencias.length - 1]).last;
 
-  const pontos = await Promise.all(
-    competencias.map(async (competencia) => {
-      const [receita, despesa, folha] = await Promise.all([
-        somaPagamentos(supabase, escolaId, competencia),
-        somaDespesas(supabase, escolaId, competencia),
-        somaFolha(supabase, escolaId, competencia),
-      ]);
-      return {
-        competencia,
-        receita,
-        custos: despesa + folha,
-      };
-    })
-  );
+  // Convert competencias array to set for filtering
+  const compSet = new Set(competencias);
 
-  return pontos;
+  const [pagamentosRes, despesasRes, folhaRes] = await Promise.all([
+    supabase
+      .from("pagamentos")
+      .select("data_pagamento, valor_pago")
+      .eq("escola_id", escolaId)
+      .gte("data_pagamento", first)
+      .lte("data_pagamento", last)
+      .is("cancelado_em", null),
+    supabase
+      .from("despesas")
+      .select("valor, competencia")
+      .eq("escola_id", escolaId)
+      .in("competencia", competencias),
+    // payroll uses reference_month (DATE) — convert competencias to DATEs
+    supabase
+      .from("payroll")
+      .select("reference_month, total_earnings")
+      .in("reference_month", competencias.map((c) => `${c}-01`)),
+  ]);
+
+  const receitaPorComp = new Map<string, number>();
+  const despesaPorComp = new Map<string, number>();
+  const folhaPorComp = new Map<string, number>();
+
+  for (const p of pagamentosRes.data ?? []) {
+    const dt = String(p.data_pagamento);
+    const comp = dt.slice(0, 7); // YYYY-MM
+    if (compSet.has(comp)) {
+      receitaPorComp.set(comp, (receitaPorComp.get(comp) ?? 0) + Number(p.valor_pago ?? 0));
+    }
+  }
+  for (const d of despesasRes.data ?? []) {
+    despesaPorComp.set(d.competencia, (despesaPorComp.get(d.competencia) ?? 0) + Number(d.valor ?? 0));
+  }
+  for (const f of folhaRes.data ?? []) {
+    const comp = String(f.reference_month).slice(0, 7);
+    folhaPorComp.set(comp, (folhaPorComp.get(comp) ?? 0) + Number(f.total_earnings ?? 0));
+  }
+
+  return competencias.map((competencia) => ({
+    competencia,
+    receita: receitaPorComp.get(competencia) ?? 0,
+    custos: (despesaPorComp.get(competencia) ?? 0) + (folhaPorComp.get(competencia) ?? 0),
+  }));
 }
 
 export type OcupacaoData = {
