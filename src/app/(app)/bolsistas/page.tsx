@@ -97,12 +97,12 @@ export default async function BolsistasPage() {
             <thead>
               <tr className="border-b border-line text-[0.66rem] uppercase tracking-kicker text-ink/55">
                 <th className="px-4 py-3 text-left">Aluno</th>
-                <th className="px-4 py-3 text-left">Etapa</th>
-                <th className="px-4 py-3 text-left">Série / Turma</th>
+                <th className="px-4 py-3 text-left whitespace-nowrap">Etapa</th>
+                <th className="px-4 py-3 text-left whitespace-nowrap">Série / Turma</th>
                 <th className="px-4 py-3 text-left">Responsável</th>
                 <th className="px-4 py-3 text-left">Contato</th>
-                <th className="px-4 py-3 text-left">Tipo</th>
-                <th className="px-4 py-3 text-right">Ação</th>
+                <th className="px-4 py-3 text-left whitespace-nowrap">Tipo</th>
+                <th className="px-4 py-3 text-right whitespace-nowrap">Ação</th>
               </tr>
             </thead>
             <tbody>
@@ -129,8 +129,8 @@ export default async function BolsistasPage() {
                           </div>
                         </Link>
                       </td>
-                      <td className="px-4 py-3">
-                        <span className="rounded-pill bg-muted px-2 py-0.5 text-xs font-semibold text-ink/70">
+                      <td className="px-4 py-3 whitespace-nowrap">
+                        <span className="rounded-pill bg-muted px-2 py-0.5 text-xs font-semibold text-ink/70 whitespace-nowrap">
                           {SEGMENTO_LABEL[b.segmento] ?? b.segmento}
                         </span>
                       </td>
@@ -172,17 +172,17 @@ export default async function BolsistasPage() {
                           )}
                         </div>
                       </td>
-                      <td className="px-4 py-3">
-                        <span className={`inline-flex items-center gap-1 rounded-pill px-2 py-0.5 text-xs font-semibold ${TIPO_STYLE[b.tipoVaga]}`}>
+                      <td className="px-4 py-3 whitespace-nowrap">
+                        <span className={`inline-flex items-center gap-1 rounded-pill px-2 py-0.5 text-xs font-semibold whitespace-nowrap ${TIPO_STYLE[b.tipoVaga]}`}>
                           <Icon size={12} />
                           {TIPO_LABEL[b.tipoVaga]}
                           {b.tipoVaga === "bolsa_parcial" && ` ${b.percentualBolsa.toFixed(0)}%`}
                         </span>
                       </td>
-                      <td className="px-4 py-3 text-right">
+                      <td className="px-4 py-3 text-right whitespace-nowrap">
                         <Link
                           href={`/alunos/${b.alunoId}`}
-                          className="inline-flex items-center gap-1 rounded-ui bg-brand/10 px-3 py-1.5 text-xs font-semibold text-brand hover:bg-brand/20"
+                          className="inline-flex items-center gap-1 rounded-ui bg-brand/10 px-3 py-1.5 text-xs font-semibold text-brand hover:bg-brand/20 whitespace-nowrap"
                         >
                           Ver ficha
                           <ArrowRight size={12} />
