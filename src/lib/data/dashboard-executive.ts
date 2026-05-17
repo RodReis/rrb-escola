@@ -684,3 +684,56 @@ export async function getAlertas(
 
   return alertas.slice(0, 5);
 }
+
+export type BeneficiosData = {
+  total: number;
+  porTipo: Record<TipoVaga, number>;
+  receitaPerdidaEstimada: number;
+};
+
+export async function getBeneficios(
+  escolaId: string = DEFAULT_SCHOOL_ID
+): Promise<BeneficiosData> {
+  const supabase = await createServerClient();
+
+  const { data } = await supabase
+    .from("matriculas")
+    .select("tipo_vaga, percentual_bolsa, planos(valor_mensalidade)")
+    .eq("escola_id", escolaId)
+    .eq("status", "ativa")
+    .in("tipo_vaga", BENEFICIARIO_TIPOS);
+
+  const porTipo: Record<TipoVaga, number> = {
+    paga: 0,
+    bolsa_integral: 0,
+    bolsa_parcial: 0,
+    permuta: 0,
+    gratuita: 0,
+  };
+
+  let receitaPerdida = 0;
+
+  for (const m of ((data ?? []) as any[])) {
+    const tipo = m.tipo_vaga as TipoVaga;
+    porTipo[tipo] = (porTipo[tipo] ?? 0) + 1;
+
+    const planosRel = m.planos;
+    const plano = Array.isArray(planosRel) ? planosRel[0] : planosRel;
+    const mensalidade = Number(plano?.valor_mensalidade ?? 0);
+
+    if (tipo === "bolsa_parcial") {
+      const pct = Number(m.percentual_bolsa ?? 0) / 100;
+      receitaPerdida += mensalidade * pct;
+    } else {
+      receitaPerdida += mensalidade;
+    }
+  }
+
+  const total = BENEFICIARIO_TIPOS.reduce((s, t) => s + (porTipo[t] ?? 0), 0);
+
+  return {
+    total,
+    porTipo,
+    receitaPerdidaEstimada: receitaPerdida,
+  };
+}
