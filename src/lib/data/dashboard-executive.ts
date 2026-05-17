@@ -503,3 +503,67 @@ export async function getTopDevedores(
   rows.sort((a, b) => b.valor - a.valor);
   return rows.slice(0, limit);
 }
+
+export type RepasseData = {
+  valor: number;
+  valorPrev: number;
+};
+
+export async function getRepasseRecebido(
+  competencia: string,
+  escolaId: string = DEFAULT_SCHOOL_ID
+): Promise<RepasseData> {
+  const supabase = await createServerClient();
+  const prev = prevCompetencia(competencia);
+  const [valor, valorPrev] = await Promise.all([
+    somaPagamentos(supabase, escolaId, competencia),
+    somaPagamentos(supabase, escolaId, prev),
+  ]);
+  return { valor, valorPrev };
+}
+
+export type RenovacaoRow = {
+  matriculaId: string;
+  alunoId: string;
+  alunoNome: string;
+  anoLetivo: number;
+  diasRestantes: number;
+};
+
+export async function getRenovacoesPendentes(
+  limit: number = 5,
+  escolaId: string = DEFAULT_SCHOOL_ID
+): Promise<RenovacaoRow[]> {
+  const supabase = await createServerClient();
+  const hoje = new Date();
+  const anoLetivo = hoje.getFullYear();
+
+  const { data } = await supabase
+    .from("matriculas")
+    .select("id, aluno_id, ano_letivo, alunos(nome)")
+    .eq("escola_id", escolaId)
+    .eq("status", "ativa")
+    .eq("ano_letivo", anoLetivo)
+    .limit(limit);
+
+  const fimAno = new Date(anoLetivo, 11, 31);
+  const diasRestantes = Math.floor((fimAno.getTime() - hoje.getTime()) / (1000 * 60 * 60 * 24));
+
+  type Row = {
+    id: string;
+    aluno_id: string;
+    ano_letivo: number;
+    alunos: { nome: string } | { nome: string }[] | null;
+  };
+
+  return ((data ?? []) as unknown as Row[]).map((m) => {
+    const alunoRel = Array.isArray(m.alunos) ? m.alunos[0] : m.alunos;
+    return {
+      matriculaId: m.id,
+      alunoId: m.aluno_id,
+      alunoNome: alunoRel?.nome ?? "—",
+      anoLetivo: m.ano_letivo,
+      diasRestantes,
+    };
+  });
+}
