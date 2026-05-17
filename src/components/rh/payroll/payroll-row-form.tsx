@@ -3,6 +3,7 @@
 import { useMemo, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Panel } from "@/components/ui/card";
+import { CurrencyInput } from "@/components/ui/currency-input";
 import { money } from "@/lib/constants";
 import { calcAll, calcDSR, calcBaseFromSemDsr, calcProventosBase, type InssBracket, type IrBracket, type PayrollInput as CalcInput } from "@/lib/payroll/calculators";
 import type { PayrollRowJoined } from "@/lib/data/payroll";
@@ -52,7 +53,7 @@ function num(v: unknown): number {
 export function PayrollRowForm({ row, brackets, disabled }: Props) {
   const initial: FormState = useMemo(
     () => ({
-      base_salary: num(row.base_salary),
+      base_salary: num(row.base_salary) > 0 ? num(row.base_salary) : num(row.employees?.base_salary ?? 0),
       horas_extras: num(row.horas_extras),
       gratificacao: num(row.gratificacao),
       comissao: num(row.comissao),
@@ -69,9 +70,9 @@ export function PayrollRowForm({ row, brackets, disabled }: Props) {
       gps: num(row.gps ?? row.employees?.gps_default ?? 0),
       uniform_value: num(row.uniform_value),
       dependentes: num(row.dependentes),
-      salario_sem_dsr: num(
-        row.salario_sem_dsr ?? row.employees?.salario_sem_dsr ?? 0
-      ),
+      salario_sem_dsr: row.salario_sem_dsr != null
+        ? num(row.salario_sem_dsr)
+        : num(row.employees?.salario_sem_dsr ?? 0),
       aplica_dobra:
         row.aplica_dobra ?? row.employees?.aplica_dobra ?? false,
       inss_manual: !!row.inss_manual,
@@ -121,6 +122,7 @@ export function PayrollRowForm({ row, brackets, disabled }: Props) {
   const set = <K extends keyof FormState>(k: K, v: FormState[K]) => setState((s) => ({ ...s, [k]: v }));
   const setNum = (k: keyof FormState) => (e: React.ChangeEvent<HTMLInputElement>) =>
     set(k, num(e.target.value) as never);
+  const setVal = (k: keyof FormState) => (v: number) => set(k, v as never);
 
   const resetCalc = () => {
     setState((s) => ({ ...s, inss_manual: false, ir_manual: false, inss: computed.inss, ir: computed.ir }));
@@ -138,7 +140,7 @@ export function PayrollRowForm({ row, brackets, disabled }: Props) {
             label="Salário s/ DSR"
             name="salario_sem_dsr"
             value={state.salario_sem_dsr}
-            onChange={setNum("salario_sem_dsr")}
+            onValueChange={setVal("salario_sem_dsr")}
             disabled={disabled}
           />
           <div className="grid gap-1 text-xs text-ink/65">
@@ -167,14 +169,14 @@ export function PayrollRowForm({ row, brackets, disabled }: Props) {
             <span className="text-success tabular-nums">{money.format(derivedBase)}</span>
           </div>
           <input type="hidden" name="base_salary" value={derivedBase} />
-          <NumberField label="Horas extras" name="horas_extras" value={state.horas_extras} onChange={setNum("horas_extras")} disabled={disabled} />
-          <NumberField label="Gratificação" name="gratificacao" value={state.gratificacao} onChange={setNum("gratificacao")} disabled={disabled} />
-          <NumberField label="Comissão" name="comissao" value={state.comissao} onChange={setNum("comissao")} disabled={disabled} />
-          <NumberField label="Adicional noturno" name="adicional_noturno" value={state.adicional_noturno} onChange={setNum("adicional_noturno")} disabled={disabled} />
-          <NumberField label="Periculosidade" name="periculosidade" value={state.periculosidade} onChange={setNum("periculosidade")} disabled={disabled} />
-          <NumberField label="Insalubridade" name="insalubridade" value={state.insalubridade} onChange={setNum("insalubridade")} disabled={disabled} />
-          <NumberField label="Outros proventos" name="outros_proventos" value={state.outros_proventos} onChange={setNum("outros_proventos")} disabled={disabled} />
-          <NumberField label="Salário-família" name="family_allowance" value={state.family_allowance} onChange={setNum("family_allowance")} disabled={disabled} />
+          <NumberField label="Horas extras" name="horas_extras" value={state.horas_extras} onValueChange={setVal("horas_extras")} disabled={disabled} />
+          <NumberField label="Gratificação" name="gratificacao" value={state.gratificacao} onValueChange={setVal("gratificacao")} disabled={disabled} />
+          <NumberField label="Comissão" name="comissao" value={state.comissao} onValueChange={setVal("comissao")} disabled={disabled} />
+          <NumberField label="Adicional noturno" name="adicional_noturno" value={state.adicional_noturno} onValueChange={setVal("adicional_noturno")} disabled={disabled} />
+          <NumberField label="Periculosidade" name="periculosidade" value={state.periculosidade} onValueChange={setVal("periculosidade")} disabled={disabled} />
+          <NumberField label="Insalubridade" name="insalubridade" value={state.insalubridade} onValueChange={setVal("insalubridade")} disabled={disabled} />
+          <NumberField label="Outros proventos" name="outros_proventos" value={state.outros_proventos} onValueChange={setVal("outros_proventos")} disabled={disabled} />
+          <NumberField label="Salário-família" name="family_allowance" value={state.family_allowance} onValueChange={setVal("family_allowance")} disabled={disabled} />
           <div className="mt-2 border-t border-line pt-2 flex justify-between text-sm font-bold">
             <span className="text-ink/70">Subtotal proventos</span>
             <span className="text-success tabular-nums">{money.format(computed.total_earnings)}</span>
@@ -199,13 +201,10 @@ export function PayrollRowForm({ row, brackets, disabled }: Props) {
             </label>
           </label>
           {state.inss_manual ? (
-            <input
+            <CurrencyInput
               name="inss"
-              type="number"
-              step="0.01"
-              min="0"
               value={state.inss}
-              onChange={setNum("inss")}
+              onChange={setVal("inss")}
               disabled={disabled}
             />
           ) : (
@@ -232,13 +231,10 @@ export function PayrollRowForm({ row, brackets, disabled }: Props) {
             </label>
           </label>
           {state.ir_manual ? (
-            <input
+            <CurrencyInput
               name="ir"
-              type="number"
-              step="0.01"
-              min="0"
               value={state.ir}
-              onChange={setNum("ir")}
+              onChange={setVal("ir")}
               disabled={disabled}
             />
           ) : (
@@ -251,13 +247,13 @@ export function PayrollRowForm({ row, brackets, disabled }: Props) {
           )}
 
           <NumberField label="Dependentes (IR)" name="dependentes" value={state.dependentes} onChange={setNum("dependentes")} step={1} integer disabled={disabled} />
-          <NumberField label="Empréstimo" name="loan_deduction" value={state.loan_deduction} onChange={setNum("loan_deduction")} disabled={disabled} />
-          <NumberField label="Adiantamento" name="advance" value={state.advance} onChange={setNum("advance")} disabled={disabled} />
-          <NumberField label="GPS" name="gps" value={state.gps} onChange={setNum("gps")} disabled={disabled} />
-          <NumberField label="Vale transporte" name="vale_transporte" value={state.vale_transporte} onChange={setNum("vale_transporte")} disabled={disabled} />
-          <NumberField label="Vale alimentação" name="vale_alimentacao" value={state.vale_alimentacao} onChange={setNum("vale_alimentacao")} disabled={disabled} />
-          <NumberField label="Outros descontos" name="outros_descontos" value={state.outros_descontos} onChange={setNum("outros_descontos")} disabled={disabled} />
-          <NumberField label="Uniforme" name="uniform_value" value={state.uniform_value} onChange={setNum("uniform_value")} disabled={disabled} />
+          <NumberField label="Empréstimo" name="loan_deduction" value={state.loan_deduction} onValueChange={setVal("loan_deduction")} disabled={disabled} />
+          <NumberField label="Adiantamento" name="advance" value={state.advance} onValueChange={setVal("advance")} disabled={disabled} />
+          <NumberField label="GPS" name="gps" value={state.gps} onValueChange={setVal("gps")} disabled={disabled} />
+          <NumberField label="Vale transporte" name="vale_transporte" value={state.vale_transporte} onValueChange={setVal("vale_transporte")} disabled={disabled} />
+          <NumberField label="Vale alimentação" name="vale_alimentacao" value={state.vale_alimentacao} onValueChange={setVal("vale_alimentacao")} disabled={disabled} />
+          <NumberField label="Outros descontos" name="outros_descontos" value={state.outros_descontos} onValueChange={setVal("outros_descontos")} disabled={disabled} />
+          <NumberField label="Uniforme" name="uniform_value" value={state.uniform_value} onValueChange={setVal("uniform_value")} disabled={disabled} />
 
           <div className="mt-2 border-t border-line pt-2 flex justify-between text-sm font-bold">
             <span className="text-ink/70">Subtotal descontos</span>
@@ -339,6 +335,7 @@ function NumberField({
   name,
   value,
   onChange,
+  onValueChange,
   step = 0.01,
   integer = false,
   required = false,
@@ -347,7 +344,8 @@ function NumberField({
   label: string;
   name: string;
   value: number;
-  onChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
+  onChange?: (e: React.ChangeEvent<HTMLInputElement>) => void;
+  onValueChange?: (v: number) => void;
   step?: number;
   integer?: boolean;
   required?: boolean;
@@ -356,17 +354,27 @@ function NumberField({
   return (
     <label className="block text-sm">
       <span className="text-xs font-semibold text-ink/70">{label}</span>
-      <input
-        name={name}
-        type="number"
-        step={integer ? 1 : step}
-        min="0"
-        value={value}
-        onChange={onChange}
-        required={required}
-        disabled={disabled}
-        className="mt-1 w-full rounded-ui border border-line bg-surface px-3 py-2 text-sm tabular-nums"
-      />
+      {integer ? (
+        <input
+          name={name}
+          type="number"
+          step={1}
+          min="0"
+          value={value}
+          onChange={onChange}
+          required={required}
+          disabled={disabled}
+          className="mt-1 w-full rounded-ui border border-line bg-surface px-3 py-2 text-sm tabular-nums"
+        />
+      ) : (
+        <CurrencyInput
+          name={name}
+          value={value}
+          onChange={onValueChange ?? (() => {})}
+          disabled={disabled}
+          required={required}
+        />
+      )}
     </label>
   );
 }

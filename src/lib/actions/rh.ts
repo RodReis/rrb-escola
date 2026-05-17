@@ -97,6 +97,7 @@ function readEmployeeForm(formData: FormData) {
     status_contrato: String(formData.get("status_contrato") ?? "").trim(),
     birth_date: String(formData.get("birth_date") ?? "").trim(),
     hire_date: String(formData.get("hire_date") ?? "").trim(),
+    base_salary: formData.get("base_salary"),
     salario_sem_dsr: formData.get("salario_sem_dsr"),
     aplica_dobra: formData.get("aplica_dobra"),
     gps_default: formData.get("gps_default")
@@ -123,6 +124,7 @@ export async function createEmployeeAction(formData: FormData) {
     status_contrato: parsed.data.status_contrato ?? null,
     birth_date: parsed.data.birth_date || null,
     hire_date: parsed.data.hire_date || null,
+    base_salary: parsed.data.base_salary ?? 0,
     salario_sem_dsr: parsed.data.salario_sem_dsr ?? 0,
     aplica_dobra: parsed.data.aplica_dobra ?? false,
     gps_default: parsed.data.gps_default ?? 0
@@ -166,6 +168,7 @@ export async function updateEmployeeAction(formData: FormData) {
       birth_date: parsed.data.birth_date || null,
       hire_date: parsed.data.hire_date || null,
       ativo: parsed.data.ativo,
+      base_salary: parsed.data.base_salary ?? 0,
       salario_sem_dsr: parsed.data.salario_sem_dsr ?? 0,
       aplica_dobra: parsed.data.aplica_dobra ?? false,
       gps_default: parsed.data.gps_default ?? 0
@@ -195,4 +198,18 @@ export async function toggleEmployeeAction(formData: FormData) {
 
   revalidatePath("/rh/funcionarios");
   redirect(`/rh/funcionarios?ok=${ativo ? "ativado" : "desativado"}`);
+}
+
+export async function deleteEmployeeAction(formData: FormData) {
+  await requirePerfil(["admin"]);
+  const id = String(formData.get("id") ?? "");
+
+  if (!id) redirect("/rh/funcionarios?erro=ID inválido");
+
+  const supabase = await createServerClient();
+  const { error } = await supabase.from("employees").delete().eq("id", id);
+  if (error) redirect(`/rh/funcionarios?erro=${encodeURIComponent(error.message)}`);
+
+  revalidatePath("/rh/funcionarios");
+  redirect("/rh/funcionarios?ok=excluído");
 }

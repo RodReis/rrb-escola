@@ -215,49 +215,82 @@ export async function generateMonthAction(formData: FormData) {
 
   const { data: employees, error: empErr } = await supabase
     .from("employees")
-    .select("id, salario_sem_dsr, aplica_dobra")
+    .select("id, base_salary, salario_sem_dsr, aplica_dobra")
     .eq("ativo", true);
   if (empErr) redirect(`/rh/folha/${urlMonth}?erro=${encodeURIComponent(empErr.message)}`);
 
-  // Pull most recent prior payroll for each employee (any prior month, not just last month)
+  // Pull most recent prior payroll for each employee (any prior month).
+  // Full snapshot: all proventos/descontos/flags copied as template.
   const { data: priorRows } = await supabase
     .from("payroll")
-    .select("employee_id, reference_month, base_salary, dependentes, vale_transporte, vale_alimentacao, salario_sem_dsr, aplica_dobra")
+    .select("*")
     .lt("reference_month", dbMonth)
     .order("reference_month", { ascending: false });
 
-  const prevMap = new Map<string, { base_salary: number; dependentes: number; vale_transporte: number; vale_alimentacao: number; salario_sem_dsr: number | null; aplica_dobra: boolean | null }>();
+  type PriorRow = NonNullable<typeof priorRows>[number];
+  const prevMap = new Map<string, PriorRow>();
   for (const p of priorRows ?? []) {
-    if (prevMap.has(p.employee_id)) continue; // já tem (mais recente)
-    prevMap.set(p.employee_id, {
-      base_salary: Number(p.base_salary ?? 0),
-      dependentes: Number(p.dependentes ?? 0),
-      vale_transporte: Number(p.vale_transporte ?? 0),
-      vale_alimentacao: Number(p.vale_alimentacao ?? 0),
-      salario_sem_dsr: p.salario_sem_dsr != null ? Number(p.salario_sem_dsr) : null,
-      aplica_dobra: p.aplica_dobra
-    });
+    if (prevMap.has(p.employee_id)) continue; // mais recente
+    prevMap.set(p.employee_id, p);
   }
+
+  const n = (v: unknown) => (v == null ? 0 : Number(v));
 
   const rows = (employees ?? []).map((e) => {
     const prev = prevMap.get(e.id);
+    const empBase = Number((e as { base_salary?: number | null }).base_salary ?? 0);
     const empSemDsr = Number(e.salario_sem_dsr ?? 0);
     const empDobra = e.aplica_dobra ?? false;
-    const semDsr = prev?.salario_sem_dsr ?? (empSemDsr > 0 ? empSemDsr : null);
-    const dobra = prev?.aplica_dobra ?? empDobra;
-    const baseFromSemDsr = semDsr != null && semDsr > 0
-      ? calcProventosBase(semDsr, dobra ?? false)
-      : null;
-    const base_salary = baseFromSemDsr ?? prev?.base_salary ?? 0;
+
+    if (prev) {
+      // Copia integral do mês anterior (template)
+      return {
+        employee_id: e.id,
+        reference_month: dbMonth,
+        base_salary: n(prev.base_salary),
+        salario_sem_dsr: prev.salario_sem_dsr,
+        aplica_dobra: prev.aplica_dobra ?? empDobra,
+        additional: n(prev.additional),
+        horas_extras: n(prev.horas_extras),
+        gratificacao: n(prev.gratificacao),
+        comissao: n(prev.comissao),
+        adicional_noturno: n(prev.adicional_noturno),
+        periculosidade: n(prev.periculosidade),
+        insalubridade: n(prev.insalubridade),
+        outros_proventos: n(prev.outros_proventos),
+        family_allowance: n(prev.family_allowance),
+        dependentes: n(prev.dependentes),
+        vale_transporte: n(prev.vale_transporte),
+        vale_alimentacao: n(prev.vale_alimentacao),
+        outros_descontos: n(prev.outros_descontos),
+        loan_deduction: n(prev.loan_deduction),
+        advance: n(prev.advance),
+        gps: prev.gps,
+        uniform_value: n(prev.uniform_value),
+        inss: n(prev.inss),
+        ir: n(prev.ir),
+        inss_manual: !!prev.inss_manual,
+        ir_manual: !!prev.ir_manual,
+        consider_decimo_terceiro: !!prev.consider_decimo_terceiro,
+        considera_um_tercio_ferias: !!prev.considera_um_tercio_ferias,
+        total_earnings: n(prev.total_earnings),
+        total_deductions: n(prev.total_deductions),
+        net_amount: n(prev.net_amount)
+      };
+    }
+
+    // Sem mês anterior — usa defaults do employee
+    const baseFromSemDsr = empSemDsr > 0 ? calcProventosBase(empSemDsr, empDobra) : null;
+    const base_salary = baseFromSemDsr ?? (empBase > 0 ? empBase : 0);
     return {
       employee_id: e.id,
       reference_month: dbMonth,
       base_salary,
-      salario_sem_dsr: semDsr,
-      aplica_dobra: dobra,
-      dependentes: prev?.dependentes ?? 0,
-      vale_transporte: prev?.vale_transporte ?? 0,
-      vale_alimentacao: prev?.vale_alimentacao ?? 0,
+      salario_sem_dsr: empSemDsr > 0 ? empSemDsr : null,
+      aplica_dobra: empDobra,
+      dependentes: 0,
+      vale_transporte: 0,
+      vale_alimentacao: 0,
       total_earnings: base_salary,
       total_deductions: 0,
       net_amount: base_salary
