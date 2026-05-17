@@ -29,18 +29,18 @@ export function SaldoYTDCard({ data }: { data: SaldoYTDData }) {
       </strong>
       <p className="text-xs text-ink/55">acumulado do ano</p>
 
-      <dl className="mt-4 grid grid-cols-3 gap-2 text-xs">
-        <div className="rounded-ui bg-brand/10 p-2">
+      <dl className="mt-4 grid gap-1.5 text-xs">
+        <div className="flex items-center justify-between rounded-ui bg-brand/10 px-2 py-1.5">
           <dt className="text-[0.66rem] uppercase tracking-kicker text-brand/80">Receita</dt>
-          <dd className="mt-0.5 font-bold text-brand">{money.format(data.receita)}</dd>
+          <dd className="font-bold text-brand whitespace-nowrap">{money.format(data.receita)}</dd>
         </div>
-        <div className="rounded-ui bg-danger/10 p-2">
+        <div className="flex items-center justify-between rounded-ui bg-danger/10 px-2 py-1.5">
           <dt className="text-[0.66rem] uppercase tracking-kicker text-danger/80">Despesas</dt>
-          <dd className="mt-0.5 font-bold text-danger">{money.format(data.despesa)}</dd>
+          <dd className="font-bold text-danger whitespace-nowrap">{money.format(data.despesa)}</dd>
         </div>
-        <div className="rounded-ui bg-warning/10 p-2">
+        <div className="flex items-center justify-between rounded-ui bg-warning/10 px-2 py-1.5">
           <dt className="text-[0.66rem] uppercase tracking-kicker text-warning/80">Folha</dt>
-          <dd className="mt-0.5 font-bold text-warning">{money.format(data.folha)}</dd>
+          <dd className="font-bold text-warning whitespace-nowrap">{money.format(data.folha)}</dd>
         </div>
       </dl>
 
