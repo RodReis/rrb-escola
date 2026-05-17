@@ -219,8 +219,13 @@ export async function generateMonthAction(formData: FormData) {
     .eq("ativo", true);
   if (empErr) redirect(`/rh/folha/${urlMonth}?erro=${encodeURIComponent(empErr.message)}`);
 
-  // Pull most recent prior payroll for each employee (any prior month).
-  // Full snapshot: all proventos/descontos/flags copied as template.
+  // Template canonico: folha de 2026-05 (definida pelo usuario como base).
+  // Fallback: se employee nao tem linha no template, usa mes anterior mais recente.
+  const TEMPLATE_MONTH = "2026-05-01";
+  const { data: templateRows } = await supabase
+    .from("payroll")
+    .select("*")
+    .eq("reference_month", TEMPLATE_MONTH);
   const { data: priorRows } = await supabase
     .from("payroll")
     .select("*")
@@ -229,8 +234,11 @@ export async function generateMonthAction(formData: FormData) {
 
   type PriorRow = NonNullable<typeof priorRows>[number];
   const prevMap = new Map<string, PriorRow>();
+  for (const p of templateRows ?? []) {
+    prevMap.set(p.employee_id, p);
+  }
   for (const p of priorRows ?? []) {
-    if (prevMap.has(p.employee_id)) continue; // mais recente
+    if (prevMap.has(p.employee_id)) continue;
     prevMap.set(p.employee_id, p);
   }
 
