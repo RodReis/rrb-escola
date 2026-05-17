@@ -567,3 +567,60 @@ export async function getRenovacoesPendentes(
     };
   });
 }
+
+export type AlertaSeveridade = "critico" | "atencao" | "info";
+
+export type AlertaItem = {
+  id: string;
+  severidade: AlertaSeveridade;
+  titulo: string;
+  descricao: string;
+  href?: string;
+};
+
+export async function getAlertas(
+  competencia: string,
+  gestaoFinanceira: GestaoFinanceira,
+  escolaId: string = DEFAULT_SCHOOL_ID
+): Promise<AlertaItem[]> {
+  const alertas: AlertaItem[] = [];
+
+  const ocup = await getOcupacao(escolaId);
+  for (const etapa of ocup.porEtapa) {
+    if (etapa.capacidade > 0 && etapa.matriculados / etapa.capacidade < 0.5) {
+      alertas.push({
+        id: `vagas-${etapa.etapa}`,
+        severidade: "atencao",
+        titulo: `Vagas ociosas em ${etapa.etapa}`,
+        descricao: `${etapa.matriculados}/${etapa.capacidade} matrículas`,
+        href: "/matriculas",
+      });
+    }
+  }
+
+  if (gestaoFinanceira === "propria") {
+    const inad = await getInadimplencia(competencia, escolaId);
+    if (inad.percentual > 0.1) {
+      alertas.push({
+        id: "inadimplencia-alta",
+        severidade: "critico",
+        titulo: "Inadimplência acima de 10%",
+        descricao: `${(inad.percentual * 100).toFixed(1)}% do previsto não foi pago`,
+        href: "/financeiro",
+      });
+    }
+  }
+
+  const folhaRatio = await getFolhaRatio(competencia, escolaId);
+  if (folhaRatio.ratio > 0.65) {
+    alertas.push({
+      id: "folha-pesada",
+      severidade: "atencao",
+      titulo: "Folha acima de 65% da receita",
+      descricao: `${(folhaRatio.ratio * 100).toFixed(1)}% comprometido`,
+      href: "/rh",
+    });
+  }
+
+  return alertas.slice(0, 5);
+}
