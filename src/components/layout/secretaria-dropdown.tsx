@@ -6,6 +6,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
   BookOpen,
+  Cake,
   ClipboardCheck,
   ClipboardList,
   FileText,
@@ -29,6 +30,7 @@ const secretariaItems = [
   { href: "/disciplinas", label: "Disciplinas", icon: ClipboardList },
   { href: "/avaliacoes", label: "Avaliações", icon: ClipboardCheck },
   { href: "/professores/atribuicoes", label: "Atribuições", icon: UserCheck },
+  { href: "/mural/aniversariantes", label: "Mural aniversários", icon: Cake },
   { href: "/organograma", label: "Organograma", icon: Network },
   { href: "/importacoes", label: "Importações", icon: Inbox }
 ];

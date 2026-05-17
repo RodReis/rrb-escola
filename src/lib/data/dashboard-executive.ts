@@ -1223,3 +1223,75 @@ export async function getFrequenciaPorTurma(
 
   return rows;
 }
+
+export type AniversarioSemanaRow = {
+  alunoId: string;
+  nome: string;
+  dia: number;
+  mes: number;
+  diaSemana: string;
+  fotoUrl: string | null;
+  hoje: boolean;
+};
+
+export async function getAniversariantesSemana(
+  escolaId: string = DEFAULT_SCHOOL_ID
+): Promise<AniversarioSemanaRow[]> {
+  const supabase = await createServerClient();
+  const hoje = new Date();
+  const DIAS_SEMANA = ["Dom", "Seg", "Ter", "Qua", "Qui", "Sex", "Sab"];
+
+  // 7 dias a partir de hoje: lista (mes, dia) validos
+  const janela: Array<{ mes: number; dia: number; rotulo: string }> = [];
+  for (let i = 0; i < 7; i++) {
+    const d = new Date(hoje.getFullYear(), hoje.getMonth(), hoje.getDate() + i);
+    janela.push({
+      mes: d.getMonth() + 1,
+      dia: d.getDate(),
+      rotulo: DIAS_SEMANA[d.getDay()] ?? "",
+    });
+  }
+
+  const { data: matriculas } = await supabase
+    .from("matriculas")
+    .select("aluno_id, alunos(id, nome, data_nascimento, foto_url)")
+    .eq("escola_id", escolaId)
+    .eq("status", "ativa");
+
+  const vistos = new Set<string>();
+  const rows: AniversarioSemanaRow[] = [];
+
+  for (const m of ((matriculas ?? []) as any[])) {
+    const aluno = Array.isArray(m.alunos) ? m.alunos[0] : m.alunos;
+    if (!aluno?.data_nascimento) continue;
+    if (vistos.has(aluno.id)) continue;
+
+    const parts = String(aluno.data_nascimento).split("-").map(Number);
+    const mm = parts[1];
+    const dd = parts[2];
+    if (!mm || !dd) continue;
+
+    const slot = janela.find((j) => j.mes === mm && j.dia === dd);
+    if (!slot) continue;
+
+    vistos.add(aluno.id);
+    rows.push({
+      alunoId: aluno.id,
+      nome: aluno.nome ?? "—",
+      dia: dd,
+      mes: mm,
+      diaSemana: slot.rotulo,
+      fotoUrl: aluno.foto_url ?? null,
+      hoje: dd === hoje.getDate() && mm === hoje.getMonth() + 1,
+    });
+  }
+
+  rows.sort((a, b) => {
+    // ordena seguindo a janela (proximidade)
+    const ia = janela.findIndex((j) => j.mes === a.mes && j.dia === a.dia);
+    const ib = janela.findIndex((j) => j.mes === b.mes && j.dia === b.dia);
+    return ia - ib;
+  });
+
+  return rows;
+}
