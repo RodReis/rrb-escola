@@ -17,6 +17,7 @@ const primaryItems: Array<{ href: string; label: string; icon: TopbarIconName }>
 const secondaryItems: Array<{ href: string; label: string; icon: TopbarIconName }> = [
   { href: "/usuarios", label: "Usuários", icon: "UsersRound" },
   { href: "/planos", label: "Planos", icon: "CreditCard" },
+  { href: "/valores-praticados", label: "Valores", icon: "ReceiptText" },
   { href: "/frequencias", label: "Frequência", icon: "CalendarCheck" },
   { href: "/relatorios/alunos", label: "Rel. Alunos", icon: "UsersRound" },
   { href: "/relatorios/inadimplencia", label: "Inadimplência", icon: "ReceiptText" },
