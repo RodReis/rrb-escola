@@ -550,3 +550,90 @@ export async function getPedagogicoSummary(
     reprovados,
   };
 }
+
+export type AlunoRankingRow = {
+  alunoId: string;
+  matriculaId: string;
+  nome: string;
+  turma: string;
+  serie: string;
+  segmento: string;
+  mediaGeral: number;
+  disciplinasComMedia: number;
+};
+
+export async function getRankingAlunos(
+  escolaId: string = DEFAULT_SCHOOL_ID,
+  anoLetivo: number = new Date().getFullYear(),
+  limit: number = 10
+): Promise<AlunoRankingRow[]> {
+  const supabase = await createServerClient();
+
+  const { data: consol } = await supabase
+    .from("notas_consolidadas")
+    .select("matricula_id, aluno_id, disciplina_id, media")
+    .eq("escola_id", escolaId)
+    .eq("ano_letivo", anoLetivo)
+    .not("media", "is", null);
+
+  if (!consol || consol.length === 0) return [];
+
+  // Agrega medias por aluno (media das medias de disciplinas no ano todo)
+  type Acc = { matriculaId: string; soma: number; count: number };
+  const porAluno = new Map<string, Acc>();
+  for (const r of consol as any[]) {
+    const acc = porAluno.get(r.aluno_id) ?? { matriculaId: r.matricula_id, soma: 0, count: 0 };
+    if (r.media !== null && r.media !== undefined) {
+      acc.soma += Number(r.media);
+      acc.count++;
+    }
+    porAluno.set(r.aluno_id, acc);
+  }
+
+  const alunoIds = Array.from(porAluno.keys());
+  if (alunoIds.length === 0) return [];
+
+  const { data: alunos } = await supabase
+    .from("alunos")
+    .select("id, nome")
+    .in("id", alunoIds);
+
+  const matriculaIds = Array.from(porAluno.values()).map((a) => a.matriculaId);
+  const { data: matriculas } = await supabase
+    .from("matriculas")
+    .select("id, turmas(nome, series(nome, segmento))")
+    .in("id", matriculaIds);
+
+  const nomeMap = new Map<string, string>();
+  for (const a of (alunos ?? []) as Array<{ id: string; nome: string }>) {
+    nomeMap.set(a.id, a.nome);
+  }
+
+  const matMap = new Map<string, { turma: string; serie: string; segmento: string }>();
+  for (const m of ((matriculas ?? []) as any[])) {
+    const t = pickOne(m.turmas);
+    const s = pickOne(t?.series);
+    matMap.set(m.id, {
+      turma: t?.nome ?? "—",
+      serie: s?.nome ?? "—",
+      segmento: s?.segmento ?? "outros",
+    });
+  }
+
+  const rows: AlunoRankingRow[] = Array.from(porAluno.entries()).map(([alunoId, a]) => {
+    const info = matMap.get(a.matriculaId) ?? { turma: "—", serie: "—", segmento: "outros" };
+    return {
+      alunoId,
+      matriculaId: a.matriculaId,
+      nome: nomeMap.get(alunoId) ?? "—",
+      turma: info.turma,
+      serie: info.serie,
+      segmento: info.segmento,
+      mediaGeral: a.count > 0 ? a.soma / a.count : 0,
+      disciplinasComMedia: a.count,
+    };
+  });
+
+  rows.sort((a, b) => b.mediaGeral - a.mediaGeral);
+  return rows.slice(0, limit);
+}

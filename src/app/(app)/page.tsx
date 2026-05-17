@@ -43,6 +43,7 @@ import { MargemTrendCard } from "@/components/dashboard/margem-trend-card";
 import { EvasaoCard } from "@/components/dashboard/evasao-card";
 import { FrequenciaHeatmap } from "@/components/dashboard/frequencia-heatmap";
 import { MediasDisciplinasCard } from "@/components/dashboard/medias-disciplinas-card";
+import { RankingAlunosCard } from "@/components/dashboard/ranking-alunos-card";
 import { RankingTurmasCard } from "@/components/dashboard/ranking-turmas-card";
 import { RealizadoProjetadoCard } from "@/components/dashboard/realizado-projetado-card";
 import { TopCategoriasCard } from "@/components/dashboard/top-categorias-card";
@@ -51,6 +52,7 @@ import {
   getFrequenciaDetalhada,
   getMediasPorDisciplina,
   getPedagogicoSummary,
+  getRankingAlunos,
 } from "@/lib/data/pedagogico";
 import { MetricRing } from "@/components/dashboard/metric-ring";
 import { RenovacoesPendentes } from "@/components/dashboard/renovacoes-pendentes";
@@ -108,6 +110,7 @@ export default async function DashboardPage({
     freqDetalhada,
     mediasDisc,
     pedagogicoSummary,
+    rankingAlunos,
     slot2,
     slot5,
   ] = await Promise.all([
@@ -131,6 +134,7 @@ export default async function DashboardPage({
     getFrequenciaDetalhada(escolaId, 60),
     getMediasPorDisciplina(escolaId),
     getPedagogicoSummary(escolaId),
+    getRankingAlunos(escolaId, undefined, 10),
     isPropria
       ? getInadimplencia(competencia, escolaId)
       : getRepasseRecebido(competencia, escolaId),
@@ -250,6 +254,7 @@ export default async function DashboardPage({
             <FrequenciaHeatmap data={freqDetalhada} />
           </section>
           <MediasDisciplinasCard rows={mediasDisc} summary={pedagogicoSummary} />
+          <RankingAlunosCard items={rankingAlunos} />
         </>
       )}
     </div>
