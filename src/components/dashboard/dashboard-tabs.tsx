@@ -1,11 +1,12 @@
 import Link from "next/link";
-import { GraduationCap, Wallet, type LucideIcon } from "lucide-react";
+import { BookOpen, GraduationCap, Wallet, type LucideIcon } from "lucide-react";
 
-type Tab = "financeiro" | "alunos";
+type Tab = "financeiro" | "alunos" | "pedagogico";
 
 const TABS: Array<{ id: Tab; label: string; icon: LucideIcon }> = [
   { id: "financeiro", label: "Financeiro", icon: Wallet },
   { id: "alunos",     label: "Alunos",     icon: GraduationCap },
+  { id: "pedagogico", label: "Pedagógico", icon: BookOpen },
 ];
 
 export function DashboardTabs({ active, competencia }: { active: Tab; competencia?: string }) {
@@ -40,5 +41,7 @@ export function DashboardTabs({ active, competencia }: { active: Tab; competenci
 }
 
 export function parseTab(value: string | undefined): Tab {
-  return value === "alunos" ? "alunos" : "financeiro";
+  if (value === "alunos") return "alunos";
+  if (value === "pedagogico") return "pedagogico";
+  return "financeiro";
 }

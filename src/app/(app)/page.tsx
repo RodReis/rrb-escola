@@ -40,9 +40,18 @@ import { HeroFinancial } from "@/components/dashboard/hero-financial";
 import { FolhaRatioCard } from "@/components/dashboard/folha-ratio-card";
 import { FrequenciaCard } from "@/components/dashboard/frequencia-card";
 import { MargemTrendCard } from "@/components/dashboard/margem-trend-card";
+import { EvasaoCard } from "@/components/dashboard/evasao-card";
+import { FrequenciaHeatmap } from "@/components/dashboard/frequencia-heatmap";
+import { MediasDisciplinasCard } from "@/components/dashboard/medias-disciplinas-card";
 import { RankingTurmasCard } from "@/components/dashboard/ranking-turmas-card";
 import { RealizadoProjetadoCard } from "@/components/dashboard/realizado-projetado-card";
 import { TopCategoriasCard } from "@/components/dashboard/top-categorias-card";
+import {
+  getEvasao,
+  getFrequenciaDetalhada,
+  getMediasPorDisciplina,
+  getPedagogicoSummary,
+} from "@/lib/data/pedagogico";
 import { MetricRing } from "@/components/dashboard/metric-ring";
 import { RenovacoesPendentes } from "@/components/dashboard/renovacoes-pendentes";
 import { RepasseCard } from "@/components/dashboard/repasse-card";
@@ -95,6 +104,10 @@ export default async function DashboardPage({
     topCategorias,
     realizadoVsProjetado,
     frequenciaPorTurma,
+    evasao,
+    freqDetalhada,
+    mediasDisc,
+    pedagogicoSummary,
     slot2,
     slot5,
   ] = await Promise.all([
@@ -114,6 +127,10 @@ export default async function DashboardPage({
     getTopCategoriasDespesas(competencia, escolaId, 6),
     getRealizadoVsProjetado(competencia, escolaId),
     getFrequenciaPorTurma(escolaId, 30),
+    getEvasao(escolaId),
+    getFrequenciaDetalhada(escolaId, 60),
+    getMediasPorDisciplina(escolaId),
+    getPedagogicoSummary(escolaId),
     isPropria
       ? getInadimplencia(competencia, escolaId)
       : getRepasseRecebido(competencia, escolaId),
@@ -223,6 +240,16 @@ export default async function DashboardPage({
 
           {!isPropria && <RenovacoesPendentes items={slot5 as RenovacaoRow[]} />}
           {isPropria && <TopDevedores items={slot5 as DevedorRow[]} />}
+        </>
+      )}
+
+      {aba === "pedagogico" && (
+        <>
+          <section className="grid gap-6 lg:grid-cols-2">
+            <EvasaoCard data={evasao} />
+            <FrequenciaHeatmap data={freqDetalhada} />
+          </section>
+          <MediasDisciplinasCard rows={mediasDisc} summary={pedagogicoSummary} />
         </>
       )}
     </div>
