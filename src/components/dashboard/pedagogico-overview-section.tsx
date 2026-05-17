@@ -41,7 +41,7 @@ export function PedagogicoOverviewSection({ data }: { data: PedagogicoOverview }
         </div>
       </header>
 
-      <div className="grid gap-3 md:grid-cols-2 lg:grid-cols-6">
+      <div className="grid gap-3 md:grid-cols-2 lg:grid-cols-4">
         <article className="rounded-panel bg-surface p-4 shadow-soft">
           <div className="flex items-center gap-2">
             <span className="grid h-8 w-8 place-items-center rounded-ui bg-brand/10 text-brand">
@@ -85,32 +85,10 @@ export function PedagogicoOverviewSection({ data }: { data: PedagogicoOverview }
           <strong className="mt-2 block text-2xl font-bold text-ink">{data.totalTurnos}</strong>
           <p className="text-xs text-ink/55">períodos letivos</p>
         </article>
-
-        {data.porEtapa.slice(0, 2).map((e) => {
-          const cfg = ETAPA_CFG[e.etapa];
-          const Icon = cfg?.icon ?? BookOpen;
-          return (
-            <article key={e.etapa} className={`rounded-panel bg-surface p-4 shadow-soft bg-gradient-to-br ${cfg ? `${cfg.bg} to-transparent` : ""}`}>
-              <div className="flex items-center gap-2">
-                <span className={`grid h-8 w-8 place-items-center rounded-ui ${cfg?.bg ?? "bg-muted"} ${cfg?.text ?? "text-ink/60"}`}>
-                  <Icon size={14} />
-                </span>
-                <p className="text-[0.66rem] font-bold uppercase tracking-kicker text-ink/55 truncate">{e.label}</p>
-              </div>
-              <strong className={`mt-2 block text-2xl font-bold ${cfg?.text ?? "text-ink"}`}>{e.count}</strong>
-              <div className="mt-2 flex items-center gap-2">
-                <div className="h-1.5 flex-1 rounded-pill bg-muted overflow-hidden">
-                  <div className={`h-1.5 rounded-pill ${cfg?.bar ?? "bg-ink/30"}`} style={{ width: `${e.percent}%` }} />
-                </div>
-                <span className="shrink-0 text-[0.66rem] font-semibold text-ink/55">{e.percent.toFixed(1)}%</span>
-              </div>
-            </article>
-          );
-        })}
       </div>
 
-      <div className="mt-3 grid gap-3 md:grid-cols-2 lg:grid-cols-2">
-        {data.porEtapa.slice(2).map((e) => {
+      <div className="mt-3 grid gap-3 md:grid-cols-2 lg:grid-cols-4">
+        {data.porEtapa.map((e) => {
           const cfg = ETAPA_CFG[e.etapa];
           const Icon = cfg?.icon ?? BookOpen;
           return (
