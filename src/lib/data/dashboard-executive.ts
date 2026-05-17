@@ -805,3 +805,56 @@ export async function getBeneficios(
     receitaPerdidaEstimada: receitaPerdida,
   };
 }
+
+export type AniversarianteRow = {
+  alunoId: string;
+  nome: string;
+  dia: number;
+  mes: number;
+  diaSemana: string;
+  proximo: boolean; // verdadeiro se aniversario ainda nao passou
+};
+
+export async function getAniversariantes(
+  escolaId: string = DEFAULT_SCHOOL_ID,
+  limit: number = 10
+): Promise<AniversarianteRow[]> {
+  const supabase = await createServerClient();
+  const hoje = new Date();
+  const mesAtual = hoje.getMonth() + 1;
+  const diaHoje = hoje.getDate();
+
+  // alunos com matricula ativa
+  const { data: matriculas } = await supabase
+    .from("matriculas")
+    .select("aluno_id, alunos(id, nome, data_nascimento)")
+    .eq("escola_id", escolaId)
+    .eq("status", "ativa");
+
+  const vistos = new Set<string>();
+  const rows: AniversarianteRow[] = [];
+  const DIAS_SEMANA = ["Dom", "Seg", "Ter", "Qua", "Qui", "Sex", "Sab"];
+
+  for (const m of (matriculas ?? []) as any[]) {
+    const aluno = Array.isArray(m.alunos) ? m.alunos[0] : m.alunos;
+    if (!aluno?.data_nascimento) continue;
+    if (vistos.has(aluno.id)) continue;
+    vistos.add(aluno.id);
+
+    const [, mm, dd] = String(aluno.data_nascimento).split("-").map(Number);
+    if (mm !== mesAtual) continue;
+
+    const dataAniv = new Date(hoje.getFullYear(), mm - 1, dd);
+    rows.push({
+      alunoId: aluno.id,
+      nome: aluno.nome ?? "—",
+      dia: dd,
+      mes: mm,
+      diaSemana: DIAS_SEMANA[dataAniv.getDay()] ?? "",
+      proximo: dd >= diaHoje,
+    });
+  }
+
+  rows.sort((a, b) => a.dia - b.dia);
+  return rows.slice(0, limit);
+}

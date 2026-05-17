@@ -5,6 +5,7 @@ import { requireSession } from "@/lib/auth/session";
 import {
   currentCompetencia,
   getAlertas,
+  getAniversariantes,
   getBeneficios,
   getEscolaConfig,
   getFolhaPorEmpresa,
@@ -24,6 +25,7 @@ import {
   type RepasseData,
 } from "@/lib/data/dashboard-executive";
 import { AlertList } from "@/components/dashboard/alert-list";
+import { AniversariantesCard } from "@/components/dashboard/aniversariantes-card";
 import { BeneficiosCard } from "@/components/dashboard/beneficios-card";
 import { CompetenciaPicker } from "@/components/dashboard/competencia-picker";
 import { DashboardTabs, parseTab } from "@/components/dashboard/dashboard-tabs";
@@ -75,6 +77,7 @@ export default async function DashboardPage({
     folhaEmpresas,
     alertas,
     beneficios,
+    aniversariantes,
     slot2,
     slot5,
   ] = await Promise.all([
@@ -87,6 +90,7 @@ export default async function DashboardPage({
     getFolhaPorEmpresa(competencia, escolaId),
     getAlertas(competencia, config.gestaoFinanceira, escolaId),
     getBeneficios(escolaId),
+    getAniversariantes(escolaId, 10),
     isPropria
       ? getInadimplencia(competencia, escolaId)
       : getRepasseRecebido(competencia, escolaId),
@@ -182,8 +186,11 @@ export default async function DashboardPage({
 
           <StageTable rows={stages} />
 
-          {!isPropria && <RenovacoesPendentes items={slot5 as RenovacaoRow[]} />}
-          {isPropria && <TopDevedores items={slot5 as DevedorRow[]} />}
+          <section className="grid gap-6 lg:grid-cols-2">
+            <AniversariantesCard items={aniversariantes} />
+            {!isPropria && <RenovacoesPendentes items={slot5 as RenovacaoRow[]} />}
+            {isPropria && <TopDevedores items={slot5 as DevedorRow[]} />}
+          </section>
         </>
       )}
     </div>
