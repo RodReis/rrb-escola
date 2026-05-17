@@ -1014,3 +1014,52 @@ export async function getRankingTurmas(
   rows.sort((a, b) => b.ocupacao - a.ocupacao);
   return rows.slice(0, limit);
 }
+
+export type CategoriaDespesaRow = {
+  categoriaId: string | null;
+  categoria: string;
+  total: number;
+  count: number;
+  tipo: "fixa" | "variavel" | "mista";
+};
+
+export async function getTopCategoriasDespesas(
+  competencia: string,
+  escolaId: string = DEFAULT_SCHOOL_ID,
+  limit: number = 6
+): Promise<CategoriaDespesaRow[]> {
+  const supabase = await createServerClient();
+
+  const { data } = await supabase
+    .from("despesas")
+    .select("valor, tipo, categoria_id, categorias_despesa(nome)")
+    .eq("escola_id", escolaId)
+    .eq("competencia", competencia)
+    .neq("status", "cancelada");
+
+  type Acc = { categoria: string; total: number; count: number; tipos: Set<string> };
+  const map = new Map<string, Acc>();
+
+  for (const r of (data ?? []) as any[]) {
+    const catRel = r.categorias_despesa;
+    const cat = Array.isArray(catRel) ? catRel[0] : catRel;
+    const key = r.categoria_id ?? "sem_categoria";
+    const nome = cat?.nome ?? "Sem categoria";
+    const acc = map.get(key) ?? { categoria: nome, total: 0, count: 0, tipos: new Set() };
+    acc.total += Number(r.valor ?? 0);
+    acc.count += 1;
+    if (r.tipo) acc.tipos.add(r.tipo);
+    map.set(key, acc);
+  }
+
+  const rows: CategoriaDespesaRow[] = Array.from(map.entries()).map(([id, a]) => ({
+    categoriaId: id === "sem_categoria" ? null : id,
+    categoria: a.categoria,
+    total: a.total,
+    count: a.count,
+    tipo: a.tipos.size > 1 ? "mista" : (a.tipos.has("fixa") ? "fixa" : "variavel"),
+  }));
+
+  rows.sort((a, b) => b.total - a.total);
+  return rows.slice(0, limit);
+}

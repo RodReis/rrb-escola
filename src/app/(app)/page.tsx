@@ -21,6 +21,7 @@ import {
   getRevenueTrend,
   getStageBreakdown,
   getTicketMedio,
+  getTopCategoriasDespesas,
   getTopDevedores,
   type DevedorRow,
   type InadimplenciaData,
@@ -38,6 +39,7 @@ import { FolhaRatioCard } from "@/components/dashboard/folha-ratio-card";
 import { FrequenciaCard } from "@/components/dashboard/frequencia-card";
 import { MargemTrendCard } from "@/components/dashboard/margem-trend-card";
 import { RankingTurmasCard } from "@/components/dashboard/ranking-turmas-card";
+import { TopCategoriasCard } from "@/components/dashboard/top-categorias-card";
 import { MetricRing } from "@/components/dashboard/metric-ring";
 import { RenovacoesPendentes } from "@/components/dashboard/renovacoes-pendentes";
 import { RepasseCard } from "@/components/dashboard/repasse-card";
@@ -87,6 +89,7 @@ export default async function DashboardPage({
     margemTrend,
     frequencia,
     rankingTurmas,
+    topCategorias,
     slot2,
     slot5,
   ] = await Promise.all([
@@ -103,6 +106,7 @@ export default async function DashboardPage({
     getMargemTrend(6, escolaId),
     getFrequenciaResumo(escolaId, 30),
     getRankingTurmas(escolaId, 10),
+    getTopCategoriasDespesas(competencia, escolaId, 6),
     isPropria
       ? getInadimplencia(competencia, escolaId)
       : getRepasseRecebido(competencia, escolaId),
@@ -166,7 +170,10 @@ export default async function DashboardPage({
             <MargemTrendCard data={margemTrend} />
           </section>
 
-          <FolhaEmpresas items={folhaEmpresas} />
+          <section className="grid gap-6 lg:grid-cols-2">
+            <TopCategoriasCard items={topCategorias} />
+            <FolhaEmpresas items={folhaEmpresas} />
+          </section>
         </>
       ) : (
         <>
