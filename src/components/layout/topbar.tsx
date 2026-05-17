@@ -10,6 +10,7 @@ import { School } from "lucide-react";
 const primaryItems: Array<{ href: string; label: string; icon: TopbarIconName }> = [
   { href: "/", label: "Dashboard", icon: "LayoutDashboard" },
   { href: "/financeiro", label: "Financeiro", icon: "BarChart3" },
+  { href: "/despesas", label: "Despesas", icon: "ReceiptText" },
   { href: "/portaria", label: "Portaria", icon: "DoorOpen" }
 ];
 
