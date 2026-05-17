@@ -5,7 +5,8 @@ create table if not exists public.companies (
   id uuid primary key default gen_random_uuid(),
   cnpj text not null unique,
   name text not null,
-  created_at timestamptz not null default now()
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now()
 );
 
 create table if not exists public.employees (
@@ -16,7 +17,8 @@ create table if not exists public.employees (
   birth_date date,
   hire_date date,
   school_category text check (school_category is null or school_category in ('admin','fund1','fund2','medio')),
-  created_at timestamptz not null default now()
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now()
 );
 
 create index if not exists idx_employees_company on public.employees (company_id);
@@ -41,6 +43,7 @@ create table if not exists public.payroll (
   considera_um_tercio_ferias boolean default false,
   observations text,
   created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now(),
   unique (employee_id, reference_month)
 );
 
