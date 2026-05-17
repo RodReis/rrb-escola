@@ -1,12 +1,13 @@
 import Link from "next/link";
-import { Plus } from "lucide-react";
+import { Plus, Pencil } from "lucide-react";
 import { ButtonLink } from "@/components/ui/button";
 import { PageHeader } from "@/components/ui/page-header";
 import { DataTableShell } from "@/components/ui/data-table";
 import { StatusPill, type StatusTone } from "@/components/ui/status-pill";
 import { Avatar } from "@/components/ui/avatar";
 import { EmployeeFilters } from "@/components/rh/employee-filters";
-import { toggleEmployeeAction } from "@/lib/actions/rh";
+import { DeleteEmployeeButton } from "@/components/rh/delete-employee-button";
+import { ToggleEmployeeButton } from "@/components/rh/toggle-employee-button";
 import { listCompanies, listEmployees, getEmployeeSegmentCounts } from "@/lib/data/rh";
 import { requireSession } from "@/lib/auth/session";
 
@@ -160,17 +161,13 @@ export default async function FuncionariosPage({
                     <div className="inline-flex items-center gap-3">
                       <Link
                         href={`/rh/funcionarios/${emp.id}/editar`}
-                        className="text-xs font-semibold text-brand hover:underline"
+                        className="inline-flex items-center gap-1 text-xs font-semibold text-brand hover:underline"
+                        title="Editar"
                       >
-                        Editar
+                        <Pencil size={14} /> Editar
                       </Link>
-                      <form action={toggleEmployeeAction} className="inline">
-                        <input type="hidden" name="id" value={emp.id} />
-                        <input type="hidden" name="ativo" value={emp.ativo ? "" : "on"} />
-                        <button type="submit" className="text-xs font-semibold text-danger hover:underline">
-                          {emp.ativo ? "Desativar" : "Ativar"}
-                        </button>
-                      </form>
+                      <ToggleEmployeeButton id={emp.id} name={emp.name} ativo={emp.ativo} />
+                      {isAdmin ? <DeleteEmployeeButton id={emp.id} name={emp.name} /> : null}
                     </div>
                   </td>
                 ) : null}

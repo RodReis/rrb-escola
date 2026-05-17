@@ -65,8 +65,8 @@ export function PayrollMonthTable({
                 </Link>
               </td>
               <td className="text-ink/80">{r.employees?.companies?.name ?? "—"}</td>
-              <td className="text-right tabular-nums">{money.format(Number(r.base_salary ?? 0))}</td>
-              <td className="text-right tabular-nums text-success">{money.format(Number(r.total_earnings ?? 0))}</td>
+              <td className="text-right tabular-nums">{money.format(Number(r.base_salary) > 0 ? Number(r.base_salary) : Number(r.employees?.base_salary ?? 0))}</td>
+              <td className="text-right tabular-nums text-success">{money.format(Number(r.total_earnings) > 0 ? Number(r.total_earnings) : Number(r.employees?.base_salary ?? 0))}</td>
               <td className="text-right tabular-nums text-danger">{money.format(Number(r.inss ?? 0))}</td>
               <td className="text-right tabular-nums text-danger">{money.format(Number(r.ir ?? 0))}</td>
               <td className="text-right tabular-nums text-warning">{money.format(Number(r.total_deductions ?? 0))}</td>

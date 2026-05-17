@@ -39,6 +39,14 @@ export const EmployeeSchema = z.object({
   ),
   birth_date: optionalString,
   hire_date: optionalString,
+  base_salary: z.preprocess(
+    (v) => {
+      if (v === "" || v == null) return 0;
+      if (typeof v === "string") return Number(v.replace(",", "."));
+      return v;
+    },
+    z.number().min(0)
+  ).optional(),
   salario_sem_dsr: z.preprocess(
     (v) => {
       if (v === "" || v == null) return 0;

@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
+import { CurrencyInput } from "@/components/ui/currency-input";
 import { maskCPF, maskPhone } from "@/lib/format/masks";
 import type { Employee } from "@/lib/data/rh";
 import type { Company } from "@/lib/data/rh";
@@ -17,12 +18,9 @@ type Props = {
 export function EmployeeForm({ action, employee, companies, defaultCompanyId, submitLabel = "Salvar" }: Props) {
   const [cpf, setCpf] = useState(employee?.cpf ?? "");
   const [telefone, setTelefone] = useState(employee?.telefone ?? "");
-  const [salarioSemDsr, setSalarioSemDsr] = useState<string>(
-    employee?.salario_sem_dsr != null ? String(employee.salario_sem_dsr) : ""
-  );
-  const [gpsDefault, setGpsDefault] = useState<string>(
-    employee?.gps_default != null ? String(employee.gps_default) : ""
-  );
+  const [baseSalary, setBaseSalary] = useState<number>(Number(employee?.base_salary ?? 0));
+  const [salarioSemDsr, setSalarioSemDsr] = useState<number>(Number(employee?.salario_sem_dsr ?? 0));
+  const [gpsDefault, setGpsDefault] = useState<number>(Number(employee?.gps_default ?? 0));
 
   return (
     <form action={action} className="grid gap-4 md:grid-cols-2">
@@ -97,16 +95,13 @@ export function EmployeeForm({ action, employee, companies, defaultCompanyId, su
       </label>
 
       <label>
+        Salário Base
+        <CurrencyInput name="base_salary" value={baseSalary} onChange={setBaseSalary} />
+      </label>
+
+      <label>
         Salário s/ DSR
-        <input
-          name="salario_sem_dsr"
-          type="number"
-          step="0.01"
-          min="0"
-          value={salarioSemDsr}
-          onChange={(e) => setSalarioSemDsr(e.target.value)}
-          placeholder="0,00"
-        />
+        <CurrencyInput name="salario_sem_dsr" value={salarioSemDsr} onChange={setSalarioSemDsr} />
       </label>
 
       <label className="flex grid-cols-none items-center gap-2 self-end pb-3">
@@ -121,15 +116,7 @@ export function EmployeeForm({ action, employee, companies, defaultCompanyId, su
 
       <label>
         GPS padrão
-        <input
-          name="gps_default"
-          type="number"
-          step="0.01"
-          min="0"
-          value={gpsDefault}
-          onChange={(e) => setGpsDefault(e.target.value)}
-          placeholder="0,00"
-        />
+        <CurrencyInput name="gps_default" value={gpsDefault} onChange={setGpsDefault} />
       </label>
 
       <label>

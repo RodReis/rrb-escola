@@ -53,6 +53,7 @@ export type PayrollRowJoined = PayrollRow & {
     school_category: string | null;
     ativo: boolean;
     company_id: string;
+    base_salary: number | null;
     salario_sem_dsr: number | null;
     aplica_dobra: boolean | null;
     gps_default: number | null;
@@ -80,7 +81,7 @@ export async function listPayrollByMonth(
       family_allowance, vale_transporte, vale_alimentacao, outros_descontos, loan_deduction, advance, uniform_value, gps,
       dependentes, salario_sem_dsr, aplica_dobra, total_earnings, inss, ir, inss_manual, ir_manual, total_deductions, net_amount,
       consider_decimo_terceiro, considera_um_tercio_ferias, observations,
-      employees!inner(id, name, cpf, cargo, school_category, ativo, company_id, salario_sem_dsr, aplica_dobra, gps_default, companies(id, name, cnpj))
+      employees!inner(id, name, cpf, cargo, school_category, ativo, company_id, base_salary, salario_sem_dsr, aplica_dobra, gps_default, companies(id, name, cnpj))
     `)
     .eq("reference_month", dbMonth);
 
@@ -99,6 +100,7 @@ export async function listPayrollByMonth(
     return r;
   });
 
+  rows = rows.filter((r) => r.employees?.ativo !== false);
   if (filters.companyId) rows = rows.filter((r) => r.employees?.company_id === filters.companyId);
   if (filters.segmento) rows = rows.filter((r) => r.employees?.school_category === filters.segmento);
   if (filters.search) {
@@ -127,7 +129,7 @@ export async function getPayrollByEmployeeMonth(
       family_allowance, vale_transporte, vale_alimentacao, outros_descontos, loan_deduction, advance, uniform_value, gps,
       dependentes, salario_sem_dsr, aplica_dobra, total_earnings, inss, ir, inss_manual, ir_manual, total_deductions, net_amount,
       consider_decimo_terceiro, considera_um_tercio_ferias, observations,
-      employees!inner(id, name, cpf, cargo, school_category, ativo, company_id, hire_date, birth_date, salario_sem_dsr, aplica_dobra, gps_default, companies(id, name, cnpj))
+      employees!inner(id, name, cpf, cargo, school_category, ativo, company_id, hire_date, birth_date, base_salary, salario_sem_dsr, aplica_dobra, gps_default, companies(id, name, cnpj))
     `)
     .eq("employee_id", employeeId)
     .eq("reference_month", dbMonth)
