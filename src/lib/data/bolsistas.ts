@@ -32,24 +32,37 @@ export async function listBolsistas(escolaId: string = DEFAULT_SCHOOL_ID): Promi
   const supabase = await createServerClient();
   const anoLetivo = new Date().getFullYear();
 
-  const { data } = await supabase
-    .from("matriculas")
-    .select(`
-      id, tipo_vaga, percentual_bolsa,
-      alunos (
-        id, nome, foto_url, matricula_codigo, celular, email,
-        responsaveis_aluno ( nome, celular, telefone, parentesco, responsavel_financeiro )
-      ),
-      series ( nome, segmento ),
-      turmas ( nome ),
-      planos ( nome, valor_mensalidade )
-    `)
-    .eq("escola_id", escolaId)
-    .eq("status", "ativa")
-    .eq("ano_letivo", anoLetivo)
-    .in("tipo_vaga", ["bolsa_integral", "bolsa_parcial", "permuta", "gratuita"]);
+  const [matriculasRes, valoresRes] = await Promise.all([
+    supabase
+      .from("matriculas")
+      .select(`
+        id, tipo_vaga, percentual_bolsa,
+        alunos (
+          id, nome, foto_url, matricula_codigo, celular, email,
+          responsaveis_aluno ( nome, celular, telefone, parentesco, responsavel_financeiro )
+        ),
+        series ( nome, segmento ),
+        turmas ( nome ),
+        planos ( nome, valor_mensalidade )
+      `)
+      .eq("escola_id", escolaId)
+      .eq("status", "ativa")
+      .eq("ano_letivo", anoLetivo)
+      .in("tipo_vaga", ["bolsa_integral", "bolsa_parcial", "permuta", "gratuita"]),
+    supabase
+      .from("valores_praticados")
+      .select("segmento, valor_mensalidade")
+      .eq("escola_id", escolaId)
+      .eq("ano_letivo", anoLetivo)
+      .eq("ordem_filho", 1),
+  ]);
 
-  return ((data ?? []) as any[]).map((m): BolsistaRow => {
+  const valorPorSegmento = new Map<string, number>();
+  for (const v of (valoresRes.data ?? []) as Array<{ segmento: string; valor_mensalidade: number | string }>) {
+    valorPorSegmento.set(v.segmento, Number(v.valor_mensalidade));
+  }
+
+  return ((matriculasRes.data ?? []) as any[]).map((m): BolsistaRow => {
     const aluno = pickOne(m.alunos);
     const serie = pickOne(m.series);
     const turma = pickOne(m.turmas);
@@ -66,13 +79,14 @@ export async function listBolsistas(escolaId: string = DEFAULT_SCHOOL_ID): Promi
       responsaveis[0] ??
       null;
 
-    const valorMensalidade = Number(plano?.valor_mensalidade ?? 0);
+    const segmento = serie?.segmento ?? "outros";
+    const valorReferencia = valorPorSegmento.get(segmento) ?? Number(plano?.valor_mensalidade ?? 0);
     const tipoVaga = m.tipo_vaga as TipoVagaBolsa;
     const percentualBolsa = Number(m.percentual_bolsa ?? 0);
     const receitaPerdidaMes =
       tipoVaga === "bolsa_parcial"
-        ? valorMensalidade * (percentualBolsa / 100)
-        : valorMensalidade;
+        ? valorReferencia * (percentualBolsa / 100)
+        : valorReferencia;
 
     return {
       matriculaId: m.id,
@@ -84,14 +98,14 @@ export async function listBolsistas(escolaId: string = DEFAULT_SCHOOL_ID): Promi
       email: aluno?.email ?? null,
       serie: serie?.nome ?? "—",
       turma: turma?.nome ?? "—",
-      segmento: serie?.segmento ?? "outros",
+      segmento,
       tipoVaga,
       percentualBolsa,
       responsavelNome: responsavel?.nome ?? null,
       responsavelCelular: responsavel?.celular ?? responsavel?.telefone ?? null,
       responsavelParentesco: responsavel?.parentesco ?? null,
       planoNome: plano?.nome ?? null,
-      valorMensalidade,
+      valorMensalidade: valorReferencia,
       receitaPerdidaMes,
     };
   }).sort((a, b) => a.nome.localeCompare(b.nome, "pt-BR"));
