@@ -31,6 +31,13 @@ export function DespesaRow({ d }: { d: DespesaRowType }) {
         </Link>
       </td>
       <td className="py-2">{d.categoria_nome ?? "-"}</td>
+      <td className="py-2">
+        <span className={`inline-flex items-center rounded-pill px-2 py-0.5 text-xs font-semibold whitespace-nowrap ${
+          d.tipo === "fixa" ? "bg-brand/10 text-brand" : "bg-muted text-ink/60"
+        }`}>
+          {d.tipo === "fixa" ? "Fixa" : "Variável"}
+        </span>
+      </td>
       <td className="py-2">{d.fornecedor ?? "-"}</td>
       <td className="py-2">{dateText(d.data_vencimento)}</td>
       <td className="py-2">{dateText(d.data_pagamento)}</td>

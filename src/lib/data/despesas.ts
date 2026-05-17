@@ -7,12 +7,15 @@ export interface CategoriaDespesa {
   ativo: boolean;
 }
 
+export type TipoDespesa = "fixa" | "variavel";
+
 export interface DespesaRow {
   id: string;
   competencia: string;
   descricao: string;
   categoria_id: string | null;
   categoria_nome: string | null;
+  tipo: TipoDespesa;
   fornecedor: string | null;
   valor: number;
   data_vencimento: string;
@@ -26,6 +29,7 @@ export interface DespesaRow {
 export interface DespesaFilters {
   categoria_id?: string;
   status?: string[];
+  tipo?: TipoDespesa;
 }
 
 export async function getCategorias(opts: { onlyAtivos?: boolean } = {}): Promise<CategoriaDespesa[]> {
@@ -49,13 +53,14 @@ export async function getDespesasMensais(
   let q = supabase
     .from("despesas")
     .select(
-      "id, competencia, descricao, categoria_id, fornecedor, valor, data_vencimento, data_pagamento, forma_pagamento, comprovante_path, status, criado_em, categorias_despesa(nome)"
+      "id, competencia, descricao, categoria_id, tipo, fornecedor, valor, data_vencimento, data_pagamento, forma_pagamento, comprovante_path, status, criado_em, categorias_despesa(nome)"
     )
     .eq("escola_id", DEFAULT_SCHOOL_ID)
     .eq("competencia", competencia)
     .order("data_vencimento");
 
   if (filters.categoria_id) q = q.eq("categoria_id", filters.categoria_id);
+  if (filters.tipo) q = q.eq("tipo", filters.tipo);
   if (filters.status && filters.status.length > 0) q = q.in("status", filters.status);
 
   const { data, error } = await q;
@@ -67,6 +72,7 @@ export async function getDespesasMensais(
     descricao: r.descricao,
     categoria_id: r.categoria_id,
     categoria_nome: r.categorias_despesa?.nome ?? null,
+    tipo: (r.tipo ?? "variavel") as TipoDespesa,
     fornecedor: r.fornecedor,
     valor: Number(r.valor),
     data_vencimento: r.data_vencimento,
@@ -83,7 +89,7 @@ export async function getDespesaById(id: string): Promise<DespesaRow | null> {
   const { data, error } = await supabase
     .from("despesas")
     .select(
-      "id, competencia, descricao, categoria_id, fornecedor, valor, data_vencimento, data_pagamento, forma_pagamento, comprovante_path, status, criado_em, categorias_despesa(nome)"
+      "id, competencia, descricao, categoria_id, tipo, fornecedor, valor, data_vencimento, data_pagamento, forma_pagamento, comprovante_path, status, criado_em, categorias_despesa(nome)"
     )
     .eq("escola_id", DEFAULT_SCHOOL_ID)
     .eq("id", id)
@@ -96,6 +102,7 @@ export async function getDespesaById(id: string): Promise<DespesaRow | null> {
     descricao: data.descricao,
     categoria_id: data.categoria_id,
     categoria_nome: (data as any).categorias_despesa?.nome ?? null,
+    tipo: ((data as any).tipo ?? "variavel") as TipoDespesa,
     fornecedor: data.fornecedor,
     valor: Number(data.valor),
     data_vencimento: data.data_vencimento,
