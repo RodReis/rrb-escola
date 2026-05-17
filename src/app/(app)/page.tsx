@@ -170,7 +170,7 @@ export default async function DashboardPage({
 
       <DashboardTabs active={aba} competencia={competencia} />
 
-      {aba === "financeiro" ? (
+      {aba === "financeiro" && (
         <>
           <HeroFinancial data={hero} />
 
@@ -205,7 +205,9 @@ export default async function DashboardPage({
             <FolhaEmpresas items={folhaEmpresas} />
           </section>
         </>
-      ) : (
+      )}
+
+      {aba === "alunos" && (
         <>
           <section className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
             <MetricRing
