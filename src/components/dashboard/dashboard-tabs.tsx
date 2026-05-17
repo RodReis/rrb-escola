@@ -1,0 +1,42 @@
+import Link from "next/link";
+import { GraduationCap, Wallet, type LucideIcon } from "lucide-react";
+
+type Tab = "financeiro" | "alunos";
+
+const TABS: Array<{ id: Tab; label: string; icon: LucideIcon }> = [
+  { id: "financeiro", label: "Financeiro", icon: Wallet },
+  { id: "alunos",     label: "Alunos",     icon: GraduationCap },
+];
+
+export function DashboardTabs({ active }: { active: Tab }) {
+  return (
+    <nav className="flex gap-1 border-b border-line">
+      {TABS.map((t) => {
+        const Icon = t.icon;
+        const isActive = t.id === active;
+        return (
+          <Link
+            key={t.id}
+            href={`/?aba=${t.id}`}
+            scroll={false}
+            className={`relative inline-flex items-center gap-2 px-4 py-2.5 text-sm font-semibold transition-colors ${
+              isActive
+                ? "text-brand"
+                : "text-ink/55 hover:text-ink"
+            }`}
+          >
+            <Icon size={14} />
+            {t.label}
+            {isActive && (
+              <span className="absolute inset-x-0 -bottom-px h-0.5 rounded-full bg-brand" />
+            )}
+          </Link>
+        );
+      })}
+    </nav>
+  );
+}
+
+export function parseTab(value: string | undefined): Tab {
+  return value === "alunos" ? "alunos" : "financeiro";
+}

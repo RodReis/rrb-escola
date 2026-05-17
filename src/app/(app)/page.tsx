@@ -25,6 +25,7 @@ import {
 } from "@/lib/data/dashboard-executive";
 import { AlertList } from "@/components/dashboard/alert-list";
 import { BeneficiosCard } from "@/components/dashboard/beneficios-card";
+import { DashboardTabs, parseTab } from "@/components/dashboard/dashboard-tabs";
 import { FolhaEmpresas } from "@/components/dashboard/folha-empresas";
 import { HeroFinancial } from "@/components/dashboard/hero-financial";
 import { FolhaRatioCard } from "@/components/dashboard/folha-ratio-card";
@@ -44,7 +45,14 @@ function mesLabel(competencia: string): string {
   return `${MESES[(m as number) - 1]}/${y}`;
 }
 
-export default async function DashboardPage() {
+export default async function DashboardPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ aba?: string }>;
+}) {
+  const params = await searchParams;
+  const aba = parseTab(params.aba);
+
   const session = await requireSession();
   const escolaId = session.profile.escola_id;
   const competencia = currentCompetencia();
@@ -106,48 +114,72 @@ export default async function DashboardPage() {
         }
       />
 
-      <HeroFinancial data={hero} />
+      <DashboardTabs active={aba} />
 
-      <section className="grid gap-6 lg:grid-cols-3">
-        <AlertList items={alertas} />
-        <div className="lg:col-span-2">
-          <RevenueTrendChart data={trend} />
-        </div>
-      </section>
+      {aba === "financeiro" ? (
+        <>
+          <HeroFinancial data={hero} />
 
-      <section className="grid gap-6 md:grid-cols-2 lg:grid-cols-4 xl:grid-cols-5">
-        <MetricRing
-          label="Ocupação"
-          percent={ocupacaoPct}
-          centerLabel="Vagas"
-          centerValue={`${ocupacao.ocupadas}/${ocupacao.total}`}
-        />
-        {isPropria ? (
-          <MetricRing
-            label="Inadimplência"
-            percent={(slot2 as InadimplenciaData).percentual}
-            centerLabel="Em atraso"
-            centerValue={money.format((slot2 as InadimplenciaData).valor)}
-            variant={(slot2 as InadimplenciaData).percentual > 0.1 ? "danger" : "warning"}
-          />
-        ) : (
-          <RepasseCard data={slot2 as RepasseData} />
-        )}
-        <FolhaRatioCard data={folhaRatio} />
-        <TicketCard data={ticket} />
-        <BeneficiosCard data={beneficios} />
-      </section>
+          <section className="grid gap-6 lg:grid-cols-3">
+            <AlertList items={alertas} />
+            <div className="lg:col-span-2">
+              <RevenueTrendChart data={trend} />
+            </div>
+          </section>
 
-      <StageTable rows={stages} />
+          <section className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+            {isPropria ? (
+              <MetricRing
+                label="Inadimplência"
+                percent={(slot2 as InadimplenciaData).percentual}
+                centerLabel="Em atraso"
+                centerValue={money.format((slot2 as InadimplenciaData).valor)}
+                variant={(slot2 as InadimplenciaData).percentual > 0.1 ? "danger" : "warning"}
+              />
+            ) : (
+              <RepasseCard data={slot2 as RepasseData} />
+            )}
+            <FolhaRatioCard data={folhaRatio} />
+            <TicketCard data={ticket} />
+          </section>
 
-      <section className="grid gap-6 lg:grid-cols-2">
-        {isPropria ? (
-          <TopDevedores items={slot5 as DevedorRow[]} />
-        ) : (
-          <RenovacoesPendentes items={slot5 as RenovacaoRow[]} />
-        )}
-        <FolhaEmpresas items={folhaEmpresas} />
-      </section>
+          <FolhaEmpresas items={folhaEmpresas} />
+        </>
+      ) : (
+        <>
+          <section className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+            <MetricRing
+              label="Ocupação"
+              percent={ocupacaoPct}
+              centerLabel="Vagas"
+              centerValue={`${ocupacao.ocupadas}/${ocupacao.total}`}
+            />
+            <BeneficiosCard data={beneficios} />
+            <article className="rounded-panel bg-surface p-6 shadow-soft">
+              <p className="text-[0.66rem] font-bold uppercase tracking-kicker text-ink/55">Resumo</p>
+              <dl className="mt-4 grid gap-3">
+                <div className="flex items-baseline justify-between">
+                  <dt className="text-sm text-ink/70">Pagantes</dt>
+                  <dd className="text-xl font-bold text-ink">{ocupacao.pagantes}</dd>
+                </div>
+                <div className="flex items-baseline justify-between">
+                  <dt className="text-sm text-ink/70">Beneficiados</dt>
+                  <dd className="text-xl font-bold text-accent">{ocupacao.beneficiados}</dd>
+                </div>
+                <div className="flex items-baseline justify-between border-t border-line pt-3">
+                  <dt className="text-sm font-semibold text-ink">Total ativos</dt>
+                  <dd className="text-2xl font-bold text-brand">{ocupacao.ocupadas}</dd>
+                </div>
+              </dl>
+            </article>
+          </section>
+
+          <StageTable rows={stages} />
+
+          {!isPropria && <RenovacoesPendentes items={slot5 as RenovacaoRow[]} />}
+          {isPropria && <TopDevedores items={slot5 as DevedorRow[]} />}
+        </>
+      )}
     </div>
   );
 }
