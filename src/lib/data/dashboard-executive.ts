@@ -222,7 +222,8 @@ export async function getRevenueTrend(
       .eq("escola_id", escolaId)
       .gte("data_pagamento", first)
       .lte("data_pagamento", last)
-      .is("cancelado_em", null),
+      .is("cancelado_em", null)
+      .range(0, 99999),
     supabase
       .from("despesas")
       .select("valor, competencia")
@@ -1576,7 +1577,8 @@ export async function getSaldoYTD(
       .eq("escola_id", escolaId)
       .gte("data_pagamento", inicioAno)
       .lte("data_pagamento", fimHoje)
-      .is("cancelado_em", null),
+      .is("cancelado_em", null)
+      .range(0, 99999),
     supabase
       .from("despesas")
       .select("valor")
