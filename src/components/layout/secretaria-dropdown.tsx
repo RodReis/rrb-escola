@@ -6,12 +6,14 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
   BookOpen,
+  ClipboardList,
   FileText,
   GraduationCap,
   HandHeart,
   Inbox,
   Layers3,
   Network,
+  UserCheck,
   UsersRound,
   ChevronDown
 } from "lucide-react";
@@ -23,6 +25,8 @@ const secretariaItems = [
   { href: "/matriculas", label: "Matrículas", icon: FileText },
   { href: "/series", label: "Séries", icon: Layers3 },
   { href: "/turmas", label: "Turmas", icon: GraduationCap },
+  { href: "/disciplinas", label: "Disciplinas", icon: ClipboardList },
+  { href: "/professores/atribuicoes", label: "Atribuições", icon: UserCheck },
   { href: "/organograma", label: "Organograma", icon: Network },
   { href: "/importacoes", label: "Importações", icon: Inbox }
 ];

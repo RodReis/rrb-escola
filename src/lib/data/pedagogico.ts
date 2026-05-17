@@ -236,6 +236,104 @@ export async function getMediasPorDisciplina(
   return rows;
 }
 
+export type DisciplinaRow = {
+  id: string;
+  serieId: string;
+  serie: string;
+  segmento: string;
+  nome: string;
+  ordem: number;
+  ativo: boolean;
+};
+
+export async function listDisciplinas(
+  escolaId: string = DEFAULT_SCHOOL_ID
+): Promise<DisciplinaRow[]> {
+  const supabase = await createServerClient();
+  const { data } = await supabase
+    .from("disciplinas")
+    .select("id, nome, ordem, ativo, serie_id, series(nome, segmento)")
+    .eq("escola_id", escolaId)
+    .order("nome");
+
+  return ((data ?? []) as any[]).map((d) => {
+    const s = pickOne(d.series);
+    return {
+      id: d.id,
+      serieId: d.serie_id,
+      serie: s?.nome ?? "—",
+      segmento: s?.segmento ?? "outros",
+      nome: d.nome,
+      ordem: Number(d.ordem ?? 0),
+      ativo: !!d.ativo,
+    };
+  });
+}
+
+export type AtribuicaoRow = {
+  id: string;
+  perfilId: string;
+  professorNome: string;
+  disciplinaId: string;
+  disciplina: string;
+  turmaId: string;
+  turma: string;
+  serie: string;
+};
+
+export async function listAtribuicoes(
+  escolaId: string = DEFAULT_SCHOOL_ID
+): Promise<AtribuicaoRow[]> {
+  const supabase = await createServerClient();
+  const { data } = await supabase
+    .from("professor_disciplina_turma")
+    .select(`
+      id, perfil_id, disciplina_id, turma_id,
+      perfis(nome),
+      disciplinas(nome),
+      turmas(nome, series(nome))
+    `)
+    .eq("escola_id", escolaId);
+
+  return ((data ?? []) as any[]).map((a) => {
+    const perfil = pickOne(a.perfis);
+    const disciplina = pickOne(a.disciplinas);
+    const turma = pickOne(a.turmas);
+    const serie = pickOne(turma?.series);
+    return {
+      id: a.id,
+      perfilId: a.perfil_id,
+      professorNome: perfil?.nome ?? "—",
+      disciplinaId: a.disciplina_id,
+      disciplina: disciplina?.nome ?? "—",
+      turmaId: a.turma_id,
+      turma: turma?.nome ?? "—",
+      serie: serie?.nome ?? "—",
+    };
+  }).sort((x, y) => x.professorNome.localeCompare(y.professorNome, "pt-BR"));
+}
+
+export type ProfessorOption = {
+  id: string;
+  nome: string;
+  email: string;
+};
+
+export async function listProfessores(
+  escolaId: string = DEFAULT_SCHOOL_ID
+): Promise<ProfessorOption[]> {
+  const supabase = await createServerClient();
+  const { data } = await supabase
+    .from("perfis")
+    .select("id, nome, email")
+    .eq("escola_id", escolaId)
+    .eq("perfil", "professor")
+    .eq("ativo", true)
+    .order("nome");
+
+  return ((data ?? []) as Array<{ id: string; nome: string; email: string }>);
+}
+
 export async function getPedagogicoSummary(
   escolaId: string = DEFAULT_SCHOOL_ID,
   anoLetivo: number = new Date().getFullYear()
