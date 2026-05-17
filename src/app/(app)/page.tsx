@@ -191,15 +191,6 @@ export default async function DashboardPage({
         <>
           <HeroFinancial data={hero} />
 
-          <RealizadoProjetadoCard data={realizadoVsProjetado} />
-
-          <section className="grid gap-6 lg:grid-cols-3">
-            <AlertList items={alertas} />
-            <div className="lg:col-span-2">
-              <RevenueTrendChart data={trend} />
-            </div>
-          </section>
-
           <section className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
             {isPropria ? (
               <MetricRing
@@ -217,6 +208,15 @@ export default async function DashboardPage({
             <MargemTrendCard data={margemTrend} />
             <SaldoYTDCard data={saldoYTD} />
             <BolsistasReceitaCard data={beneficios} />
+          </section>
+
+          <RealizadoProjetadoCard data={realizadoVsProjetado} />
+
+          <section className="grid gap-6 lg:grid-cols-3">
+            <AlertList items={alertas} />
+            <div className="lg:col-span-2">
+              <RevenueTrendChart data={trend} />
+            </div>
           </section>
 
           {isPropria && <ProximasCobrancasCard items={proximasCobrancas} />}
