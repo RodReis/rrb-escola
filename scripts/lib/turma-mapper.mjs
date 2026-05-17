@@ -10,6 +10,7 @@ function clean(s) {
     .normalize("NFKD")
     .replace(/\p{Diacritic}/gu, "")
     .toUpperCase()
+    .replace(/[–—]/g, "-")
     .replace(/\s+/g, " ")
     .trim();
 }
@@ -41,7 +42,7 @@ export function mapTurmaHeader(raw) {
   }
 
   // <N>O ANO - <LETRA>
-  m = s.match(/^(\d+)O\s*ANO\s*-\s*([A-Z])$/);
+  m = s.match(/^(\d+)O\s*ANO\s*-\s*([AB])$/);
   if (m) {
     const letra = m[2];
     return {
@@ -52,7 +53,7 @@ export function mapTurmaHeader(raw) {
   }
 
   // <N>A SERIE - EM - <LETRA>
-  m = s.match(/^(\d+)A\s*SERIE\s*-\s*EM\s*-\s*([A-Z])$/);
+  m = s.match(/^(\d+)A\s*SERIE\s*-\s*EM\s*-\s*([AB])$/);
   if (m) {
     const letra = m[2];
     return {

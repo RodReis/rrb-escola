@@ -88,3 +88,30 @@ test("retorna null para string nao reconhecida", () => {
   assert.equal(mapTurmaHeader(""), null);
   assert.equal(mapTurmaHeader("MATRICULA"), null);
 });
+
+test("letra alem de A/B retorna null (evita fallback silencioso)", () => {
+  assert.equal(mapTurmaHeader("5º ANO - C"), null);
+  assert.equal(mapTurmaHeader("3º ANO - D"), null);
+  assert.equal(mapTurmaHeader("1ª SÉRIE - EM - C"), null);
+});
+
+test("normaliza en-dash/em-dash para hifen", () => {
+  assert.deepEqual(mapTurmaHeader("3º ANO – A"), {
+    serie_nome: "3º Ano",
+    turma_nome: "A",
+    turno: "matutino"
+  });
+  assert.deepEqual(mapTurmaHeader("INFANTIL 4 — MATUTINO"), {
+    serie_nome: "Infantil 4",
+    turma_nome: "A",
+    turno: "matutino"
+  });
+});
+
+test("aceita ano de dois digitos", () => {
+  assert.deepEqual(mapTurmaHeader("10º ANO - A"), {
+    serie_nome: "10º Ano",
+    turma_nome: "A",
+    turno: "matutino"
+  });
+});
