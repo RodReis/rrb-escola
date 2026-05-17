@@ -533,31 +533,31 @@ export async function getRenovacoesPendentes(
   const supabase = await createServerClient();
   const hoje = new Date();
   const anoLetivo = hoje.getFullYear();
+  const hojeUTC = Date.UTC(hoje.getFullYear(), hoje.getMonth(), hoje.getDate());
 
   const { data } = await supabase
     .from("matriculas")
-    .select("id, aluno_id, ano_letivo, alunos(nome)")
+    .select("id, aluno_id, ano_letivo, data_matricula, alunos(nome)")
     .eq("escola_id", escolaId)
     .eq("status", "ativa")
     .eq("ano_letivo", anoLetivo)
+    .order("data_matricula", { ascending: true })
     .limit(limit);
 
-  const fimAno = new Date(anoLetivo, 11, 31);
-  const diasRestantes = Math.floor((fimAno.getTime() - hoje.getTime()) / (1000 * 60 * 60 * 24));
-
-  type Row = {
-    id: string;
-    aluno_id: string;
-    ano_letivo: number;
-    alunos: { nome: string } | { nome: string }[] | null;
-  };
-
-  return ((data ?? []) as unknown as Row[]).map((m) => {
-    const alunoRel = Array.isArray(m.alunos) ? m.alunos[0] : m.alunos;
+  return ((data ?? []) as any[]).map((m) => {
+    let diasRestantes = 0;
+    if (m.data_matricula) {
+      const [dy, dm, dd] = String(m.data_matricula).split("-").map(Number) as [number, number, number];
+      const fimContratoUTC = Date.UTC(dy + 1, dm - 1, dd);
+      diasRestantes = Math.floor((fimContratoUTC - hojeUTC) / (1000 * 60 * 60 * 24));
+    } else {
+      const fimAno = Date.UTC(anoLetivo, 11, 31);
+      diasRestantes = Math.floor((fimAno - hojeUTC) / (1000 * 60 * 60 * 24));
+    }
     return {
       matriculaId: m.id,
       alunoId: m.aluno_id,
-      alunoNome: alunoRel?.nome ?? "—",
+      alunoNome: Array.isArray(m.alunos) ? (m.alunos[0]?.nome ?? "—") : (m.alunos?.nome ?? "—"),
       anoLetivo: m.ano_letivo,
       diasRestantes,
     };
