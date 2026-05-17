@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { GraduationCap, HandCoins, Sparkles, Mail, Phone, type LucideIcon } from "lucide-react";
+import { GraduationCap, HandCoins, Sparkles, Mail, Phone, ArrowRight, type LucideIcon } from "lucide-react";
 import { PageHeader } from "@/components/ui/page-header";
 import { Avatar } from "@/components/ui/avatar";
 import { listBolsistas, type TipoVagaBolsa } from "@/lib/data/bolsistas";
@@ -102,14 +102,13 @@ export default async function BolsistasPage() {
                 <th className="px-4 py-3 text-left">Responsável</th>
                 <th className="px-4 py-3 text-left">Contato</th>
                 <th className="px-4 py-3 text-left">Tipo</th>
-                <th className="px-4 py-3 text-right">Mensalidade</th>
-                <th className="px-4 py-3 text-right">Não realizado</th>
+                <th className="px-4 py-3 text-right">Ação</th>
               </tr>
             </thead>
             <tbody>
               {bolsistas.length === 0 ? (
                 <tr>
-                  <td colSpan={8} className="px-4 py-12 text-center text-ink/55">
+                  <td colSpan={7} className="px-4 py-12 text-center text-ink/55">
                     Nenhum bolsista no ano letivo corrente.
                   </td>
                 </tr>
@@ -180,11 +179,14 @@ export default async function BolsistasPage() {
                           {b.tipoVaga === "bolsa_parcial" && ` ${b.percentualBolsa.toFixed(0)}%`}
                         </span>
                       </td>
-                      <td className="px-4 py-3 text-right text-ink/70">
-                        {b.valorMensalidade > 0 ? money.format(b.valorMensalidade) : "—"}
-                      </td>
-                      <td className="px-4 py-3 text-right font-semibold text-warning">
-                        {b.receitaPerdidaMes > 0 ? money.format(b.receitaPerdidaMes) : "—"}
+                      <td className="px-4 py-3 text-right">
+                        <Link
+                          href={`/alunos/${b.alunoId}`}
+                          className="inline-flex items-center gap-1 rounded-ui bg-brand/10 px-3 py-1.5 text-xs font-semibold text-brand hover:bg-brand/20"
+                        >
+                          Ver ficha
+                          <ArrowRight size={12} />
+                        </Link>
                       </td>
                     </tr>
                   );
