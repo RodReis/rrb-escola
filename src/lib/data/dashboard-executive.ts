@@ -49,6 +49,11 @@ function prevCompetencia(competencia: string): string {
   return competenciaFromDate(d);
 }
 
+function yoyCompetencia(competencia: string): string {
+  const [y, m] = competencia.split("-").map(Number);
+  return `${y - 1}-${pad(m)}`;
+}
+
 export function currentCompetencia(): string {
   return competenciaFromDate(new Date());
 }
@@ -57,14 +62,18 @@ export type HeroData = {
   competencia: string;
   receita: number;
   receitaPrev: number;
+  receitaYoY: number;
   despesa: number;
   despesaPrev: number;
+  despesaYoY: number;
   despesaFixa: number;
   despesaVariavel: number;
   folha: number;
   folhaPrev: number;
+  folhaYoY: number;
   margem: number;
   margemPrev: number;
+  margemYoY: number;
 };
 
 type Supa = Awaited<ReturnType<typeof createServerClient>>;
@@ -139,14 +148,22 @@ export async function getHero(
 ): Promise<HeroData> {
   const supabase = await createServerClient();
   const prev = prevCompetencia(competencia);
+  const yoy = yoyCompetencia(competencia);
 
-  const [receita, receitaPrev, despesaBreakdown, despesaPrev, folha, folhaPrev] = await Promise.all([
+  const [
+    receita, receitaPrev, receitaYoY,
+    despesaBreakdown, despesaPrev, despesaYoY,
+    folha, folhaPrev, folhaYoY,
+  ] = await Promise.all([
     somaPagamentos(supabase, escolaId, competencia),
     somaPagamentos(supabase, escolaId, prev),
+    somaPagamentos(supabase, escolaId, yoy),
     somaDespesasPorTipo(supabase, escolaId, competencia),
     somaDespesas(supabase, escolaId, prev),
+    somaDespesas(supabase, escolaId, yoy),
     somaFolha(supabase, escolaId, competencia),
     somaFolha(supabase, escolaId, prev),
+    somaFolha(supabase, escolaId, yoy),
   ]);
 
   const despesa = despesaBreakdown.fixas + despesaBreakdown.variaveis;
@@ -155,14 +172,18 @@ export async function getHero(
     competencia,
     receita,
     receitaPrev,
+    receitaYoY,
     despesa,
     despesaPrev,
+    despesaYoY,
     despesaFixa: despesaBreakdown.fixas,
     despesaVariavel: despesaBreakdown.variaveis,
     folha,
     folhaPrev,
+    folhaYoY,
     margem: receita - despesa - folha,
     margemPrev: receitaPrev - despesaPrev - folhaPrev,
+    margemYoY: receitaYoY - despesaYoY - folhaYoY,
   };
 }
 
