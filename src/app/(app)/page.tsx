@@ -15,7 +15,6 @@ import {
   getFrequenciaResumo,
   getHero,
   getInadimplencia,
-  getMargemTrend,
   getOcupacao,
   getProximasCobrancas,
   getRankingTurmas,
@@ -45,7 +44,6 @@ import { FolhaEmpresas } from "@/components/dashboard/folha-empresas";
 import { HeroFinancial } from "@/components/dashboard/hero-financial";
 import { FolhaRatioCard } from "@/components/dashboard/folha-ratio-card";
 import { FrequenciaCard } from "@/components/dashboard/frequencia-card";
-import { MargemTrendCard } from "@/components/dashboard/margem-trend-card";
 import { EvasaoCard } from "@/components/dashboard/evasao-card";
 import { FrequenciaHeatmap } from "@/components/dashboard/frequencia-heatmap";
 import { MediasDisciplinasCard } from "@/components/dashboard/medias-disciplinas-card";
@@ -109,7 +107,6 @@ export default async function DashboardPage({
     alertas,
     beneficios,
     aniversariantes,
-    margemTrend,
     frequencia,
     rankingTurmas,
     topCategorias,
@@ -137,7 +134,6 @@ export default async function DashboardPage({
     getAlertas(competencia, config.gestaoFinanceira, escolaId),
     getBeneficios(escolaId),
     getAniversariantes(escolaId, 10),
-    getMargemTrend(6, escolaId),
     getFrequenciaResumo(escolaId, 30),
     getRankingTurmas(escolaId, 10),
     getTopCategoriasDespesas(competencia, escolaId, 6),
@@ -191,21 +187,9 @@ export default async function DashboardPage({
         <>
           <HeroFinancial data={hero} />
 
-          <section className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-            {isPropria ? (
-              <MetricRing
-                label="Inadimplência"
-                percent={(slot2 as InadimplenciaData).percentual}
-                centerLabel="Em atraso"
-                centerValue={money.format((slot2 as InadimplenciaData).valor)}
-                variant={(slot2 as InadimplenciaData).percentual > 0.1 ? "danger" : "warning"}
-              />
-            ) : (
-              <RepasseCard data={slot2 as RepasseData} />
-            )}
+          <section className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
             <FolhaRatioCard data={folhaRatio} />
             <TicketCard data={ticket} />
-            <MargemTrendCard data={margemTrend} />
             <SaldoYTDCard data={saldoYTD} />
             <BolsistasReceitaCard data={beneficios} />
           </section>
