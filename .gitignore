@@ -11,3 +11,4 @@ tsconfig.tsbuildinfo
 *.log
 .next-dev*.log
 .next-dev*.err.log
+backups/

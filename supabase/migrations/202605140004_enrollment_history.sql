@@ -27,13 +27,13 @@ language plpgsql
 as $$
 begin
   if tg_op = 'INSERT' then
-    insert into historico_matriculas (escola_id, matricula_id, aluno_id, acao, status_novo, dados_novos)
+    insert into public.historico_matriculas (escola_id, matricula_id, aluno_id, acao, status_novo, dados_novos)
     values (new.escola_id, new.id, new.aluno_id, 'criacao', new.status, to_jsonb(new));
     return new;
   end if;
 
   if tg_op = 'UPDATE' then
-    insert into historico_matriculas (
+    insert into public.historico_matriculas (
       escola_id,
       matricula_id,
       aluno_id,
