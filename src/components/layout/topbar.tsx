@@ -2,6 +2,7 @@ import Link from "next/link";
 import { TopbarNavLink, type TopbarIconName } from "@/components/layout/topbar-nav-link";
 import { SecretariaDropdown } from "@/components/layout/secretaria-dropdown";
 import { RhDropdown } from "@/components/layout/rh-dropdown";
+import { FinanceiroDropdown } from "@/components/layout/financeiro-dropdown";
 import { TopbarUserCard } from "@/components/layout/topbar-user-card";
 import { logoutAction } from "@/lib/actions/auth";
 import type { SessionProfile } from "@/lib/auth/session";
@@ -9,18 +10,13 @@ import { School } from "lucide-react";
 
 const primaryItems: Array<{ href: string; label: string; icon: TopbarIconName }> = [
   { href: "/", label: "Dashboard", icon: "LayoutDashboard" },
-  { href: "/financeiro", label: "Financeiro", icon: "BarChart3" },
-  { href: "/despesas", label: "Despesas", icon: "ReceiptText" },
   { href: "/portaria", label: "Portaria", icon: "DoorOpen" }
 ];
 
 const secondaryItems: Array<{ href: string; label: string; icon: TopbarIconName }> = [
   { href: "/usuarios", label: "Usuários", icon: "UsersRound" },
-  { href: "/planos", label: "Planos", icon: "CreditCard" },
-  { href: "/valores-praticados", label: "Valores", icon: "ReceiptText" },
   { href: "/frequencias", label: "Frequência", icon: "CalendarCheck" },
   { href: "/relatorios/alunos", label: "Rel. Alunos", icon: "UsersRound" },
-  { href: "/relatorios/inadimplencia", label: "Inadimplência", icon: "ReceiptText" },
   { href: "/relatorios/frequencia", label: "Rel. Frequência", icon: "CalendarCheck" }
 ];
 
@@ -68,6 +64,7 @@ export function Topbar({ perfil }: { perfil: SessionProfile }) {
       </nav>
 
       <div className="flex items-center gap-0.5 shrink-0">
+        <FinanceiroDropdown />
         <SecretariaDropdown />
         <RhDropdown />
       </div>
