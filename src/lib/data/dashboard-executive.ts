@@ -182,6 +182,22 @@ function rollingCompetencias(months: number): string[] {
   return out;
 }
 
+export type MargemTrendPoint = {
+  competencia: string;
+  margem: number;
+};
+
+export async function getMargemTrend(
+  months: number = 6,
+  escolaId: string = DEFAULT_SCHOOL_ID
+): Promise<MargemTrendPoint[]> {
+  const trend = await getRevenueTrend(months, escolaId);
+  return trend.map((p) => ({
+    competencia: p.competencia,
+    margem: p.receita - p.custos,
+  }));
+}
+
 export async function getRevenueTrend(
   months: number = 6,
   escolaId: string = DEFAULT_SCHOOL_ID
