@@ -7,8 +7,10 @@ import { usePathname } from "next/navigation";
 import {
   BookOpen,
   Cake,
+  CalendarCheck,
   ClipboardCheck,
   ClipboardList,
+  DoorOpen,
   FileText,
   GraduationCap,
   HandHeart,
@@ -30,6 +32,8 @@ const secretariaItems = [
   { href: "/disciplinas", label: "Disciplinas", icon: ClipboardList },
   { href: "/avaliacoes", label: "Avaliações", icon: ClipboardCheck },
   { href: "/professores/atribuicoes", label: "Atribuições", icon: UserCheck },
+  { href: "/frequencias", label: "Frequência", icon: CalendarCheck },
+  { href: "/portaria", label: "Portaria", icon: DoorOpen },
   { href: "/mural/aniversariantes", label: "Mural aniversários", icon: Cake },
   { href: "/organograma", label: "Organograma", icon: Network },
   { href: "/importacoes", label: "Importações", icon: Inbox }

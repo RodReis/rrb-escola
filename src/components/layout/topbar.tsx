@@ -14,12 +14,10 @@ import { getPublicUrl } from "@/lib/storage/public-urls";
 import { School } from "lucide-react";
 
 const primaryItems: Array<{ href: string; label: string; icon: TopbarIconName }> = [
-  { href: "/", label: "Dashboard", icon: "LayoutDashboard" },
-  { href: "/portaria", label: "Portaria", icon: "DoorOpen" }
+  { href: "/", label: "Dashboard", icon: "LayoutDashboard" }
 ];
 
 const secondaryItems: Array<{ href: string; label: string; icon: TopbarIconName }> = [
-  { href: "/frequencias", label: "Frequência", icon: "CalendarCheck" },
   { href: "/relatorios/alunos", label: "Rel. Alunos", icon: "UsersRound" },
   { href: "/relatorios/frequencia", label: "Rel. Frequência", icon: "CalendarCheck" }
 ];
