@@ -15,6 +15,7 @@ import {
   getInadimplencia,
   getMargemTrend,
   getOcupacao,
+  getRankingTurmas,
   getRenovacoesPendentes,
   getRepasseRecebido,
   getRevenueTrend,
@@ -36,6 +37,7 @@ import { HeroFinancial } from "@/components/dashboard/hero-financial";
 import { FolhaRatioCard } from "@/components/dashboard/folha-ratio-card";
 import { FrequenciaCard } from "@/components/dashboard/frequencia-card";
 import { MargemTrendCard } from "@/components/dashboard/margem-trend-card";
+import { RankingTurmasCard } from "@/components/dashboard/ranking-turmas-card";
 import { MetricRing } from "@/components/dashboard/metric-ring";
 import { RenovacoesPendentes } from "@/components/dashboard/renovacoes-pendentes";
 import { RepasseCard } from "@/components/dashboard/repasse-card";
@@ -84,6 +86,7 @@ export default async function DashboardPage({
     aniversariantes,
     margemTrend,
     frequencia,
+    rankingTurmas,
     slot2,
     slot5,
   ] = await Promise.all([
@@ -99,6 +102,7 @@ export default async function DashboardPage({
     getAniversariantes(escolaId, 10),
     getMargemTrend(6, escolaId),
     getFrequenciaResumo(escolaId, 30),
+    getRankingTurmas(escolaId, 10),
     isPropria
       ? getInadimplencia(competencia, escolaId)
       : getRepasseRecebido(competencia, escolaId),
@@ -197,10 +201,12 @@ export default async function DashboardPage({
           <StageTable rows={stages} />
 
           <section className="grid gap-6 lg:grid-cols-2">
+            <RankingTurmasCard items={rankingTurmas} />
             <AniversariantesCard items={aniversariantes} />
-            {!isPropria && <RenovacoesPendentes items={slot5 as RenovacaoRow[]} />}
-            {isPropria && <TopDevedores items={slot5 as DevedorRow[]} />}
           </section>
+
+          {!isPropria && <RenovacoesPendentes items={slot5 as RenovacaoRow[]} />}
+          {isPropria && <TopDevedores items={slot5 as DevedorRow[]} />}
         </>
       )}
     </div>

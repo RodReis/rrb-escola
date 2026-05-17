@@ -955,3 +955,62 @@ export async function getAniversariantes(
   rows.sort((a, b) => a.dia - b.dia);
   return rows.slice(0, limit);
 }
+
+export type TurmaRankingRow = {
+  turmaId: string;
+  turmaNome: string;
+  serie: string;
+  segmento: string;
+  turno: string;
+  capacidade: number;
+  matriculados: number;
+  ocupacao: number; // 0..1
+  vagasLivres: number;
+};
+
+export async function getRankingTurmas(
+  escolaId: string = DEFAULT_SCHOOL_ID,
+  limit: number = 10
+): Promise<TurmaRankingRow[]> {
+  const supabase = await createServerClient();
+  const anoLetivo = new Date().getFullYear();
+
+  const { data: turmas } = await supabase
+    .from("turmas")
+    .select("id, nome, turno, capacidade, serie_id, series(nome, segmento)")
+    .eq("escola_id", escolaId)
+    .eq("ano_letivo", anoLetivo)
+    .eq("ativo", true);
+
+  const { data: matriculas } = await supabase
+    .from("matriculas")
+    .select("turma_id")
+    .eq("escola_id", escolaId)
+    .eq("status", "ativa");
+
+  const countPorTurma = new Map<string, number>();
+  for (const m of matriculas ?? []) {
+    countPorTurma.set(m.turma_id, (countPorTurma.get(m.turma_id) ?? 0) + 1);
+  }
+
+  const rows: TurmaRankingRow[] = ((turmas ?? []) as any[]).map((t) => {
+    const seriesRel = t.series;
+    const serie = Array.isArray(seriesRel) ? seriesRel[0] : seriesRel;
+    const cap = Number(t.capacidade ?? 0);
+    const matric = countPorTurma.get(t.id) ?? 0;
+    return {
+      turmaId: t.id,
+      turmaNome: t.nome,
+      serie: serie?.nome ?? "—",
+      segmento: serie?.segmento ?? "outros",
+      turno: t.turno,
+      capacidade: cap,
+      matriculados: matric,
+      ocupacao: cap > 0 ? matric / cap : 0,
+      vagasLivres: Math.max(0, cap - matric),
+    };
+  });
+
+  rows.sort((a, b) => b.ocupacao - a.ocupacao);
+  return rows.slice(0, limit);
+}
