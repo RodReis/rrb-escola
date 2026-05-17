@@ -115,7 +115,7 @@ export default async function DashboardPage() {
         </div>
       </section>
 
-      <section className="grid gap-6 md:grid-cols-2 lg:grid-cols-5">
+      <section className="grid gap-6 md:grid-cols-2 lg:grid-cols-4 xl:grid-cols-5">
         <MetricRing
           label="Ocupação"
           percent={ocupacaoPct}
