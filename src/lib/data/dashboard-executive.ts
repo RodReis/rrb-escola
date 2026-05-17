@@ -218,11 +218,14 @@ export type OcupacaoData = {
 
 export async function getOcupacao(escolaId: string = DEFAULT_SCHOOL_ID): Promise<OcupacaoData> {
   const supabase = await createServerClient();
+  const anoLetivo = new Date().getFullYear();
 
   const { data: turmas } = await supabase
     .from("turmas")
     .select("id, capacidade, serie_id, series(segmento)")
-    .eq("escola_id", escolaId);
+    .eq("escola_id", escolaId)
+    .eq("ano_letivo", anoLetivo)
+    .eq("ativo", true);
 
   const { data: matriculas } = await supabase
     .from("matriculas")
