@@ -273,6 +273,8 @@ export type StageBreakdownRow = {
   receita: number;
   ticket: number;
   ocupacao: number;
+  capacidade: number;
+  vagasLivres: number;
 };
 
 export async function getStageBreakdown(
@@ -314,6 +316,8 @@ export async function getStageBreakdown(
     receita: receitaPorEtapa.get(p.etapa) ?? 0,
     ticket: p.matriculados > 0 ? (receitaPorEtapa.get(p.etapa) ?? 0) / p.matriculados : 0,
     ocupacao: p.capacidade > 0 ? p.matriculados / p.capacidade : 0,
+    capacidade: p.capacidade,
+    vagasLivres: Math.max(0, p.capacidade - p.matriculados),
   }));
 }
 
