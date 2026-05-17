@@ -93,7 +93,12 @@ select
   a.aluno_id,
   a.serie_id,
   a.turma_id,
-  a.plano_id,
+  coalesce(a.plano_id, (
+    select id from planos
+    where escola_id = '00000000-0000-0000-0000-000000000001'
+    order by valor_mensalidade desc
+    limit 1
+  )),
   coalesce(a.matricula_codigo, '') || '-2026-BOLSA',
   '2026-01-01',
   2026,
