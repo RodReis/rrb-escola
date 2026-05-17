@@ -59,6 +59,8 @@ export type HeroData = {
   receitaPrev: number;
   despesa: number;
   despesaPrev: number;
+  despesaFixa: number;
+  despesaVariavel: number;
   folha: number;
   folhaPrev: number;
   margem: number;
@@ -96,6 +98,26 @@ async function somaDespesas(
   return (data ?? []).reduce((s, r) => s + Number(r.valor ?? 0), 0);
 }
 
+async function somaDespesasPorTipo(
+  supabase: Supa,
+  escolaId: string,
+  competencia: string
+): Promise<{ fixas: number; variaveis: number }> {
+  const { data } = await supabase
+    .from("despesas")
+    .select("valor, tipo")
+    .eq("escola_id", escolaId)
+    .eq("competencia", competencia);
+  let fixas = 0;
+  let variaveis = 0;
+  for (const r of (data ?? []) as Array<{ valor: number | string; tipo: string }>) {
+    const v = Number(r.valor ?? 0);
+    if (r.tipo === "fixa") fixas += v;
+    else variaveis += v;
+  }
+  return { fixas, variaveis };
+}
+
 // Nota: tabela payroll nao tem escola_id; reference_month e DATE (YYYY-MM-01).
 // Soma total_earnings (proventos brutos) do mes inteiro.
 async function somaFolha(
@@ -118,14 +140,16 @@ export async function getHero(
   const supabase = await createServerClient();
   const prev = prevCompetencia(competencia);
 
-  const [receita, receitaPrev, despesa, despesaPrev, folha, folhaPrev] = await Promise.all([
+  const [receita, receitaPrev, despesaBreakdown, despesaPrev, folha, folhaPrev] = await Promise.all([
     somaPagamentos(supabase, escolaId, competencia),
     somaPagamentos(supabase, escolaId, prev),
-    somaDespesas(supabase, escolaId, competencia),
+    somaDespesasPorTipo(supabase, escolaId, competencia),
     somaDespesas(supabase, escolaId, prev),
     somaFolha(supabase, escolaId, competencia),
     somaFolha(supabase, escolaId, prev),
   ]);
+
+  const despesa = despesaBreakdown.fixas + despesaBreakdown.variaveis;
 
   return {
     competencia,
@@ -133,6 +157,8 @@ export async function getHero(
     receitaPrev,
     despesa,
     despesaPrev,
+    despesaFixa: despesaBreakdown.fixas,
+    despesaVariavel: despesaBreakdown.variaveis,
     folha,
     folhaPrev,
     margem: receita - despesa - folha,

@@ -40,11 +40,66 @@ function HeroCard({ icon, label, value, previous, invert, tone = "brand" }: Card
   );
 }
 
+type DespesasCardProps = {
+  total: number;
+  previous: number;
+  fixas: number;
+  variaveis: number;
+};
+
+function DespesasCard({ total, previous, fixas, variaveis }: DespesasCardProps) {
+  const t = TONES.danger;
+  const fixasPct = total > 0 ? (fixas / total) * 100 : 0;
+  const variaveisPct = total > 0 ? (variaveis / total) * 100 : 0;
+
+  return (
+    <article className={`relative overflow-hidden rounded-panel bg-gradient-to-br ${t.bg} p-6 shadow-soft ring-1 ${t.ring}`}>
+      <div className="flex items-center gap-3">
+        <span className={`grid h-10 w-10 place-items-center rounded-ui ${t.icon}`}>
+          <Receipt size={18} />
+        </span>
+        <p className="text-[0.66rem] font-bold uppercase tracking-kicker text-ink/70">Despesas</p>
+      </div>
+      <strong className="mt-4 block text-[2.1rem] font-bold leading-none text-ink">
+        {money.format(total)}
+      </strong>
+      <div className="mt-3 flex items-center gap-2">
+        <DeltaBadge current={total} previous={previous} invert />
+      </div>
+
+      {total > 0 && (
+        <>
+          <div className="mt-4 flex h-2 w-full overflow-hidden rounded-pill bg-muted">
+            {fixas > 0 && (
+              <div className="h-2 bg-danger" style={{ width: `${fixasPct}%` }} title={`Fixas ${fixasPct.toFixed(0)}%`} />
+            )}
+            {variaveis > 0 && (
+              <div className="h-2 bg-warning" style={{ width: `${variaveisPct}%` }} title={`Variáveis ${variaveisPct.toFixed(0)}%`} />
+            )}
+          </div>
+          <dl className="mt-2 grid grid-cols-2 gap-2 text-xs">
+            <div className="flex items-center gap-1.5">
+              <span className="h-2 w-2 rounded-full bg-danger" />
+              <dt className="text-ink/55">Fixas</dt>
+              <dd className="ml-auto font-semibold text-ink">{money.format(fixas)}</dd>
+            </div>
+            <div className="flex items-center gap-1.5">
+              <span className="h-2 w-2 rounded-full bg-warning" />
+              <dt className="text-ink/55">Variáveis</dt>
+              <dd className="ml-auto font-semibold text-ink">{money.format(variaveis)}</dd>
+            </div>
+          </dl>
+        </>
+      )}
+    </article>
+  );
+}
+
 export function HeroFinancial({ data }: { data: HeroData }) {
   return (
     <section className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
       <HeroCard icon={<DollarSign size={18} />} label="Receita" value={data.receita} previous={data.receitaPrev} tone="brand" />
-      <HeroCard icon={<Receipt size={18} />} label="Despesas" value={data.despesa} previous={data.despesaPrev} invert tone="danger" />
+      <DespesasCard total={data.despesa} previous={data.despesaPrev} fixas={data.despesaFixa} variaveis={data.despesaVariavel} />
       <HeroCard icon={<Users size={18} />} label="Folha" value={data.folha} previous={data.folhaPrev} invert tone="warning" />
       <HeroCard icon={data.margem >= 0 ? <TrendingUp size={18} /> : <TrendingDown size={18} />} label="Margem" value={data.margem} previous={data.margemPrev} tone="margem" />
     </section>
