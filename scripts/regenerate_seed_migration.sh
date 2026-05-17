@@ -17,12 +17,12 @@ docker exec supabase_db_rrb-escola pg_dump -U postgres -d postgres \
 
 echo "=== Dump auth.users + auth.identities ==="
 docker exec supabase_db_rrb-escola pg_dump -U postgres -d postgres \
-  --data-only --inserts --no-owner --no-acl \
+  --data-only --column-inserts --no-owner --no-acl \
   --table=auth.users --table=auth.identities > "$TMP_AUTH"
 
 echo "=== Dump public schema ==="
 docker exec supabase_db_rrb-escola pg_dump -U postgres -d postgres \
-  --data-only --inserts --no-owner --no-acl \
+  --data-only --column-inserts --no-owner --no-acl \
   --schema=public \
   --exclude-table=schema_migrations > "$TMP_DATA"
 
@@ -37,12 +37,14 @@ echo "=== Monta migration ==="
   cat "$TMP_DATA"
 } > "$MIGRATION"
 
-echo "=== Adiciona ON CONFLICT DO NOTHING ==="
+echo "=== Adiciona ON CONFLICT DO NOTHING + fix search_path ==="
 python -c "
 import re
 with open('$MIGRATION','r',encoding='utf-8') as f:
     content = f.read()
-content = re.sub(r'(INSERT INTO [a-z_.]+ VALUES \(.+?\));$', r'\1 ON CONFLICT DO NOTHING;', content, flags=re.MULTILINE | re.DOTALL)
+content = re.sub(r'(INSERT INTO [a-z_.]+(?:\s*\([^)]+\))? VALUES \(.+?\));$', r'\1 ON CONFLICT DO NOTHING;', content, flags=re.MULTILINE | re.DOTALL)
+# pg_dump zera search_path; restaurar para evitar quebra de triggers
+content = content.replace(\"set_config('search_path', '', false)\", \"set_config('search_path', 'public, pg_catalog', false)\")
 with open('$MIGRATION','w',encoding='utf-8') as f:
     f.write(content)
 print('done')

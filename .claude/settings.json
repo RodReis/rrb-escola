@@ -1,0 +1,13 @@
+{
+  "permissions": {
+    "allow": [
+      "Skill(superpowers:writing-plans)",
+      "Skill(superpowers:writing-plans:*)",
+      "Skill(superpowers:subagent-driven-development)",
+      "Skill(superpowers:subagent-driven-development:*)",
+      "mcp__claude_ai_Supabase__execute_sql",
+      "WebFetch(domain:api.anthropic.com)",
+      "Read(//c/Users/rodri/AppData/Local/Temp/design_out/rrb-escola/**)"
+    ]
+  }
+}

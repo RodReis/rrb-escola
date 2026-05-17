@@ -19,6 +19,21 @@ create policy "service role full access segmentos" on segmentos for all to servi
 create policy "authenticated read segmentos" on segmentos for select to authenticated
   using (escola_id in (select escola_id from perfis where user_id = auth.uid()));
 
+-- Garante escola default antes de seed (seed.sql roda apos migrations)
+insert into escolas (id, nome, cnpj, telefone, email, endereco, cidade, uf, cep)
+values (
+  '00000000-0000-0000-0000-000000000001',
+  'RRB Escola',
+  '00.000.000/0001-00',
+  '(62) 3333-0000',
+  'secretaria@rrbescola.local',
+  'Rua Principal, 100',
+  'Goiânia',
+  'GO',
+  '74000-000'
+)
+on conflict (id) do nothing;
+
 -- Seed: 4 segmentos para escola 00000000-0000-0000-0000-000000000001
 insert into segmentos (id, escola_id, nome, ordem) values
   ('a0000000-0000-0000-0000-000000000001', '00000000-0000-0000-0000-000000000001', 'Educação Infantil', 1),
