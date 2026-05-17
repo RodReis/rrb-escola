@@ -6,6 +6,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
   BookOpen,
+  ClipboardCheck,
   ClipboardList,
   FileText,
   GraduationCap,
@@ -26,6 +27,7 @@ const secretariaItems = [
   { href: "/series", label: "Séries", icon: Layers3 },
   { href: "/turmas", label: "Turmas", icon: GraduationCap },
   { href: "/disciplinas", label: "Disciplinas", icon: ClipboardList },
+  { href: "/avaliacoes", label: "Avaliações", icon: ClipboardCheck },
   { href: "/professores/atribuicoes", label: "Atribuições", icon: UserCheck },
   { href: "/organograma", label: "Organograma", icon: Network },
   { href: "/importacoes", label: "Importações", icon: Inbox }

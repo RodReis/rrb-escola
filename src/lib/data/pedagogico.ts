@@ -334,6 +334,174 @@ export async function listProfessores(
   return ((data ?? []) as Array<{ id: string; nome: string; email: string }>);
 }
 
+export type AvaliacaoRow = {
+  id: string;
+  titulo: string;
+  tipo: string;
+  bimestre: number;
+  anoLetivo: number;
+  peso: number;
+  valorMaximo: number;
+  dataAplicacao: string | null;
+  disciplinaId: string;
+  disciplina: string;
+  turmaId: string;
+  turma: string;
+  serie: string;
+  totalAlunos: number;
+  notasLancadas: number;
+};
+
+export async function listAvaliacoes(
+  escolaId: string = DEFAULT_SCHOOL_ID,
+  anoLetivo: number = new Date().getFullYear()
+): Promise<AvaliacaoRow[]> {
+  const supabase = await createServerClient();
+  const { data } = await supabase
+    .from("avaliacoes")
+    .select(`
+      id, titulo, tipo, bimestre, ano_letivo, peso, valor_maximo, data_aplicacao,
+      disciplina_id, disciplinas(nome),
+      turma_id, turmas(nome, series(nome))
+    `)
+    .eq("escola_id", escolaId)
+    .eq("ano_letivo", anoLetivo)
+    .order("bimestre")
+    .order("data_aplicacao", { ascending: false });
+
+  if (!data || data.length === 0) return [];
+
+  const ids = data.map((a) => a.id);
+  const [{ data: alunosRes }, { data: notasRes }] = await Promise.all([
+    supabase
+      .from("matriculas")
+      .select("turma_id, status")
+      .eq("escola_id", escolaId)
+      .eq("status", "ativa"),
+    supabase
+      .from("notas")
+      .select("avaliacao_id, valor")
+      .in("avaliacao_id", ids),
+  ]);
+
+  const alunosPorTurma = new Map<string, number>();
+  for (const m of (alunosRes ?? []) as Array<{ turma_id: string }>) {
+    alunosPorTurma.set(m.turma_id, (alunosPorTurma.get(m.turma_id) ?? 0) + 1);
+  }
+
+  const notasPorAval = new Map<string, number>();
+  for (const n of (notasRes ?? []) as Array<{ avaliacao_id: string; valor: number | null }>) {
+    if (n.valor !== null && n.valor !== undefined) {
+      notasPorAval.set(n.avaliacao_id, (notasPorAval.get(n.avaliacao_id) ?? 0) + 1);
+    }
+  }
+
+  return ((data ?? []) as any[]).map((a) => {
+    const disc = pickOne(a.disciplinas);
+    const turma = pickOne(a.turmas);
+    const serie = pickOne(turma?.series);
+    return {
+      id: a.id,
+      titulo: a.titulo,
+      tipo: a.tipo,
+      bimestre: a.bimestre,
+      anoLetivo: a.ano_letivo,
+      peso: Number(a.peso),
+      valorMaximo: Number(a.valor_maximo),
+      dataAplicacao: a.data_aplicacao,
+      disciplinaId: a.disciplina_id,
+      disciplina: disc?.nome ?? "—",
+      turmaId: a.turma_id,
+      turma: turma?.nome ?? "—",
+      serie: serie?.nome ?? "—",
+      totalAlunos: alunosPorTurma.get(a.turma_id) ?? 0,
+      notasLancadas: notasPorAval.get(a.id) ?? 0,
+    };
+  });
+}
+
+export type AvaliacaoDetalhe = AvaliacaoRow & {
+  alunos: Array<{
+    matriculaId: string;
+    alunoId: string;
+    nome: string;
+    valorAtual: number | null;
+  }>;
+};
+
+export async function getAvaliacaoDetalhe(
+  id: string,
+  escolaId: string = DEFAULT_SCHOOL_ID
+): Promise<AvaliacaoDetalhe | null> {
+  const supabase = await createServerClient();
+
+  const { data: aval } = await supabase
+    .from("avaliacoes")
+    .select(`
+      id, titulo, tipo, bimestre, ano_letivo, peso, valor_maximo, data_aplicacao,
+      disciplina_id, disciplinas(nome),
+      turma_id, turmas(nome, series(nome))
+    `)
+    .eq("escola_id", escolaId)
+    .eq("id", id)
+    .maybeSingle();
+
+  if (!aval) return null;
+
+  const turmaId = (aval as any).turma_id;
+  const { data: matriculas } = await supabase
+    .from("matriculas")
+    .select("id, aluno_id, alunos(nome)")
+    .eq("escola_id", escolaId)
+    .eq("turma_id", turmaId)
+    .eq("status", "ativa");
+
+  const { data: notas } = await supabase
+    .from("notas")
+    .select("matricula_id, valor")
+    .eq("avaliacao_id", id);
+
+  const notaPorMatricula = new Map<string, number | null>();
+  for (const n of (notas ?? []) as Array<{ matricula_id: string; valor: number | null }>) {
+    notaPorMatricula.set(n.matricula_id, n.valor);
+  }
+
+  const alunos = ((matriculas ?? []) as any[])
+    .map((m) => {
+      const a = pickOne(m.alunos);
+      return {
+        matriculaId: m.id,
+        alunoId: m.aluno_id,
+        nome: a?.nome ?? "—",
+        valorAtual: notaPorMatricula.get(m.id) ?? null,
+      };
+    })
+    .sort((x, y) => x.nome.localeCompare(y.nome, "pt-BR"));
+
+  const disc = pickOne((aval as any).disciplinas);
+  const turma = pickOne((aval as any).turmas);
+  const serie = pickOne(turma?.series);
+
+  return {
+    id: (aval as any).id,
+    titulo: (aval as any).titulo,
+    tipo: (aval as any).tipo,
+    bimestre: (aval as any).bimestre,
+    anoLetivo: (aval as any).ano_letivo,
+    peso: Number((aval as any).peso),
+    valorMaximo: Number((aval as any).valor_maximo),
+    dataAplicacao: (aval as any).data_aplicacao,
+    disciplinaId: (aval as any).disciplina_id,
+    disciplina: disc?.nome ?? "—",
+    turmaId,
+    turma: turma?.nome ?? "—",
+    serie: serie?.nome ?? "—",
+    totalAlunos: alunos.length,
+    notasLancadas: alunos.filter((a) => a.valorAtual !== null).length,
+    alunos,
+  };
+}
+
 export async function getPedagogicoSummary(
   escolaId: string = DEFAULT_SCHOOL_ID,
   anoLetivo: number = new Date().getFullYear()
