@@ -1,13 +1,18 @@
 -- Despesas mensais: categorias, despesas, storage bucket de comprovantes, RLS.
 -- Drop legacy ad-hoc `despesas` table (no prior migration created it; user authorized drop).
 drop table if exists despesas cascade;
+drop table if exists categorias_despesa cascade;
 
 create table if not exists categorias_despesa (
   id uuid primary key default gen_random_uuid(),
-  nome text not null unique,
+  escola_id uuid not null references escolas(id) on delete cascade,
+  nome text not null,
   ativo boolean not null default true,
-  criado_em timestamptz not null default now()
+  criado_em timestamptz not null default now(),
+  unique (escola_id, nome)
 );
+
+create index if not exists categorias_despesa_escola_idx on categorias_despesa (escola_id);
 
 do $$ begin
   create type forma_pagamento_despesa as enum ('pix','dinheiro','cartao','boleto','transferencia');
@@ -21,6 +26,7 @@ end $$;
 
 create table if not exists despesas (
   id uuid primary key default gen_random_uuid(),
+  escola_id uuid not null references escolas(id) on delete cascade,
   competencia text not null check (competencia ~ '^\d{4}-\d{2}$'),
   descricao text not null,
   categoria_id uuid references categorias_despesa(id) on delete restrict,
@@ -36,17 +42,22 @@ create table if not exists despesas (
   atualizado_em timestamptz not null default now()
 );
 
+create index if not exists despesas_escola_idx on despesas (escola_id);
 create index if not exists despesas_competencia_idx on despesas (competencia);
 create index if not exists despesas_categoria_idx on despesas (categoria_id);
 create index if not exists despesas_status_idx on despesas (status);
 
 create or replace function set_despesas_atualizado_em()
-returns trigger as $$
+returns trigger
+language plpgsql
+security definer
+set search_path = public
+as $$
 begin
   new.atualizado_em = now();
   return new;
 end;
-$$ language plpgsql;
+$$;
 
 drop trigger if exists despesas_atualizado_em on despesas;
 create trigger despesas_atualizado_em
@@ -64,36 +75,24 @@ drop policy if exists categorias_despesa_rw on categorias_despesa;
 create policy categorias_despesa_rw on categorias_despesa
   for all
   using (
-    exists (
-      select 1 from perfis p
-      where p.id = auth.uid()
-        and p.perfil in ('admin','financeiro')
-    )
+    escola_id = (select escola_id from current_perfil())
+    and (select perfil from current_perfil()) in ('admin','financeiro')
   )
   with check (
-    exists (
-      select 1 from perfis p
-      where p.id = auth.uid()
-        and p.perfil in ('admin','financeiro')
-    )
+    escola_id = (select escola_id from current_perfil())
+    and (select perfil from current_perfil()) in ('admin','financeiro')
   );
 
 drop policy if exists despesas_rw on despesas;
 create policy despesas_rw on despesas
   for all
   using (
-    exists (
-      select 1 from perfis p
-      where p.id = auth.uid()
-        and p.perfil in ('admin','financeiro')
-    )
+    escola_id = (select escola_id from current_perfil())
+    and (select perfil from current_perfil()) in ('admin','financeiro')
   )
   with check (
-    exists (
-      select 1 from perfis p
-      where p.id = auth.uid()
-        and p.perfil in ('admin','financeiro')
-    )
+    escola_id = (select escola_id from current_perfil())
+    and (select perfil from current_perfil()) in ('admin','financeiro')
   );
 
 drop policy if exists despesas_comprovantes_rw on storage.objects;
@@ -101,28 +100,20 @@ create policy despesas_comprovantes_rw on storage.objects
   for all
   using (
     bucket_id = 'despesas-comprovantes'
-    and exists (
-      select 1 from perfis p
-      where p.id = auth.uid()
-        and p.perfil in ('admin','financeiro')
-    )
+    and (select perfil from current_perfil()) in ('admin','financeiro')
   )
   with check (
     bucket_id = 'despesas-comprovantes'
-    and exists (
-      select 1 from perfis p
-      where p.id = auth.uid()
-        and p.perfil in ('admin','financeiro')
-    )
+    and (select perfil from current_perfil()) in ('admin','financeiro')
   );
 
-insert into categorias_despesa (nome) values
-  ('Aluguel'),
-  ('Água'),
-  ('Luz'),
-  ('Internet'),
-  ('Material escolar'),
-  ('Manutenção'),
-  ('Fornecedores'),
-  ('Outros')
-on conflict (nome) do nothing;
+insert into categorias_despesa (escola_id, nome) values
+  ('00000000-0000-0000-0000-000000000001', 'Aluguel'),
+  ('00000000-0000-0000-0000-000000000001', 'Água'),
+  ('00000000-0000-0000-0000-000000000001', 'Luz'),
+  ('00000000-0000-0000-0000-000000000001', 'Internet'),
+  ('00000000-0000-0000-0000-000000000001', 'Material escolar'),
+  ('00000000-0000-0000-0000-000000000001', 'Manutenção'),
+  ('00000000-0000-0000-0000-000000000001', 'Fornecedores'),
+  ('00000000-0000-0000-0000-000000000001', 'Outros')
+on conflict (escola_id, nome) do nothing;
