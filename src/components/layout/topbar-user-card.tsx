@@ -17,9 +17,11 @@ function getInitials(nome: string) {
 export function TopbarUserCard({
   perfil,
   logoutAction,
+  avatarUrl,
 }: {
   perfil: SessionProfile;
   logoutAction: () => Promise<void>;
+  avatarUrl?: string | null;
 }) {
   const initials = getInitials(perfil.nome);
   const [open, setOpen] = useState(false);
@@ -47,9 +49,14 @@ export function TopbarUserCard({
           <div className="text-[11.5px] font-semibold text-white">{perfil.nome.split(" ")[0]}</div>
           <div className="text-[9.5px] text-white/50 truncate max-w-[120px]">{perfil.email}</div>
         </div>
-        <div className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-[#FF7B72] to-[#C81515] text-white text-[10px] font-bold tracking-tight">
-          {initials}
-        </div>
+        {avatarUrl ? (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img src={avatarUrl} alt={perfil.nome} className="h-6 w-6 shrink-0 rounded-full object-cover" />
+        ) : (
+          <div className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-[#FF7B72] to-[#C81515] text-white text-[10px] font-bold tracking-tight">
+            {initials}
+          </div>
+        )}
       </button>
 
       {open && (
