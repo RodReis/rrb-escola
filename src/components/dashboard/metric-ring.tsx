@@ -14,8 +14,8 @@ const VARIANT: Record<NonNullable<Props["variant"]>, { ring: string; bg: string;
 };
 
 export function MetricRing({ label, percent, centerLabel, centerValue, variant = "default" }: Props) {
-  const size = 124;
-  const stroke = 14;
+  const size = 108;
+  const stroke = 12;
   const radius = (size - stroke) / 2;
   const circ = 2 * Math.PI * radius;
   const pct = Math.min(Math.max(percent, 0), 1);
@@ -25,7 +25,7 @@ export function MetricRing({ label, percent, centerLabel, centerValue, variant =
   return (
     <article className={`relative overflow-hidden rounded-panel bg-surface bg-gradient-to-br ${v.bg} p-6 shadow-soft`}>
       <p className="text-[0.66rem] font-bold uppercase tracking-kicker text-ink/55">{label}</p>
-      <div className="mt-4 flex items-center gap-4">
+      <div className="mt-4 flex flex-col items-center gap-3">
         <div className="relative">
           <svg width={size} height={size} className="-rotate-90">
             <circle
@@ -50,12 +50,12 @@ export function MetricRing({ label, percent, centerLabel, centerValue, variant =
             />
           </svg>
           <div className="absolute inset-0 grid place-items-center">
-            <strong className={`text-xl font-bold ${v.text}`}>{(pct * 100).toFixed(0)}%</strong>
+            <strong className={`text-lg font-bold ${v.text}`}>{(pct * 100).toFixed(0)}%</strong>
           </div>
         </div>
-        <div>
+        <div className="text-center">
           <p className="text-[0.66rem] uppercase tracking-kicker text-ink/55">{centerLabel}</p>
-          <strong className="block text-2xl font-bold text-ink">{centerValue}</strong>
+          <strong className="block text-xl font-bold text-ink">{centerValue}</strong>
         </div>
       </div>
     </article>
