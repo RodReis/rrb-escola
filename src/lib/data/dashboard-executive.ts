@@ -405,23 +405,44 @@ export async function getTicketMedio(
 
 export type FolhaRatioData = {
   ratio: number;
+  ratioPrev: number;
   receita: number;
   folha: number;
+  serie: number[]; // ratio dos ultimos N meses (em fracao 0..1)
 };
 
 export async function getFolhaRatio(
   competencia: string,
-  escolaId: string = DEFAULT_SCHOOL_ID
+  escolaId: string = DEFAULT_SCHOOL_ID,
+  months: number = 6
 ): Promise<FolhaRatioData> {
   const supabase = await createServerClient();
-  const [receita, folha] = await Promise.all([
+  const competencias = rollingCompetencias(months);
+  const prev = prevCompetencia(competencia);
+
+  const serie = await Promise.all(
+    competencias.map(async (c) => {
+      const [r, f] = await Promise.all([
+        somaPagamentos(supabase, escolaId, c),
+        somaFolha(supabase, escolaId, c),
+      ]);
+      return r > 0 ? f / r : 0;
+    })
+  );
+
+  const [receita, folha, receitaPrev, folhaPrev] = await Promise.all([
     somaPagamentos(supabase, escolaId, competencia),
     somaFolha(supabase, escolaId, competencia),
+    somaPagamentos(supabase, escolaId, prev),
+    somaFolha(supabase, escolaId, prev),
   ]);
+
   return {
     ratio: receita > 0 ? folha / receita : 0,
+    ratioPrev: receitaPrev > 0 ? folhaPrev / receitaPrev : 0,
     receita,
     folha,
+    serie,
   };
 }
 

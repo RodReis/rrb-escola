@@ -27,7 +27,7 @@ import { AlertList } from "@/components/dashboard/alert-list";
 import { BeneficiosCard } from "@/components/dashboard/beneficios-card";
 import { FolhaEmpresas } from "@/components/dashboard/folha-empresas";
 import { HeroFinancial } from "@/components/dashboard/hero-financial";
-import { MetricBar } from "@/components/dashboard/metric-bar";
+import { FolhaRatioCard } from "@/components/dashboard/folha-ratio-card";
 import { MetricRing } from "@/components/dashboard/metric-ring";
 import { RenovacoesPendentes } from "@/components/dashboard/renovacoes-pendentes";
 import { RepasseCard } from "@/components/dashboard/repasse-card";
@@ -133,11 +133,7 @@ export default async function DashboardPage() {
         ) : (
           <RepasseCard data={slot2 as RepasseData} />
         )}
-        <MetricBar
-          label="Folha / Receita"
-          percent={folhaRatio.ratio}
-          caption={`${money.format(folhaRatio.folha)} / ${money.format(folhaRatio.receita)}`}
-        />
+        <FolhaRatioCard data={folhaRatio} />
         <TicketCard data={ticket} />
         <BeneficiosCard data={beneficios} />
       </section>
