@@ -8,6 +8,7 @@ import {
   BookOpen,
   FileText,
   GraduationCap,
+  HandHeart,
   Inbox,
   Layers3,
   Network,
@@ -18,6 +19,7 @@ import { cn } from "@/lib/utils";
 
 const secretariaItems = [
   { href: "/alunos", label: "Alunos", icon: UsersRound },
+  { href: "/bolsistas", label: "Bolsistas", icon: HandHeart },
   { href: "/matriculas", label: "Matrículas", icon: FileText },
   { href: "/series", label: "Séries", icon: Layers3 },
   { href: "/turmas", label: "Turmas", icon: GraduationCap },
