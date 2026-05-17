@@ -409,3 +409,97 @@ export async function getFolhaPorEmpresa(
 
   return Array.from(porEmpresa.values());
 }
+
+export type InadimplenciaData = {
+  percentual: number;
+  valor: number;
+  count: number;
+};
+
+export async function getInadimplencia(
+  competencia: string,
+  escolaId: string = DEFAULT_SCHOOL_ID
+): Promise<InadimplenciaData> {
+  const supabase = await createServerClient();
+  const [vencidas, total] = await Promise.all([
+    supabase
+      .from("cobrancas")
+      .select("valor_final")
+      .eq("escola_id", escolaId)
+      .eq("competencia", competencia)
+      .eq("status", "vencida"),
+    supabase
+      .from("cobrancas")
+      .select("valor_final")
+      .eq("escola_id", escolaId)
+      .eq("competencia", competencia)
+      .neq("status", "cancelada"),
+  ]);
+
+  const valor = (vencidas.data ?? []).reduce((s, r) => s + Number(r.valor_final ?? 0), 0);
+  const totalValor = (total.data ?? []).reduce((s, r) => s + Number(r.valor_final ?? 0), 0);
+
+  return {
+    percentual: totalValor > 0 ? valor / totalValor : 0,
+    valor,
+    count: vencidas.data?.length ?? 0,
+  };
+}
+
+export type DevedorRow = {
+  alunoId: string;
+  nome: string;
+  valor: number;
+  diasVencimento: number;
+};
+
+export async function getTopDevedores(
+  limit: number = 5,
+  escolaId: string = DEFAULT_SCHOOL_ID
+): Promise<DevedorRow[]> {
+  const supabase = await createServerClient();
+  const hoje = new Date();
+  const hojeStr = `${hoje.getFullYear()}-${pad(hoje.getMonth() + 1)}-${pad(hoje.getDate())}`;
+
+  const { data } = await supabase
+    .from("cobrancas")
+    .select("valor_final, data_vencimento, matriculas(aluno_id, alunos(nome))")
+    .eq("escola_id", escolaId)
+    .in("status", ["vencida", "parcial"])
+    .lte("data_vencimento", hojeStr);
+
+  type Row = {
+    valor_final: number | null;
+    data_vencimento: string;
+    matriculas:
+      | { aluno_id: string; alunos: { nome: string } | { nome: string }[] | null }
+      | { aluno_id: string; alunos: { nome: string } | { nome: string }[] | null }[]
+      | null;
+  };
+
+  const porAluno = new Map<string, { nome: string; valor: number; vencimento: string }>();
+  for (const c of ((data ?? []) as unknown as Row[])) {
+    const matRel = Array.isArray(c.matriculas) ? c.matriculas[0] : c.matriculas;
+    const alunoId = matRel?.aluno_id;
+    if (!alunoId) continue;
+    const alunoRel = matRel?.alunos
+      ? Array.isArray(matRel.alunos)
+        ? matRel.alunos[0]
+        : matRel.alunos
+      : null;
+    const nome = alunoRel?.nome ?? "—";
+    const acc = porAluno.get(alunoId) ?? { nome, valor: 0, vencimento: c.data_vencimento };
+    acc.valor += Number(c.valor_final ?? 0);
+    if (c.data_vencimento < acc.vencimento) acc.vencimento = c.data_vencimento;
+    porAluno.set(alunoId, acc);
+  }
+
+  const rows: DevedorRow[] = Array.from(porAluno.entries()).map(([alunoId, v]) => {
+    const venc = new Date(v.vencimento);
+    const dias = Math.floor((hoje.getTime() - venc.getTime()) / (1000 * 60 * 60 * 24));
+    return { alunoId, nome: v.nome, valor: v.valor, diasVencimento: dias };
+  });
+
+  rows.sort((a, b) => b.valor - a.valor);
+  return rows.slice(0, limit);
+}
