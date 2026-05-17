@@ -637,3 +637,166 @@ export async function getRankingAlunos(
   rows.sort((a, b) => b.mediaGeral - a.mediaGeral);
   return rows.slice(0, limit);
 }
+
+export type BoletimDisciplina = {
+  disciplinaId: string;
+  disciplina: string;
+  bimestres: Array<{
+    bimestre: number;
+    media: number | null;
+    totalAvaliacoes: number;
+    notasLancadas: number;
+  }>;
+  mediaAnual: number | null;
+};
+
+export type BoletimFrequencia = {
+  totalDias: number;
+  presencas: number;
+  faltas: number;
+  taxa: number;
+};
+
+export type BoletimData = {
+  aluno: {
+    id: string;
+    nome: string;
+    matriculaCodigo: string | null;
+    fotoUrl: string | null;
+  };
+  matricula: {
+    id: string;
+    anoLetivo: number;
+    serie: string;
+    turma: string;
+    segmento: string;
+  };
+  disciplinas: BoletimDisciplina[];
+  frequencia: BoletimFrequencia;
+};
+
+export async function getBoletim(
+  alunoId: string,
+  anoLetivo: number = new Date().getFullYear(),
+  escolaId: string = DEFAULT_SCHOOL_ID
+): Promise<BoletimData | null> {
+  const supabase = await createServerClient();
+
+  const { data: matricula } = await supabase
+    .from("matriculas")
+    .select(`
+      id, ano_letivo,
+      alunos(id, nome, matricula_codigo, foto_url),
+      turmas(nome, series(nome, segmento))
+    `)
+    .eq("escola_id", escolaId)
+    .eq("aluno_id", alunoId)
+    .eq("ano_letivo", anoLetivo)
+    .eq("status", "ativa")
+    .maybeSingle();
+
+  if (!matricula) return null;
+  const m = matricula as any;
+  const aluno = pickOne(m.alunos);
+  const turma = pickOne(m.turmas);
+  const serieRel = pickOne(turma?.series);
+
+  // Notas consolidadas do aluno no ano
+  const { data: consol } = await supabase
+    .from("notas_consolidadas")
+    .select("disciplina_id, bimestre, media, total_avaliacoes, notas_lancadas")
+    .eq("escola_id", escolaId)
+    .eq("matricula_id", m.id);
+
+  // Carrega nomes de disciplinas
+  const disciplinaIds = Array.from(new Set((consol ?? []).map((c: any) => c.disciplina_id)));
+  const { data: disciplinas } = disciplinaIds.length > 0
+    ? await supabase.from("disciplinas").select("id, nome, ordem").in("id", disciplinaIds)
+    : { data: [] };
+
+  const dispMap = new Map<string, { nome: string; ordem: number }>();
+  for (const d of (disciplinas ?? []) as Array<{ id: string; nome: string; ordem: number }>) {
+    dispMap.set(d.id, { nome: d.nome, ordem: d.ordem });
+  }
+
+  // Agrupa por disciplina
+  type Acc = Map<number, { media: number | null; totalAvaliacoes: number; notasLancadas: number }>;
+  const porDisc = new Map<string, Acc>();
+  for (const c of ((consol ?? []) as any[])) {
+    const acc = porDisc.get(c.disciplina_id) ?? new Map();
+    acc.set(c.bimestre, {
+      media: c.media !== null && c.media !== undefined ? Number(c.media) : null,
+      totalAvaliacoes: Number(c.total_avaliacoes ?? 0),
+      notasLancadas: Number(c.notas_lancadas ?? 0),
+    });
+    porDisc.set(c.disciplina_id, acc);
+  }
+
+  const disciplinasOut: BoletimDisciplina[] = Array.from(porDisc.entries()).map(([id, bimMap]) => {
+    const info = dispMap.get(id) ?? { nome: "—", ordem: 999 };
+    const bimestres = [1, 2, 3, 4].map((b) => {
+      const v = bimMap.get(b);
+      return {
+        bimestre: b,
+        media: v?.media ?? null,
+        totalAvaliacoes: v?.totalAvaliacoes ?? 0,
+        notasLancadas: v?.notasLancadas ?? 0,
+      };
+    });
+    const medias = bimestres.map((b) => b.media).filter((v): v is number => v !== null);
+    const mediaAnual = medias.length > 0 ? medias.reduce((s, x) => s + x, 0) / medias.length : null;
+    return {
+      disciplinaId: id,
+      disciplina: info.nome,
+      bimestres,
+      mediaAnual,
+    };
+  });
+
+  disciplinasOut.sort((a, b) => {
+    const oa = dispMap.get(a.disciplinaId)?.ordem ?? 999;
+    const ob = dispMap.get(b.disciplinaId)?.ordem ?? 999;
+    if (oa !== ob) return oa - ob;
+    return a.disciplina.localeCompare(b.disciplina);
+  });
+
+  // Frequencia do aluno no ano
+  const { data: freqs } = await supabase
+    .from("frequencias")
+    .select("presente")
+    .eq("escola_id", escolaId)
+    .eq("aluno_id", alunoId)
+    .gte("data_aula", `${anoLetivo}-01-01`)
+    .lte("data_aula", `${anoLetivo}-12-31`);
+
+  let presencas = 0;
+  let faltas = 0;
+  for (const r of (freqs ?? []) as Array<{ presente: boolean }>) {
+    if (r.presente) presencas++;
+    else faltas++;
+  }
+  const totalDias = presencas + faltas;
+
+  return {
+    aluno: {
+      id: aluno?.id ?? alunoId,
+      nome: aluno?.nome ?? "—",
+      matriculaCodigo: aluno?.matricula_codigo ?? null,
+      fotoUrl: aluno?.foto_url ?? null,
+    },
+    matricula: {
+      id: m.id,
+      anoLetivo: m.ano_letivo,
+      serie: serieRel?.nome ?? "—",
+      turma: turma?.nome ?? "—",
+      segmento: serieRel?.segmento ?? "outros",
+    },
+    disciplinas: disciplinasOut,
+    frequencia: {
+      totalDias,
+      presencas,
+      faltas,
+      taxa: totalDias > 0 ? presencas / totalDias : 0,
+    },
+  };
+}

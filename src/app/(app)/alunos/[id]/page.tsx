@@ -26,6 +26,7 @@ export default async function StudentPage({ params, searchParams }: { params: { 
         </div>
         <div className="flex flex-wrap gap-2">
           <ButtonLink href="/alunos" variant="secondary">Voltar</ButtonLink>
+          <ButtonLink href={`/alunos/${student.id}/boletim`} variant="secondary">Boletim</ButtonLink>
           <ButtonLink href={`/alunos/${student.id}/editar`} variant="primary">Editar</ButtonLink>
           <ExportStudentButton student={student} />
         </div>
