@@ -695,13 +695,27 @@ export async function getBeneficios(
   escolaId: string = DEFAULT_SCHOOL_ID
 ): Promise<BeneficiosData> {
   const supabase = await createServerClient();
+  const anoLetivo = new Date().getFullYear();
 
-  const { data } = await supabase
+  const { data: matriculas } = await supabase
     .from("matriculas")
-    .select("tipo_vaga, percentual_bolsa, planos(valor_mensalidade)")
+    .select("tipo_vaga, percentual_bolsa, series(segmento), planos(valor_mensalidade)")
     .eq("escola_id", escolaId)
     .eq("status", "ativa")
     .in("tipo_vaga", BENEFICIARIO_TIPOS);
+
+  // Carrega valores praticados do ano corrente (ordem_filho = 1)
+  const { data: valoresPraticados } = await supabase
+    .from("valores_praticados")
+    .select("segmento, valor_mensalidade")
+    .eq("escola_id", escolaId)
+    .eq("ano_letivo", anoLetivo)
+    .eq("ordem_filho", 1);
+
+  const valorPorSegmento = new Map<string, number>();
+  for (const v of (valoresPraticados ?? []) as Array<{ segmento: string; valor_mensalidade: number | string }>) {
+    valorPorSegmento.set(v.segmento, Number(v.valor_mensalidade));
+  }
 
   const porTipo: Record<TipoVaga, number> = {
     paga: 0,
@@ -713,19 +727,26 @@ export async function getBeneficios(
 
   let receitaPerdida = 0;
 
-  for (const m of ((data ?? []) as any[])) {
+  for (const m of ((matriculas ?? []) as any[])) {
     const tipo = m.tipo_vaga as TipoVaga;
     porTipo[tipo] = (porTipo[tipo] ?? 0) + 1;
 
+    const seriesRel = m.series;
+    const serie = Array.isArray(seriesRel) ? seriesRel[0] : seriesRel;
+    const segmento = serie?.segmento as string | undefined;
+
     const planosRel = m.planos;
     const plano = Array.isArray(planosRel) ? planosRel[0] : planosRel;
-    const mensalidade = Number(plano?.valor_mensalidade ?? 0);
+    const fallback = Number(plano?.valor_mensalidade ?? 0);
+
+    const valorSegmento = segmento ? valorPorSegmento.get(segmento) : undefined;
+    const valorReferencia = valorSegmento ?? fallback;
 
     if (tipo === "bolsa_parcial") {
       const pct = Number(m.percentual_bolsa ?? 0) / 100;
-      receitaPerdida += mensalidade * pct;
+      receitaPerdida += valorReferencia * pct;
     } else {
-      receitaPerdida += mensalidade;
+      receitaPerdida += valorReferencia;
     }
   }
 
