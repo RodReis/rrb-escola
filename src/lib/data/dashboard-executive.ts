@@ -3,6 +3,10 @@ import { DEFAULT_SCHOOL_ID } from "@/lib/constants";
 
 export type GestaoFinanceira = "propria" | "terceirizada";
 
+export type TipoVaga = 'paga' | 'bolsa_integral' | 'bolsa_parcial' | 'permuta' | 'gratuita';
+
+const BENEFICIARIO_TIPOS: TipoVaga[] = ['bolsa_integral', 'bolsa_parcial', 'permuta', 'gratuita'];
+
 export type EscolaConfig = {
   gestaoFinanceira: GestaoFinanceira;
 };
@@ -213,7 +217,14 @@ export async function getRevenueTrend(
 export type OcupacaoData = {
   total: number;
   ocupadas: number;
-  porEtapa: Array<{ etapa: string; capacidade: number; matriculados: number }>;
+  pagantes: number;
+  beneficiados: number;
+  porEtapa: Array<{
+    etapa: string;
+    capacidade: number;
+    matriculados: number;
+    bolsistas: number;
+  }>;
 };
 
 export async function getOcupacao(escolaId: string = DEFAULT_SCHOOL_ID): Promise<OcupacaoData> {
@@ -229,40 +240,52 @@ export async function getOcupacao(escolaId: string = DEFAULT_SCHOOL_ID): Promise
 
   const { data: matriculas } = await supabase
     .from("matriculas")
-    .select("turma_id")
+    .select("turma_id, tipo_vaga")
     .eq("escola_id", escolaId)
     .eq("status", "ativa");
 
-  const matriculasPorTurma = new Map<string, number>();
+  type MatriculaCount = { total: number; bolsistas: number };
+  const matriculasPorTurma = new Map<string, MatriculaCount>();
+  let pagantes = 0;
+  let beneficiados = 0;
+
   for (const m of matriculas ?? []) {
-    matriculasPorTurma.set(m.turma_id, (matriculasPorTurma.get(m.turma_id) ?? 0) + 1);
+    const acc = matriculasPorTurma.get(m.turma_id) ?? { total: 0, bolsistas: 0 };
+    acc.total += 1;
+    const ehBeneficiario = BENEFICIARIO_TIPOS.includes(m.tipo_vaga as TipoVaga);
+    if (ehBeneficiario) {
+      acc.bolsistas += 1;
+      beneficiados += 1;
+    } else {
+      pagantes += 1;
+    }
+    matriculasPorTurma.set(m.turma_id, acc);
   }
 
-  const porEtapaMap = new Map<string, { capacidade: number; matriculados: number }>();
+  type EtapaAgg = { capacidade: number; matriculados: number; bolsistas: number };
+  const porEtapaMap = new Map<string, EtapaAgg>();
   let total = 0;
   let ocupadas = 0;
 
-  for (const t of (turmas ?? []) as Array<{
-    id: string;
-    capacidade: number | null;
-    serie_id: string;
-    series: { segmento: string | null } | { segmento: string | null }[] | null;
-  }>) {
-    const seriesRel = Array.isArray(t.series) ? t.series[0] : t.series;
-    const etapa = seriesRel?.segmento ?? "outros";
+  for (const t of turmas ?? []) {
+    const seriesRel = (t as any).series;
+    const etapa = (Array.isArray(seriesRel) ? seriesRel[0]?.segmento : seriesRel?.segmento) ?? "outros";
     const cap = Number(t.capacidade ?? 0);
-    const ocup = matriculasPorTurma.get(t.id) ?? 0;
+    const counts = matriculasPorTurma.get(t.id) ?? { total: 0, bolsistas: 0 };
     total += cap;
-    ocupadas += ocup;
-    const acc = porEtapaMap.get(etapa) ?? { capacidade: 0, matriculados: 0 };
+    ocupadas += counts.total;
+    const acc = porEtapaMap.get(etapa) ?? { capacidade: 0, matriculados: 0, bolsistas: 0 };
     acc.capacidade += cap;
-    acc.matriculados += ocup;
+    acc.matriculados += counts.total;
+    acc.bolsistas += counts.bolsistas;
     porEtapaMap.set(etapa, acc);
   }
 
   return {
     total,
     ocupadas,
+    pagantes,
+    beneficiados,
     porEtapa: Array.from(porEtapaMap.entries()).map(([etapa, v]) => ({ etapa, ...v })),
   };
 }
