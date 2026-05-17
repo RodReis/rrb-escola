@@ -176,3 +176,145 @@ export async function getRevenueTrend(
 
   return pontos;
 }
+
+export type OcupacaoData = {
+  total: number;
+  ocupadas: number;
+  porEtapa: Array<{ etapa: string; capacidade: number; matriculados: number }>;
+};
+
+export async function getOcupacao(escolaId: string = DEFAULT_SCHOOL_ID): Promise<OcupacaoData> {
+  const supabase = await createServerClient();
+
+  const { data: turmas } = await supabase
+    .from("turmas")
+    .select("id, capacidade, serie_id, series(segmento)")
+    .eq("escola_id", escolaId);
+
+  const { data: matriculas } = await supabase
+    .from("matriculas")
+    .select("turma_id")
+    .eq("escola_id", escolaId)
+    .eq("status", "ativa");
+
+  const matriculasPorTurma = new Map<string, number>();
+  for (const m of matriculas ?? []) {
+    matriculasPorTurma.set(m.turma_id, (matriculasPorTurma.get(m.turma_id) ?? 0) + 1);
+  }
+
+  const porEtapaMap = new Map<string, { capacidade: number; matriculados: number }>();
+  let total = 0;
+  let ocupadas = 0;
+
+  for (const t of (turmas ?? []) as Array<{
+    id: string;
+    capacidade: number | null;
+    serie_id: string;
+    series: { segmento: string | null } | { segmento: string | null }[] | null;
+  }>) {
+    const seriesRel = Array.isArray(t.series) ? t.series[0] : t.series;
+    const etapa = seriesRel?.segmento ?? "outros";
+    const cap = Number(t.capacidade ?? 0);
+    const ocup = matriculasPorTurma.get(t.id) ?? 0;
+    total += cap;
+    ocupadas += ocup;
+    const acc = porEtapaMap.get(etapa) ?? { capacidade: 0, matriculados: 0 };
+    acc.capacidade += cap;
+    acc.matriculados += ocup;
+    porEtapaMap.set(etapa, acc);
+  }
+
+  return {
+    total,
+    ocupadas,
+    porEtapa: Array.from(porEtapaMap.entries()).map(([etapa, v]) => ({ etapa, ...v })),
+  };
+}
+
+export type StageBreakdownRow = {
+  etapa: string;
+  alunos: number;
+  receita: number;
+  ticket: number;
+  ocupacao: number;
+};
+
+export async function getStageBreakdown(
+  competencia: string,
+  escolaId: string = DEFAULT_SCHOOL_ID
+): Promise<StageBreakdownRow[]> {
+  const supabase = await createServerClient();
+
+  const { data: cobrancas } = await supabase
+    .from("cobrancas")
+    .select("valor_final, matriculas(serie_id, series(segmento))")
+    .eq("escola_id", escolaId)
+    .eq("competencia", competencia)
+    .neq("status", "cancelada");
+
+  const receitaPorEtapa = new Map<string, number>();
+  for (const c of ((cobrancas ?? []) as unknown) as Array<{
+    valor_final: number | null;
+    matriculas:
+      | { serie_id: string; series: { segmento: string | null } | { segmento: string | null }[] | null }
+      | { serie_id: string; series: { segmento: string | null } | { segmento: string | null }[] | null }[]
+      | null;
+  }>) {
+    const matRel = Array.isArray(c.matriculas) ? c.matriculas[0] : c.matriculas;
+    const seriesRel = matRel?.series
+      ? Array.isArray(matRel.series)
+        ? matRel.series[0]
+        : matRel.series
+      : null;
+    const etapa = seriesRel?.segmento ?? "outros";
+    receitaPorEtapa.set(etapa, (receitaPorEtapa.get(etapa) ?? 0) + Number(c.valor_final ?? 0));
+  }
+
+  const ocup = await getOcupacao(escolaId);
+
+  return ocup.porEtapa.map((p) => ({
+    etapa: p.etapa,
+    alunos: p.matriculados,
+    receita: receitaPorEtapa.get(p.etapa) ?? 0,
+    ticket: p.matriculados > 0 ? (receitaPorEtapa.get(p.etapa) ?? 0) / p.matriculados : 0,
+    ocupacao: p.capacidade > 0 ? p.matriculados / p.capacidade : 0,
+  }));
+}
+
+export type TicketMedioData = {
+  atual: number;
+  serie: number[];
+};
+
+export async function getTicketMedio(
+  months: number = 6,
+  escolaId: string = DEFAULT_SCHOOL_ID
+): Promise<TicketMedioData> {
+  const supabase = await createServerClient();
+  const competencias = rollingCompetencias(months);
+
+  const serie = await Promise.all(
+    competencias.map(async (competencia) => {
+      const [{ count }, { data: cobrancas }] = await Promise.all([
+        supabase
+          .from("matriculas")
+          .select("id", { count: "exact", head: true })
+          .eq("escola_id", escolaId)
+          .eq("status", "ativa"),
+        supabase
+          .from("cobrancas")
+          .select("valor_final")
+          .eq("escola_id", escolaId)
+          .eq("competencia", competencia)
+          .neq("status", "cancelada"),
+      ]);
+      const total = (cobrancas ?? []).reduce((s, r) => s + Number(r.valor_final ?? 0), 0);
+      return count && count > 0 ? total / count : 0;
+    })
+  );
+
+  return {
+    atual: serie[serie.length - 1] ?? 0,
+    serie,
+  };
+}
