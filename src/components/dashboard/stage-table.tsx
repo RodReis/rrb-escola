@@ -34,6 +34,7 @@ function ordemEtapa(etapa: string): number {
 export function StageTable({ rows }: { rows: StageBreakdownRow[] }) {
   const sorted = [...rows].sort((a, b) => ordemEtapa(a.etapa) - ordemEtapa(b.etapa));
   const totalAlunos = sorted.reduce((s, r) => s + r.alunos, 0);
+  const totalBolsistas = sorted.reduce((s, r) => s + r.bolsistas, 0);
   const totalReceita = sorted.reduce((s, r) => s + r.receita, 0);
   const totalCapacidade = sorted.reduce((s, r) => s + r.capacidade, 0);
   const totalVagas = sorted.reduce((s, r) => s + r.vagasLivres, 0);
@@ -52,6 +53,7 @@ export function StageTable({ rows }: { rows: StageBreakdownRow[] }) {
             <tr className="text-[0.66rem] uppercase tracking-kicker text-ink/55">
               <th className="px-2 py-2 text-left">Etapa</th>
               <th className="px-2 py-2 text-right">Alunos</th>
+              <th className="px-2 py-2 text-right">Bolsistas</th>
               <th className="px-2 py-2 text-right">Capacidade</th>
               <th className="px-2 py-2 text-right">Vagas livres</th>
               <th className="px-2 py-2 text-right">Receita</th>
@@ -74,6 +76,15 @@ export function StageTable({ rows }: { rows: StageBreakdownRow[] }) {
                     </span>
                   </td>
                   <td className="px-2 py-3 text-right font-semibold text-ink">{r.alunos}</td>
+                  <td className="px-2 py-3 text-right">
+                    {r.bolsistas > 0 ? (
+                      <span className="inline-flex items-center gap-1 rounded-pill bg-accent/10 px-2 py-0.5 text-xs font-semibold text-accent">
+                        {r.bolsistas} ({((r.bolsistas / r.alunos) * 100).toFixed(0)}%)
+                      </span>
+                    ) : (
+                      <span className="text-ink/40">—</span>
+                    )}
+                  </td>
                   <td className="px-2 py-3 text-right text-ink/70">{r.capacidade}</td>
                   <td className="px-2 py-3 text-right">
                     {overbook ? (
@@ -106,6 +117,11 @@ export function StageTable({ rows }: { rows: StageBreakdownRow[] }) {
             <tr className="border-t-2 border-line bg-muted/40 font-bold">
               <td className="px-2 py-3 text-ink">Total</td>
               <td className="px-2 py-3 text-right">{totalAlunos}</td>
+              <td className="px-2 py-3 text-right">
+                <span className="inline-flex items-center gap-1 rounded-pill bg-accent/10 px-2 py-0.5 text-xs font-bold text-accent">
+                  {totalBolsistas}
+                </span>
+              </td>
               <td className="px-2 py-3 text-right">{totalCapacidade}</td>
               <td className="px-2 py-3 text-right">
                 <span className="inline-flex items-center gap-1 rounded-pill bg-brand/10 px-2 py-0.5 text-xs text-brand">
