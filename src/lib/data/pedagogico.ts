@@ -800,3 +800,90 @@ export async function getBoletim(
     },
   };
 }
+
+export type PedagogicoOverview = {
+  totalAlunos: number;
+  totalTurmas: number;
+  totalSeries: number;
+  totalTurnos: number;
+  porEtapa: Array<{
+    etapa: string;
+    label: string;
+    count: number;
+    percent: number;
+  }>;
+};
+
+const ETAPA_LABELS: Record<string, string> = {
+  INFANTIL: "Educação Infantil",
+  FUNDAMENTAL1: "Ensino Fundamental I",
+  FUNDAMENTAL2: "Ensino Fundamental II",
+  MEDIO: "Ensino Médio",
+};
+
+export async function getPedagogicoOverview(
+  escolaId: string = DEFAULT_SCHOOL_ID,
+  anoLetivo: number = new Date().getFullYear()
+): Promise<PedagogicoOverview> {
+  const supabase = await createServerClient();
+
+  const [
+    { count: totalAlunos },
+    { data: turmas },
+    { count: totalSeries },
+    { data: matriculasEtapa },
+  ] = await Promise.all([
+    supabase
+      .from("matriculas")
+      .select("id", { count: "exact", head: true })
+      .eq("escola_id", escolaId)
+      .eq("status", "ativa"),
+    supabase
+      .from("turmas")
+      .select("id, turno")
+      .eq("escola_id", escolaId)
+      .eq("ano_letivo", anoLetivo)
+      .eq("ativo", true),
+    supabase
+      .from("series")
+      .select("id", { count: "exact", head: true })
+      .eq("escola_id", escolaId),
+    supabase
+      .from("matriculas")
+      .select("series(segmento)")
+      .eq("escola_id", escolaId)
+      .eq("status", "ativa"),
+  ]);
+
+  const turnosSet = new Set<string>();
+  for (const t of (turmas ?? []) as Array<{ turno: string }>) {
+    if (t.turno) turnosSet.add(t.turno);
+  }
+
+  const porEtapaMap = new Map<string, number>();
+  for (const m of ((matriculasEtapa ?? []) as any[])) {
+    const s = pickOne(m.series);
+    const etapa = s?.segmento ?? "outros";
+    porEtapaMap.set(etapa, (porEtapaMap.get(etapa) ?? 0) + 1);
+  }
+
+  const total = totalAlunos ?? 0;
+  const ordem = ["INFANTIL", "FUNDAMENTAL1", "FUNDAMENTAL2", "MEDIO"];
+  const porEtapa = ordem.map((etapa) => {
+    const count = porEtapaMap.get(etapa) ?? 0;
+    return {
+      etapa,
+      label: ETAPA_LABELS[etapa] ?? etapa,
+      count,
+      percent: total > 0 ? (count / total) * 100 : 0,
+    };
+  });
+
+  return {
+    totalAlunos: total,
+    totalTurmas: (turmas ?? []).length,
+    totalSeries: totalSeries ?? 0,
+    totalTurnos: turnosSet.size,
+    porEtapa,
+  };
+}

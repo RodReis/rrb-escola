@@ -47,6 +47,7 @@ import { FrequenciaCard } from "@/components/dashboard/frequencia-card";
 import { EvasaoCard } from "@/components/dashboard/evasao-card";
 import { FrequenciaHeatmap } from "@/components/dashboard/frequencia-heatmap";
 import { MediasDisciplinasCard } from "@/components/dashboard/medias-disciplinas-card";
+import { PedagogicoOverviewSection } from "@/components/dashboard/pedagogico-overview-section";
 import { ProximasCobrancasCard } from "@/components/dashboard/proximas-cobrancas-card";
 import { RankingAlunosCard } from "@/components/dashboard/ranking-alunos-card";
 import { RankingTurmasCard } from "@/components/dashboard/ranking-turmas-card";
@@ -58,6 +59,7 @@ import {
   getEvasao,
   getFrequenciaDetalhada,
   getMediasPorDisciplina,
+  getPedagogicoOverview,
   getPedagogicoSummary,
   getRankingAlunos,
 } from "@/lib/data/pedagogico";
@@ -121,6 +123,7 @@ export default async function DashboardPage({
     proximasCobrancas,
     saudeSistema,
     saldoYTD,
+    pedagogicoOverview,
     slot2,
     slot5,
   ] = await Promise.all([
@@ -148,6 +151,7 @@ export default async function DashboardPage({
     getProximasCobrancas(escolaId, 7),
     getSaudeSistema(escolaId),
     getSaldoYTD(escolaId),
+    getPedagogicoOverview(escolaId),
     isPropria
       ? getInadimplencia(competencia, escolaId)
       : getRepasseRecebido(competencia, escolaId),
@@ -261,6 +265,7 @@ export default async function DashboardPage({
 
       {aba === "pedagogico" && (
         <>
+          <PedagogicoOverviewSection data={pedagogicoOverview} />
           <section className="grid gap-6 lg:grid-cols-2">
             <EvasaoCard data={evasao} />
             <FrequenciaHeatmap data={freqDetalhada} />
