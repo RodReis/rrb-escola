@@ -17,6 +17,7 @@ import {
   Network,
   UserCheck,
   UsersRound,
+  Webhook,
   ChevronDown
 } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -32,7 +33,8 @@ const secretariaItems = [
   { href: "/professores/atribuicoes", label: "Atribuições", icon: UserCheck },
   { href: "/mural/aniversariantes", label: "Mural aniversários", icon: Cake },
   { href: "/organograma", label: "Organograma", icon: Network },
-  { href: "/importacoes", label: "Importações", icon: Inbox }
+  { href: "/importacoes", label: "Importações", icon: Inbox },
+  { href: "/configuracoes/webhook", label: "Webhook", icon: Webhook }
 ];
 
 const secretariaHrefs = secretariaItems.map((i) => i.href);

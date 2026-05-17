@@ -1295,3 +1295,268 @@ export async function getAniversariantesSemana(
 
   return rows;
 }
+
+export type AniversarioMatriculaRow = {
+  alunoId: string;
+  nome: string;
+  dataMatricula: string;
+  anosNaEscola: number;
+  diaSemana: string;
+  hoje: boolean;
+};
+
+export async function getAniversariantesMatricula(
+  escolaId: string = DEFAULT_SCHOOL_ID,
+  limit: number = 10
+): Promise<AniversarioMatriculaRow[]> {
+  const supabase = await createServerClient();
+  const hoje = new Date();
+  const mesAtual = hoje.getMonth() + 1;
+  const diaHoje = hoje.getDate();
+  const DIAS_SEMANA = ["Dom", "Seg", "Ter", "Qua", "Qui", "Sex", "Sab"];
+
+  // Pega a matricula mais antiga (primeira na escola) por aluno ativo
+  const { data: matriculas } = await supabase
+    .from("matriculas")
+    .select("aluno_id, data_matricula, alunos(id, nome)")
+    .eq("escola_id", escolaId);
+
+  const primeira = new Map<string, { dataMatricula: string; nome: string }>();
+  for (const m of ((matriculas ?? []) as any[])) {
+    const aluno = Array.isArray(m.alunos) ? m.alunos[0] : m.alunos;
+    if (!aluno || !m.data_matricula) continue;
+    const atual = primeira.get(aluno.id);
+    if (!atual || m.data_matricula < atual.dataMatricula) {
+      primeira.set(aluno.id, { dataMatricula: m.data_matricula, nome: aluno.nome ?? "—" });
+    }
+  }
+
+  // Verifica quem tem matricula ATIVA (so listar quem ainda esta na escola)
+  const { data: ativasRaw } = await supabase
+    .from("matriculas")
+    .select("aluno_id")
+    .eq("escola_id", escolaId)
+    .eq("status", "ativa");
+
+  const ativos = new Set<string>(
+    (ativasRaw ?? []).map((m: { aluno_id: string }) => m.aluno_id)
+  );
+
+  const rows: AniversarioMatriculaRow[] = [];
+  for (const [alunoId, info] of Array.from(primeira.entries())) {
+    if (!ativos.has(alunoId)) continue;
+    const parts = info.dataMatricula.split("-").map(Number);
+    const ano = parts[0];
+    const mm = parts[1];
+    const dd = parts[2];
+    if (!ano || !mm || !dd) continue;
+    if (mm !== mesAtual) continue;
+
+    const anos = hoje.getFullYear() - ano;
+    if (anos < 1) continue; // pula recém-matriculados sem aniversário
+
+    const dataAniv = new Date(hoje.getFullYear(), mm - 1, dd);
+    rows.push({
+      alunoId,
+      nome: info.nome,
+      dataMatricula: info.dataMatricula,
+      anosNaEscola: anos,
+      diaSemana: DIAS_SEMANA[dataAniv.getDay()] ?? "",
+      hoje: dd === diaHoje,
+    });
+  }
+
+  rows.sort((a, b) => {
+    const da = new Date(a.dataMatricula).getDate();
+    const db = new Date(b.dataMatricula).getDate();
+    return da - db;
+  });
+
+  return rows.slice(0, limit);
+}
+
+export type ProximaCobrancaRow = {
+  cobrancaId: string;
+  alunoId: string;
+  alunoNome: string;
+  descricao: string;
+  valor: number;
+  dataVencimento: string;
+  diasAteVencimento: number;
+  status: string;
+};
+
+export async function getProximasCobrancas(
+  escolaId: string = DEFAULT_SCHOOL_ID,
+  dias: number = 7
+): Promise<ProximaCobrancaRow[]> {
+  const supabase = await createServerClient();
+  const hoje = new Date();
+  const hojeStr = hoje.toISOString().slice(0, 10);
+  const limite = new Date(hoje);
+  limite.setDate(limite.getDate() + dias);
+  const limiteStr = limite.toISOString().slice(0, 10);
+
+  const { data } = await supabase
+    .from("cobrancas")
+    .select(`
+      id, descricao, valor_final, data_vencimento, status,
+      matriculas(aluno_id, alunos(nome))
+    `)
+    .eq("escola_id", escolaId)
+    .gte("data_vencimento", hojeStr)
+    .lte("data_vencimento", limiteStr)
+    .in("status", ["aberta", "vencida", "parcial"])
+    .order("data_vencimento");
+
+  const hojeUTC = Date.UTC(hoje.getFullYear(), hoje.getMonth(), hoje.getDate());
+  return ((data ?? []) as any[]).map((c) => {
+    const matricula = Array.isArray(c.matriculas) ? c.matriculas[0] : c.matriculas;
+    const aluno = Array.isArray(matricula?.alunos) ? matricula?.alunos?.[0] : matricula?.alunos;
+    const [vy, vm, vd] = String(c.data_vencimento).split("-").map(Number) as [number, number, number];
+    const vencUTC = Date.UTC(vy, vm - 1, vd);
+    const diasAteVencimento = Math.floor((vencUTC - hojeUTC) / (1000 * 60 * 60 * 24));
+    return {
+      cobrancaId: c.id,
+      alunoId: matricula?.aluno_id ?? "",
+      alunoNome: aluno?.nome ?? "—",
+      descricao: c.descricao ?? "—",
+      valor: Number(c.valor_final ?? 0),
+      dataVencimento: c.data_vencimento,
+      diasAteVencimento,
+      status: c.status,
+    };
+  });
+}
+
+export type SaudeIndicador = {
+  id: string;
+  titulo: string;
+  detalhe: string;
+  ok: boolean;
+  href: string;
+};
+
+export type SaudeSistemaData = {
+  totalChecks: number;
+  okCount: number;
+  itens: SaudeIndicador[];
+};
+
+export async function getSaudeSistema(
+  escolaId: string = DEFAULT_SCHOOL_ID
+): Promise<SaudeSistemaData> {
+  const supabase = await createServerClient();
+  const anoLetivo = new Date().getFullYear();
+
+  // 1. Turmas sem disciplinas (via serie)
+  const { data: seriesSemDisc } = await supabase
+    .from("series")
+    .select("id, nome, disciplinas(id)")
+    .eq("escola_id", escolaId);
+  const seriesVazias = ((seriesSemDisc ?? []) as any[]).filter((s) => {
+    const arr = Array.isArray(s.disciplinas) ? s.disciplinas : [];
+    return arr.length === 0;
+  });
+
+  // 2. Turmas sem nenhuma avaliação no ano
+  const { data: turmasRaw } = await supabase
+    .from("turmas")
+    .select("id, nome, ano_letivo, ativo, series(nome)")
+    .eq("escola_id", escolaId)
+    .eq("ano_letivo", anoLetivo)
+    .eq("ativo", true);
+
+  const turmaIds = ((turmasRaw ?? []) as any[]).map((t) => t.id);
+  const { data: avals } = turmaIds.length > 0
+    ? await supabase
+        .from("avaliacoes")
+        .select("turma_id")
+        .eq("escola_id", escolaId)
+        .eq("ano_letivo", anoLetivo)
+        .in("turma_id", turmaIds)
+    : { data: [] };
+  const turmasComAval = new Set(((avals ?? []) as Array<{ turma_id: string }>).map((a) => a.turma_id));
+  const turmasSemAval = ((turmasRaw ?? []) as any[]).filter((t) => !turmasComAval.has(t.id));
+
+  // 3. Disciplinas sem professor atribuido (qualquer turma)
+  const { count: discCount } = await supabase
+    .from("disciplinas")
+    .select("id", { count: "exact", head: true })
+    .eq("escola_id", escolaId)
+    .eq("ativo", true);
+  const { count: atribCount } = await supabase
+    .from("professor_disciplina_turma")
+    .select("id", { count: "exact", head: true })
+    .eq("escola_id", escolaId);
+  const semProfessor = (discCount ?? 0) > 0 && (atribCount ?? 0) === 0;
+
+  // 4. Alunos ativos sem plano
+  const { count: alunosSemPlano } = await supabase
+    .from("matriculas")
+    .select("id", { count: "exact", head: true })
+    .eq("escola_id", escolaId)
+    .eq("status", "ativa")
+    .is("plano_id", null);
+
+  // 5. Valores praticados ano corrente
+  const { count: valoresCount } = await supabase
+    .from("valores_praticados")
+    .select("id", { count: "exact", head: true })
+    .eq("escola_id", escolaId)
+    .eq("ano_letivo", anoLetivo);
+
+  const itens: SaudeIndicador[] = [
+    {
+      id: "series-sem-disc",
+      titulo: "Séries com disciplinas",
+      detalhe: seriesVazias.length === 0
+        ? "Todas as séries possuem disciplinas"
+        : `${seriesVazias.length} série(s) sem disciplinas: ${seriesVazias.slice(0, 3).map((s) => s.nome).join(", ")}`,
+      ok: seriesVazias.length === 0,
+      href: "/disciplinas",
+    },
+    {
+      id: "turmas-sem-aval",
+      titulo: "Turmas com avaliações",
+      detalhe: turmasSemAval.length === 0
+        ? "Todas as turmas têm pelo menos uma avaliação"
+        : `${turmasSemAval.length} turma(s) sem avaliações no ano`,
+      ok: turmasSemAval.length === 0,
+      href: "/avaliacoes/nova",
+    },
+    {
+      id: "disc-sem-prof",
+      titulo: "Disciplinas com professor",
+      detalhe: semProfessor
+        ? "Nenhuma atribuição professor → disciplina cadastrada"
+        : `${atribCount ?? 0} atribuição(ões) configurada(s)`,
+      ok: !semProfessor,
+      href: "/professores/atribuicoes",
+    },
+    {
+      id: "alunos-sem-plano",
+      titulo: "Alunos ativos com plano",
+      detalhe: (alunosSemPlano ?? 0) === 0
+        ? "Todas matrículas ativas têm plano vinculado"
+        : `${alunosSemPlano} matrícula(s) ativa(s) sem plano`,
+      ok: (alunosSemPlano ?? 0) === 0,
+      href: "/alunos",
+    },
+    {
+      id: "valores-praticados",
+      titulo: "Valores praticados do ano",
+      detalhe: (valoresCount ?? 0) >= 12
+        ? `${valoresCount} valores cadastrados`
+        : `Faltam ${12 - (valoresCount ?? 0)} de 12 valores (4 segmentos × 3 ordens)`,
+      ok: (valoresCount ?? 0) >= 12,
+      href: "/valores-praticados",
+    },
+  ];
+
+  return {
+    totalChecks: itens.length,
+    okCount: itens.filter((i) => i.ok).length,
+    itens,
+  };
+}

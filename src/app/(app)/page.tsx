@@ -6,6 +6,7 @@ import {
   currentCompetencia,
   getAlertas,
   getAniversariantes,
+  getAniversariantesMatricula,
   getBeneficios,
   getEscolaConfig,
   getFolhaPorEmpresa,
@@ -16,11 +17,13 @@ import {
   getInadimplencia,
   getMargemTrend,
   getOcupacao,
+  getProximasCobrancas,
   getRankingTurmas,
   getRealizadoVsProjetado,
   getRenovacoesPendentes,
   getRepasseRecebido,
   getRevenueTrend,
+  getSaudeSistema,
   getStageBreakdown,
   getTicketMedio,
   getTopCategoriasDespesas,
@@ -32,6 +35,7 @@ import {
 } from "@/lib/data/dashboard-executive";
 import { AlertList } from "@/components/dashboard/alert-list";
 import { AniversariantesCard } from "@/components/dashboard/aniversariantes-card";
+import { AniversarioMatriculaCard } from "@/components/dashboard/aniversario-matricula-card";
 import { BeneficiosCard } from "@/components/dashboard/beneficios-card";
 import { CompetenciaPicker } from "@/components/dashboard/competencia-picker";
 import { DashboardTabs, parseTab } from "@/components/dashboard/dashboard-tabs";
@@ -43,9 +47,11 @@ import { MargemTrendCard } from "@/components/dashboard/margem-trend-card";
 import { EvasaoCard } from "@/components/dashboard/evasao-card";
 import { FrequenciaHeatmap } from "@/components/dashboard/frequencia-heatmap";
 import { MediasDisciplinasCard } from "@/components/dashboard/medias-disciplinas-card";
+import { ProximasCobrancasCard } from "@/components/dashboard/proximas-cobrancas-card";
 import { RankingAlunosCard } from "@/components/dashboard/ranking-alunos-card";
 import { RankingTurmasCard } from "@/components/dashboard/ranking-turmas-card";
 import { RealizadoProjetadoCard } from "@/components/dashboard/realizado-projetado-card";
+import { SaudeSistemaCard } from "@/components/dashboard/saude-sistema-card";
 import { TopCategoriasCard } from "@/components/dashboard/top-categorias-card";
 import {
   getEvasao,
@@ -111,6 +117,9 @@ export default async function DashboardPage({
     mediasDisc,
     pedagogicoSummary,
     rankingAlunos,
+    aniversariantesMatricula,
+    proximasCobrancas,
+    saudeSistema,
     slot2,
     slot5,
   ] = await Promise.all([
@@ -135,6 +144,9 @@ export default async function DashboardPage({
     getMediasPorDisciplina(escolaId),
     getPedagogicoSummary(escolaId),
     getRankingAlunos(escolaId, undefined, 10),
+    getAniversariantesMatricula(escolaId, 10),
+    getProximasCobrancas(escolaId, 7),
+    getSaudeSistema(escolaId),
     isPropria
       ? getInadimplencia(competencia, escolaId)
       : getRepasseRecebido(competencia, escolaId),
@@ -200,6 +212,8 @@ export default async function DashboardPage({
             <MargemTrendCard data={margemTrend} />
           </section>
 
+          {isPropria && <ProximasCobrancasCard items={proximasCobrancas} />}
+
           <section className="grid gap-6 lg:grid-cols-2">
             <TopCategoriasCard items={topCategorias} />
             <FolhaEmpresas items={folhaEmpresas} />
@@ -242,6 +256,11 @@ export default async function DashboardPage({
           <section className="grid gap-6 lg:grid-cols-2">
             <RankingTurmasCard items={rankingTurmas} />
             <AniversariantesCard items={aniversariantes} />
+          </section>
+
+          <section className="grid gap-6 lg:grid-cols-2">
+            <AniversarioMatriculaCard items={aniversariantesMatricula} />
+            <SaudeSistemaCard data={saudeSistema} />
           </section>
 
           {!isPropria && <RenovacoesPendentes items={slot5 as RenovacaoRow[]} />}
