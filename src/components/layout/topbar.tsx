@@ -3,9 +3,11 @@ import { TopbarNavLink, type TopbarIconName } from "@/components/layout/topbar-n
 import { SecretariaDropdown } from "@/components/layout/secretaria-dropdown";
 import { RhDropdown } from "@/components/layout/rh-dropdown";
 import { FinanceiroDropdown } from "@/components/layout/financeiro-dropdown";
+import { NotificationBell } from "@/components/layout/notification-bell";
 import { TopbarUserCard } from "@/components/layout/topbar-user-card";
 import { logoutAction } from "@/lib/actions/auth";
 import type { SessionProfile } from "@/lib/auth/session";
+import { listNotificacoes } from "@/lib/data/notificacoes";
 import { School } from "lucide-react";
 
 const primaryItems: Array<{ href: string; label: string; icon: TopbarIconName }> = [
@@ -35,7 +37,8 @@ function BrandBlock() {
   );
 }
 
-export function Topbar({ perfil }: { perfil: SessionProfile }) {
+export async function Topbar({ perfil }: { perfil: SessionProfile }) {
+  const notifs = await listNotificacoes(perfil.id, perfil.escola_id, 20);
   return (
     <header
       className="sticky top-0 z-50 border-b border-black/20"
@@ -84,14 +87,7 @@ export function Topbar({ perfil }: { perfil: SessionProfile }) {
           </svg>
         </button>
 
-        {/* Notifications */}
-        <button className="relative inline-flex h-[30px] w-[30px] items-center justify-center rounded-[7px] border border-white/[0.12] bg-white/10 text-white cursor-pointer">
-          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-            <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/>
-            <path d="M13.73 21a2 2 0 0 1-3.46 0"/>
-          </svg>
-          <span className="absolute top-[6px] right-[6px] h-[6px] w-[6px] rounded-full bg-[#ff3344] shadow-[0_0_0_1.5px_#15349E]" />
-        </button>
+        <NotificationBell perfilId={perfil.id} escolaId={perfil.escola_id} initial={notifs} />
 
         {/* User card */}
         <TopbarUserCard perfil={perfil} logoutAction={logoutAction} />
