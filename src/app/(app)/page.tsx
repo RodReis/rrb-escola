@@ -16,6 +16,7 @@ import {
   getMargemTrend,
   getOcupacao,
   getRankingTurmas,
+  getRealizadoVsProjetado,
   getRenovacoesPendentes,
   getRepasseRecebido,
   getRevenueTrend,
@@ -39,6 +40,7 @@ import { FolhaRatioCard } from "@/components/dashboard/folha-ratio-card";
 import { FrequenciaCard } from "@/components/dashboard/frequencia-card";
 import { MargemTrendCard } from "@/components/dashboard/margem-trend-card";
 import { RankingTurmasCard } from "@/components/dashboard/ranking-turmas-card";
+import { RealizadoProjetadoCard } from "@/components/dashboard/realizado-projetado-card";
 import { TopCategoriasCard } from "@/components/dashboard/top-categorias-card";
 import { MetricRing } from "@/components/dashboard/metric-ring";
 import { RenovacoesPendentes } from "@/components/dashboard/renovacoes-pendentes";
@@ -90,6 +92,7 @@ export default async function DashboardPage({
     frequencia,
     rankingTurmas,
     topCategorias,
+    realizadoVsProjetado,
     slot2,
     slot5,
   ] = await Promise.all([
@@ -107,6 +110,7 @@ export default async function DashboardPage({
     getFrequenciaResumo(escolaId, 30),
     getRankingTurmas(escolaId, 10),
     getTopCategoriasDespesas(competencia, escolaId, 6),
+    getRealizadoVsProjetado(competencia, escolaId),
     isPropria
       ? getInadimplencia(competencia, escolaId)
       : getRepasseRecebido(competencia, escolaId),
@@ -145,6 +149,8 @@ export default async function DashboardPage({
       {aba === "financeiro" ? (
         <>
           <HeroFinancial data={hero} />
+
+          <RealizadoProjetadoCard data={realizadoVsProjetado} />
 
           <section className="grid gap-6 lg:grid-cols-3">
             <AlertList items={alertas} />

@@ -1063,3 +1063,85 @@ export async function getTopCategoriasDespesas(
   rows.sort((a, b) => b.total - a.total);
   return rows.slice(0, limit);
 }
+
+export type RealizadoVsProjetadoData = {
+  projetado: number;
+  realizado: number;
+  diferenca: number;
+  pctRealizacao: number; // 0..1
+  porEtapa: Array<{
+    etapa: string;
+    projetado: number;
+    realizado: number;
+    diferenca: number;
+    matriculados: number;
+    valorReferencia: number;
+  }>;
+};
+
+export async function getRealizadoVsProjetado(
+  competencia: string,
+  escolaId: string = DEFAULT_SCHOOL_ID
+): Promise<RealizadoVsProjetadoData> {
+  const supabase = await createServerClient();
+  const anoLetivo = Number(competencia.split("-")[0]);
+
+  // Carrega valores praticados ordem_filho = 1 (preco cheio)
+  const { data: valoresRaw } = await supabase
+    .from("valores_praticados")
+    .select("segmento, valor_mensalidade")
+    .eq("escola_id", escolaId)
+    .eq("ano_letivo", anoLetivo)
+    .eq("ordem_filho", 1);
+
+  const valorPorSegmento = new Map<string, number>();
+  for (const v of (valoresRaw ?? []) as Array<{ segmento: string; valor_mensalidade: number | string }>) {
+    valorPorSegmento.set(v.segmento, Number(v.valor_mensalidade));
+  }
+
+  // Matriculados por segmento (todas as ativas, inclusive bolsistas — projetado conta TODOS pelo preco cheio)
+  const ocup = await getOcupacao(escolaId);
+
+  // Realizado: soma cobrancas do mes (valor_final ja com descontos)
+  const { data: cobrancas } = await supabase
+    .from("cobrancas")
+    .select("valor_final, matriculas(serie_id, series(segmento))")
+    .eq("escola_id", escolaId)
+    .eq("competencia", competencia)
+    .neq("status", "cancelada");
+
+  const realizadoPorEtapa = new Map<string, number>();
+  for (const c of ((cobrancas ?? []) as any[])) {
+    const matriculasRel = c.matriculas;
+    const matricula = Array.isArray(matriculasRel) ? matriculasRel[0] : matriculasRel;
+    const seriesRel = matricula?.series;
+    const serie = Array.isArray(seriesRel) ? seriesRel[0] : seriesRel;
+    const etapa = serie?.segmento ?? "outros";
+    realizadoPorEtapa.set(etapa, (realizadoPorEtapa.get(etapa) ?? 0) + Number(c.valor_final ?? 0));
+  }
+
+  const porEtapa = ocup.porEtapa.map((e) => {
+    const valorReferencia = valorPorSegmento.get(e.etapa) ?? 0;
+    const projetado = e.matriculados * valorReferencia;
+    const realizado = realizadoPorEtapa.get(e.etapa) ?? 0;
+    return {
+      etapa: e.etapa,
+      projetado,
+      realizado,
+      diferenca: realizado - projetado,
+      matriculados: e.matriculados,
+      valorReferencia,
+    };
+  });
+
+  const projetado = porEtapa.reduce((s, e) => s + e.projetado, 0);
+  const realizado = porEtapa.reduce((s, e) => s + e.realizado, 0);
+
+  return {
+    projetado,
+    realizado,
+    diferenca: realizado - projetado,
+    pctRealizacao: projetado > 0 ? realizado / projetado : 0,
+    porEtapa,
+  };
+}
