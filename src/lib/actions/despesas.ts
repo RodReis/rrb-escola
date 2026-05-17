@@ -6,7 +6,7 @@ import { requireSession } from "@/lib/auth/session";
 import { DEFAULT_SCHOOL_ID } from "@/lib/constants";
 import { createServerClient } from "@/lib/supabase/server";
 import { formNumber, formText } from "@/lib/utils";
-import { despesaSchema, FORMAS_PAGAMENTO } from "@/lib/validation/despesas";
+import { comprovanteSchema, despesaSchema, FORMAS_PAGAMENTO } from "@/lib/validation/despesas";
 
 function competenciaFromDate(d: string) {
   return d.slice(0, 7);
@@ -176,4 +176,67 @@ export async function duplicateMonthAction(formData: FormData) {
 
   revalidatePath("/despesas");
   redirect(`/despesas?mes=${toCompetencia}`);
+}
+
+export async function uploadComprovanteAction(formData: FormData) {
+  await requireSession();
+  const id = formText(formData, "id");
+  const file = formData.get("file");
+  if (!id) redirect("/despesas?erro=id");
+  if (!(file instanceof File) || file.size === 0) {
+    redirect(`/despesas/${id}/editar?erro=arquivo_vazio`);
+  }
+
+  const parsed = comprovanteSchema.safeParse({ size: file.size, type: file.type });
+  if (!parsed.success) {
+    redirect(`/despesas/${id}/editar?erro=${encodeURIComponent(parsed.error.issues[0]?.message ?? "comprovante_invalido")}`);
+  }
+
+  const supabase = await createServerClient();
+  const safeName = file.name.replace(/[^a-zA-Z0-9._-]/g, "_");
+  const path = `${id}/${Date.now()}-${safeName}`;
+  const buffer = Buffer.from(await file.arrayBuffer());
+
+  const { error: errUpload } = await supabase.storage
+    .from("despesas-comprovantes")
+    .upload(path, buffer, { contentType: file.type, upsert: false });
+  if (errUpload) redirect(`/despesas/${id}/editar?erro=${encodeURIComponent(errUpload.message)}`);
+
+  const { error: errUpdate } = await supabase
+    .from("despesas")
+    .update({ comprovante_path: path })
+    .eq("id", id)
+    .eq("escola_id", DEFAULT_SCHOOL_ID);
+  if (errUpdate) redirect(`/despesas/${id}/editar?erro=${encodeURIComponent(errUpdate.message)}`);
+
+  revalidatePath("/despesas");
+  redirect(`/despesas/${id}/editar`);
+}
+
+export async function removeComprovanteAction(formData: FormData) {
+  await requireSession();
+  const id = formText(formData, "id");
+  const path = formText(formData, "path");
+  if (!id || !path) redirect("/despesas?erro=id");
+
+  const supabase = await createServerClient();
+  await supabase.storage.from("despesas-comprovantes").remove([path]);
+  await supabase
+    .from("despesas")
+    .update({ comprovante_path: null })
+    .eq("id", id)
+    .eq("escola_id", DEFAULT_SCHOOL_ID);
+
+  revalidatePath("/despesas");
+  redirect(`/despesas/${id}/editar`);
+}
+
+export async function getComprovanteUrlAction(path: string): Promise<string | null> {
+  await requireSession();
+  const supabase = await createServerClient();
+  const { data, error } = await supabase.storage
+    .from("despesas-comprovantes")
+    .createSignedUrl(path, 60);
+  if (error) return null;
+  return data?.signedUrl ?? null;
 }
