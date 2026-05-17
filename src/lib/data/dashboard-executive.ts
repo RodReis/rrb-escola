@@ -1560,3 +1560,59 @@ export async function getSaudeSistema(
     itens,
   };
 }
+
+export type SaldoYTDData = {
+  receita: number;
+  despesa: number;
+  folha: number;
+  margem: number;
+  mesesComputados: number;
+};
+
+export async function getSaldoYTD(
+  escolaId: string = DEFAULT_SCHOOL_ID,
+  anoLetivo: number = new Date().getFullYear()
+): Promise<SaldoYTDData> {
+  const supabase = await createServerClient();
+  const hoje = new Date();
+  const mesAtual = hoje.getMonth() + 1;
+  const competencias: string[] = [];
+  for (let m = 1; m <= mesAtual; m++) {
+    competencias.push(`${anoLetivo}-${pad(m)}`);
+  }
+
+  // receita: pagamentos no ano
+  const inicioAno = `${anoLetivo}-01-01`;
+  const fimHoje = hoje.toISOString().slice(0, 10);
+
+  const [pagamentosRes, despesasRes, folhaRes] = await Promise.all([
+    supabase
+      .from("pagamentos")
+      .select("valor_pago")
+      .eq("escola_id", escolaId)
+      .gte("data_pagamento", inicioAno)
+      .lte("data_pagamento", fimHoje)
+      .is("cancelado_em", null),
+    supabase
+      .from("despesas")
+      .select("valor")
+      .eq("escola_id", escolaId)
+      .in("competencia", competencias),
+    supabase
+      .from("payroll")
+      .select("total_earnings")
+      .in("reference_month", competencias.map((c) => `${c}-01`)),
+  ]);
+
+  const receita = (pagamentosRes.data ?? []).reduce((s, r) => s + Number(r.valor_pago ?? 0), 0);
+  const despesa = (despesasRes.data ?? []).reduce((s, r) => s + Number(r.valor ?? 0), 0);
+  const folha = (folhaRes.data ?? []).reduce((s, r) => s + Number(r.total_earnings ?? 0), 0);
+
+  return {
+    receita,
+    despesa,
+    folha,
+    margem: receita - despesa - folha,
+    mesesComputados: mesAtual,
+  };
+}

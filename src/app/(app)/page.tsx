@@ -19,6 +19,7 @@ import {
   getOcupacao,
   getProximasCobrancas,
   getRankingTurmas,
+  getSaldoYTD,
   getRealizadoVsProjetado,
   getRenovacoesPendentes,
   getRepasseRecebido,
@@ -37,6 +38,7 @@ import { AlertList } from "@/components/dashboard/alert-list";
 import { AniversariantesCard } from "@/components/dashboard/aniversariantes-card";
 import { AniversarioMatriculaCard } from "@/components/dashboard/aniversario-matricula-card";
 import { BeneficiosCard } from "@/components/dashboard/beneficios-card";
+import { BolsistasReceitaCard } from "@/components/dashboard/bolsistas-receita-card";
 import { CompetenciaPicker } from "@/components/dashboard/competencia-picker";
 import { DashboardTabs, parseTab } from "@/components/dashboard/dashboard-tabs";
 import { FolhaEmpresas } from "@/components/dashboard/folha-empresas";
@@ -51,6 +53,7 @@ import { ProximasCobrancasCard } from "@/components/dashboard/proximas-cobrancas
 import { RankingAlunosCard } from "@/components/dashboard/ranking-alunos-card";
 import { RankingTurmasCard } from "@/components/dashboard/ranking-turmas-card";
 import { RealizadoProjetadoCard } from "@/components/dashboard/realizado-projetado-card";
+import { SaldoYTDCard } from "@/components/dashboard/saldo-ytd-card";
 import { SaudeSistemaCard } from "@/components/dashboard/saude-sistema-card";
 import { TopCategoriasCard } from "@/components/dashboard/top-categorias-card";
 import {
@@ -120,6 +123,7 @@ export default async function DashboardPage({
     aniversariantesMatricula,
     proximasCobrancas,
     saudeSistema,
+    saldoYTD,
     slot2,
     slot5,
   ] = await Promise.all([
@@ -147,6 +151,7 @@ export default async function DashboardPage({
     getAniversariantesMatricula(escolaId, 10),
     getProximasCobrancas(escolaId, 7),
     getSaudeSistema(escolaId),
+    getSaldoYTD(escolaId),
     isPropria
       ? getInadimplencia(competencia, escolaId)
       : getRepasseRecebido(competencia, escolaId),
@@ -195,7 +200,7 @@ export default async function DashboardPage({
             </div>
           </section>
 
-          <section className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
+          <section className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
             {isPropria ? (
               <MetricRing
                 label="Inadimplência"
@@ -210,6 +215,8 @@ export default async function DashboardPage({
             <FolhaRatioCard data={folhaRatio} />
             <TicketCard data={ticket} />
             <MargemTrendCard data={margemTrend} />
+            <SaldoYTDCard data={saldoYTD} />
+            <BolsistasReceitaCard data={beneficios} />
           </section>
 
           {isPropria && <ProximasCobrancasCard items={proximasCobrancas} />}
