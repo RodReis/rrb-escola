@@ -10,6 +10,7 @@ import {
   getEscolaConfig,
   getFolhaPorEmpresa,
   getFolhaRatio,
+  getFrequenciaResumo,
   getHero,
   getInadimplencia,
   getMargemTrend,
@@ -33,6 +34,7 @@ import { DashboardTabs, parseTab } from "@/components/dashboard/dashboard-tabs";
 import { FolhaEmpresas } from "@/components/dashboard/folha-empresas";
 import { HeroFinancial } from "@/components/dashboard/hero-financial";
 import { FolhaRatioCard } from "@/components/dashboard/folha-ratio-card";
+import { FrequenciaCard } from "@/components/dashboard/frequencia-card";
 import { MargemTrendCard } from "@/components/dashboard/margem-trend-card";
 import { MetricRing } from "@/components/dashboard/metric-ring";
 import { RenovacoesPendentes } from "@/components/dashboard/renovacoes-pendentes";
@@ -81,6 +83,7 @@ export default async function DashboardPage({
     beneficios,
     aniversariantes,
     margemTrend,
+    frequencia,
     slot2,
     slot5,
   ] = await Promise.all([
@@ -95,6 +98,7 @@ export default async function DashboardPage({
     getBeneficios(escolaId),
     getAniversariantes(escolaId, 10),
     getMargemTrend(6, escolaId),
+    getFrequenciaResumo(escolaId, 30),
     isPropria
       ? getInadimplencia(competencia, escolaId)
       : getRepasseRecebido(competencia, escolaId),
@@ -162,13 +166,14 @@ export default async function DashboardPage({
         </>
       ) : (
         <>
-          <section className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+          <section className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
             <MetricRing
               label="Ocupação"
               percent={ocupacaoPct}
               centerLabel="Vagas"
               centerValue={`${ocupacao.ocupadas}/${ocupacao.total}`}
             />
+            <FrequenciaCard data={frequencia} />
             <BeneficiosCard data={beneficios} />
             <article className="rounded-panel bg-surface p-6 shadow-soft">
               <p className="text-[0.66rem] font-bold uppercase tracking-kicker text-ink/55">Resumo</p>

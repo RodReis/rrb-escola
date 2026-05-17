@@ -843,6 +843,64 @@ export async function getBeneficios(
   };
 }
 
+export type FrequenciaResumo = {
+  totalRegistros: number;
+  presentes: number;
+  faltas: number;
+  taxaPresenca: number; // 0..1
+  diasComRegistro: number;
+  serie: Array<{ data: string; taxa: number }>; // ultimos N dias
+};
+
+export async function getFrequenciaResumo(
+  escolaId: string = DEFAULT_SCHOOL_ID,
+  days: number = 30
+): Promise<FrequenciaResumo> {
+  const supabase = await createServerClient();
+  const hoje = new Date();
+  const desde = new Date(hoje);
+  desde.setDate(desde.getDate() - days);
+  const desdeStr = desde.toISOString().slice(0, 10);
+  const hojeStr = hoje.toISOString().slice(0, 10);
+
+  const { data } = await supabase
+    .from("frequencias")
+    .select("data_aula, presente")
+    .eq("escola_id", escolaId)
+    .gte("data_aula", desdeStr)
+    .lte("data_aula", hojeStr);
+
+  let presentes = 0;
+  let faltas = 0;
+  const porDia = new Map<string, { p: number; f: number }>();
+
+  for (const r of (data ?? []) as Array<{ data_aula: string; presente: boolean }>) {
+    if (r.presente) presentes++;
+    else faltas++;
+    const acc = porDia.get(r.data_aula) ?? { p: 0, f: 0 };
+    if (r.presente) acc.p++;
+    else acc.f++;
+    porDia.set(r.data_aula, acc);
+  }
+
+  const total = presentes + faltas;
+  const serie = Array.from(porDia.entries())
+    .sort((a, b) => a[0].localeCompare(b[0]))
+    .map(([data, c]) => ({
+      data,
+      taxa: c.p + c.f > 0 ? c.p / (c.p + c.f) : 0,
+    }));
+
+  return {
+    totalRegistros: total,
+    presentes,
+    faltas,
+    taxaPresenca: total > 0 ? presentes / total : 0,
+    diasComRegistro: porDia.size,
+    serie,
+  };
+}
+
 export type AniversarianteRow = {
   alunoId: string;
   nome: string;
