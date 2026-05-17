@@ -318,3 +318,94 @@ export async function getTicketMedio(
     serie,
   };
 }
+
+export type FolhaRatioData = {
+  ratio: number;
+  receita: number;
+  folha: number;
+};
+
+export async function getFolhaRatio(
+  competencia: string,
+  escolaId: string = DEFAULT_SCHOOL_ID
+): Promise<FolhaRatioData> {
+  const supabase = await createServerClient();
+  const [receita, folha] = await Promise.all([
+    somaPagamentos(supabase, escolaId, competencia),
+    somaFolha(supabase, escolaId, competencia),
+  ]);
+  return {
+    ratio: receita > 0 ? folha / receita : 0,
+    receita,
+    folha,
+  };
+}
+
+export type FolhaEmpresaRow = {
+  empresaId: string;
+  empresa: string;
+  headcount: number;
+  bruto: number;
+  inss: number;
+  irrf: number;
+  liquido: number;
+};
+
+// Nota: tabela payroll é por funcionario+mes, sem escola_id.
+// Agregamos por company_id (employees.companies.name).
+export async function getFolhaPorEmpresa(
+  competencia: string,
+  _escolaId: string = DEFAULT_SCHOOL_ID
+): Promise<FolhaEmpresaRow[]> {
+  const supabase = await createServerClient();
+  const referenceMonth = competenciaToReferenceMonth(competencia);
+
+  const { data } = await supabase
+    .from("payroll")
+    .select(
+      "employee_id, total_earnings, inss, ir, net_amount, employees(company_id, companies(name))"
+    )
+    .eq("reference_month", referenceMonth);
+
+  type Row = {
+    employee_id: string;
+    total_earnings: number | null;
+    inss: number | null;
+    ir: number | null;
+    net_amount: number | null;
+    employees:
+      | { company_id: string | null; companies: { name: string } | { name: string }[] | null }
+      | { company_id: string | null; companies: { name: string } | { name: string }[] | null }[]
+      | null;
+  };
+
+  const porEmpresa = new Map<string, FolhaEmpresaRow>();
+  for (const r of ((data ?? []) as unknown as Row[])) {
+    const emp = Array.isArray(r.employees) ? r.employees[0] : r.employees;
+    const empresaId = emp?.company_id ?? "sem-empresa";
+    const compRel = emp?.companies
+      ? Array.isArray(emp.companies)
+        ? emp.companies[0]
+        : emp.companies
+      : null;
+    const nome = compRel?.name ?? "—";
+    const acc =
+      porEmpresa.get(empresaId) ?? {
+        empresaId,
+        empresa: nome,
+        headcount: 0,
+        bruto: 0,
+        inss: 0,
+        irrf: 0,
+        liquido: 0,
+      };
+    acc.headcount += 1;
+    acc.bruto += Number(r.total_earnings ?? 0);
+    acc.inss += Number(r.inss ?? 0);
+    acc.irrf += Number(r.ir ?? 0);
+    acc.liquido += Number(r.net_amount ?? 0);
+    porEmpresa.set(empresaId, acc);
+  }
+
+  return Array.from(porEmpresa.values());
+}
