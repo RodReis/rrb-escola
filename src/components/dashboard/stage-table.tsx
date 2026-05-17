@@ -1,3 +1,5 @@
+import Link from "next/link";
+import { ArrowUpRight } from "lucide-react";
 import { money } from "@/lib/constants";
 import type { StageBreakdownRow } from "@/lib/data/dashboard-executive";
 
@@ -68,12 +70,18 @@ export function StageTable({ rows }: { rows: StageBreakdownRow[] }) {
               const dotColor = ETAPA_COLOR[r.etapa] ?? "bg-ink/30";
               const txtColor = ETAPA_TEXT[r.etapa] ?? "text-ink";
               return (
-                <tr key={r.etapa} className="border-t border-line">
+                <tr key={r.etapa} className="border-t border-line hover:bg-muted/40">
                   <td className="px-2 py-3">
-                    <span className="flex items-center gap-2">
+                    <Link
+                      href={`/alunos?segmento=${r.etapa}`}
+                      className="group flex items-center gap-2"
+                    >
                       <span className={`h-2.5 w-2.5 rounded-full ${dotColor}`} />
-                      <span className={`font-semibold ${txtColor}`}>{LABELS[r.etapa] ?? r.etapa}</span>
-                    </span>
+                      <span className={`font-semibold ${txtColor} group-hover:underline`}>
+                        {LABELS[r.etapa] ?? r.etapa}
+                      </span>
+                      <ArrowUpRight size={12} className="text-ink/30 group-hover:text-ink/60" />
+                    </Link>
                   </td>
                   <td className="px-2 py-3 text-right font-semibold text-ink">{r.alunos}</td>
                   <td className="px-2 py-3 text-right">
