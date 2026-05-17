@@ -495,8 +495,10 @@ export async function getTopDevedores(
   }
 
   const rows: DevedorRow[] = Array.from(porAluno.entries()).map(([alunoId, v]) => {
-    const venc = new Date(v.vencimento);
-    const dias = Math.floor((hoje.getTime() - venc.getTime()) / (1000 * 60 * 60 * 24));
+    const [vy, vm, vd] = v.vencimento.split("-").map(Number) as [number, number, number];
+    const vencUTC = Date.UTC(vy, vm - 1, vd);
+    const hojeUTC = Date.UTC(hoje.getFullYear(), hoje.getMonth(), hoje.getDate());
+    const dias = Math.floor((hojeUTC - vencUTC) / (1000 * 60 * 60 * 24));
     return { alunoId, nome: v.nome, valor: v.valor, diasVencimento: dias };
   });
 
