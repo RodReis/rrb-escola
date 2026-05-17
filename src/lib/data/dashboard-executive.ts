@@ -352,15 +352,22 @@ export async function getTicketMedio(
 
   const serie = await Promise.all(
     competencias.map(async (competencia) => {
-      const { data: cobrancas } = await supabase
-        .from("cobrancas")
-        .select("valor_final")
-        .eq("escola_id", escolaId)
-        .eq("competencia", competencia)
-        .neq("status", "cancelada");
+      const [{ data: cobrancas }, { count: pagantesCount }] = await Promise.all([
+        supabase
+          .from("cobrancas")
+          .select("valor_final")
+          .eq("escola_id", escolaId)
+          .eq("competencia", competencia)
+          .neq("status", "cancelada"),
+        supabase
+          .from("matriculas")
+          .select("id", { count: "exact", head: true })
+          .eq("escola_id", escolaId)
+          .eq("status", "ativa")
+          .in("tipo_vaga", ["paga", "bolsa_parcial"]),
+      ]);
       const total = (cobrancas ?? []).reduce((s, r) => s + Number(r.valor_final ?? 0), 0);
-      const count = cobrancas?.length ?? 0;
-      return count > 0 ? total / count : 0;
+      return pagantesCount && pagantesCount > 0 ? total / pagantesCount : 0;
     })
   );
 
