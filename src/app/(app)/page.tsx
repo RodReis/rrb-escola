@@ -10,6 +10,7 @@ import {
   getEscolaConfig,
   getFolhaPorEmpresa,
   getFolhaRatio,
+  getFrequenciaPorTurma,
   getFrequenciaResumo,
   getHero,
   getInadimplencia,
@@ -93,6 +94,7 @@ export default async function DashboardPage({
     rankingTurmas,
     topCategorias,
     realizadoVsProjetado,
+    frequenciaPorTurma,
     slot2,
     slot5,
   ] = await Promise.all([
@@ -111,6 +113,7 @@ export default async function DashboardPage({
     getRankingTurmas(escolaId, 10),
     getTopCategoriasDespesas(competencia, escolaId, 6),
     getRealizadoVsProjetado(competencia, escolaId),
+    getFrequenciaPorTurma(escolaId, 30),
     isPropria
       ? getInadimplencia(competencia, escolaId)
       : getRepasseRecebido(competencia, escolaId),
@@ -190,7 +193,7 @@ export default async function DashboardPage({
               centerLabel="Vagas"
               centerValue={`${ocupacao.ocupadas}/${ocupacao.total}`}
             />
-            <FrequenciaCard data={frequencia} />
+            <FrequenciaCard data={frequencia} porTurma={frequenciaPorTurma} />
             <BeneficiosCard data={beneficios} />
             <article className="rounded-panel bg-surface p-6 shadow-soft">
               <p className="text-[0.66rem] font-bold uppercase tracking-kicker text-ink/55">Resumo</p>

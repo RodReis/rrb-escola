@@ -1,9 +1,21 @@
 import Link from "next/link";
-import { CalendarCheck, ArrowUpRight } from "lucide-react";
+import { CalendarCheck, ArrowUpRight, AlertTriangle } from "lucide-react";
 import { TrendSpark } from "./trend-spark";
-import type { FrequenciaResumo } from "@/lib/data/dashboard-executive";
+import type { FrequenciaResumo, FrequenciaPorTurmaRow } from "@/lib/data/dashboard-executive";
 
-export function FrequenciaCard({ data }: { data: FrequenciaResumo }) {
+const SEG_COLOR: Record<string, string> = {
+  INFANTIL: "bg-gold",
+  FUNDAMENTAL1: "bg-brand",
+  FUNDAMENTAL2: "bg-clay",
+  MEDIO: "bg-moss",
+};
+
+type Props = {
+  data: FrequenciaResumo;
+  porTurma?: FrequenciaPorTurmaRow[];
+};
+
+export function FrequenciaCard({ data, porTurma = [] }: Props) {
   const pct = data.taxaPresenca * 100;
   const status: "success" | "warning" | "danger" =
     pct >= 90 ? "success" : pct >= 75 ? "warning" : "danger";
@@ -15,6 +27,11 @@ export function FrequenciaCard({ data }: { data: FrequenciaResumo }) {
   }[status];
 
   const serieValues = data.serie.map((s) => s.taxa * 100);
+
+  // top 3 turmas com baixa presença (< 75%) que tenham registros
+  const turmasProblema = porTurma
+    .filter((t) => t.totalRegistros > 0 && t.taxaPresenca < 0.75)
+    .slice(0, 3);
 
   return (
     <article className={`rounded-panel bg-surface bg-gradient-to-br ${cfg.grad} p-6 shadow-soft`}>
@@ -61,6 +78,33 @@ export function FrequenciaCard({ data }: { data: FrequenciaResumo }) {
           {serieValues.length >= 2 && (
             <div className={`mt-3 ${cfg.spark}`}>
               <TrendSpark values={serieValues} width={220} height={32} />
+            </div>
+          )}
+
+          {turmasProblema.length > 0 && (
+            <div className="mt-4 rounded-ui border border-danger/20 bg-danger/5 p-3">
+              <div className="flex items-center gap-2 mb-2">
+                <AlertTriangle size={12} className="text-danger" />
+                <p className="text-[0.66rem] font-bold uppercase tracking-kicker text-danger">
+                  Turmas com baixa presença
+                </p>
+              </div>
+              <ul className="grid gap-1.5">
+                {turmasProblema.map((t) => (
+                  <li key={t.turmaId}>
+                    <Link
+                      href={`/frequencias?turma=${t.turmaId}`}
+                      className="flex items-center gap-2 text-xs hover:underline"
+                    >
+                      <span className={`h-1.5 w-1.5 rounded-full ${SEG_COLOR[t.segmento] ?? "bg-ink/30"}`} />
+                      <span className="truncate text-ink">{t.serie} {t.turmaNome}</span>
+                      <span className="ml-auto font-bold text-danger">
+                        {(t.taxaPresenca * 100).toFixed(0)}%
+                      </span>
+                    </Link>
+                  </li>
+                ))}
+              </ul>
             </div>
           )}
         </>

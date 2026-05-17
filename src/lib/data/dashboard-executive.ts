@@ -1145,3 +1145,81 @@ export async function getRealizadoVsProjetado(
     porEtapa,
   };
 }
+
+export type FrequenciaPorTurmaRow = {
+  turmaId: string;
+  turmaNome: string;
+  serie: string;
+  segmento: string;
+  presentes: number;
+  faltas: number;
+  taxaPresenca: number; // 0..1
+  totalRegistros: number;
+};
+
+export async function getFrequenciaPorTurma(
+  escolaId: string = DEFAULT_SCHOOL_ID,
+  days: number = 30
+): Promise<FrequenciaPorTurmaRow[]> {
+  const supabase = await createServerClient();
+  const hoje = new Date();
+  const desde = new Date(hoje);
+  desde.setDate(desde.getDate() - days);
+  const desdeStr = desde.toISOString().slice(0, 10);
+  const hojeStr = hoje.toISOString().slice(0, 10);
+  const anoLetivo = hoje.getFullYear();
+
+  const { data: turmas } = await supabase
+    .from("turmas")
+    .select("id, nome, series(nome, segmento)")
+    .eq("escola_id", escolaId)
+    .eq("ano_letivo", anoLetivo)
+    .eq("ativo", true);
+
+  const { data: frequencias } = await supabase
+    .from("frequencias")
+    .select("presente, matricula_id, matriculas(turma_id)")
+    .eq("escola_id", escolaId)
+    .gte("data_aula", desdeStr)
+    .lte("data_aula", hojeStr);
+
+  type Acc = { p: number; f: number };
+  const porTurma = new Map<string, Acc>();
+  for (const f of ((frequencias ?? []) as any[])) {
+    const mRel = f.matriculas;
+    const matricula = Array.isArray(mRel) ? mRel[0] : mRel;
+    const turmaId = matricula?.turma_id;
+    if (!turmaId) continue;
+    const acc = porTurma.get(turmaId) ?? { p: 0, f: 0 };
+    if (f.presente) acc.p++;
+    else acc.f++;
+    porTurma.set(turmaId, acc);
+  }
+
+  const rows: FrequenciaPorTurmaRow[] = ((turmas ?? []) as any[]).map((t) => {
+    const seriesRel = t.series;
+    const serie = Array.isArray(seriesRel) ? seriesRel[0] : seriesRel;
+    const acc = porTurma.get(t.id) ?? { p: 0, f: 0 };
+    const total = acc.p + acc.f;
+    return {
+      turmaId: t.id,
+      turmaNome: t.nome,
+      serie: serie?.nome ?? "—",
+      segmento: serie?.segmento ?? "outros",
+      presentes: acc.p,
+      faltas: acc.f,
+      taxaPresenca: total > 0 ? acc.p / total : 0,
+      totalRegistros: total,
+    };
+  });
+
+  // ordena: turmas COM registros primeiro (menor taxa = problema), depois turmas sem registro no fim
+  rows.sort((a, b) => {
+    if (a.totalRegistros === 0 && b.totalRegistros === 0) return 0;
+    if (a.totalRegistros === 0) return 1;
+    if (b.totalRegistros === 0) return -1;
+    return a.taxaPresenca - b.taxaPresenca;
+  });
+
+  return rows;
+}
