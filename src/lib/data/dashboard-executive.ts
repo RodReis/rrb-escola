@@ -135,3 +135,44 @@ export async function getHero(
     margemPrev: receitaPrev - despesaPrev - folhaPrev,
   };
 }
+
+export type RevenueTrendPoint = {
+  competencia: string;
+  receita: number;
+  custos: number;
+};
+
+function rollingCompetencias(months: number): string[] {
+  const out: string[] = [];
+  const now = new Date();
+  for (let i = months - 1; i >= 0; i--) {
+    const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+    out.push(competenciaFromDate(d));
+  }
+  return out;
+}
+
+export async function getRevenueTrend(
+  months: number = 6,
+  escolaId: string = DEFAULT_SCHOOL_ID
+): Promise<RevenueTrendPoint[]> {
+  const supabase = await createServerClient();
+  const competencias = rollingCompetencias(months);
+
+  const pontos = await Promise.all(
+    competencias.map(async (competencia) => {
+      const [receita, despesa, folha] = await Promise.all([
+        somaPagamentos(supabase, escolaId, competencia),
+        somaDespesas(supabase, escolaId, competencia),
+        somaFolha(supabase, escolaId, competencia),
+      ]);
+      return {
+        competencia,
+        receita,
+        custos: despesa + folha,
+      };
+    })
+  );
+
+  return pontos;
+}
