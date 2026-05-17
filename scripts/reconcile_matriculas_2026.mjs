@@ -135,6 +135,106 @@ async function main() {
   console.log(
     `DB: alunos=${alunos.length} series=${series.length} turmas=${turmas.length} matriculas2026=${matriculas.length}`
   );
+
+  // Índices
+  const alunoByNorm = new Map();
+  for (const a of alunos) {
+    alunoByNorm.set(normalizeName(a.nome), a);
+  }
+  const serieByNome = new Map(series.map((s) => [s.nome, s]));
+  const turmaByKey = new Map(
+    turmas.map((t) => [`${t.serie_id}|${t.nome}|${t.turno}`, t])
+  );
+  const matriculaByAluno = new Map(matriculas.map((m) => [m.aluno_id, m]));
+
+  const resolved = [];
+  const orfaos = [];
+  const turmasFaltando = new Set();
+  const seriesFaltando = new Set();
+
+  for (const item of planilha) {
+    const mapped = mapTurmaHeader(item.turma_label);
+    if (!mapped) {
+      // Defensivo: parser não deveria ter aceito sem mapeamento.
+      orfaos.push({ ...item, motivo: "turma_label nao mapeada" });
+      continue;
+    }
+    const aluno = alunoByNorm.get(normalizeName(item.nome_raw));
+    if (!aluno) {
+      orfaos.push({ ...item, motivo: "aluno nao encontrado por nome" });
+      continue;
+    }
+
+    const serie = serieByNome.get(mapped.serie_nome);
+    if (!serie) {
+      seriesFaltando.add(mapped.serie_nome);
+    }
+    const turma = serie
+      ? turmaByKey.get(`${serie.id}|${mapped.turma_nome}|${mapped.turno}`)
+      : null;
+    if (serie && !turma) {
+      turmasFaltando.add(
+        `${mapped.serie_nome} | turma ${mapped.turma_nome} | ${mapped.turno}`
+      );
+    }
+
+    const matricula = matriculaByAluno.get(aluno.id);
+
+    let status;
+    if (!serie || !turma) {
+      status = "turma_faltando";
+    } else if (!matricula) {
+      status = "insert_matricula";
+    } else if (matricula.turma_id === turma.id) {
+      status = "inalterado";
+    } else {
+      status = "update_matricula";
+    }
+
+    resolved.push({
+      aluno_id: aluno.id,
+      aluno_nome: aluno.nome,
+      sheet: item.sheet,
+      turma_label: item.turma_label,
+      serie_nome_alvo: mapped.serie_nome,
+      turma_nome_alvo: mapped.turma_nome,
+      turno_alvo: mapped.turno,
+      matricula_id_atual: matricula?.id ?? null,
+      serie_id_alvo: serie?.id ?? null,
+      turma_id_alvo: turma?.id ?? null,
+      status
+    });
+  }
+
+  // Extras: matrículas no DB cujos alunos não estão na planilha (por nome)
+  const planilhaAlunoIds = new Set(
+    resolved.map((r) => r.aluno_id).filter(Boolean)
+  );
+  const extras = matriculas
+    .filter((m) => !planilhaAlunoIds.has(m.aluno_id))
+    .map((m) => ({
+      matricula_id: m.id,
+      aluno_id: m.aluno_id,
+      aluno_nome: alunos.find((a) => a.id === m.aluno_id)?.nome ?? "?"
+    }));
+
+  const counts = resolved.reduce((acc, r) => {
+    acc[r.status] = (acc[r.status] ?? 0) + 1;
+    return acc;
+  }, {});
+  counts.orfaos_planilha = orfaos.length;
+  counts.extras_sistema = extras.length;
+
+  console.log("\n=== Resumo ===");
+  for (const [k, v] of Object.entries(counts)) console.log(`  ${k}: ${v}`);
+  if (seriesFaltando.size) {
+    console.log("\nSéries faltando no DB:");
+    for (const s of seriesFaltando) console.log(`  - ${s}`);
+  }
+  if (turmasFaltando.size) {
+    console.log("\nTurmas faltando no DB:");
+    for (const t of turmasFaltando) console.log(`  - ${t}`);
+  }
 }
 
 main().catch((e) => {
