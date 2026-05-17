@@ -8,16 +8,18 @@ const TABS: Array<{ id: Tab; label: string; icon: LucideIcon }> = [
   { id: "alunos",     label: "Alunos",     icon: GraduationCap },
 ];
 
-export function DashboardTabs({ active }: { active: Tab }) {
+export function DashboardTabs({ active, competencia }: { active: Tab; competencia?: string }) {
   return (
     <nav className="flex gap-1 border-b border-line">
       {TABS.map((t) => {
         const Icon = t.icon;
         const isActive = t.id === active;
+        const qs = new URLSearchParams({ aba: t.id });
+        if (competencia) qs.set("competencia", competencia);
         return (
           <Link
             key={t.id}
-            href={`/?aba=${t.id}`}
+            href={`/?${qs.toString()}`}
             scroll={false}
             className={`relative inline-flex items-center gap-2 px-4 py-2.5 text-sm font-semibold transition-colors ${
               isActive

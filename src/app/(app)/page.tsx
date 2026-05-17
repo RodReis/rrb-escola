@@ -25,6 +25,7 @@ import {
 } from "@/lib/data/dashboard-executive";
 import { AlertList } from "@/components/dashboard/alert-list";
 import { BeneficiosCard } from "@/components/dashboard/beneficios-card";
+import { CompetenciaPicker } from "@/components/dashboard/competencia-picker";
 import { DashboardTabs, parseTab } from "@/components/dashboard/dashboard-tabs";
 import { FolhaEmpresas } from "@/components/dashboard/folha-empresas";
 import { HeroFinancial } from "@/components/dashboard/hero-financial";
@@ -45,17 +46,21 @@ function mesLabel(competencia: string): string {
   return `${MESES[(m as number) - 1]}/${y}`;
 }
 
+function isValidCompetencia(v: string | undefined): v is string {
+  return typeof v === "string" && /^\d{4}-\d{2}$/.test(v);
+}
+
 export default async function DashboardPage({
   searchParams,
 }: {
-  searchParams: Promise<{ aba?: string }>;
+  searchParams: Promise<{ aba?: string; competencia?: string }>;
 }) {
   const params = await searchParams;
   const aba = parseTab(params.aba);
 
   const session = await requireSession();
   const escolaId = session.profile.escola_id;
-  const competencia = currentCompetencia();
+  const competencia = isValidCompetencia(params.competencia) ? params.competencia : currentCompetencia();
 
   const config = await getEscolaConfig(escolaId);
   const isPropria = config.gestaoFinanceira === "propria";
@@ -101,6 +106,7 @@ export default async function DashboardPage({
         description="Visão executiva para tomada de decisão."
         actions={
           <>
+            <CompetenciaPicker current={competencia} />
             <ButtonLink href="/relatorios/alunos" variant="secondary">
               <Download size={14} /> Exportar
             </ButtonLink>
@@ -114,7 +120,7 @@ export default async function DashboardPage({
         }
       />
 
-      <DashboardTabs active={aba} />
+      <DashboardTabs active={aba} competencia={competencia} />
 
       {aba === "financeiro" ? (
         <>
