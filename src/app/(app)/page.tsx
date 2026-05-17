@@ -5,6 +5,7 @@ import { requireSession } from "@/lib/auth/session";
 import {
   currentCompetencia,
   getAlertas,
+  getBeneficios,
   getEscolaConfig,
   getFolhaPorEmpresa,
   getFolhaRatio,
@@ -23,6 +24,7 @@ import {
   type RepasseData,
 } from "@/lib/data/dashboard-executive";
 import { AlertList } from "@/components/dashboard/alert-list";
+import { BeneficiosCard } from "@/components/dashboard/beneficios-card";
 import { FolhaEmpresas } from "@/components/dashboard/folha-empresas";
 import { HeroFinancial } from "@/components/dashboard/hero-financial";
 import { MetricBar } from "@/components/dashboard/metric-bar";
@@ -59,6 +61,7 @@ export default async function DashboardPage() {
     folhaRatio,
     folhaEmpresas,
     alertas,
+    beneficios,
     slot2,
     slot5,
   ] = await Promise.all([
@@ -70,6 +73,7 @@ export default async function DashboardPage() {
     getFolhaRatio(competencia, escolaId),
     getFolhaPorEmpresa(competencia, escolaId),
     getAlertas(competencia, config.gestaoFinanceira, escolaId),
+    getBeneficios(escolaId),
     isPropria
       ? getInadimplencia(competencia, escolaId)
       : getRepasseRecebido(competencia, escolaId),
@@ -111,7 +115,7 @@ export default async function DashboardPage() {
         </div>
       </section>
 
-      <section className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
+      <section className="grid gap-6 md:grid-cols-2 lg:grid-cols-5">
         <MetricRing
           label="Ocupação"
           percent={ocupacaoPct}
@@ -135,6 +139,7 @@ export default async function DashboardPage() {
           caption={`${money.format(folhaRatio.folha)} / ${money.format(folhaRatio.receita)}`}
         />
         <TicketCard data={ticket} />
+        <BeneficiosCard data={beneficios} />
       </section>
 
       <StageTable rows={stages} />
