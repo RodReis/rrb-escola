@@ -50,6 +50,8 @@ function extractNameAndValue(rowValues) {
       const up = t.toUpperCase();
       if (up === "ALUNO" || up.startsWith("MATRICULA")) continue;
       if (mapTurmaHeader(t)) continue;
+      // Ignora células que são números puros (linhas de soma/total)
+      if (/^-?\d+([.,]\d+)?$/.test(t)) continue;
       nome = t;
       continue;
     }

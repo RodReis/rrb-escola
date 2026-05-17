@@ -26,6 +26,13 @@ addBlock(inf, "MATERNAL - MATUTINO", [
 addBlock(inf, "INFANTIL 4 - VESPERTINO", [
   { nome: "Manuela Margarida Barros", valor: 800 }
 ]);
+addBlock(inf, "INFANTIL 5 - MATUTINO", [
+  { nome: "Pedro Silva", valor: 700 },
+  { nome: "Maria Souza", valor: 720 }
+]);
+// Linha de totalizador (deve ser ignorada pelo parser)
+inf.addRow([null, null, null, 1420, null]);
+inf.addRow([]);
 
 const f1 = wb.addWorksheet("FUND 1");
 f1.addRow([]);

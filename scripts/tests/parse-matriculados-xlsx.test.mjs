@@ -16,7 +16,7 @@ async function loadFixture() {
 test("extrai todos alunos com turma e mensalidade", async () => {
   const wb = await loadFixture();
   const items = parseMatriculadosXlsx(wb);
-  assert.equal(items.length, 4);
+  assert.equal(items.length, 6);
 
   const maternal = items.filter(i => i.turma_label.includes("MATERNAL"));
   assert.equal(maternal.length, 2);
@@ -37,4 +37,14 @@ test("ignora linhas sem nome", async () => {
   const wb = await loadFixture();
   const items = parseMatriculadosXlsx(wb);
   assert.ok(items.every(i => i.nome_raw && i.nome_raw.length > 2));
+});
+
+test("ignora linha de totalizador numerico", async () => {
+  const wb = await loadFixture();
+  const items = parseMatriculadosXlsx(wb);
+  // Nenhum item deve ter nome_raw que seja apenas numero
+  assert.ok(items.every(i => !/^-?\d+([.,]\d+)?$/.test(i.nome_raw)));
+  // INFANTIL 5 - MATUTINO deve ter exatamente 2 alunos (linha 1420 ignorada)
+  const inf5 = items.filter(i => i.turma_label.includes("INFANTIL 5"));
+  assert.equal(inf5.length, 2);
 });
