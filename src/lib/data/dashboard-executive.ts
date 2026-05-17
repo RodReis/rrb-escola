@@ -293,6 +293,7 @@ export async function getOcupacao(escolaId: string = DEFAULT_SCHOOL_ID): Promise
 export type StageBreakdownRow = {
   etapa: string;
   alunos: number;
+  bolsistas: number;
   receita: number;
   ticket: number;
   ocupacao: number;
@@ -314,20 +315,12 @@ export async function getStageBreakdown(
     .neq("status", "cancelada");
 
   const receitaPorEtapa = new Map<string, number>();
-  for (const c of ((cobrancas ?? []) as unknown) as Array<{
-    valor_final: number | null;
-    matriculas:
-      | { serie_id: string; series: { segmento: string | null } | { segmento: string | null }[] | null }
-      | { serie_id: string; series: { segmento: string | null } | { segmento: string | null }[] | null }[]
-      | null;
-  }>) {
-    const matRel = Array.isArray(c.matriculas) ? c.matriculas[0] : c.matriculas;
-    const seriesRel = matRel?.series
-      ? Array.isArray(matRel.series)
-        ? matRel.series[0]
-        : matRel.series
-      : null;
-    const etapa = seriesRel?.segmento ?? "outros";
+  for (const c of (cobrancas ?? []) as any[]) {
+    const matriculasRel = c.matriculas;
+    const matricula = Array.isArray(matriculasRel) ? matriculasRel[0] : matriculasRel;
+    const seriesRel = matricula?.series;
+    const serie = Array.isArray(seriesRel) ? seriesRel[0] : seriesRel;
+    const etapa = serie?.segmento ?? "outros";
     receitaPorEtapa.set(etapa, (receitaPorEtapa.get(etapa) ?? 0) + Number(c.valor_final ?? 0));
   }
 
@@ -336,6 +329,7 @@ export async function getStageBreakdown(
   return ocup.porEtapa.map((p) => ({
     etapa: p.etapa,
     alunos: p.matriculados,
+    bolsistas: p.bolsistas,
     receita: receitaPorEtapa.get(p.etapa) ?? 0,
     ticket: p.matriculados > 0 ? (receitaPorEtapa.get(p.etapa) ?? 0) / p.matriculados : 0,
     ocupacao: p.capacidade > 0 ? p.matriculados / p.capacidade : 0,
