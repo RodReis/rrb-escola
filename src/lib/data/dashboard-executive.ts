@@ -908,6 +908,7 @@ export type AniversarianteRow = {
   mes: number;
   diaSemana: string;
   proximo: boolean; // verdadeiro se aniversario ainda nao passou
+  hoje: boolean;
 };
 
 export async function getAniversariantes(
@@ -947,6 +948,7 @@ export async function getAniversariantes(
       mes: mm,
       diaSemana: DIAS_SEMANA[dataAniv.getDay()] ?? "",
       proximo: dd >= diaHoje,
+      hoje: dd === diaHoje,
     });
   }
 
