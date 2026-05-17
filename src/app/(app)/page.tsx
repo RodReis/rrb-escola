@@ -1,26 +1,92 @@
-import { Download, FileText, Plus, Upload, UsersRound } from "lucide-react";
-import { FinanceChart } from "@/components/dashboard/finance-chart";
+import { Download, Plus, Upload } from "lucide-react";
 import { ButtonLink } from "@/components/ui/button";
-import { Panel } from "@/components/ui/card";
 import { PageHeader } from "@/components/ui/page-header";
-import { getDashboard } from "@/lib/data/dashboard";
+import { requireSession } from "@/lib/auth/session";
+import {
+  currentCompetencia,
+  getAlertas,
+  getEscolaConfig,
+  getFolhaPorEmpresa,
+  getFolhaRatio,
+  getHero,
+  getInadimplencia,
+  getOcupacao,
+  getRenovacoesPendentes,
+  getRepasseRecebido,
+  getRevenueTrend,
+  getStageBreakdown,
+  getTicketMedio,
+  getTopDevedores,
+  type DevedorRow,
+  type InadimplenciaData,
+  type RenovacaoRow,
+  type RepasseData,
+} from "@/lib/data/dashboard-executive";
+import { AlertList } from "@/components/dashboard/alert-list";
+import { FolhaEmpresas } from "@/components/dashboard/folha-empresas";
+import { HeroFinancial } from "@/components/dashboard/hero-financial";
+import { MetricBar } from "@/components/dashboard/metric-bar";
+import { MetricRing } from "@/components/dashboard/metric-ring";
+import { RenovacoesPendentes } from "@/components/dashboard/renovacoes-pendentes";
+import { RepasseCard } from "@/components/dashboard/repasse-card";
+import { RevenueTrendChart } from "@/components/dashboard/revenue-trend-chart";
+import { StageTable } from "@/components/dashboard/stage-table";
+import { TicketCard } from "@/components/dashboard/ticket-card";
+import { TopDevedores } from "@/components/dashboard/top-devedores";
 import { money } from "@/lib/constants";
 
-export default async function DashboardPage() {
-  const dashboard = await getDashboard();
+const MESES = ["Jan","Fev","Mar","Abr","Mai","Jun","Jul","Ago","Set","Out","Nov","Dez"];
 
-  const mesLabel = dashboard.mesCompetencia.replace(/^(\d{4})-(\d{2})$/, (_, y, m) => {
-    const meses = ["Jan","Fev","Mar","Abr","Mai","Jun","Jul","Ago","Set","Out","Nov","Dez"];
-    return `${meses[Number(m) - 1]}/${y}`;
-  });
+function mesLabel(competencia: string): string {
+  const [y, m] = competencia.split("-").map(Number);
+  return `${MESES[(m as number) - 1]}/${y}`;
+}
+
+export default async function DashboardPage() {
+  const session = await requireSession();
+  const escolaId = session.profile.escola_id;
+  const competencia = currentCompetencia();
+
+  const config = await getEscolaConfig(escolaId);
+  const isPropria = config.gestaoFinanceira === "propria";
+
+  const [
+    hero,
+    trend,
+    ocupacao,
+    stages,
+    ticket,
+    folhaRatio,
+    folhaEmpresas,
+    alertas,
+    slot2,
+    slot5,
+  ] = await Promise.all([
+    getHero(competencia, escolaId),
+    getRevenueTrend(6, escolaId),
+    getOcupacao(escolaId),
+    getStageBreakdown(competencia, escolaId),
+    getTicketMedio(6, escolaId),
+    getFolhaRatio(competencia, escolaId),
+    getFolhaPorEmpresa(competencia, escolaId),
+    getAlertas(competencia, config.gestaoFinanceira, escolaId),
+    isPropria
+      ? getInadimplencia(competencia, escolaId)
+      : getRepasseRecebido(competencia, escolaId),
+    isPropria
+      ? getTopDevedores(5, escolaId)
+      : getRenovacoesPendentes(5, escolaId),
+  ]);
+
+  const ocupacaoPct = ocupacao.total > 0 ? ocupacao.ocupadas / ocupacao.total : 0;
 
   return (
     <div className="grid gap-8">
       <PageHeader
         breadcrumb={[{ label: "Gestão" }, { label: "Dashboard" }]}
         title="Dashboard"
-        counter="2026"
-        description="Visão geral da secretaria, matrículas, cobranças e pagamentos."
+        counter={mesLabel(competencia)}
+        description="Visão executiva para tomada de decisão."
         actions={
           <>
             <ButtonLink href="/relatorios/alunos" variant="secondary">
@@ -34,54 +100,53 @@ export default async function DashboardPage() {
             </ButtonLink>
           </>
         }
-        kpis={[
-          { label: "Alunos",           value: dashboard.alunos.toLocaleString("pt-BR") },
-          { label: "Matrículas ativas", value: dashboard.matriculas.toLocaleString("pt-BR"), tone: "success" },
-          { label: `A vencer ${mesLabel}`, value: money.format(dashboard.totalAberto), tone: "warning" },
-          { label: "Pago total",        value: money.format(dashboard.totalPago), tone: "success" }
-        ]}
       />
 
-      <section className="grid gap-4 md:grid-cols-2">
-        <Panel>
-          <p className="text-[0.66rem] font-bold uppercase tracking-[0.14em] text-ink/55">Previsto {mesLabel}</p>
-          <strong className="mt-2 block text-3xl font-bold text-ink">{money.format(dashboard.previstoMes)}</strong>
-        </Panel>
-        <Panel>
-          <p className="text-[0.66rem] font-bold uppercase tracking-[0.14em] text-ink/55">Recebido {mesLabel}</p>
-          <strong className="mt-2 block text-3xl font-bold text-brand">{money.format(dashboard.recebidoMes)}</strong>
-        </Panel>
+      <HeroFinancial data={hero} />
+
+      <section className="grid gap-6 lg:grid-cols-3">
+        <AlertList items={alertas} />
+        <div className="lg:col-span-2">
+          <RevenueTrendChart data={trend} />
+        </div>
       </section>
 
-      <Panel className="grid gap-5">
-        <div className="flex items-center gap-3">
-          <span className="grid h-11 w-11 place-items-center rounded-ui bg-muted text-brand">
-            <FileText />
-          </span>
-          <div>
-            <h2 className="text-xl font-bold">Receita por competência</h2>
-            <p className="text-sm text-ink/60">Cobranças pagas e abertas.</p>
-          </div>
-        </div>
-        <FinanceChart data={dashboard.chart} />
-      </Panel>
+      <section className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
+        <MetricRing
+          label="Ocupação"
+          percent={ocupacaoPct}
+          centerLabel="Vagas"
+          centerValue={`${ocupacao.ocupadas}/${ocupacao.total}`}
+        />
+        {isPropria ? (
+          <MetricRing
+            label="Inadimplência"
+            percent={(slot2 as InadimplenciaData).percentual}
+            centerLabel="Em atraso"
+            centerValue={money.format((slot2 as InadimplenciaData).valor)}
+            variant={(slot2 as InadimplenciaData).percentual > 0.1 ? "danger" : "warning"}
+          />
+        ) : (
+          <RepasseCard data={slot2 as RepasseData} />
+        )}
+        <MetricBar
+          label="Folha / Receita"
+          percent={folhaRatio.ratio}
+          caption={`${money.format(folhaRatio.folha)} / ${money.format(folhaRatio.receita)}`}
+        />
+        <TicketCard data={ticket} />
+      </section>
 
-      <Panel className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-        <div className="flex items-center gap-3">
-          <span className="grid h-11 w-11 place-items-center rounded-ui bg-muted text-brand">
-            <UsersRound />
-          </span>
-          <div>
-            <h2 className="text-xl font-bold">Atalhos administrativos</h2>
-            <p className="text-sm text-ink/60">Acesso rápido aos cadastros do dia a dia.</p>
-          </div>
-        </div>
-        <div className="flex flex-wrap gap-2">
-          <ButtonLink href="/alunos" variant="secondary">Alunos</ButtonLink>
-          <ButtonLink href="/matriculas" variant="secondary">Matrículas</ButtonLink>
-          <ButtonLink href="/financeiro" variant="secondary">Financeiro</ButtonLink>
-        </div>
-      </Panel>
+      <StageTable rows={stages} />
+
+      <section className="grid gap-6 lg:grid-cols-2">
+        {isPropria ? (
+          <TopDevedores items={slot5 as DevedorRow[]} />
+        ) : (
+          <RenovacoesPendentes items={slot5 as RenovacaoRow[]} />
+        )}
+        <FolhaEmpresas items={folhaEmpresas} />
+      </section>
     </div>
   );
 }
