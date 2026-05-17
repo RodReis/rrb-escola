@@ -115,3 +115,65 @@ export async function cancelDespesaAction(formData: FormData) {
 
   revalidatePath("/despesas");
 }
+
+function adjacentMes(competencia: string, delta: number) {
+  const [y, m] = competencia.split("-").map(Number);
+  const d = new Date(Date.UTC(y, m - 1 + delta, 1));
+  return `${d.getUTCFullYear()}-${String(d.getUTCMonth() + 1).padStart(2, "0")}`;
+}
+
+function shiftVencimento(dataOrigem: string, fromMes: string, toMes: string): string {
+  const day = dataOrigem.slice(8, 10);
+  const [y, m] = toMes.split("-").map(Number);
+  const lastDay = new Date(Date.UTC(y, m, 0)).getUTCDate();
+  const useDay = Math.min(Number(day), lastDay);
+  return `${toMes}-${String(useDay).padStart(2, "0")}`;
+}
+
+export async function duplicateMonthAction(formData: FormData) {
+  const session = await requireSession();
+  const toCompetencia = formText(formData, "to") ?? new Date().toISOString().slice(0, 7);
+  const fromCompetencia = adjacentMes(toCompetencia, -1);
+
+  const supabase = await createServerClient();
+
+  const { data: existentes, error: errCheck } = await supabase
+    .from("despesas")
+    .select("id")
+    .eq("competencia", toCompetencia)
+    .eq("escola_id", DEFAULT_SCHOOL_ID)
+    .limit(1);
+  if (errCheck) redirect(`/despesas?mes=${toCompetencia}&erro=${encodeURIComponent(errCheck.message)}`);
+  if ((existentes?.length ?? 0) > 0) {
+    redirect(`/despesas?mes=${toCompetencia}&erro=mes_destino_nao_vazio`);
+  }
+
+  const { data: origem, error: errOrigem } = await supabase
+    .from("despesas")
+    .select("descricao, categoria_id, fornecedor, valor, data_vencimento")
+    .eq("competencia", fromCompetencia)
+    .eq("escola_id", DEFAULT_SCHOOL_ID)
+    .neq("status", "cancelada");
+  if (errOrigem) redirect(`/despesas?mes=${toCompetencia}&erro=${encodeURIComponent(errOrigem.message)}`);
+  if (!origem || origem.length === 0) {
+    redirect(`/despesas?mes=${toCompetencia}&erro=mes_origem_vazio`);
+  }
+
+  const novas = origem.map((row) => ({
+    descricao: row.descricao,
+    categoria_id: row.categoria_id,
+    fornecedor: row.fornecedor,
+    valor: row.valor,
+    data_vencimento: shiftVencimento(row.data_vencimento, fromCompetencia, toCompetencia),
+    competencia: toCompetencia,
+    status: "aberta" as const,
+    escola_id: DEFAULT_SCHOOL_ID,
+    criado_por: session.profile.id
+  }));
+
+  const { error: errInsert } = await supabase.from("despesas").insert(novas);
+  if (errInsert) redirect(`/despesas?mes=${toCompetencia}&erro=${encodeURIComponent(errInsert.message)}`);
+
+  revalidatePath("/despesas");
+  redirect(`/despesas?mes=${toCompetencia}`);
+}
