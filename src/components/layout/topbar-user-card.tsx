@@ -2,7 +2,7 @@
 
 import { useState, useRef, useEffect } from "react";
 import Link from "next/link";
-import { User, Settings, LogOut } from "lucide-react";
+import { User, LogOut } from "lucide-react";
 import type { SessionProfile } from "@/lib/auth/session";
 
 function getInitials(nome: string) {
@@ -62,16 +62,6 @@ export function TopbarUserCard({
             <User size={13} />
             Meu perfil
           </Link>
-          {perfil.perfil === "admin" && (
-            <Link
-              href="/configuracoes/escola"
-              onClick={() => setOpen(false)}
-              className="flex items-center gap-2 px-2.5 py-2 text-[12px] font-medium text-[#1A2240] rounded-[7px] hover:bg-slate-50"
-            >
-              <Settings size={13} />
-              Dados da escola
-            </Link>
-          )}
           <div className="my-1 h-px bg-slate-200" />
           <form action={logoutAction}>
             <button

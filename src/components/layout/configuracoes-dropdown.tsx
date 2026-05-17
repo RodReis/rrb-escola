@@ -5,39 +5,25 @@ import { createPortal } from "react-dom";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
-  BookOpen,
-  Cake,
-  ClipboardCheck,
-  ClipboardList,
-  FileText,
-  GraduationCap,
-  HandHeart,
-  Inbox,
-  Layers3,
-  Network,
-  UserCheck,
+  Settings,
+  School,
   UsersRound,
-  ChevronDown
+  Webhook,
+  Tags,
+  ChevronDown,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
-const secretariaItems = [
-  { href: "/alunos", label: "Alunos", icon: UsersRound },
-  { href: "/bolsistas", label: "Bolsistas", icon: HandHeart },
-  { href: "/matriculas", label: "Matrículas", icon: FileText },
-  { href: "/series", label: "Séries", icon: Layers3 },
-  { href: "/turmas", label: "Turmas", icon: GraduationCap },
-  { href: "/disciplinas", label: "Disciplinas", icon: ClipboardList },
-  { href: "/avaliacoes", label: "Avaliações", icon: ClipboardCheck },
-  { href: "/professores/atribuicoes", label: "Atribuições", icon: UserCheck },
-  { href: "/mural/aniversariantes", label: "Mural aniversários", icon: Cake },
-  { href: "/organograma", label: "Organograma", icon: Network },
-  { href: "/importacoes", label: "Importações", icon: Inbox }
+const items = [
+  { href: "/configuracoes/escola", label: "Dados da escola", icon: School },
+  { href: "/usuarios", label: "Usuários", icon: UsersRound },
+  { href: "/configuracoes/webhook", label: "Webhook", icon: Webhook },
+  { href: "/despesas/categorias", label: "Categorias despesa", icon: Tags },
 ];
 
-const secretariaHrefs = secretariaItems.map((i) => i.href);
+const hrefs = items.map((i) => i.href);
 
-export function SecretariaDropdown() {
+export function ConfiguracoesDropdown() {
   const pathname = usePathname();
   const [open, setOpen] = useState(false);
   const [mounted, setMounted] = useState(false);
@@ -45,29 +31,24 @@ export function SecretariaDropdown() {
   const ref = useRef<HTMLDivElement>(null);
   const btnRef = useRef<HTMLButtonElement>(null);
 
-  const isActive = secretariaHrefs.some(
-    (href) => pathname === href || pathname.startsWith(`${href}/`)
-  );
+  const isActive = hrefs.some((h) => pathname === h || pathname.startsWith(`${h}/`));
 
-  useEffect(() => {
-    setMounted(true);
-  }, []);
+  useEffect(() => { setMounted(true); }, []);
 
   useEffect(() => {
     if (!open) return;
-    function handleClick(e: MouseEvent) {
-      const target = e.target as Node;
-      if (ref.current?.contains(target)) return;
+    function handle(e: MouseEvent) {
+      if (ref.current?.contains(e.target as Node)) return;
       setOpen(false);
     }
-    document.addEventListener("mousedown", handleClick);
-    return () => document.removeEventListener("mousedown", handleClick);
+    document.addEventListener("mousedown", handle);
+    return () => document.removeEventListener("mousedown", handle);
   }, [open]);
 
   useEffect(() => {
     if (!open || !btnRef.current) return;
     const r = btnRef.current.getBoundingClientRect();
-    setPos({ left: r.left, top: r.bottom + 6, width: 192 });
+    setPos({ left: r.left, top: r.bottom + 6, width: 200 });
   }, [open]);
 
   return (
@@ -83,8 +64,8 @@ export function SecretariaDropdown() {
             : "text-white/70 hover:bg-white/[0.18] hover:text-white"
         )}
       >
-        <BookOpen size={13} strokeWidth={isActive ? 2 : 1.7} />
-        Secretaria
+        <Settings size={13} strokeWidth={isActive ? 2 : 1.7} />
+        Configurações
         <ChevronDown size={11} strokeWidth={2} className={cn("transition-transform duration-150", open && "rotate-180")} />
       </button>
 
@@ -95,7 +76,7 @@ export function SecretariaDropdown() {
               className="rounded-[10px] border border-[#1B3FB8]/20 bg-white shadow-[0_14px_40px_-10px_rgba(0,0,0,0.18),0_2px_8px_-4px_rgba(0,0,0,0.08)] p-1"
               onMouseDown={(e) => e.stopPropagation()}
             >
-              {secretariaItems.map((item) => {
+              {items.map((item) => {
                 const Icon = item.icon;
                 const active = pathname === item.href || pathname.startsWith(`${item.href}/`);
                 return (

@@ -3,6 +3,7 @@ import { TopbarNavLink, type TopbarIconName } from "@/components/layout/topbar-n
 import { SecretariaDropdown } from "@/components/layout/secretaria-dropdown";
 import { RhDropdown } from "@/components/layout/rh-dropdown";
 import { FinanceiroDropdown } from "@/components/layout/financeiro-dropdown";
+import { ConfiguracoesDropdown } from "@/components/layout/configuracoes-dropdown";
 import { NotificationBell } from "@/components/layout/notification-bell";
 import { TopbarUserCard } from "@/components/layout/topbar-user-card";
 import { logoutAction } from "@/lib/actions/auth";
@@ -16,7 +17,6 @@ const primaryItems: Array<{ href: string; label: string; icon: TopbarIconName }>
 ];
 
 const secondaryItems: Array<{ href: string; label: string; icon: TopbarIconName }> = [
-  { href: "/usuarios", label: "Usuários", icon: "UsersRound" },
   { href: "/frequencias", label: "Frequência", icon: "CalendarCheck" },
   { href: "/relatorios/alunos", label: "Rel. Alunos", icon: "UsersRound" },
   { href: "/relatorios/frequencia", label: "Rel. Frequência", icon: "CalendarCheck" }
@@ -70,6 +70,7 @@ export async function Topbar({ perfil }: { perfil: SessionProfile }) {
         <FinanceiroDropdown />
         <SecretariaDropdown />
         <RhDropdown />
+        <ConfiguracoesDropdown />
       </div>
 
       <div className="flex items-center gap-2 shrink-0">
