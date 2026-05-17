@@ -12,6 +12,53 @@ values (
 )
 on conflict (id) do nothing;
 
+-- Admin user para dev local. Email: admin@rrb.local | Senha: admin123
+insert into auth.users (
+  instance_id, id, aud, role, email,
+  encrypted_password, email_confirmed_at, raw_app_meta_data, raw_user_meta_data,
+  created_at, updated_at, confirmation_token, email_change, email_change_token_new, recovery_token
+)
+values (
+  '00000000-0000-0000-0000-000000000000',
+  '11111111-1111-1111-1111-111111111111',
+  'authenticated',
+  'authenticated',
+  'admin@rrb.local',
+  crypt('admin123', gen_salt('bf')),
+  now(),
+  '{"provider":"email","providers":["email"]}',
+  '{}',
+  now(),
+  now(),
+  '', '', '', ''
+)
+on conflict (id) do nothing;
+
+insert into auth.identities (
+  id, user_id, identity_data, provider, provider_id, last_sign_in_at, created_at, updated_at
+)
+values (
+  gen_random_uuid(),
+  '11111111-1111-1111-1111-111111111111',
+  jsonb_build_object('sub', '11111111-1111-1111-1111-111111111111', 'email', 'admin@rrb.local'),
+  'email',
+  '11111111-1111-1111-1111-111111111111',
+  now(), now(), now()
+)
+on conflict do nothing;
+
+insert into perfis (id, user_id, escola_id, nome, email, perfil, ativo)
+values (
+  '22222222-2222-2222-2222-222222222222',
+  '11111111-1111-1111-1111-111111111111',
+  '00000000-0000-0000-0000-000000000001',
+  'Admin RRB',
+  'admin@rrb.local',
+  'admin',
+  true
+)
+on conflict (id) do nothing;
+
 insert into dispositivos_acesso (id, escola_id, nome, local, tipo)
 values ('50000000-0000-0000-0000-000000000001', '00000000-0000-0000-0000-000000000001', 'Portaria Principal', 'Entrada principal', 'portaria')
 on conflict (escola_id, nome) do nothing;
