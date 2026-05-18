@@ -855,7 +855,7 @@ export async function getFrequenciaResumo(
 
   const { data } = await supabase
     .from("frequencias")
-    .select("data_aula, presente, matriculas(turma_id, turmas!inner(ano_letivo))")
+    .select("data_aula, presente, matriculas!inner(turma_id, turmas!inner(ano_letivo))")
     .eq("escola_id", escolaId)
     .eq("matriculas.turmas.ano_letivo", anoLetivo)
     .gte("data_aula", desdeStr)
@@ -1091,7 +1091,7 @@ export async function getRealizadoVsProjetado(
   }
 
   // Matriculados por segmento (todas as ativas, inclusive bolsistas — projetado conta TODOS pelo preco cheio)
-  const ocup = await getOcupacao(escolaId);
+  const ocup = await getOcupacao(escolaId, anoLetivo);
 
   // Realizado: soma cobrancas do mes (valor_final ja com descontos)
   const { data: cobrancas } = await supabase
@@ -1329,7 +1329,8 @@ export async function getAniversariantesMatricula(
     .from("matriculas")
     .select("aluno_id")
     .eq("escola_id", escolaId)
-    .eq("status", "ativa");
+    .eq("status", "ativa")
+    .eq("ano_letivo", anoLetivo);
 
   const ativos = new Set<string>(
     (ativasRaw ?? []).map((m: { aluno_id: string }) => m.aluno_id)
