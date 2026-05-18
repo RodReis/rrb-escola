@@ -95,7 +95,7 @@ export async function buildVariables(
     supabase
       .from("responsaveis_aluno")
       // schema: nome, cpf, parentesco (sem rg)
-      .select("nome, cpf, celular, email, parentesco, responsavel_financeiro")
+      .select("nome, cpf, rg, celular, email, parentesco, responsavel_financeiro")
       .eq("aluno_id", alunoId),
     supabase
       .from("enderecos_aluno")
@@ -167,13 +167,12 @@ export async function buildVariables(
     ANO_LETIVO: String(matricula.ano_letivo ?? ""),
 
     NOME_PAI_ALUNO: pai?.nome ?? "",
-    // rg não existe na tabela responsaveis_aluno — retorna string vazia
-    RG_PAI_ALUNO: "",
+    RG_PAI_ALUNO: (pai as any)?.rg ?? "",
     CPF_PAI_ALUNO: pai?.cpf ?? "",
     ENDERECO_PAI_ALUNO: formatEndereco(endPrincipal),
 
     NOME_MAE_ALUNO: mae?.nome ?? "",
-    RG_MAE_ALUNO: "",
+    RG_MAE_ALUNO: (mae as any)?.rg ?? "",
     CPF_MAE_ALUNO: mae?.cpf ?? "",
     ENDERECO_MAE_ALUNO: formatEndereco(endPrincipal),
 

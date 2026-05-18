@@ -29,6 +29,12 @@ export function StudentEditForm({ student }: { student: StudentSheet }) {
   const endereco    = student.enderecos_aluno[0];
   const contato     = student.contatos_aluno[0];
   const responsavel = student.responsaveis_aluno[0];
+  const pai = student.responsaveis_aluno.find((r) =>
+    ["pai", "padrasto"].includes((r.parentesco ?? "").toLowerCase())
+  ) ?? (student.responsaveis_aluno[0]?.parentesco ? undefined : student.responsaveis_aluno[0]);
+  const mae = student.responsaveis_aluno.find((r) =>
+    ["mae", "mãe", "madrasta"].includes((r.parentesco ?? "").toLowerCase())
+  );
   const medica      = student.informacoes_medicas;
   const autorizacoes = student.autorizacoes_aluno;
 
@@ -124,7 +130,27 @@ export function StudentEditForm({ student }: { student: StudentSheet }) {
               <label>Parentesco<input name="contato_parentesco" defaultValue={contato?.parentesco ?? ""} /></label>
             </div>
             <div className="grid gap-4 md:grid-cols-4">
-              <p className="ds-kicker md:col-span-4">Responsável principal</p>
+              <p className="ds-kicker md:col-span-4">Pai / Responsável masculino</p>
+              <input type="hidden" name="pai_id" value={pai?.id ?? ""} />
+              <label className="md:col-span-2">Nome<input name="pai_nome" defaultValue={pai?.nome ?? ""} required /></label>
+              <label>RG <span className="text-clay">*</span><input name="pai_rg" defaultValue={(pai as any)?.rg ?? ""} required /></label>
+              <label>CPF<input name="pai_cpf" defaultValue={pai?.cpf ?? ""} /></label>
+              <label>Telefone<input name="pai_telefone" defaultValue={pai?.telefone ?? ""} /></label>
+              <label>Celular<input name="pai_celular" defaultValue={pai?.celular ?? ""} /></label>
+              <label className="md:col-span-2">E-mail<input name="pai_email" type="email" defaultValue={pai?.email ?? ""} /></label>
+            </div>
+            <div className="grid gap-4 md:grid-cols-4">
+              <p className="ds-kicker md:col-span-4">Mãe / Responsável feminino</p>
+              <input type="hidden" name="mae_id" value={mae?.id ?? ""} />
+              <label className="md:col-span-2">Nome<input name="mae_nome" defaultValue={mae?.nome ?? ""} required /></label>
+              <label>RG <span className="text-clay">*</span><input name="mae_rg" defaultValue={(mae as any)?.rg ?? ""} required /></label>
+              <label>CPF<input name="mae_cpf" defaultValue={mae?.cpf ?? ""} /></label>
+              <label>Telefone<input name="mae_telefone" defaultValue={mae?.telefone ?? ""} /></label>
+              <label>Celular<input name="mae_celular" defaultValue={mae?.celular ?? ""} /></label>
+              <label className="md:col-span-2">E-mail<input name="mae_email" type="email" defaultValue={mae?.email ?? ""} /></label>
+            </div>
+            <div className="grid gap-4 md:grid-cols-4">
+              <p className="ds-kicker md:col-span-4">Responsável principal (financeiro)</p>
               <label className="md:col-span-2">Nome<input name="responsavel_nome" defaultValue={responsavel?.nome ?? ""} /></label>
               <label>CPF<input name="responsavel_cpf" defaultValue={responsavel?.cpf ?? ""} /></label>
               <label>Parentesco<input name="responsavel_parentesco" defaultValue={responsavel?.parentesco ?? ""} /></label>

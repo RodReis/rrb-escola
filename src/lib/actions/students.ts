@@ -200,6 +200,8 @@ export async function updateStudentAction(formData: FormData) {
   const enderecoId = formText(formData, "endereco_id");
   const contatoId = formText(formData, "contato_id");
   const responsavelId = formText(formData, "responsavel_id");
+  const paiId = formText(formData, "pai_id");
+  const maeId = formText(formData, "mae_id");
 
   const enderecoPayload = {
     aluno_id: alunoId,
@@ -234,6 +236,28 @@ export async function updateStudentAction(formData: FormData) {
     responsavel_pedagogico: true
   };
 
+  const paiPayload = {
+    aluno_id: alunoId,
+    nome: formText(formData, "pai_nome") ?? "Pai",
+    rg: formText(formData, "pai_rg"),
+    cpf: formText(formData, "pai_cpf"),
+    telefone: formText(formData, "pai_telefone"),
+    celular: formText(formData, "pai_celular"),
+    email: formText(formData, "pai_email"),
+    parentesco: "Pai",
+  };
+
+  const maePayload = {
+    aluno_id: alunoId,
+    nome: formText(formData, "mae_nome") ?? "Mãe",
+    rg: formText(formData, "mae_rg"),
+    cpf: formText(formData, "mae_cpf"),
+    telefone: formText(formData, "mae_telefone"),
+    celular: formText(formData, "mae_celular"),
+    email: formText(formData, "mae_email"),
+    parentesco: "Mãe",
+  };
+
   await Promise.all([
     enderecoId
       ? supabase.from("enderecos_aluno").update(enderecoPayload).eq("id", enderecoId).eq("aluno_id", alunoId)
@@ -244,6 +268,16 @@ export async function updateStudentAction(formData: FormData) {
     responsavelId
       ? supabase.from("responsaveis_aluno").update(responsavelPayload).eq("id", responsavelId).eq("aluno_id", alunoId)
       : supabase.from("responsaveis_aluno").insert(responsavelPayload),
+    paiId
+      ? supabase.from("responsaveis_aluno").update(paiPayload).eq("id", paiId).eq("aluno_id", alunoId)
+      : formText(formData, "pai_nome")
+        ? supabase.from("responsaveis_aluno").insert(paiPayload)
+        : Promise.resolve(),
+    maeId
+      ? supabase.from("responsaveis_aluno").update(maePayload).eq("id", maeId).eq("aluno_id", alunoId)
+      : formText(formData, "mae_nome")
+        ? supabase.from("responsaveis_aluno").insert(maePayload)
+        : Promise.resolve(),
     supabase.from("informacoes_medicas").upsert(
       {
         aluno_id: alunoId,
