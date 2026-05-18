@@ -12,6 +12,7 @@ import { listNotificacoes } from "@/lib/data/notificacoes";
 import { createServerClient } from "@/lib/supabase/server";
 import { getPublicUrl } from "@/lib/storage/public-urls";
 import { School } from "lucide-react";
+import { AnoLetivoPicker } from "@/components/layout/ano-letivo-picker";
 
 const primaryItems: Array<{ href: string; label: string; icon: TopbarIconName }> = [
   { href: "/", label: "Dashboard", icon: "LayoutDashboard" }
@@ -44,7 +45,7 @@ function BrandBlock({ logoUrl, nome }: { logoUrl: string | null; nome: string })
   );
 }
 
-export async function Topbar({ perfil }: { perfil: SessionProfile }) {
+export async function Topbar({ perfil, anosLetivos }: { perfil: SessionProfile; anosLetivos: number[] }) {
   const supabase = await createServerClient();
   const [notifs, escolaRes, perfilRes] = await Promise.all([
     listNotificacoes(perfil.id, perfil.escola_id, 20),
@@ -93,18 +94,7 @@ export async function Topbar({ perfil }: { perfil: SessionProfile }) {
 
       <div className="flex items-center gap-2 shrink-0">
         {/* Year picker */}
-        <button className="inline-flex items-center gap-1.5 h-[30px] px-2.5 rounded-[7px] text-[11.5px] font-medium text-white/70 bg-white/10 border border-white/[0.12] cursor-pointer">
-          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-            <rect x="3" y="4" width="18" height="18" rx="2" ry="2"/>
-            <line x1="16" y1="2" x2="16" y2="6"/>
-            <line x1="8" y1="2" x2="8" y2="6"/>
-            <line x1="3" y1="10" x2="21" y2="10"/>
-          </svg>
-          <span className="text-white">2026.1</span>
-          <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-            <polyline points="6 9 12 15 18 9"/>
-          </svg>
-        </button>
+        <AnoLetivoPicker anos={anosLetivos} />
 
         <NotificationBell perfilId={perfil.id} escolaId={perfil.escola_id} initial={notifs} />
 
