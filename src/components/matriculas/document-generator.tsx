@@ -4,7 +4,7 @@ import { useState } from "react";
 import { FileText, Download, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Panel } from "@/components/ui/card";
-import { generateDocumentoAction } from "@/lib/actions/documents-generate";
+import { generateDocumentoAction, generateDocxAction } from "@/lib/actions/documents-generate";
 import { TIPO_TEMPLATE, TEMPLATE_META, type TipoTemplate } from "@/lib/documents/templates";
 import type { StudentDocument } from "@/lib/data/documents";
 
@@ -27,12 +27,34 @@ export function DocumentGenerator({ matriculaId, documentosIniciais }: Props) {
   const [tipoSelecionado, setTipoSelecionado] = useState<TipoTemplate>(
     TIPO_TEMPLATE.CONTRATO_COLEGIO
   );
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState<"pdf" | "docx" | null>(null);
   const [erro, setErro] = useState<string | null>(null);
   const [documentos, setDocumentos] = useState<StudentDocument[]>(documentosIniciais);
 
-  async function handleGerar() {
-    setLoading(true);
+  async function handleGerarDocx() {
+    setLoading("docx");
+    setErro(null);
+    try {
+      const result = await generateDocxAction(matriculaId, tipoSelecionado);
+      if (!result.success || !result.base64 || !result.nomeArquivo) {
+        setErro(result.error ?? "Erro desconhecido.");
+        return;
+      }
+      const bytes = Uint8Array.from(atob(result.base64), (c) => c.charCodeAt(0));
+      const blob = new Blob([bytes], { type: "application/vnd.openxmlformats-officedocument.wordprocessingml.document" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = result.nomeArquivo;
+      a.click();
+      URL.revokeObjectURL(url);
+    } finally {
+      setLoading(null);
+    }
+  }
+
+  async function handleGerarPdf() {
+    setLoading("pdf");
     setErro(null);
     try {
       const result = await generateDocumentoAction(matriculaId, tipoSelecionado);
@@ -46,12 +68,10 @@ export function DocumentGenerator({ matriculaId, documentosIniciais }: Props) {
         if (res.ok) {
           const novos = await res.json();
           setDocumentos(novos);
-        } else {
-          console.error("Falha ao recarregar documentos", res.status);
         }
       }
     } finally {
-      setLoading(false);
+      setLoading(null);
     }
   }
 
@@ -66,7 +86,7 @@ export function DocumentGenerator({ matriculaId, documentosIniciais }: Props) {
             value={tipoSelecionado}
             onChange={(e) => setTipoSelecionado(e.target.value as TipoTemplate)}
             className="rounded-ui border border-line bg-surface px-3 py-2 text-sm text-ink"
-            disabled={loading}
+            disabled={loading !== null}
           >
             {Object.values(TIPO_TEMPLATE).map((tipo) => (
               <option key={tipo} value={tipo}>
@@ -75,12 +95,16 @@ export function DocumentGenerator({ matriculaId, documentosIniciais }: Props) {
             ))}
           </select>
         </label>
-        <Button variant="accent" onClick={handleGerar} disabled={loading}>
-          {loading ? (
-            <>
-              <Loader2 size={16} className="animate-spin" />
-              Gerando...
-            </>
+        <Button variant="accent" onClick={handleGerarDocx} disabled={loading !== null}>
+          {loading === "docx" ? (
+            <><Loader2 size={16} className="animate-spin" /> Gerando...</>
+          ) : (
+            "Baixar .docx"
+          )}
+        </Button>
+        <Button variant="secondary" onClick={handleGerarPdf} disabled={loading !== null}>
+          {loading === "pdf" ? (
+            <><Loader2 size={16} className="animate-spin" /> Gerando...</>
           ) : (
             "Gerar PDF"
           )}

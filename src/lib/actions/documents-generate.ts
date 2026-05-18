@@ -4,8 +4,44 @@ import { revalidatePath } from "next/cache";
 import { requireSession } from "@/lib/auth/session";
 import { createServerClient } from "@/lib/supabase/server";
 import { buildVariables } from "@/lib/documents/variables";
-import { generateDocumentoPdf } from "@/lib/documents/generator";
+import { generateDocx, generateDocumentoPdf } from "@/lib/documents/generator";
 import { isTipoTemplate, TEMPLATE_META } from "@/lib/documents/templates";
+
+export async function generateDocxAction(
+  matriculaId: string,
+  tipoTemplateRaw: string
+): Promise<{ success: boolean; base64?: string; nomeArquivo?: string; error?: string }> {
+  await requireSession();
+
+  if (!isTipoTemplate(tipoTemplateRaw)) {
+    return { success: false, error: "Tipo de template inválido." };
+  }
+
+  try {
+    const variables = await buildVariables(matriculaId);
+    const meta = TEMPLATE_META[tipoTemplateRaw];
+    const docxBuffer = generateDocx(tipoTemplateRaw, variables);
+
+    const nomeAluno = (variables.NOME_ALUNO || "Aluno")
+      .normalize("NFD")
+      .replace(/[̀-ͯ]/g, "")
+      .replace(/[^a-zA-Z0-9\s-]/g, "")
+      .trim()
+      .replace(/\s+/g, "-");
+    const anoLetivo = variables.ANO_LETIVO || String(new Date().getFullYear());
+    const nomeArquivo = `${meta.label} - ${nomeAluno} - ${anoLetivo}.docx`
+      .replace(/[/\\:*?"<>|]/g, "-");
+
+    return {
+      success: true,
+      base64: docxBuffer.toString("base64"),
+      nomeArquivo,
+    };
+  } catch (err) {
+    const msg = err instanceof Error ? err.message : "Erro ao gerar documento.";
+    return { success: false, error: msg };
+  }
+}
 
 export async function generateDocumentoAction(
   matriculaId: string,
