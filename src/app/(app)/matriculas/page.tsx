@@ -13,13 +13,17 @@ export default async function MatriculasPage({
 }: {
   searchParams: Promise<Record<string, string>>;
 }) {
-  const { status = "", nome = "" } = await searchParams;
+  const { status = "", nome = "", aluno_id = "" } = await searchParams;
 
   const [{ alunos, series, turmas, planos }, all, filtered] = await Promise.all([
     getAcademicData(),
     getEnrollments(),
     getEnrollments({ status: status || undefined, nome: nome || undefined }),
   ]);
+
+  const alunoPre = aluno_id
+    ? alunos.find((a) => a.id === aluno_id) ?? null
+    : null;
 
   const counts = {
     all:        all.length,
@@ -31,6 +35,14 @@ export default async function MatriculasPage({
 
   return (
     <div className="grid gap-8">
+      {alunoPre && (
+        <script
+          dangerouslySetInnerHTML={{
+            __html:
+              "document.getElementById('nova-matricula')?.scrollIntoView({behavior:'smooth',block:'start'});",
+          }}
+        />
+      )}
       <PageHeader
         breadcrumb={[{ label: "Acadêmico", href: "/" }, { label: "Matrículas" }]}
         title="Matrículas"
@@ -44,14 +56,21 @@ export default async function MatriculasPage({
         ]}
       />
 
-      <Panel className="grid gap-5">
+      <Panel id="nova-matricula" className="grid gap-5">
         <div>
           <p className="text-[0.66rem] font-bold uppercase tracking-[0.14em] text-ink/55">Nova matrícula</p>
           <h2 className="mt-1 text-xl font-bold text-ink">Cadastrar vínculo acadêmico</h2>
         </div>
         <form action={createEnrollmentAction} className="grid gap-4 md:grid-cols-4">
           <label className="md:col-span-2">Aluno
-            <StudentCombobox alunos={alunos} />
+            <StudentCombobox
+              alunos={alunos}
+              defaultValue={
+                alunoPre
+                  ? { id: alunoPre.id, nome: alunoPre.nome, matricula_codigo: alunoPre.matricula_codigo }
+                  : undefined
+              }
+            />
           </label>
           <label>Série
             <select name="serie_id" required>
