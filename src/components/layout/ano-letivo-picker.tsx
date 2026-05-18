@@ -1,5 +1,6 @@
 "use client";
 
+import { Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { ChevronDown } from "lucide-react";
 
@@ -7,7 +8,7 @@ interface Props {
   anos: number[];
 }
 
-export function AnoLetivoPicker({ anos }: Props) {
+function AnoLetivoPickerInner({ anos }: Props) {
   const router = useRouter();
   const searchParams = useSearchParams();
   const current = Number(searchParams.get("ano")) || new Date().getFullYear();
@@ -50,5 +51,17 @@ export function AnoLetivoPicker({ anos }: Props) {
       </select>
       <ChevronDown size={10} className="pointer-events-none shrink-0 text-white/70" />
     </div>
+  );
+}
+
+export function AnoLetivoPicker({ anos }: Props) {
+  return (
+    <Suspense fallback={
+      <div className="inline-flex items-center h-[30px] px-2.5 rounded-[7px] text-[11.5px] font-medium text-white/70 bg-white/10 border border-white/[0.12]">
+        <span className="text-white font-semibold">{new Date().getFullYear()}</span>
+      </div>
+    }>
+      <AnoLetivoPickerInner anos={anos} />
+    </Suspense>
   );
 }
