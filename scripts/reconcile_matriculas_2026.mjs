@@ -31,6 +31,16 @@ function loadEnvFile(file) {
 loadEnvFile(".env.local");
 loadEnvFile(".env");
 
+function normSerie(s) {
+  return String(s ?? "")
+    .normalize("NFD")
+    .replace(/\p{Diacritic}/gu, "")
+    .toUpperCase()
+    .replace(/\s+EM$/u, "")
+    .replace(/\s+/g, "")
+    .trim();
+}
+
 const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
 const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
 if (!url || !serviceKey) {
@@ -141,9 +151,9 @@ async function main() {
   for (const a of alunos) {
     alunoByNorm.set(normalizeName(a.nome), a);
   }
-  const serieByNome = new Map(series.map((s) => [s.nome, s]));
-  const turmaByKey = new Map(
-    turmas.map((t) => [`${t.serie_id}|${t.nome}|${t.turno}`, t])
+  const serieByNorm = new Map(series.map((s) => [normSerie(s.nome), s]));
+  const turmaBySerieTurno = new Map(
+    turmas.map((t) => [`${t.serie_id}|${t.turno}`, t])
   );
   const matriculaByAluno = new Map(matriculas.map((m) => [m.aluno_id, m]));
 
@@ -165,16 +175,16 @@ async function main() {
       continue;
     }
 
-    const serie = serieByNome.get(mapped.serie_nome);
+    const serie = serieByNorm.get(normSerie(mapped.serie_nome));
     if (!serie) {
       seriesFaltando.add(mapped.serie_nome);
     }
     const turma = serie
-      ? turmaByKey.get(`${serie.id}|${mapped.turma_nome}|${mapped.turno}`)
+      ? turmaBySerieTurno.get(`${serie.id}|${mapped.turno}`)
       : null;
     if (serie && !turma) {
       turmasFaltando.add(
-        `${mapped.serie_nome} | turma ${mapped.turma_nome} | ${mapped.turno}`
+        `${mapped.serie_nome} | ${mapped.turno}`
       );
     }
 
