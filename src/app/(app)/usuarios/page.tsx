@@ -1,60 +1,137 @@
-import { Plus } from "lucide-react";
+import Link from "next/link";
+import { Plus, Search } from "lucide-react";
 import { requireAdmin } from "@/lib/auth/session";
 import { createServerClient } from "@/lib/supabase/server";
-import { deactivateUserAction } from "@/lib/actions/users";
+import {
+  deactivateUserAction,
+  reactivateUserAction,
+  resetPasswordAction,
+} from "@/lib/actions/users";
 import { readUserCreatedFlash } from "@/lib/actions/user-flash";
 import { ButtonLink } from "@/components/ui/button";
+import { Panel } from "@/components/ui/card";
 import { PageHeader } from "@/components/ui/page-header";
 import { DataTableShell } from "@/components/ui/data-table";
 import { StatusPill } from "@/components/ui/status-pill";
 
 export const dynamic = "force-dynamic";
 
-export default async function UsuariosPage({ searchParams }: { searchParams: { criado?: string; desativado?: string; erro?: string } }) {
+const PERFIL_LABEL: Record<string, string> = {
+  admin: "Admin",
+  secretaria: "Secretaria",
+  financeiro: "Financeiro",
+  professor: "Professor",
+};
+
+export default async function UsuariosPage({
+  searchParams,
+}: {
+  searchParams: Promise<{
+    criado?: string;
+    desativado?: string;
+    reativado?: string;
+    senha?: string;
+    atualizado?: string;
+    erro?: string;
+    q?: string;
+    perfil?: string;
+    status?: string;
+  }>;
+}) {
   await requireAdmin();
+  const sp = await searchParams;
+
   const supabase = await createServerClient();
-  const { data: perfis } = await supabase
+  let query = supabase
     .from("perfis")
     .select("id, nome, email, perfil, ativo, created_at")
     .order("created_at", { ascending: false });
 
-  const flash = searchParams.criado ? readUserCreatedFlash() : null;
+  if (sp.perfil && PERFIL_LABEL[sp.perfil]) {
+    query = query.eq("perfil", sp.perfil);
+  }
+  if (sp.status === "ativo") query = query.eq("ativo", true);
+  if (sp.status === "inativo") query = query.eq("ativo", false);
+  if (sp.q && sp.q.trim()) {
+    const q = sp.q.trim();
+    query = query.or(`nome.ilike.%${q}%,email.ilike.%${q}%`);
+  }
+
+  const { data: perfis } = await query;
+  const flash = (sp.criado || sp.senha) ? readUserCreatedFlash() : null;
   const rows = perfis ?? [];
   const ativos = rows.filter((p) => p.ativo).length;
 
   return (
-    <div className="grid gap-8">
+    <div className="grid gap-6">
       <PageHeader
         breadcrumb={[{ label: "Administração" }, { label: "Usuários" }]}
         title="Usuários"
         counter={rows.length.toLocaleString("pt-BR")}
-        description="Gerencie acesso, perfis e status dos usuários do sistema."
+        description="Gerencie acesso, perfis e status dos usuários."
         actions={
           <ButtonLink href="/usuarios/novo" variant="primary">
             <Plus size={14} /> Novo usuário
           </ButtonLink>
         }
         kpis={[
-          { label: "Total",    value: rows.length.toLocaleString("pt-BR") },
-          { label: "Ativos",   value: ativos.toLocaleString("pt-BR"), tone: "success" },
-          { label: "Inativos", value: (rows.length - ativos).toLocaleString("pt-BR"), tone: "danger" }
+          { label: "Total", value: rows.length.toLocaleString("pt-BR") },
+          { label: "Ativos", value: ativos.toLocaleString("pt-BR"), tone: "success" },
+          { label: "Inativos", value: (rows.length - ativos).toLocaleString("pt-BR"), tone: "danger" },
         ]}
       />
 
-      {flash ? (
+      {flash && (
         <div className="rounded-ui bg-success/10 p-4 text-sm font-semibold text-success">
-          Usuário {flash.email} criado. Senha inicial: <code className="font-mono">{flash.password}</code>
-          <p className="mt-1 text-xs font-medium text-ink/55">Anote agora — esta mensagem não será exibida novamente.</p>
+          {sp.senha ? "Nova senha gerada" : "Usuário criado"} para <strong>{flash.email}</strong>. Senha: <code className="font-mono">{flash.password}</code>
+          <p className="mt-1 text-xs font-medium text-ink/55">Anote agora — não será exibida novamente.</p>
         </div>
-      ) : null}
-      {searchParams.desativado ? (
-        <div className="rounded-ui bg-success/10 p-4 text-sm font-semibold text-success">Usuário desativado.</div>
-      ) : null}
-      {searchParams.erro ? (
+      )}
+      {sp.desativado && <div className="rounded-ui bg-success/10 p-4 text-sm font-semibold text-success">Usuário desativado.</div>}
+      {sp.reativado && <div className="rounded-ui bg-success/10 p-4 text-sm font-semibold text-success">Usuário reativado.</div>}
+      {sp.atualizado && <div className="rounded-ui bg-success/10 p-4 text-sm font-semibold text-success">Usuário atualizado.</div>}
+      {sp.erro && (
         <div className="rounded-ui bg-danger/10 p-4 text-sm font-semibold text-danger">
-          {searchParams.erro === "self" ? "Você não pode desativar a própria conta." : `Falha: ${searchParams.erro}`}
+          {sp.erro === "self" ? "Você não pode desativar a própria conta." : `Falha: ${decodeURIComponent(sp.erro)}`}
         </div>
-      ) : null}
+      )}
+
+      <Panel>
+        <form className="grid gap-3 md:grid-cols-[1fr_180px_160px_auto] items-end">
+          <label className="relative">
+            <span className="text-xs font-semibold text-ink/55">Buscar</span>
+            <Search size={14} className="absolute left-3 bottom-3 text-ink/40" />
+            <input
+              name="q"
+              defaultValue={sp.q ?? ""}
+              placeholder="Nome ou email"
+              className="pl-9"
+            />
+          </label>
+          <label>
+            <span className="text-xs font-semibold text-ink/55">Perfil</span>
+            <select name="perfil" defaultValue={sp.perfil ?? ""}>
+              <option value="">Todos</option>
+              <option value="admin">Admin</option>
+              <option value="secretaria">Secretaria</option>
+              <option value="financeiro">Financeiro</option>
+              <option value="professor">Professor</option>
+            </select>
+          </label>
+          <label>
+            <span className="text-xs font-semibold text-ink/55">Status</span>
+            <select name="status" defaultValue={sp.status ?? ""}>
+              <option value="">Todos</option>
+              <option value="ativo">Ativos</option>
+              <option value="inativo">Inativos</option>
+            </select>
+          </label>
+          <div className="flex gap-2">
+            <button className="ds-button ds-button-primary">Filtrar</button>
+            <Link href="/usuarios" className="ds-button ds-button-secondary">Limpar</Link>
+          </div>
+        </form>
+      </Panel>
 
       <DataTableShell>
         <table className="ds-dt min-w-[720px]">
@@ -64,30 +141,54 @@ export default async function UsuariosPage({ searchParams }: { searchParams: { c
               <th>Email</th>
               <th>Perfil</th>
               <th>Status</th>
-              <th className="text-right"></th>
+              <th className="text-right">Ações</th>
             </tr>
           </thead>
           <tbody>
-            {rows.map((p) => (
-              <tr key={p.id}>
-                <td className="font-semibold text-ink">{p.nome}</td>
-                <td className="text-ink/75">{p.email}</td>
-                <td className="text-ink/75">{p.perfil}</td>
-                <td>
-                  <StatusPill tone={p.ativo ? "success" : "danger"}>
-                    {p.ativo ? "Ativo" : "Inativo"}
-                  </StatusPill>
-                </td>
-                <td className="text-right">
-                  {p.ativo ? (
-                    <form action={deactivateUserAction} className="inline">
-                      <input type="hidden" name="perfilId" value={p.id} />
-                      <button className="text-xs font-semibold text-danger hover:underline">Desativar</button>
-                    </form>
-                  ) : null}
-                </td>
+            {rows.length === 0 ? (
+              <tr>
+                <td colSpan={5} className="py-8 text-center text-ink/55">Nenhum usuário encontrado.</td>
               </tr>
-            ))}
+            ) : (
+              rows.map((p) => (
+                <tr key={p.id}>
+                  <td className="font-semibold text-ink">{p.nome}</td>
+                  <td className="text-ink/75">{p.email}</td>
+                  <td>
+                    <span className="rounded-pill bg-muted px-2 py-0.5 text-xs font-semibold text-ink/70">
+                      {PERFIL_LABEL[p.perfil] ?? p.perfil}
+                    </span>
+                  </td>
+                  <td>
+                    <StatusPill tone={p.ativo ? "success" : "danger"}>
+                      {p.ativo ? "Ativo" : "Inativo"}
+                    </StatusPill>
+                  </td>
+                  <td className="text-right">
+                    <div className="inline-flex items-center gap-2">
+                      <Link href={`/usuarios/${p.id}/editar`} className="text-xs font-semibold text-brand hover:underline">
+                        Editar
+                      </Link>
+                      <form action={resetPasswordAction} className="inline">
+                        <input type="hidden" name="perfilId" value={p.id} />
+                        <button className="text-xs font-semibold text-warning hover:underline">Resetar senha</button>
+                      </form>
+                      {p.ativo ? (
+                        <form action={deactivateUserAction} className="inline">
+                          <input type="hidden" name="perfilId" value={p.id} />
+                          <button className="text-xs font-semibold text-danger hover:underline">Desativar</button>
+                        </form>
+                      ) : (
+                        <form action={reactivateUserAction} className="inline">
+                          <input type="hidden" name="perfilId" value={p.id} />
+                          <button className="text-xs font-semibold text-success hover:underline">Reativar</button>
+                        </form>
+                      )}
+                    </div>
+                  </td>
+                </tr>
+              ))
+            )}
           </tbody>
         </table>
       </DataTableShell>

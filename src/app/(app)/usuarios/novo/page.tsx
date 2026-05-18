@@ -36,6 +36,15 @@ export default async function NovoUsuarioPage({ searchParams }: { searchParams: 
           Email
           <input name="email" type="email" required />
         </label>
+        <label>
+          Perfil
+          <select name="perfil" defaultValue="admin" required>
+            <option value="admin">Admin</option>
+            <option value="secretaria">Secretaria</option>
+            <option value="financeiro">Financeiro</option>
+            <option value="professor">Professor</option>
+          </select>
+        </label>
         <div className="flex gap-3">
           <button className="ds-button ds-button-primary">Criar</button>
           <Link href="/usuarios" className="ds-button ds-button-secondary">Cancelar</Link>

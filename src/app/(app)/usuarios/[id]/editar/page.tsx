@@ -1,0 +1,69 @@
+import Link from "next/link";
+import { notFound } from "next/navigation";
+import { requireAdmin } from "@/lib/auth/session";
+import { createServerClient } from "@/lib/supabase/server";
+import { updateUserAction } from "@/lib/actions/users";
+
+export const dynamic = "force-dynamic";
+
+export default async function EditarUsuarioPage({
+  params,
+  searchParams,
+}: {
+  params: Promise<{ id: string }>;
+  searchParams: Promise<{ erro?: string }>;
+}) {
+  await requireAdmin();
+  const { id } = await params;
+  const sp = await searchParams;
+
+  const supabase = await createServerClient();
+  const { data: perfil } = await supabase
+    .from("perfis")
+    .select("id, nome, email, perfil, ativo")
+    .eq("id", id)
+    .maybeSingle();
+
+  if (!perfil) notFound();
+
+  return (
+    <section className="ds-section max-w-lg">
+      <header className="mb-6">
+        <p className="ds-kicker">Administração</p>
+        <h1 className="font-serif text-3xl text-ink">Editar usuário</h1>
+        <p className="mt-2 text-sm text-muted">{perfil.email}</p>
+      </header>
+
+      {sp.erro && (
+        <div className="mb-4 rounded-ui bg-danger/10 p-3 text-sm font-bold text-danger">
+          {decodeURIComponent(sp.erro)}
+        </div>
+      )}
+
+      <form action={updateUserAction} className="grid gap-4">
+        <input type="hidden" name="perfilId" value={perfil.id} />
+        <label>
+          Nome
+          <input name="nome" type="text" defaultValue={perfil.nome} required />
+        </label>
+        <label>
+          Email (somente leitura)
+          <input type="email" value={perfil.email} readOnly disabled />
+        </label>
+        <label>
+          Perfil
+          <select name="perfil" defaultValue={perfil.perfil} required>
+            <option value="admin">Admin</option>
+            <option value="secretaria">Secretaria</option>
+            <option value="financeiro">Financeiro</option>
+            <option value="professor">Professor</option>
+          </select>
+        </label>
+        <div className="flex gap-3">
+          <button className="ds-button ds-button-primary">Salvar</button>
+          <Link href="/usuarios" className="ds-button ds-button-secondary">Cancelar</Link>
+        </div>
+      </form>
+    </section>
+  );
+}

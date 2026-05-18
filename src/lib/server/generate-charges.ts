@@ -22,6 +22,8 @@ type Plan = {
   dia_vencimento: number;
 };
 
+export type TipoVagaCobranca = "paga" | "bolsa_integral" | "bolsa_parcial" | "permuta" | "gratuita";
+
 type GenerateChargesInput = {
   supabase: SupabaseLike;
   escolaId: string;
@@ -30,6 +32,8 @@ type GenerateChargesInput = {
   planoId: string | null;
   dataMatricula: string;
   anoLetivo: number;
+  tipoVaga?: TipoVagaCobranca;
+  percentualBolsa?: number;
 };
 
 // generateChargesForEnrollment: geração sob demanda. Filtra duplicatas (matricula_id + competencia + numero_parcela) para ser idempotente.
@@ -45,6 +49,13 @@ function dueDate(year: number, monthIndex: number, day: number) {
 
 export async function generateChargesForEnrollment(input: GenerateChargesInput) {
   if (!input.planoId) return;
+
+  const tipoVaga: TipoVagaCobranca = input.tipoVaga ?? "paga";
+  const percentualBolsa = Math.max(0, Math.min(100, input.percentualBolsa ?? 0));
+
+  if (tipoVaga === "bolsa_integral" || tipoVaga === "permuta" || tipoVaga === "gratuita") {
+    return;
+  }
 
   const planQuery = input.supabase.from("planos") as PlanQuery;
   const { data: plan, error } = await planQuery
@@ -77,6 +88,10 @@ export async function generateChargesForEnrollment(input: GenerateChargesInput) 
     });
   }
 
+  const descontoMensal = tipoVaga === "bolsa_parcial"
+    ? Math.round(monthlyFee * (percentualBolsa / 100) * 100) / 100
+    : 0;
+
   for (let index = 0; index < installments; index += 1) {
     const monthIndex = index % 12;
     const year = input.anoLetivo + Math.floor(index / 12);
@@ -89,7 +104,7 @@ export async function generateChargesForEnrollment(input: GenerateChargesInput) 
       competencia: `${year}-${String(monthIndex + 1).padStart(2, "0")}`,
       numero_parcela: index + 1,
       valor_original: monthlyFee,
-      valor_desconto: 0,
+      valor_desconto: descontoMensal,
       valor_acrescimo: 0,
       data_vencimento: dueDate(year, monthIndex, dueDay),
       status: "aberta"

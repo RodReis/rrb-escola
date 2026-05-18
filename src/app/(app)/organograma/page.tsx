@@ -4,17 +4,24 @@ import { OrganogramaDrillPanel } from "@/components/organograma/drill-panel";
 import { PageHeader } from "@/components/ui/page-header";
 import { getOrganogramaTree, getOrganogramaDrill } from "@/lib/data/organograma";
 
+function isValidAno(val: string | undefined): boolean {
+  if (!val) return false;
+  const n = Number(val);
+  return Number.isInteger(n) && n >= 2000 && n <= 2100;
+}
+
 export default async function OrganogramaPage({
   searchParams
 }: {
-  searchParams: Promise<{ turma?: string }>;
+  searchParams: Promise<{ turma?: string; ano?: string }>;
 }) {
   const params = await searchParams;
   const turmaId = params.turma ?? null;
+  const anoLetivo = isValidAno(params.ano) ? Number(params.ano) : new Date().getFullYear();
 
   const [{ tree, totalAlunos }, drillData] = await Promise.all([
-    getOrganogramaTree(),
-    turmaId ? getOrganogramaDrill(turmaId) : Promise.resolve({ turma: null, alunos: [], somaSala: 0, ticketMedio: 0, competencia: "" })
+    getOrganogramaTree(anoLetivo),
+    turmaId ? getOrganogramaDrill(turmaId, anoLetivo) : Promise.resolve({ turma: null, alunos: [], somaSala: 0, ticketMedio: 0, competencia: "" })
   ]);
 
   return (

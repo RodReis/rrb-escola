@@ -12,3 +12,6 @@ tsconfig.tsbuildinfo
 .next-dev*.log
 .next-dev*.err.log
 backups/
+docs/pdfs/reconcile-2026-*.json
+docs/pdfs/backup-matriculas-2026-*.json
+docs/pdfs/*.dump

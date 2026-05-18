@@ -8,6 +8,24 @@ import { generateChargesForEnrollment } from "@/lib/server/generate-charges";
 import { createServerClient } from "@/lib/supabase/server";
 import { formBoolean, formNumber, formText } from "@/lib/utils";
 
+type TipoVagaInput = "paga" | "bolsa_integral" | "bolsa_parcial" | "permuta" | "gratuita";
+
+function readTipoVaga(formData: FormData): TipoVagaInput {
+  const raw = formText(formData, "tipo_vaga");
+  const valid: TipoVagaInput[] = ["paga", "bolsa_integral", "bolsa_parcial", "permuta", "gratuita"];
+  if (raw && (valid as string[]).includes(raw)) return raw as TipoVagaInput;
+  return "paga";
+}
+
+function readPercentualBolsa(formData: FormData, tipo: TipoVagaInput): number {
+  if (tipo !== "bolsa_parcial") return 0;
+  const raw = formNumber(formData, "percentual_bolsa") ?? 0;
+  if (raw <= 0 || raw >= 100) {
+    throw new Error("Bolsa parcial exige percentual entre 1 e 99.");
+  }
+  return raw;
+}
+
 export async function createStudentAction(formData: FormData) {
   await requireSession();
   const supabase = await createServerClient();
@@ -104,6 +122,9 @@ export async function createStudentAction(formData: FormData) {
     const planoId = formText(formData, "plano_id");
     const dataMatricula = formText(formData, "data_matricula") ?? new Date().toISOString().slice(0, 10);
     const anoLetivo = formNumber(formData, "ano_letivo") ?? new Date().getFullYear();
+    const tipoVaga = readTipoVaga(formData);
+    const percentualBolsa = readPercentualBolsa(formData, tipoVaga);
+
     const { data: enrollment } = await supabase.from("matriculas").insert({
       escola_id: DEFAULT_SCHOOL_ID,
       aluno_id: alunoId,
@@ -114,7 +135,9 @@ export async function createStudentAction(formData: FormData) {
       data_matricula: dataMatricula,
       ano_letivo: anoLetivo,
       idade_na_matricula: formNumber(formData, "idade_na_matricula"),
-      status: "ativa"
+      status: "ativa",
+      tipo_vaga: tipoVaga,
+      percentual_bolsa: percentualBolsa
     }).select("id").single();
 
     if (enrollment) {
@@ -125,7 +148,9 @@ export async function createStudentAction(formData: FormData) {
         matriculaId: enrollment.id,
         planoId,
         dataMatricula,
-        anoLetivo
+        anoLetivo,
+        tipoVaga,
+        percentualBolsa
       });
     }
   }

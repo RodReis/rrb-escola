@@ -6,11 +6,18 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
   BookOpen,
+  Cake,
+  CalendarCheck,
+  ClipboardCheck,
+  ClipboardList,
+  DoorOpen,
   FileText,
   GraduationCap,
+  HandHeart,
   Inbox,
   Layers3,
   Network,
+  UserCheck,
   UsersRound,
   ChevronDown
 } from "lucide-react";
@@ -18,9 +25,16 @@ import { cn } from "@/lib/utils";
 
 const secretariaItems = [
   { href: "/alunos", label: "Alunos", icon: UsersRound },
+  { href: "/bolsistas", label: "Bolsistas", icon: HandHeart },
   { href: "/matriculas", label: "Matrículas", icon: FileText },
   { href: "/series", label: "Séries", icon: Layers3 },
   { href: "/turmas", label: "Turmas", icon: GraduationCap },
+  { href: "/disciplinas", label: "Disciplinas", icon: ClipboardList },
+  { href: "/avaliacoes", label: "Avaliações", icon: ClipboardCheck },
+  { href: "/professores/atribuicoes", label: "Atribuições", icon: UserCheck },
+  { href: "/frequencias", label: "Frequência", icon: CalendarCheck },
+  { href: "/portaria", label: "Portaria", icon: DoorOpen },
+  { href: "/mural/aniversariantes", label: "Mural aniversários", icon: Cake },
   { href: "/organograma", label: "Organograma", icon: Network },
   { href: "/importacoes", label: "Importações", icon: Inbox }
 ];

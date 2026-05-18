@@ -42,6 +42,14 @@ export function DespesaForm({ action, categorias, initial, submitLabel }: Props)
       </label>
 
       <label>
+        Tipo
+        <select name="tipo" defaultValue={initial?.tipo ?? "variavel"}>
+          <option value="variavel">Variável (pontual)</option>
+          <option value="fixa">Fixa (todo mês)</option>
+        </select>
+      </label>
+
+      <label>
         Fornecedor
         <input
           name="fornecedor"

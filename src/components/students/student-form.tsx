@@ -75,14 +75,37 @@ export function StudentForm({ options }: { options: Options }) {
       </Section>
 
       <Section title="Relacao de Matriculas">
-        <div className="grid gap-4 md:grid-cols-5">
+        <div className="grid gap-4 md:grid-cols-6">
           <label>Serie<select name="serie_id"><option value="">Selecione</option>{options.series.map((item) => <option key={item.id} value={item.id}>{item.nome}</option>)}</select></label>
           <label>Turma<select name="turma_id"><option value="">Selecione</option>{options.turmas.map((item) => <option key={item.id} value={item.id}>{item.nome} - {item.ano_letivo}</option>)}</select></label>
           <label>Plano<select name="plano_id"><option value="">Selecione</option>{options.planos.map((item) => <option key={item.id} value={item.id}>{item.nome}</option>)}</select></label>
           <label>Data Matricula<input name="data_matricula" type="date" /></label>
           <label>Idade<input name="idade_na_matricula" type="number" /></label>
           <label>Ano letivo<input name="ano_letivo" type="number" defaultValue={new Date().getFullYear()} /></label>
+          <label>Tipo de vaga
+            <select name="tipo_vaga" defaultValue="paga">
+              <option value="paga">Paga</option>
+              <option value="bolsa_integral">Bolsa integral</option>
+              <option value="bolsa_parcial">Bolsa parcial</option>
+              <option value="permuta">Permuta</option>
+              <option value="gratuita">Gratuidade</option>
+            </select>
+          </label>
+          <label>% Bolsa parcial
+            <input
+              name="percentual_bolsa"
+              type="number"
+              min={0}
+              max={100}
+              step={1}
+              defaultValue={0}
+              placeholder="0-100"
+            />
+          </label>
         </div>
+        <p className="text-xs text-ink/55">
+          % Bolsa parcial só é considerado quando o tipo é &quot;Bolsa parcial&quot;. Para outros tipos, deixe em 0.
+        </p>
       </Section>
 
       <Section title="Informacoes Medicas">

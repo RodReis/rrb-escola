@@ -31,19 +31,21 @@ function adjacentMes(competencia: string, delta: number) {
 export default async function DespesasPage({
   searchParams
 }: {
-  searchParams: Promise<{ mes?: string; categoria_id?: string; status?: string; erro?: string }>;
+  searchParams: Promise<{ mes?: string; categoria_id?: string; status?: string; tipo?: string; erro?: string }>;
 }) {
   const params = await searchParams;
   const now = new Date();
   const defaultMes = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`;
   const competencia = params.mes ?? defaultMes;
   const statusFilter = params.status ? params.status.split(",") : undefined;
+  const tipoFilter = params.tipo === "fixa" || params.tipo === "variavel" ? params.tipo : undefined;
 
   const [categorias, despesas] = await Promise.all([
     getCategorias(),
     getDespesasMensais(competencia, {
       categoria_id: params.categoria_id || undefined,
-      status: statusFilter
+      status: statusFilter,
+      tipo: tipoFilter
     })
   ]);
 
@@ -117,6 +119,14 @@ export default async function DespesasPage({
             </select>
           </label>
           <label>
+            Tipo
+            <select name="tipo" defaultValue={params.tipo ?? ""}>
+              <option value="">Todos</option>
+              <option value="fixa">Fixa</option>
+              <option value="variavel">Variável</option>
+            </select>
+          </label>
+          <label>
             Status
             <select name="status" defaultValue={params.status ?? ""}>
               <option value="">Todos</option>
@@ -140,6 +150,7 @@ export default async function DespesasPage({
               <tr className="text-left text-xs uppercase tracking-wide text-muted">
                 <th className="py-2">Descrição</th>
                 <th className="py-2">Categoria</th>
+                <th className="py-2">Tipo</th>
                 <th className="py-2">Fornecedor</th>
                 <th className="py-2">Venc.</th>
                 <th className="py-2">Pago em</th>

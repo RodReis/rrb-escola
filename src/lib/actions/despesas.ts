@@ -17,6 +17,7 @@ export async function createDespesaAction(formData: FormData) {
   const parsed = despesaSchema.safeParse({
     descricao: formText(formData, "descricao"),
     categoria_id: formText(formData, "categoria_id"),
+    tipo: formText(formData, "tipo") ?? "variavel",
     fornecedor: formText(formData, "fornecedor"),
     valor: formNumber(formData, "valor"),
     data_vencimento: formText(formData, "data_vencimento"),
@@ -54,6 +55,7 @@ export async function updateDespesaAction(formData: FormData) {
   const parsed = despesaSchema.safeParse({
     descricao: formText(formData, "descricao"),
     categoria_id: formText(formData, "categoria_id"),
+    tipo: formText(formData, "tipo") ?? "variavel",
     fornecedor: formText(formData, "fornecedor"),
     valor: formNumber(formData, "valor"),
     data_vencimento: formText(formData, "data_vencimento"),

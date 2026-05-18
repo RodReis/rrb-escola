@@ -1,10 +1,12 @@
 import { z } from "zod";
 
 export const FORMAS_PAGAMENTO = ["pix", "dinheiro", "cartao", "boleto", "transferencia"] as const;
+export const TIPOS_DESPESA = ["fixa", "variavel"] as const;
 
 export const despesaSchema = z.object({
   descricao: z.string().min(1, "Descrição obrigatória").max(200),
   categoria_id: z.string().uuid("Categoria inválida"),
+  tipo: z.enum(TIPOS_DESPESA).default("variavel"),
   fornecedor: z.string().max(200).optional().nullable(),
   valor: z.number().positive("Valor deve ser maior que zero"),
   data_vencimento: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "Data inválida"),
