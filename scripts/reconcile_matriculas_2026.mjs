@@ -124,6 +124,88 @@ async function loadMatriculas(escola_id) {
   return out;
 }
 
+async function ensureSeriesETurmas({
+  escola_id,
+  series,
+  turmas,
+  pass1Resolved,
+  seriesFaltando,
+  dryRun
+}) {
+  const serieByNorm = new Map(series.map((s) => [normSerie(s.nome), s]));
+  const turmaBySerieTurno = new Map(
+    turmas.map((t) => [`${t.serie_id}|${t.turno}`, t])
+  );
+  const seriesCriadas = [];
+  const turmasCriadas = [];
+
+  // Create missing series
+  for (const nome of seriesFaltando) {
+    if (dryRun) {
+      const fakeId = `dry-serie-${normSerie(nome)}`;
+      seriesCriadas.push({ id: fakeId, nome, dry: true });
+      serieByNorm.set(normSerie(nome), { id: fakeId, nome });
+      continue;
+    }
+    const { data, error } = await supabase
+      .from("series")
+      .insert({ escola_id, nome, ordem: 0, ativo: true })
+      .select("id, nome")
+      .single();
+    if (error) throw new Error(`Erro criando serie ${nome}: ${error.message}`);
+    serieByNorm.set(normSerie(data.nome), data);
+    seriesCriadas.push(data);
+  }
+
+  // Collect needed turmas from pass1 items that had turma_faltando
+  const turmasNecessarias = new Map();
+  for (const r of pass1Resolved) {
+    if (r.status !== "turma_faltando") continue;
+    const key = `${r.serie_nome_alvo}|${r.turno_alvo}`;
+    if (turmasNecessarias.has(key)) continue;
+    const serie = serieByNorm.get(normSerie(r.serie_nome_alvo));
+    if (!serie) continue;
+    turmasNecessarias.set(key, {
+      serie_id: serie.id,
+      serie_nome: r.serie_nome_alvo,
+      nome: r.turma_nome_alvo,
+      turno: r.turno_alvo
+    });
+  }
+
+  for (const t of turmasNecessarias.values()) {
+    const tKey = `${t.serie_id}|${t.turno}`;
+    if (turmaBySerieTurno.has(tKey)) continue;
+    if (dryRun) {
+      const fakeId = `dry-turma-${tKey}`;
+      turmasCriadas.push({ id: fakeId, serie_id: t.serie_id, serie_nome: t.serie_nome, nome: t.nome, turno: t.turno, dry: true });
+      turmaBySerieTurno.set(tKey, { id: fakeId, serie_id: t.serie_id, nome: t.nome, turno: t.turno });
+      continue;
+    }
+    const { data, error } = await supabase
+      .from("turmas")
+      .insert({
+        escola_id,
+        serie_id: t.serie_id,
+        nome: t.nome,
+        ano_letivo: ANO_LETIVO,
+        turno: t.turno,
+        capacidade: 30,
+        ativo: true
+      })
+      .select("id, serie_id, nome, ano_letivo, turno")
+      .single();
+    if (error)
+      throw new Error(
+        `Erro criando turma ${t.serie_nome}/${t.nome}/${t.turno}: ${error.message}`
+      );
+    turmaBySerieTurno.set(`${data.serie_id}|${data.turno}`, data);
+    turmasCriadas.push(data);
+  }
+
+  return { serieByNorm, turmaBySerieTurno, seriesCriadas, turmasCriadas };
+}
+
 async function main() {
   console.log(`Modo: ${mode}`);
   console.log(`Planilha: ${XLSX_PATH}`);
@@ -146,75 +228,81 @@ async function main() {
     `DB: alunos=${alunos.length} series=${series.length} turmas=${turmas.length} matriculas2026=${matriculas.length}`
   );
 
-  // Índices
+  // Índices base
   const alunoByNorm = new Map();
   for (const a of alunos) {
     alunoByNorm.set(normalizeName(a.nome), a);
   }
-  const serieByNorm = new Map(series.map((s) => [normSerie(s.nome), s]));
-  const turmaBySerieTurno = new Map(
-    turmas.map((t) => [`${t.serie_id}|${t.turno}`, t])
-  );
   const matriculaByAluno = new Map(matriculas.map((m) => [m.aluno_id, m]));
 
-  const resolved = [];
-  const orfaos = [];
-  const turmasFaltando = new Set();
-  const seriesFaltando = new Set();
-
-  for (const item of planilha) {
-    const mapped = mapTurmaHeader(item.turma_label);
-    if (!mapped) {
-      // Defensivo: parser não deveria ter aceito sem mapeamento.
-      orfaos.push({ ...item, motivo: "turma_label nao mapeada" });
-      continue;
+  // First pass with current DB state
+  function resolveAll({ serieByNorm, turmaBySerieTurno }) {
+    const resolved = [];
+    const orfaos = [];
+    const turmasFaltando = new Set();
+    const seriesFaltando = new Set();
+    for (const item of planilha) {
+      const mapped = mapTurmaHeader(item.turma_label);
+      if (!mapped) {
+        orfaos.push({ ...item, motivo: "turma_label nao mapeada" });
+        continue;
+      }
+      const aluno = alunoByNorm.get(normalizeName(item.nome_raw));
+      if (!aluno) {
+        orfaos.push({ ...item, motivo: "aluno nao encontrado por nome" });
+        continue;
+      }
+      const serie = serieByNorm.get(normSerie(mapped.serie_nome));
+      if (!serie) seriesFaltando.add(mapped.serie_nome);
+      const turma = serie ? turmaBySerieTurno.get(`${serie.id}|${mapped.turno}`) : null;
+      if (serie && !turma) turmasFaltando.add(`${mapped.serie_nome} | ${mapped.turno}`);
+      const matricula = matriculaByAluno.get(aluno.id);
+      let status;
+      if (!serie || !turma) status = "turma_faltando";
+      else if (!matricula) status = "insert_matricula";
+      else if (matricula.turma_id === turma.id) status = "inalterado";
+      else status = "update_matricula";
+      resolved.push({
+        aluno_id: aluno.id,
+        aluno_nome: aluno.nome,
+        sheet: item.sheet,
+        turma_label: item.turma_label,
+        serie_nome_alvo: mapped.serie_nome,
+        turma_nome_alvo: mapped.turma_nome,
+        turno_alvo: mapped.turno,
+        matricula_id_atual: matricula?.id ?? null,
+        serie_id_alvo: serie?.id ?? null,
+        turma_id_alvo: turma?.id ?? null,
+        status
+      });
     }
-    const aluno = alunoByNorm.get(normalizeName(item.nome_raw));
-    if (!aluno) {
-      orfaos.push({ ...item, motivo: "aluno nao encontrado por nome" });
-      continue;
-    }
-
-    const serie = serieByNorm.get(normSerie(mapped.serie_nome));
-    if (!serie) {
-      seriesFaltando.add(mapped.serie_nome);
-    }
-    const turma = serie
-      ? turmaBySerieTurno.get(`${serie.id}|${mapped.turno}`)
-      : null;
-    if (serie && !turma) {
-      turmasFaltando.add(
-        `${mapped.serie_nome} | ${mapped.turno}`
-      );
-    }
-
-    const matricula = matriculaByAluno.get(aluno.id);
-
-    let status;
-    if (!serie || !turma) {
-      status = "turma_faltando";
-    } else if (!matricula) {
-      status = "insert_matricula";
-    } else if (matricula.turma_id === turma.id) {
-      status = "inalterado";
-    } else {
-      status = "update_matricula";
-    }
-
-    resolved.push({
-      aluno_id: aluno.id,
-      aluno_nome: aluno.nome,
-      sheet: item.sheet,
-      turma_label: item.turma_label,
-      serie_nome_alvo: mapped.serie_nome,
-      turma_nome_alvo: mapped.turma_nome,
-      turno_alvo: mapped.turno,
-      matricula_id_atual: matricula?.id ?? null,
-      serie_id_alvo: serie?.id ?? null,
-      turma_id_alvo: turma?.id ?? null,
-      status
-    });
+    return { resolved, orfaos, seriesFaltando, turmasFaltando };
   }
+
+  const pass1 = resolveAll({
+    serieByNorm: new Map(series.map((s) => [normSerie(s.nome), s])),
+    turmaBySerieTurno: new Map(turmas.map((t) => [`${t.serie_id}|${t.turno}`, t]))
+  });
+
+  const ensured = await ensureSeriesETurmas({
+    escola_id: escola.id,
+    series,
+    turmas,
+    pass1Resolved: pass1.resolved,
+    seriesFaltando: pass1.seriesFaltando,
+    dryRun: !apply
+  });
+
+  // Second pass with updated maps (real or simulated)
+  const pass2 = resolveAll({
+    serieByNorm: ensured.serieByNorm,
+    turmaBySerieTurno: ensured.turmaBySerieTurno
+  });
+
+  const resolved = pass2.resolved;
+  const orfaos = pass2.orfaos;
+  const seriesFaltando = pass2.seriesFaltando;
+  const turmasFaltando = pass2.turmasFaltando;
 
   // Extras: matrículas no DB cujos alunos não estão na planilha (por nome)
   const planilhaAlunoIds = new Set(
@@ -248,6 +336,9 @@ async function main() {
 
   // --- JSON report ---
   const turmaById = new Map(turmas.map((t) => [t.id, t]));
+  for (const t of ensured.turmasCriadas) {
+    if (!t.dry && t.id) turmaById.set(t.id, t);
+  }
   const serieById = new Map(series.map((s) => [s.id, s]));
 
   const report = {
@@ -296,6 +387,9 @@ async function main() {
     })),
     extras_sistema: extras
   };
+
+  report.series_criadas = ensured.seriesCriadas;
+  report.turmas_criadas = ensured.turmasCriadas;
 
   const ts = new Date().toISOString().replace(/[:.]/g, "-");
   const reportPath = `${REPORT_DIR}/reconcile-2026-${mode.toLowerCase()}-${ts}.json`;
