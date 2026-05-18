@@ -110,13 +110,20 @@ export function QuickDocumentActions({ alunoId, matriculaAtiva, onExportFichaPdf
           variant="secondary"
           onClick={() => setDropdownOpen((v) => !v)}
           disabled={loadingTipo !== null}
+          aria-haspopup="true"
+          aria-expanded={dropdownOpen}
+          aria-label="Mais documentos"
           className="!py-1.5 !px-2.5 text-xs"
         >
           Mais
           <ChevronDown size={12} />
         </Button>
         {dropdownOpen && (
-          <div className="absolute right-0 top-full z-20 mt-1 w-72 rounded-ui border border-line bg-surface p-1.5 shadow-soft">
+          <div
+            role="menu"
+            aria-label="Mais documentos"
+            className="absolute right-0 top-full z-20 mt-1 w-72 rounded-ui border border-line bg-surface p-1.5 shadow-soft"
+          >
             <p className="px-2.5 py-1.5 text-[10px] font-bold uppercase tracking-[0.12em] text-muted">
               Mais documentos
             </p>
@@ -124,9 +131,10 @@ export function QuickDocumentActions({ alunoId, matriculaAtiva, onExportFichaPdf
               <button
                 key={tipo}
                 type="button"
+                role="menuitem"
                 onClick={() => handleGerar(tipo)}
                 disabled={loadingTipo !== null}
-                className="flex w-full items-center gap-2 rounded-ui px-2.5 py-2 text-left text-sm text-ink hover:bg-subtleHover disabled:opacity-50"
+                className="flex w-full items-center gap-2 rounded-ui px-2.5 py-2 text-left text-sm text-ink hover:bg-muted/60 disabled:opacity-50"
               >
                 {loadingTipo === tipo ? (
                   <Loader2 size={14} className="animate-spin" />
@@ -141,11 +149,13 @@ export function QuickDocumentActions({ alunoId, matriculaAtiva, onExportFichaPdf
                 <div className="my-1 border-t border-line" />
                 <button
                   type="button"
+                  role="menuitem"
+                  disabled={loadingTipo !== null}
                   onClick={() => {
                     setDropdownOpen(false);
                     onExportFichaPdf();
                   }}
-                  className="flex w-full items-center gap-2 rounded-ui px-2.5 py-2 text-left text-sm italic text-muted hover:bg-subtleHover"
+                  className="flex w-full items-center gap-2 rounded-ui px-2.5 py-2 text-left text-sm italic text-muted hover:bg-muted/60 disabled:opacity-50"
                 >
                   ⬇ Exportar ficha (PDF)
                 </button>
