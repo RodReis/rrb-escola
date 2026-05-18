@@ -311,10 +311,11 @@ export async function updateStudentAction(formData: FormData) {
   const firstError = relatedResults.find((r) => r && "error" in r && r.error);
   if (firstError && "error" in firstError && firstError.error) throw firstError.error;
 
+  const ftab = formText(formData, "ftab") ?? "pessoal";
   revalidatePath("/alunos");
   revalidatePath(`/alunos/${alunoId}`);
   revalidatePath(`/alunos/${alunoId}/editar`);
-  redirect(`/alunos/${alunoId}/editar?saved=1`);
+  redirect(`/alunos/${alunoId}/editar?ftab=${ftab}&saved=1`);
 }
 
 export async function toggleStudentAction(formData: FormData) {
