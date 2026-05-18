@@ -46,7 +46,7 @@ function extractNameAndValue(rowValues) {
   let valor = null;
   for (const v of rowValues) {
     const t = cellText(v).trim();
-    if (!nome && t.length > 5) {
+    if (!nome && t.length >= 2) {
       const up = t.toUpperCase();
       if (up === "ALUNO" || up.startsWith("MATRICULA")) continue;
       if (mapTurmaHeader(t)) continue;

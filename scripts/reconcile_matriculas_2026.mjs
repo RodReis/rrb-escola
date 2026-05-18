@@ -279,6 +279,15 @@ async function main() {
     alunoByNorm.set(normalizeName(a.nome), a);
   }
   const matriculaByAluno = new Map(matriculas.map((m) => [m.aluno_id, m]));
+  const dupeAlunoIds = matriculas
+    .map((m) => m.aluno_id)
+    .filter((id, _, arr) => arr.indexOf(id) !== arr.lastIndexOf(id));
+  if (dupeAlunoIds.length) {
+    console.warn(
+      `AVISO: ${[...new Set(dupeAlunoIds)].length} aluno(s) com múltiplas matrículas 2026 — apenas a última será considerada:`,
+      [...new Set(dupeAlunoIds)]
+    );
+  }
 
   // First pass with current DB state
   function resolveAll({ serieByNorm, turmaBySerieTurno }) {
