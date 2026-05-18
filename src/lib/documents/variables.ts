@@ -23,6 +23,7 @@ export type DocumentVariables = {
   RAZAO_SOCIAL_EMPRESA: string;
   FANTASIA_EMPRESA: string;
   CIDADE_DATA_EXTENSO: string;
+  DATA_HOJE_EXTENSO: string;
 };
 
 function formatEndereco(
@@ -186,5 +187,10 @@ export async function buildVariables(
     FANTASIA_EMPRESA: escola?.nome ?? "",
 
     CIDADE_DATA_EXTENSO: formatDataExtenso(new Date()),
+    DATA_HOJE_EXTENSO: (() => {
+      const d = new Date();
+      const meses = ["janeiro","fevereiro","março","abril","maio","junho","julho","agosto","setembro","outubro","novembro","dezembro"];
+      return `${d.getDate()} de ${meses[d.getMonth()]} de ${d.getFullYear()}`;
+    })(),
   };
 }
