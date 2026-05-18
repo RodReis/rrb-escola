@@ -206,6 +206,51 @@ async function ensureSeriesETurmas({
   return { serieByNorm, turmaBySerieTurno, seriesCriadas, turmasCriadas };
 }
 
+async function applyMatriculas({ escola_id, resolved, dryRun }) {
+  let updated = 0;
+  let inserted = 0;
+  for (const r of resolved) {
+    if (r.status === "update_matricula") {
+      if (dryRun) {
+        updated++;
+        continue;
+      }
+      const { error } = await supabase
+        .from("matriculas")
+        .update({
+          serie_id: r.serie_id_alvo,
+          turma_id: r.turma_id_alvo,
+          updated_at: new Date().toISOString()
+        })
+        .eq("id", r.matricula_id_atual);
+      if (error)
+        throw new Error(
+          `UPDATE matricula ${r.matricula_id_atual} falhou: ${error.message}`
+        );
+      updated++;
+    } else if (r.status === "insert_matricula") {
+      if (dryRun) {
+        inserted++;
+        continue;
+      }
+      const { error } = await supabase.from("matriculas").insert({
+        escola_id,
+        aluno_id: r.aluno_id,
+        serie_id: r.serie_id_alvo,
+        turma_id: r.turma_id_alvo,
+        ano_letivo: ANO_LETIVO,
+        status: "ativa"
+      });
+      if (error)
+        throw new Error(
+          `INSERT matricula aluno ${r.aluno_id} falhou: ${error.message}`
+        );
+      inserted++;
+    }
+  }
+  return { updated, inserted };
+}
+
 async function main() {
   console.log(`Modo: ${mode}`);
   console.log(`Planilha: ${XLSX_PATH}`);
@@ -387,6 +432,14 @@ async function main() {
     })),
     extras_sistema: extras
   };
+
+  const applied = await applyMatriculas({
+    escola_id: escola.id,
+    resolved,
+    dryRun: !apply
+  });
+  console.log(`\nAplicado: updates=${applied.updated} inserts=${applied.inserted}`);
+  report.applied = applied;
 
   report.series_criadas = ensured.seriesCriadas;
   report.turmas_criadas = ensured.turmasCriadas;
