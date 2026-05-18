@@ -4,6 +4,7 @@ const DOCX_MIME =
   "application/vnd.openxmlformats-officedocument.wordprocessingml.document";
 
 export function downloadBase64Docx(base64: string, nomeArquivo: string): void {
+  if (typeof document === "undefined") return;
   const bin = atob(base64);
   const bytes = new Uint8Array(bin.length);
   for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
@@ -13,5 +14,5 @@ export function downloadBase64Docx(base64: string, nomeArquivo: string): void {
   a.href = url;
   a.download = nomeArquivo;
   a.click();
-  URL.revokeObjectURL(url);
+  setTimeout(() => URL.revokeObjectURL(url), 100);
 }
