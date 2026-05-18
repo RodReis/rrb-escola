@@ -310,7 +310,8 @@ export async function updateStudentAction(formData: FormData) {
 
   revalidatePath("/alunos");
   revalidatePath(`/alunos/${alunoId}`);
-  redirect(`/alunos/${alunoId}`);
+  revalidatePath(`/alunos/${alunoId}/editar`);
+  redirect(`/alunos/${alunoId}/editar?saved=1`);
 }
 
 export async function toggleStudentAction(formData: FormData) {

@@ -49,6 +49,12 @@ export default async function EditStudentPage({
         <StudentEditTabs />
       </div>
 
+      {(await searchParams).saved === "1" && (
+        <div className="flex items-center gap-2 border-b border-emerald-200 bg-emerald-50 px-6 py-3 text-sm font-medium text-emerald-800">
+          <span>✓</span> Dados salvos com sucesso.
+        </div>
+      )}
+
       <div className="grid gap-6 py-6">
         {tab === "dados" && (
           <>
