@@ -12,6 +12,11 @@ export function generateDocx(
 ): Buffer {
   const meta = TEMPLATE_META[tipoTemplate];
   const templatePath = path.join(process.cwd(), "public", "templates", meta.arquivo);
+  const resolved = path.resolve(templatePath);
+  const allowed = path.resolve(path.join(process.cwd(), "public", "templates"));
+  if (!resolved.startsWith(allowed + path.sep)) {
+    throw new Error("Invalid template path");
+  }
   const content = fs.readFileSync(templatePath);
 
   const zip = new PizZip(content);

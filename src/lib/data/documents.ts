@@ -22,15 +22,14 @@ export async function getStudentDocuments(alunoId: string): Promise<StudentDocum
 
   if (error) throw error;
 
-  return Promise.all(
-    (data ?? []).map(async (item) => {
-      const { data: signed } = await supabase.storage.from("documentos-alunos").createSignedUrl(item.storage_path, 60 * 30);
-      return {
-        ...item,
-        signed_url: signed?.signedUrl ?? null
-      };
-    })
+  const paths = (data ?? []).map((d) => d.storage_path);
+  const { data: signedList } = await supabase.storage
+    .from("documentos-alunos")
+    .createSignedUrls(paths, 60 * 30);
+  const urlMap = Object.fromEntries(
+    (signedList ?? []).map((s) => [s.path, s.signedUrl ?? null])
   );
+  return (data ?? []).map((d) => ({ ...d, signed_url: urlMap[d.storage_path] ?? null }));
 }
 
 const TIPOS_GERADOS = ["contrato", "declaracao", "termo"] as const;
@@ -46,12 +45,12 @@ export async function getMatriculaDocumentos(alunoId: string): Promise<StudentDo
 
   if (error) throw error;
 
-  return Promise.all(
-    (data ?? []).map(async (item) => {
-      const { data: signed } = await supabase.storage
-        .from("documentos-alunos")
-        .createSignedUrl(item.storage_path, 60 * 30);
-      return { ...item, signed_url: signed?.signedUrl ?? null };
-    })
+  const paths = (data ?? []).map((d) => d.storage_path);
+  const { data: signedList } = await supabase.storage
+    .from("documentos-alunos")
+    .createSignedUrls(paths, 60 * 30);
+  const urlMap = Object.fromEntries(
+    (signedList ?? []).map((s) => [s.path, s.signedUrl ?? null])
   );
+  return (data ?? []).map((d) => ({ ...d, signed_url: urlMap[d.storage_path] ?? null }));
 }

@@ -46,6 +46,8 @@ export function DocumentGenerator({ matriculaId, documentosIniciais }: Props) {
         if (res.ok) {
           const novos = await res.json();
           setDocumentos(novos);
+        } else {
+          console.error("Falha ao recarregar documentos", res.status);
         }
       }
     } finally {

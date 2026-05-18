@@ -17,7 +17,7 @@ export async function GET(
     .eq("id", params.id)
     .single();
 
-  if (!matricula) return NextResponse.json([]);
+  if (!matricula) return NextResponse.json({ error: "Matrícula não encontrada" }, { status: 404 });
 
   const { data: docs } = await supabase
     .from("documentos_aluno")
@@ -26,14 +26,14 @@ export async function GET(
     .in("tipo_documento", TIPOS_GERADOS)
     .order("created_at", { ascending: false });
 
-  const docsComUrl = await Promise.all(
-    (docs ?? []).map(async (doc) => {
-      const { data: signed } = await supabase.storage
-        .from("documentos-alunos")
-        .createSignedUrl(doc.storage_path, 60 * 30);
-      return { ...doc, signed_url: signed?.signedUrl ?? null };
-    })
+  const paths = (docs ?? []).map((d) => d.storage_path);
+  const { data: signedList } = await supabase.storage
+    .from("documentos-alunos")
+    .createSignedUrls(paths, 60 * 30);
+  const urlMap = Object.fromEntries(
+    (signedList ?? []).map((s) => [s.path, s.signedUrl ?? null])
   );
+  const docsComUrl = (docs ?? []).map((d) => ({ ...d, signed_url: urlMap[d.storage_path] ?? null }));
 
   return NextResponse.json(docsComUrl);
 }

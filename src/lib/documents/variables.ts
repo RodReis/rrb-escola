@@ -170,9 +170,7 @@ export async function buildVariables(
     CPF_MAE_ALUNO: mae?.cpf ?? "",
     ENDERECO_MAE_ALUNO: "",
 
-    ENDERECO_RESP: formatEndereco(
-      respFinanceiro ? endPrincipal : endPrincipal
-    ),
+    ENDERECO_RESP: formatEndereco(endPrincipal),
 
     // escolas.nome serve tanto para razao_social quanto fantasia
     RAZAO_SOCIAL_EMPRESA: escola?.nome ?? "",

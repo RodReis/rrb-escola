@@ -58,7 +58,10 @@ export async function generateDocumentoAction(
       tamanho_bytes: pdfBuffer.length,
     });
 
-    if (insertError) throw insertError;
+    if (insertError) {
+      await supabase.storage.from("documentos-alunos").remove([storagePath]);
+      throw insertError;
+    }
 
     const { data: signed } = await supabase.storage
       .from("documentos-alunos")
