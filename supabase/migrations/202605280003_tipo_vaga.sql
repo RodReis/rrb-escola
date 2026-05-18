@@ -14,7 +14,7 @@ alter table matriculas
     check (percentual_bolsa >= 0 and percentual_bolsa <= 100);
 
 alter table matriculas
-  add constraint matriculas_tipo_vaga_pct_check
+  add constraint matriculas_percentual_bolsa_check
   check (
     (tipo_vaga = 'bolsa_parcial' and percentual_bolsa > 0 and percentual_bolsa < 100)
     or (tipo_vaga <> 'bolsa_parcial' and percentual_bolsa = 0)
