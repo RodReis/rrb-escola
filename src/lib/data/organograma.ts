@@ -2,7 +2,7 @@
 import { createServerClient } from "@/lib/supabase/server";
 import { DEFAULT_SCHOOL_ID } from "@/lib/constants";
 
-export async function getOrganogramaTree() {
+export async function getOrganogramaTree(anoLetivo: number = new Date().getFullYear()) {
   const supabase = await createServerClient();
 
   const { data: segmentos, error: segErr } = await supabase
@@ -27,7 +27,7 @@ export async function getOrganogramaTree() {
     .from("turmas")
     .select("id, nome, serie_id")
     .eq("escola_id", DEFAULT_SCHOOL_ID)
-    .eq("ano_letivo", 2026)
+    .eq("ano_letivo", anoLetivo)
     .order("nome");
 
   if (turErr) throw turErr;
@@ -36,7 +36,7 @@ export async function getOrganogramaTree() {
     .from("matriculas")
     .select("turma_id")
     .eq("escola_id", DEFAULT_SCHOOL_ID)
-    .eq("ano_letivo", 2026)
+    .eq("ano_letivo", anoLetivo)
     .eq("status", "ativa");
 
   if (matErr) throw matErr;
@@ -85,7 +85,7 @@ export async function getOrganogramaTree() {
   return { tree, totalAlunos };
 }
 
-export async function getOrganogramaDrill(turmaId: string) {
+export async function getOrganogramaDrill(turmaId: string, anoLetivo: number = new Date().getFullYear()) {
   const supabase = await createServerClient();
   const now = new Date(Date.now() - 3 * 60 * 60 * 1000);
   const competencia = `${now.getUTCFullYear()}-${String(now.getUTCMonth() + 1).padStart(2, "0")}`;
@@ -96,7 +96,7 @@ export async function getOrganogramaDrill(turmaId: string) {
     .eq("turma_id", turmaId)
     .eq("escola_id", DEFAULT_SCHOOL_ID)
     .eq("status", "ativa")
-    .eq("ano_letivo", 2026)
+    .eq("ano_letivo", anoLetivo)
     .order("alunos(nome)");
 
   if (matErr) throw matErr;
