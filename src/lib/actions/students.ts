@@ -164,8 +164,11 @@ export async function updateStudentAction(formData: FormData) {
   await requireSession();
   const supabase = await createServerClient();
   const alunoId = formText(formData, "aluno_id");
-  const nome = formText(formData, "nome");
-  const matricula = formText(formData, "matricula_codigo");
+  // getAll + last: hidden carries the saved value; visible input (aba pessoal) appended after → last wins
+  const nomeValues = formData.getAll("nome").map(String).filter(Boolean);
+  const matriculaValues = formData.getAll("matricula_codigo").map(String).filter(Boolean);
+  const nome = nomeValues[nomeValues.length - 1]?.trim() || null;
+  const matricula = matriculaValues[matriculaValues.length - 1]?.trim() || null;
 
   if (!alunoId || !nome || !matricula) throw new Error("Aluno, nome e matricula sao obrigatorios.");
 

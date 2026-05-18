@@ -71,10 +71,12 @@ export function StudentEditForm({ student }: { student: StudentSheet }) {
       </nav>
 
       <form action={updateStudentAction} className="grid gap-5 p-5">
-        <input type="hidden" name="aluno_id"       value={student.id} />
-        <input type="hidden" name="endereco_id"    value={endereco?.id ?? ""} />
-        <input type="hidden" name="contato_id"     value={contato?.id ?? ""} />
-        <input type="hidden" name="responsavel_id" value={responsavel?.id ?? ""} />
+        <input type="hidden" name="aluno_id"          value={student.id} />
+        <input type="hidden" name="nome"             value={student.nome} />
+        <input type="hidden" name="matricula_codigo" value={student.matricula_codigo} />
+        <input type="hidden" name="endereco_id"      value={endereco?.id ?? ""} />
+        <input type="hidden" name="contato_id"       value={contato?.id ?? ""} />
+        <input type="hidden" name="responsavel_id"   value={responsavel?.id ?? ""} />
 
         {/* ── PESSOAL ─────────────────────────────────────────────────── */}
         {active === "pessoal" && (
