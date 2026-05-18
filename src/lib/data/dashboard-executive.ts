@@ -718,7 +718,7 @@ export async function getAlertas(
 ): Promise<AlertaItem[]> {
   const alertas: AlertaItem[] = [];
 
-  const ocup = await getOcupacao(escolaId);
+  const ocup = await getOcupacao(escolaId, anoLetivo);
   for (const etapa of ocup.porEtapa) {
     if (etapa.capacidade > 0 && etapa.matriculados / etapa.capacidade < 0.5) {
       alertas.push({
@@ -855,8 +855,9 @@ export async function getFrequenciaResumo(
 
   const { data } = await supabase
     .from("frequencias")
-    .select("data_aula, presente")
+    .select("data_aula, presente, matriculas(turma_id, turmas!inner(ano_letivo))")
     .eq("escola_id", escolaId)
+    .eq("matriculas.turmas.ano_letivo", anoLetivo)
     .gte("data_aula", desdeStr)
     .lte("data_aula", hojeStr);
 
@@ -1310,7 +1311,8 @@ export async function getAniversariantesMatricula(
   const { data: matriculas } = await supabase
     .from("matriculas")
     .select("aluno_id, data_matricula, alunos(id, nome)")
-    .eq("escola_id", escolaId);
+    .eq("escola_id", escolaId)
+    .eq("ano_letivo", anoLetivo);
 
   const primeira = new Map<string, { dataMatricula: string; nome: string }>();
   for (const m of ((matriculas ?? []) as any[])) {
