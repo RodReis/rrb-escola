@@ -7,13 +7,18 @@ export type DocumentVariables = {
   TIPOENSINO_ALUNO: string;
   ANO_LETIVO: string;
   // rg não existe em responsaveis_aluno — campos mantidos como string vazia para compatibilidade com templates
+  NOME_PAI_ALUNO: string;
   RG_PAI_ALUNO: string;
   CPF_PAI_ALUNO: string;
   ENDERECO_PAI_ALUNO: string;
+  NOME_MAE_ALUNO: string;
   RG_MAE_ALUNO: string;
   CPF_MAE_ALUNO: string;
   ENDERECO_MAE_ALUNO: string;
+  NOME_RESP: string;
   ENDERECO_RESP: string;
+  EMAIL_RESPONSAVEL: string;
+  CELULAR_RESPONSAVEL: string;
   // escolas não tem razao_social/nome_fantasia — usa-se o campo `nome`
   RAZAO_SOCIAL_EMPRESA: string;
   FANTASIA_EMPRESA: string;
@@ -90,7 +95,7 @@ export async function buildVariables(
     supabase
       .from("responsaveis_aluno")
       // schema: nome, cpf, parentesco (sem rg)
-      .select("nome, cpf, parentesco, responsavel_financeiro")
+      .select("nome, cpf, celular, email, parentesco, responsavel_financeiro")
       .eq("aluno_id", alunoId),
     supabase
       .from("enderecos_aluno")
@@ -161,16 +166,21 @@ export async function buildVariables(
     TIPOENSINO_ALUNO: tipoEnsino,
     ANO_LETIVO: String(matricula.ano_letivo ?? ""),
 
+    NOME_PAI_ALUNO: pai?.nome ?? "",
     // rg não existe na tabela responsaveis_aluno — retorna string vazia
     RG_PAI_ALUNO: "",
     CPF_PAI_ALUNO: pai?.cpf ?? "",
-    ENDERECO_PAI_ALUNO: "",
+    ENDERECO_PAI_ALUNO: formatEndereco(endPrincipal),
 
+    NOME_MAE_ALUNO: mae?.nome ?? "",
     RG_MAE_ALUNO: "",
     CPF_MAE_ALUNO: mae?.cpf ?? "",
-    ENDERECO_MAE_ALUNO: "",
+    ENDERECO_MAE_ALUNO: formatEndereco(endPrincipal),
 
+    NOME_RESP: respFinanceiro?.nome ?? pai?.nome ?? mae?.nome ?? "",
     ENDERECO_RESP: formatEndereco(endPrincipal),
+    EMAIL_RESPONSAVEL: respFinanceiro?.email ?? pai?.email ?? mae?.email ?? "",
+    CELULAR_RESPONSAVEL: respFinanceiro?.celular ?? pai?.celular ?? mae?.celular ?? "",
 
     // escolas.nome serve tanto para razao_social quanto fantasia
     RAZAO_SOCIAL_EMPRESA: escola?.nome ?? "",
