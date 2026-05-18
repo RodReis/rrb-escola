@@ -32,3 +32,26 @@ export async function getStudentDocuments(alunoId: string): Promise<StudentDocum
     })
   );
 }
+
+const TIPOS_GERADOS = ["contrato", "declaracao", "termo"] as const;
+
+export async function getMatriculaDocumentos(alunoId: string): Promise<StudentDocument[]> {
+  const supabase = await createServerClient();
+  const { data, error } = await supabase
+    .from("documentos_aluno")
+    .select("*")
+    .eq("aluno_id", alunoId)
+    .in("tipo_documento", TIPOS_GERADOS)
+    .order("created_at", { ascending: false });
+
+  if (error) throw error;
+
+  return Promise.all(
+    (data ?? []).map(async (item) => {
+      const { data: signed } = await supabase.storage
+        .from("documentos-alunos")
+        .createSignedUrl(item.storage_path, 60 * 30);
+      return { ...item, signed_url: signed?.signedUrl ?? null };
+    })
+  );
+}
