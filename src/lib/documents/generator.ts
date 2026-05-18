@@ -2,7 +2,7 @@ import path from "path";
 import fs from "fs";
 import PizZip from "pizzip";
 import Docxtemplater from "docxtemplater";
-import { jsPDF } from "jspdf";
+import mammoth from "mammoth";
 import type { DocumentVariables } from "./variables";
 import { TEMPLATE_META, type TipoTemplate } from "./templates";
 
@@ -31,44 +31,74 @@ export function generateDocx(
   return doc.getZip().generate({ type: "nodebuffer" }) as Buffer;
 }
 
-export function extractTextFromDocx(docxBuffer: Buffer): string {
-  const zip = new PizZip(docxBuffer);
-  const documentXml = zip.files["word/document.xml"]?.asText() ?? "";
-  return documentXml
-    .replace(/<[^>]+>/g, " ")
-    .replace(/\s{2,}/g, "\n")
-    .trim();
+async function docxBufferToHtml(docxBuffer: Buffer): Promise<string> {
+  const result = await mammoth.convertToHtml(
+    { buffer: docxBuffer },
+    {
+      styleMap: [
+        "p[style-name='Heading 1'] => h1:fresh",
+        "p[style-name='Heading 2'] => h2:fresh",
+        "p[style-name='Heading 3'] => h3:fresh",
+        "b => strong",
+        "i => em",
+      ],
+    }
+  );
+  return result.value;
 }
 
-export function generatePdf(text: string, titulo: string): Buffer {
-  const doc = new jsPDF({ orientation: "portrait", unit: "mm", format: "a4" });
+async function htmlToPdf(html: string): Promise<Buffer> {
+  // Dynamic import to avoid loading puppeteer at module init time
+  const puppeteer = await import("puppeteer");
+  const browser = await puppeteer.default.launch({
+    headless: true,
+    args: ["--no-sandbox", "--disable-setuid-sandbox", "--disable-dev-shm-usage"],
+  });
 
-  const pageWidth = doc.internal.pageSize.getWidth();
-  const margin = 20;
-  const maxWidth = pageWidth - margin * 2;
+  try {
+    const page = await browser.newPage();
 
-  doc.setFont("helvetica", "bold");
-  doc.setFontSize(13);
-  doc.text(titulo, pageWidth / 2, 20, { align: "center" });
-
-  doc.setFont("helvetica", "normal");
-  doc.setFontSize(10);
-
-  const lines = doc.splitTextToSize(text, maxWidth);
-  let y = 32;
-  const lineHeight = 5;
-  const pageHeight = doc.internal.pageSize.getHeight();
-
-  for (const line of lines) {
-    if (y + lineHeight > pageHeight - margin) {
-      doc.addPage();
-      y = margin;
-    }
-    doc.text(line, margin, y);
-    y += lineHeight;
+    const fullHtml = `<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: Arial, Helvetica, sans-serif;
+    font-size: 11pt;
+    line-height: 1.5;
+    color: #000;
+    padding: 2cm 2.5cm;
   }
+  h1 { font-size: 14pt; font-weight: bold; text-align: center; margin: 12pt 0 8pt; }
+  h2 { font-size: 12pt; font-weight: bold; margin: 10pt 0 6pt; }
+  h3 { font-size: 11pt; font-weight: bold; margin: 8pt 0 4pt; }
+  p  { margin-bottom: 6pt; text-align: justify; }
+  strong { font-weight: bold; }
+  em { font-style: italic; }
+  table { width: 100%; border-collapse: collapse; margin: 8pt 0; }
+  td, th { border: 1px solid #ccc; padding: 4pt 6pt; font-size: 10pt; }
+  @media print {
+    body { padding: 0; }
+  }
+</style>
+</head>
+<body>${html}</body>
+</html>`;
 
-  return Buffer.from(doc.output("arraybuffer"));
+    await page.setContent(fullHtml, { waitUntil: "load" });
+
+    const pdfBytes = await page.pdf({
+      format: "A4",
+      printBackground: true,
+      margin: { top: "2cm", bottom: "2cm", left: "2.5cm", right: "2.5cm" },
+    });
+
+    return Buffer.from(pdfBytes);
+  } finally {
+    await browser.close();
+  }
 }
 
 export async function generateDocumentoPdf(
@@ -77,10 +107,18 @@ export async function generateDocumentoPdf(
 ): Promise<{ pdfBuffer: Buffer; nomeArquivo: string }> {
   const meta = TEMPLATE_META[tipoTemplate];
   const docxBuffer = generateDocx(tipoTemplate, variables);
-  const text = extractTextFromDocx(docxBuffer);
-  const nomeAluno = variables.NOME_ALUNO || "Aluno";
+  const html = await docxBufferToHtml(docxBuffer);
+  const pdfBuffer = await htmlToPdf(html);
+
+  const nomeAluno = (variables.NOME_ALUNO || "Aluno")
+    .normalize("NFD")
+    .replace(/[̀-ͯ]/g, "")
+    .replace(/[^a-zA-Z0-9\s-]/g, "")
+    .trim()
+    .replace(/\s+/g, "-");
   const anoLetivo = variables.ANO_LETIVO || String(new Date().getFullYear());
-  const nomeArquivo = `${meta.label} - ${nomeAluno} - ${anoLetivo}.pdf`;
-  const pdfBuffer = generatePdf(text, meta.label);
+  const nomeArquivo = `${meta.label} - ${nomeAluno} - ${anoLetivo}.pdf`
+    .replace(/[/\\:*?"<>|]/g, "-");
+
   return { pdfBuffer, nomeArquivo };
 }
