@@ -200,118 +200,155 @@ export async function updateStudentAction(formData: FormData) {
 
   if (error) throw error;
 
-  const enderecoId = formText(formData, "endereco_id");
-  const contatoId = formText(formData, "contato_id");
+  const ftab = formText(formData, "ftab") ?? "pessoal";
+  const enderecoId   = formText(formData, "endereco_id");
+  const contatoId    = formText(formData, "contato_id");
   const responsavelId = formText(formData, "responsavel_id");
-  const paiId = formText(formData, "pai_id");
-  const maeId = formText(formData, "mae_id");
+  const paiId        = formText(formData, "pai_id");
+  const maeId        = formText(formData, "mae_id");
 
-  const enderecoPayload = {
-    aluno_id: alunoId,
-    logradouro: formText(formData, "logradouro") ?? "Nao informado",
-    numero: formText(formData, "numero"),
-    complemento: formText(formData, "complemento"),
-    bairro: formText(formData, "bairro"),
-    cidade: formText(formData, "cidade"),
-    uf: formText(formData, "uf"),
-    cep: formText(formData, "cep"),
-    principal: true
-  };
+  // Only run DB operations that belong to the active tab.
+  // Fields from inactive tabs are absent from the DOM → FormData → must not be written.
+  // Wrap in Promise.resolve() because PostgrestFilterBuilder is thenable but not a full Promise.
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const q = (builder: any) => Promise.resolve(builder) as Promise<{ error: unknown }>;
+  const ops: Promise<{ error: unknown }>[] = [];
 
-  const contatoPayload = {
-    aluno_id: alunoId,
-    nome: formText(formData, "contato_nome") ?? "Contato",
-    telefone: formText(formData, "contato_telefone"),
-    celular: formText(formData, "contato_celular"),
-    parentesco: formText(formData, "contato_parentesco"),
-    principal: true
-  };
+  if (ftab === "endereco") {
+    const payload = {
+      aluno_id: alunoId,
+      logradouro: formText(formData, "logradouro"),
+      numero: formText(formData, "numero"),
+      complemento: formText(formData, "complemento"),
+      bairro: formText(formData, "bairro"),
+      cidade: formText(formData, "cidade"),
+      uf: formText(formData, "uf"),
+      cep: formText(formData, "cep"),
+      principal: true,
+    };
+    ops.push(q(
+      enderecoId
+        ? supabase.from("enderecos_aluno").update(payload).eq("id", enderecoId).eq("aluno_id", alunoId)
+        : supabase.from("enderecos_aluno").insert(payload)
+    ));
+  }
 
-  const responsavelPayload = {
-    aluno_id: alunoId,
-    nome: formText(formData, "responsavel_nome") ?? "Responsavel",
-    cpf: formText(formData, "responsavel_cpf"),
-    telefone: formText(formData, "responsavel_telefone"),
-    celular: formText(formData, "responsavel_celular"),
-    parentesco: formText(formData, "responsavel_parentesco"),
-    email: formText(formData, "responsavel_email"),
-    responsavel_financeiro: true,
-    responsavel_pedagogico: true
-  };
-
-  const paiPayload = {
-    aluno_id: alunoId,
-    nome: formText(formData, "pai_nome") ?? "Pai",
-    rg: formText(formData, "pai_rg"),
-    cpf: formText(formData, "pai_cpf"),
-    telefone: formText(formData, "pai_telefone"),
-    celular: formText(formData, "pai_celular"),
-    email: formText(formData, "pai_email"),
-    parentesco: "Pai",
-  };
-
-  const maePayload = {
-    aluno_id: alunoId,
-    nome: formText(formData, "mae_nome") ?? "Mãe",
-    rg: formText(formData, "mae_rg"),
-    cpf: formText(formData, "mae_cpf"),
-    telefone: formText(formData, "mae_telefone"),
-    celular: formText(formData, "mae_celular"),
-    email: formText(formData, "mae_email"),
-    parentesco: "Mãe",
-  };
-
-  const relatedResults = await Promise.all([
-    enderecoId
-      ? supabase.from("enderecos_aluno").update(enderecoPayload).eq("id", enderecoId).eq("aluno_id", alunoId)
-      : supabase.from("enderecos_aluno").insert(enderecoPayload),
-    contatoId
-      ? supabase.from("contatos_aluno").update(contatoPayload).eq("id", contatoId).eq("aluno_id", alunoId)
-      : supabase.from("contatos_aluno").insert(contatoPayload),
-    responsavelId
-      ? supabase.from("responsaveis_aluno").update(responsavelPayload).eq("id", responsavelId).eq("aluno_id", alunoId)
-      : supabase.from("responsaveis_aluno").insert(responsavelPayload),
-    paiId
-      ? supabase.from("responsaveis_aluno").update(paiPayload).eq("id", paiId).eq("aluno_id", alunoId)
-      : formText(formData, "pai_nome")
-        ? supabase.from("responsaveis_aluno").insert(paiPayload)
-        : Promise.resolve({ error: null }),
-    maeId
-      ? supabase.from("responsaveis_aluno").update(maePayload).eq("id", maeId).eq("aluno_id", alunoId)
-      : formText(formData, "mae_nome")
-        ? supabase.from("responsaveis_aluno").insert(maePayload)
-        : Promise.resolve({ error: null }),
-    supabase.from("informacoes_medicas").upsert(
-      {
+  if (ftab === "responsavel") {
+    const contatoNome = formText(formData, "contato_nome");
+    if (contatoNome) {
+      const contatoPayload = {
         aluno_id: alunoId,
-        alergia: formBoolean(formData, "alergia"),
-        necessidade_especial: formBoolean(formData, "necessidade_especial"),
-        necessita_apoio: formBoolean(formData, "necessita_apoio"),
-        doenca_grave: formBoolean(formData, "doenca_grave"),
-        remedio_especial: formBoolean(formData, "remedio_especial"),
-        tipo_sanguineo: formText(formData, "tipo_sanguineo"),
-        medico: formText(formData, "medico"),
-        telefone_medico: formText(formData, "telefone_medico"),
-        plano_saude: formText(formData, "plano_saude"),
-        telefone_plano: formText(formData, "telefone_plano")
-      },
-      { onConflict: "aluno_id" }
-    ),
-    supabase.from("autorizacoes_aluno").upsert(
-      {
-        aluno_id: alunoId,
-        nao_entregar_boletim: formBoolean(formData, "nao_entregar_boletim"),
-        assinar_comunicados: formBoolean(formData, "assinar_comunicados"),
-        requerer_prova_substitutiva: formBoolean(formData, "requerer_prova_substitutiva")
-      },
-      { onConflict: "aluno_id" }
-    )
-  ]);
+        nome: contatoNome,
+        telefone: formText(formData, "contato_telefone"),
+        celular: formText(formData, "contato_celular"),
+        parentesco: formText(formData, "contato_parentesco"),
+        principal: true,
+      };
+      ops.push(q(
+        contatoId
+          ? supabase.from("contatos_aluno").update(contatoPayload).eq("id", contatoId).eq("aluno_id", alunoId)
+          : supabase.from("contatos_aluno").insert(contatoPayload)
+      ));
+    }
 
+    const paiNome = formText(formData, "pai_nome");
+    if (paiNome) {
+      const paiPayload = {
+        aluno_id: alunoId,
+        nome: paiNome,
+        rg: formText(formData, "pai_rg"),
+        cpf: formText(formData, "pai_cpf"),
+        telefone: formText(formData, "pai_telefone"),
+        celular: formText(formData, "pai_celular"),
+        email: formText(formData, "pai_email"),
+        parentesco: "Pai",
+      };
+      ops.push(q(
+        paiId
+          ? supabase.from("responsaveis_aluno").update(paiPayload).eq("id", paiId).eq("aluno_id", alunoId)
+          : supabase.from("responsaveis_aluno").insert(paiPayload)
+      ));
+    }
+
+    const maeNome = formText(formData, "mae_nome");
+    if (maeNome) {
+      const maePayload = {
+        aluno_id: alunoId,
+        nome: maeNome,
+        rg: formText(formData, "mae_rg"),
+        cpf: formText(formData, "mae_cpf"),
+        telefone: formText(formData, "mae_telefone"),
+        celular: formText(formData, "mae_celular"),
+        email: formText(formData, "mae_email"),
+        parentesco: "Mãe",
+      };
+      ops.push(q(
+        maeId
+          ? supabase.from("responsaveis_aluno").update(maePayload).eq("id", maeId).eq("aluno_id", alunoId)
+          : supabase.from("responsaveis_aluno").insert(maePayload)
+      ));
+    }
+
+    const respNome = formText(formData, "responsavel_nome");
+    if (respNome) {
+      const responsavelPayload = {
+        aluno_id: alunoId,
+        nome: respNome,
+        cpf: formText(formData, "responsavel_cpf"),
+        telefone: formText(formData, "responsavel_telefone"),
+        celular: formText(formData, "responsavel_celular"),
+        parentesco: formText(formData, "responsavel_parentesco"),
+        email: formText(formData, "responsavel_email"),
+        responsavel_financeiro: true,
+        responsavel_pedagogico: true,
+      };
+      ops.push(q(
+        responsavelId
+          ? supabase.from("responsaveis_aluno").update(responsavelPayload).eq("id", responsavelId).eq("aluno_id", alunoId)
+          : supabase.from("responsaveis_aluno").insert(responsavelPayload)
+      ));
+    }
+  }
+
+  if (ftab === "medico") {
+    ops.push(q(
+      supabase.from("informacoes_medicas").upsert(
+        {
+          aluno_id: alunoId,
+          alergia: formBoolean(formData, "alergia"),
+          necessidade_especial: formBoolean(formData, "necessidade_especial"),
+          necessita_apoio: formBoolean(formData, "necessita_apoio"),
+          doenca_grave: formBoolean(formData, "doenca_grave"),
+          remedio_especial: formBoolean(formData, "remedio_especial"),
+          tipo_sanguineo: formText(formData, "tipo_sanguineo"),
+          medico: formText(formData, "medico"),
+          telefone_medico: formText(formData, "telefone_medico"),
+          plano_saude: formText(formData, "plano_saude"),
+          telefone_plano: formText(formData, "telefone_plano"),
+        },
+        { onConflict: "aluno_id" }
+      )
+    ));
+  }
+
+  if (ftab === "autorizacoes") {
+    ops.push(q(
+      supabase.from("autorizacoes_aluno").upsert(
+        {
+          aluno_id: alunoId,
+          nao_entregar_boletim: formBoolean(formData, "nao_entregar_boletim"),
+          assinar_comunicados: formBoolean(formData, "assinar_comunicados"),
+          requerer_prova_substitutiva: formBoolean(formData, "requerer_prova_substitutiva"),
+        },
+        { onConflict: "aluno_id" }
+      )
+    ));
+  }
+
+  const relatedResults = await Promise.all(ops);
   const firstError = relatedResults.find((r) => r && "error" in r && r.error);
   if (firstError && "error" in firstError && firstError.error) throw firstError.error;
 
-  const ftab = formText(formData, "ftab") ?? "pessoal";
   revalidatePath("/alunos");
   revalidatePath(`/alunos/${alunoId}`);
   revalidatePath(`/alunos/${alunoId}/editar`);
