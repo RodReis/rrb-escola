@@ -1,4 +1,5 @@
 import { FileText, Trash2, UploadCloud } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Panel } from "@/components/ui/card";
 import { removeStudentDocumentAction, uploadStudentDocumentAction } from "@/lib/actions/documents";
@@ -8,6 +9,12 @@ function sizeLabel(bytes: number | null) {
   if (!bytes) return "";
   if (bytes < 1024 * 1024) return `${Math.round(bytes / 1024)} KB`;
   return `${(bytes / 1024 / 1024).toFixed(1)} MB`;
+}
+
+const GENERATED_TIPOS = new Set(["contrato", "declaracao", "termo"]);
+
+function origemBadge(tipo: string) {
+  return GENERATED_TIPOS.has(tipo) ? "generated" : "uploaded";
 }
 
 export function StudentDocumentsPanel({ alunoId, documents }: { alunoId: string; documents: StudentDocument[] }) {
@@ -44,11 +51,16 @@ export function StudentDocumentsPanel({ alunoId, documents }: { alunoId: string;
             <article key={document.id} className="grid gap-3 border-b border-line py-3 last:border-b-0 md:grid-cols-[1fr_150px_90px]">
               <div className="flex items-start gap-3">
                 <FileText className="mt-1 text-moss" size={18} />
-                <div>
+                <div className="grid gap-1">
                   <strong className="block text-sm text-ink">{document.nome_arquivo}</strong>
-                  <span className="text-xs text-muted">
-                    {document.tipo_documento} / {sizeLabel(document.tamanho_bytes)}
-                  </span>
+                  <div className="flex items-center gap-2 text-xs text-muted">
+                    <span>{document.tipo_documento} / {sizeLabel(document.tamanho_bytes)}</span>
+                    {origemBadge(document.tipo_documento) === "generated" ? (
+                      <Badge tone="green">Gerado</Badge>
+                    ) : (
+                      <Badge tone="gray">Enviado</Badge>
+                    )}
+                  </div>
                 </div>
               </div>
               {document.signed_url ? (
