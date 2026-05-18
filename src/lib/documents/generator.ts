@@ -45,20 +45,16 @@ async function docxBufferToHtml(docxBuffer: Buffer): Promise<string> {
     }
   );
 
-  // Wrap leading image paragraphs in a centered header row.
-  // The .docx header is a 3-column table with logos; mammoth flattens it to
-  // consecutive <p><img ...></p> blocks. We collect them and re-wrap.
   let html = result.value;
+
+  // The first <img> in the document is always the header logo image.
+  // mammoth may embed it inside a <p> that also contains text (e.g. variables),
+  // so we can't rely on img:only-child. Extract it, wrap in a centered div,
+  // and strip the now-empty leading <p> (which may only contain whitespace/strong tags).
   html = html.replace(
-    /^((?:<p[^>]*><img[^>]*\/?><\/p>\s*)+)/,
-    (_match: string, block: string) => {
-      // Extract individual img tags
-      const imgRe = /<img[^>]*\/?>/g;
-      const imgs: string[] = [];
-      let imgMatch: RegExpExecArray | null;
-      while ((imgMatch = imgRe.exec(block)) !== null) imgs.push(imgMatch[0]);
-      if (imgs.length <= 1) return block;
-      return `<div class="doc-header">${imgs.map((img) => `<div class="doc-header-cell">${img}</div>`).join("")}</div>`;
+    /^<p[^>]*>(<img[^>]*\/>)((?:<strong>[^<]*<\/strong>|\s)*)<\/p>/,
+    (_match: string, img: string) => {
+      return `<div class="doc-header-single">${img}</div>`;
     }
   );
 
@@ -100,8 +96,8 @@ async function htmlToPdf(html: string): Promise<Buffer> {
   .doc-header { display: flex; justify-content: center; align-items: center; gap: 24pt; margin-bottom: 12pt; }
   .doc-header-cell { text-align: center; }
   .doc-header-cell img { max-height: 80pt; max-width: 160pt; object-fit: contain; }
-  /* single leading image (e.g. integrado header) — also center it */
-  body > p:first-child > img:only-child { display: block; margin: 0 auto 12pt; max-height: 80pt; }
+  .doc-header-single { text-align: center; margin-bottom: 16pt; }
+  .doc-header-single img { max-width: 100%; width: 460pt; object-fit: contain; }
   @media print {
     body { padding: 0; }
   }
