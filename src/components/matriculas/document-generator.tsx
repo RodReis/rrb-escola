@@ -48,6 +48,9 @@ export function DocumentGenerator({ matriculaId, documentosIniciais }: Props) {
       a.download = result.nomeArquivo;
       a.click();
       URL.revokeObjectURL(url);
+
+      const res = await fetch(`/api/matriculas/${matriculaId}/documentos`);
+      if (res.ok) setDocumentos(await res.json());
     } finally {
       setLoading(false);
     }

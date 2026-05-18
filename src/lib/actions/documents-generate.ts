@@ -17,6 +17,20 @@ export async function generateDocxAction(
     return { success: false, error: "Tipo de template inválido." };
   }
 
+  const supabase = await createServerClient();
+
+  const { data: matricula, error: matError } = await supabase
+    .from("matriculas")
+    .select("aluno_id")
+    .eq("id", matriculaId)
+    .single();
+
+  if (matError || !matricula) {
+    return { success: false, error: "Matrícula não encontrada." };
+  }
+
+  const alunoId = matricula.aluno_id as string;
+
   try {
     const variables = await buildVariables(matriculaId);
     const meta = TEMPLATE_META[tipoTemplateRaw];
@@ -31,6 +45,36 @@ export async function generateDocxAction(
     const anoLetivo = variables.ANO_LETIVO || String(new Date().getFullYear());
     const nomeArquivo = `${meta.label} - ${nomeAluno} - ${anoLetivo}.docx`
       .replace(/[/\\:*?"<>|]/g, "-");
+
+    const safeName = nomeArquivo
+      .normalize("NFD")
+      .replace(/[̀-ͯ]/g, "")
+      .replace(/[^a-zA-Z0-9._-]/g, "-");
+    const storagePath = `${alunoId}/${Date.now()}-${safeName}`;
+    const contentType = "application/vnd.openxmlformats-officedocument.wordprocessingml.document";
+
+    const { error: uploadError } = await supabase.storage
+      .from("documentos-alunos")
+      .upload(storagePath, docxBuffer, { contentType, upsert: false });
+
+    if (uploadError) throw uploadError;
+
+    const { error: insertError } = await supabase.from("documentos_aluno").insert({
+      aluno_id: alunoId,
+      nome_arquivo: nomeArquivo,
+      tipo_documento: meta.tipoDocumento,
+      storage_path: storagePath,
+      content_type: contentType,
+      tamanho_bytes: docxBuffer.length,
+    });
+
+    if (insertError) {
+      await supabase.storage.from("documentos-alunos").remove([storagePath]);
+      throw insertError;
+    }
+
+    revalidatePath(`/matriculas/${matriculaId}`);
+    revalidatePath(`/alunos/${alunoId}`);
 
     return {
       success: true,
