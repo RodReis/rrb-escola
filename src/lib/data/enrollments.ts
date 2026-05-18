@@ -1,16 +1,30 @@
 import { createServerClient } from "@/lib/supabase/server";
 import { DEFAULT_SCHOOL_ID } from "@/lib/constants";
 
-export async function getEnrollments() {
+export async function getEnrollments(filters?: { status?: string; nome?: string }) {
   const supabase = await createServerClient();
-  const { data, error } = await supabase
+  let query = supabase
     .from("matriculas")
     .select("*, alunos(nome, matricula_codigo, foto_url), series(nome), turmas(nome), planos(nome)")
     .eq("escola_id", DEFAULT_SCHOOL_ID)
     .order("data_matricula", { ascending: false });
 
+  if (filters?.status) query = query.eq("status", filters.status);
+
+  const { data, error } = await query;
   if (error) throw error;
-  return data ?? [];
+
+  let rows = data ?? [];
+  if (filters?.nome) {
+    const q = filters.nome.toLowerCase();
+    rows = rows.filter(
+      (m) =>
+        (m.alunos?.nome ?? "").toLowerCase().includes(q) ||
+        (m.alunos?.matricula_codigo ?? "").includes(q)
+    );
+  }
+
+  return rows;
 }
 
 export async function getEnrollmentDetail(id: string) {
