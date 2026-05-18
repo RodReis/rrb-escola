@@ -172,11 +172,14 @@ export async function updateStudentAction(formData: FormData) {
 
   if (!alunoId || !nome || !matricula) throw new Error("Aluno, nome e matricula sao obrigatorios.");
 
-  const { error } = await supabase
-    .from("alunos")
-    .update({
-      matricula_codigo: matricula,
-      nome,
+  const ftab = formText(formData, "ftab") ?? "pessoal";
+
+  // Always update name/matricula (come from hidden inputs on all tabs).
+  // Only update pessoal-specific fields when on the pessoal tab — inactive fields are absent
+  // from the DOM and would overwrite real data with null.
+  const alunosPayload: Record<string, unknown> = { matricula_codigo: matricula, nome };
+  if (ftab === "pessoal") {
+    Object.assign(alunosPayload, {
       sexo: formText(formData, "sexo"),
       data_nascimento: formText(formData, "data_nascimento"),
       naturalidade: formText(formData, "naturalidade"),
@@ -193,14 +196,17 @@ export async function updateStudentAction(formData: FormData) {
       etnia: formText(formData, "etnia"),
       informacoes_adicionais: formText(formData, "informacoes_adicionais"),
       disciplina_eletiva: formText(formData, "disciplina_eletiva"),
-      foto_url: formText(formData, "foto_url")
-    })
+    });
+  }
+
+  const { error } = await supabase
+    .from("alunos")
+    .update(alunosPayload)
     .eq("id", alunoId)
     .eq("escola_id", DEFAULT_SCHOOL_ID);
 
   if (error) throw error;
 
-  const ftab = formText(formData, "ftab") ?? "pessoal";
   const enderecoId   = formText(formData, "endereco_id");
   const contatoId    = formText(formData, "contato_id");
   const responsavelId = formText(formData, "responsavel_id");
