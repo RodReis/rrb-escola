@@ -1,4 +1,5 @@
 import Link from "next/link";
+import Image from "next/image";
 import { Eye, Plus } from "lucide-react";
 import { updateEnrollmentStatusAction, createEnrollmentAction } from "@/lib/actions/academics";
 import { getEnrollments } from "@/lib/data/enrollments";
@@ -105,9 +106,24 @@ export default async function MatriculasPage() {
               return (
                 <tr key={item.id}>
                   <td>
-                    <Link href={`/alunos/${item.aluno_id}`} className="flex flex-col leading-tight group">
-                      <span className="font-semibold text-ink group-hover:text-brand">{item.alunos?.nome}</span>
-                      <span className="text-xs text-ink/50">#{item.alunos?.matricula_codigo}</span>
+                    <Link href={`/alunos/${item.aluno_id}`} className="flex items-center gap-3 group">
+                      {item.alunos?.foto_url ? (
+                        <Image
+                          src={item.alunos.foto_url}
+                          alt={item.alunos.nome ?? ""}
+                          width={32}
+                          height={32}
+                          className="size-8 rounded-full object-cover shrink-0"
+                        />
+                      ) : (
+                        <span className="size-8 rounded-full bg-line flex items-center justify-center text-xs font-bold text-ink/50 shrink-0">
+                          {(item.alunos?.nome ?? "?")[0].toUpperCase()}
+                        </span>
+                      )}
+                      <div className="flex flex-col leading-tight">
+                        <span className="font-semibold text-ink group-hover:text-brand">{item.alunos?.nome}</span>
+                        <span className="text-xs text-ink/50">#{item.alunos?.matricula_codigo}</span>
+                      </div>
                     </Link>
                   </td>
                   <td className="text-ink/80">{item.series?.nome ?? "—"}</td>

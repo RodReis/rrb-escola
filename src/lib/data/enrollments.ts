@@ -5,7 +5,7 @@ export async function getEnrollments() {
   const supabase = await createServerClient();
   const { data, error } = await supabase
     .from("matriculas")
-    .select("*, alunos(nome, matricula_codigo), series(nome), turmas(nome), planos(nome)")
+    .select("*, alunos(nome, matricula_codigo, foto_url), series(nome), turmas(nome), planos(nome)")
     .eq("escola_id", DEFAULT_SCHOOL_ID)
     .order("data_matricula", { ascending: false });
 
