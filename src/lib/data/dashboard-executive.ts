@@ -774,6 +774,7 @@ export async function getBeneficios(
     .from("matriculas")
     .select("tipo_vaga, percentual_bolsa, series(segmento), planos(valor_mensalidade)")
     .eq("escola_id", escolaId)
+    .eq("ano_letivo", anoLetivo)
     .eq("status", "ativa")
     .in("tipo_vaga", BENEFICIARIO_TIPOS);
 
@@ -853,13 +854,23 @@ export async function getFrequenciaResumo(
   const desdeStr = desde.toISOString().slice(0, 10);
   const hojeStr = hoje.toISOString().slice(0, 10);
 
-  const { data } = await supabase
-    .from("frequencias")
-    .select("data_aula, presente, matriculas!inner(turma_id, turmas!inner(ano_letivo))")
+  const { data: turmas } = await supabase
+    .from("turmas")
+    .select("id")
     .eq("escola_id", escolaId)
-    .eq("matriculas.turmas.ano_letivo", anoLetivo)
-    .gte("data_aula", desdeStr)
-    .lte("data_aula", hojeStr);
+    .eq("ano_letivo", anoLetivo);
+
+  const turmaIds = (turmas ?? []).map((t: any) => t.id as string);
+
+  const { data } = turmaIds.length === 0
+    ? { data: [] }
+    : await supabase
+        .from("frequencias")
+        .select("data_aula, presente, matriculas!inner(turma_id)")
+        .eq("escola_id", escolaId)
+        .in("matriculas.turma_id", turmaIds)
+        .gte("data_aula", desdeStr)
+        .lte("data_aula", hojeStr);
 
   let presentes = 0;
   let faltas = 0;
