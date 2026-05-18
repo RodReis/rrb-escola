@@ -2,11 +2,13 @@ import { Badge } from "@/components/ui/badge";
 import { ButtonLink } from "@/components/ui/button";
 import { Card, Panel } from "@/components/ui/card";
 import { GenerateChargesButton } from "@/components/finance/generate-charges-button";
+import { DocumentGenerator } from "@/components/matriculas/document-generator";
 import { updateEnrollmentAction, updateEnrollmentStatusAction } from "@/lib/actions/academics";
 import { money } from "@/lib/constants";
 import { getEnrollmentDetail } from "@/lib/data/enrollments";
 import { getEnrollmentChargesPreview } from "@/lib/data/finance";
 import { getAcademicData } from "@/lib/data/lookups";
+import { getMatriculaDocumentos } from "@/lib/data/documents";
 
 const statuses = ["ativa", "cancelada", "transferida", "concluida"];
 
@@ -33,6 +35,7 @@ export default async function EnrollmentDetailPage({ params }: { params: { id: s
     getEnrollmentChargesPreview(params.id)
   ]);
   const enrollment = detail.enrollment;
+  const documentos = await getMatriculaDocumentos(enrollment.aluno_id);
   const student = one(enrollment.alunos);
   const serie = one(enrollment.series);
   const turma = one(enrollment.turmas);
@@ -209,6 +212,11 @@ export default async function EnrollmentDetailPage({ params }: { params: { id: s
           ))}
         </div>
       </Panel>
+
+      <DocumentGenerator
+        matriculaId={params.id}
+        documentosIniciais={documentos}
+      />
     </div>
   );
 }
