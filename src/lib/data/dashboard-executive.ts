@@ -275,9 +275,11 @@ export type OcupacaoData = {
   }>;
 };
 
-export async function getOcupacao(escolaId: string = DEFAULT_SCHOOL_ID): Promise<OcupacaoData> {
+export async function getOcupacao(
+  escolaId: string = DEFAULT_SCHOOL_ID,
+  anoLetivo: number = new Date().getFullYear()
+): Promise<OcupacaoData> {
   const supabase = await createServerClient();
-  const anoLetivo = new Date().getFullYear();
 
   const { data: turmas } = await supabase
     .from("turmas")
@@ -351,7 +353,8 @@ export type StageBreakdownRow = {
 
 export async function getStageBreakdown(
   competencia: string,
-  escolaId: string = DEFAULT_SCHOOL_ID
+  escolaId: string = DEFAULT_SCHOOL_ID,
+  anoLetivo: number = new Date().getFullYear()
 ): Promise<StageBreakdownRow[]> {
   const supabase = await createServerClient();
 
@@ -372,7 +375,7 @@ export async function getStageBreakdown(
     receitaPorEtapa.set(etapa, (receitaPorEtapa.get(etapa) ?? 0) + Number(c.valor_final ?? 0));
   }
 
-  const ocup = await getOcupacao(escolaId);
+  const ocup = await getOcupacao(escolaId, anoLetivo);
 
   return ocup.porEtapa.map((p) => ({
     etapa: p.etapa,
