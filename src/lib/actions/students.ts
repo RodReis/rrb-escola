@@ -261,7 +261,7 @@ export async function updateStudentAction(formData: FormData) {
     parentesco: "Mãe",
   };
 
-  await Promise.all([
+  const relatedResults = await Promise.all([
     enderecoId
       ? supabase.from("enderecos_aluno").update(enderecoPayload).eq("id", enderecoId).eq("aluno_id", alunoId)
       : supabase.from("enderecos_aluno").insert(enderecoPayload),
@@ -275,12 +275,12 @@ export async function updateStudentAction(formData: FormData) {
       ? supabase.from("responsaveis_aluno").update(paiPayload).eq("id", paiId).eq("aluno_id", alunoId)
       : formText(formData, "pai_nome")
         ? supabase.from("responsaveis_aluno").insert(paiPayload)
-        : Promise.resolve(),
+        : Promise.resolve({ error: null }),
     maeId
       ? supabase.from("responsaveis_aluno").update(maePayload).eq("id", maeId).eq("aluno_id", alunoId)
       : formText(formData, "mae_nome")
         ? supabase.from("responsaveis_aluno").insert(maePayload)
-        : Promise.resolve(),
+        : Promise.resolve({ error: null }),
     supabase.from("informacoes_medicas").upsert(
       {
         aluno_id: alunoId,
@@ -307,6 +307,9 @@ export async function updateStudentAction(formData: FormData) {
       { onConflict: "aluno_id" }
     )
   ]);
+
+  const firstError = relatedResults.find((r) => r && "error" in r && r.error);
+  if (firstError && "error" in firstError && firstError.error) throw firstError.error;
 
   revalidatePath("/alunos");
   revalidatePath(`/alunos/${alunoId}`);
