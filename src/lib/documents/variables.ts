@@ -16,6 +16,8 @@ export type DocumentVariables = {
   CPF_MAE_ALUNO: string;
   ENDERECO_MAE_ALUNO: string;
   NOME_RESP: string;
+  CPF_RESP: string;
+  RG_RESP: string;
   ENDERECO_RESP: string;
   EMAIL_RESPONSAVEL: string;
   CELULAR_RESPONSAVEL: string;
@@ -178,6 +180,8 @@ export async function buildVariables(
     ENDERECO_MAE_ALUNO: formatEndereco(endPrincipal),
 
     NOME_RESP: respFinanceiro?.nome ?? pai?.nome ?? mae?.nome ?? "",
+    CPF_RESP: (respFinanceiro ?? pai ?? mae)?.cpf ?? "",
+    RG_RESP: (respFinanceiro as any)?.rg ?? (pai as any)?.rg ?? (mae as any)?.rg ?? "",
     ENDERECO_RESP: formatEndereco(endPrincipal),
     EMAIL_RESPONSAVEL: respFinanceiro?.email ?? pai?.email ?? mae?.email ?? "",
     CELULAR_RESPONSAVEL: respFinanceiro?.celular ?? pai?.celular ?? mae?.celular ?? "",
