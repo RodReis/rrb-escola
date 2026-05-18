@@ -713,7 +713,8 @@ export type AlertaItem = {
 export async function getAlertas(
   competencia: string,
   gestaoFinanceira: GestaoFinanceira,
-  escolaId: string = DEFAULT_SCHOOL_ID
+  escolaId: string = DEFAULT_SCHOOL_ID,
+  anoLetivo: number = new Date().getFullYear()
 ): Promise<AlertaItem[]> {
   const alertas: AlertaItem[] = [];
 
@@ -764,10 +765,10 @@ export type BeneficiosData = {
 };
 
 export async function getBeneficios(
-  escolaId: string = DEFAULT_SCHOOL_ID
+  escolaId: string = DEFAULT_SCHOOL_ID,
+  anoLetivo: number = new Date().getFullYear()
 ): Promise<BeneficiosData> {
   const supabase = await createServerClient();
-  const anoLetivo = new Date().getFullYear();
 
   const { data: matriculas } = await supabase
     .from("matriculas")
@@ -842,7 +843,8 @@ export type FrequenciaResumo = {
 
 export async function getFrequenciaResumo(
   escolaId: string = DEFAULT_SCHOOL_ID,
-  days: number = 30
+  days: number = 30,
+  anoLetivo: number = new Date().getFullYear()
 ): Promise<FrequenciaResumo> {
   const supabase = await createServerClient();
   const hoje = new Date();
@@ -958,10 +960,10 @@ export type TurmaRankingRow = {
 
 export async function getRankingTurmas(
   escolaId: string = DEFAULT_SCHOOL_ID,
-  limit: number = 10
+  limit: number = 10,
+  anoLetivo: number = new Date().getFullYear()
 ): Promise<TurmaRankingRow[]> {
   const supabase = await createServerClient();
-  const anoLetivo = new Date().getFullYear();
 
   const { data: turmas } = await supabase
     .from("turmas")
@@ -1069,10 +1071,10 @@ export type RealizadoVsProjetadoData = {
 
 export async function getRealizadoVsProjetado(
   competencia: string,
-  escolaId: string = DEFAULT_SCHOOL_ID
+  escolaId: string = DEFAULT_SCHOOL_ID,
+  anoLetivo: number = new Date().getFullYear()
 ): Promise<RealizadoVsProjetadoData> {
   const supabase = await createServerClient();
-  const anoLetivo = Number(competencia.split("-")[0]);
 
   // Carrega valores praticados ordem_filho = 1 (preco cheio)
   const { data: valoresRaw } = await supabase
@@ -1147,7 +1149,8 @@ export type FrequenciaPorTurmaRow = {
 
 export async function getFrequenciaPorTurma(
   escolaId: string = DEFAULT_SCHOOL_ID,
-  days: number = 30
+  days: number = 30,
+  anoLetivo: number = new Date().getFullYear()
 ): Promise<FrequenciaPorTurmaRow[]> {
   const supabase = await createServerClient();
   const hoje = new Date();
@@ -1155,7 +1158,6 @@ export async function getFrequenciaPorTurma(
   desde.setDate(desde.getDate() - days);
   const desdeStr = desde.toISOString().slice(0, 10);
   const hojeStr = hoje.toISOString().slice(0, 10);
-  const anoLetivo = hoje.getFullYear();
 
   const { data: turmas } = await supabase
     .from("turmas")
@@ -1295,7 +1297,8 @@ export type AniversarioMatriculaRow = {
 
 export async function getAniversariantesMatricula(
   escolaId: string = DEFAULT_SCHOOL_ID,
-  limit: number = 10
+  limit: number = 10,
+  anoLetivo: number = new Date().getFullYear()
 ): Promise<AniversarioMatriculaRow[]> {
   const supabase = await createServerClient();
   const hoje = new Date();
