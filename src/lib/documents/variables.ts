@@ -109,11 +109,11 @@ export async function buildVariables(
   const responsaveis = responsaveisRes.data ?? [];
 
   const pai = responsaveis.find(
-    (r) => r.parentesco?.toLowerCase() === "pai"
+    (r) => ["pai", "padrasto"].includes((r.parentesco ?? "").toLowerCase())
   ) ?? null;
 
   const mae = responsaveis.find(
-    (r) => r.parentesco?.toLowerCase() === "mãe" || r.parentesco?.toLowerCase() === "mae"
+    (r) => ["mae", "mãe", "madrasta"].includes((r.parentesco ?? "").toLowerCase())
   ) ?? null;
 
   const respFinanceiro = responsaveis.find((r) => r.responsavel_financeiro) ?? null;
