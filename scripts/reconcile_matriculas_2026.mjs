@@ -245,6 +245,63 @@ async function main() {
     console.log("\nTurmas faltando no DB:");
     for (const t of turmasFaltando) console.log(`  - ${t}`);
   }
+
+  // --- JSON report ---
+  const turmaById = new Map(turmas.map((t) => [t.id, t]));
+  const serieById = new Map(series.map((s) => [s.id, s]));
+
+  const report = {
+    mode,
+    ano_letivo: ANO_LETIVO,
+    escola: { id: escola.id, nome: escola.nome },
+    counts,
+    series_faltando: [...seriesFaltando],
+    turmas_faltando: [...turmasFaltando],
+    inalterados_count: counts.inalterado ?? 0,
+    corrigidos: resolved
+      .filter((r) => r.status === "update_matricula")
+      .map((r) => ({
+        aluno_id: r.aluno_id,
+        nome: r.aluno_nome,
+        matricula_id: r.matricula_id_atual,
+        de_serie: serieById.get(
+          matriculas.find((m) => m.id === r.matricula_id_atual)?.serie_id
+        )?.nome ?? null,
+        de_turma: turmaById.get(
+          matriculas.find((m) => m.id === r.matricula_id_atual)?.turma_id
+        )?.nome ?? null,
+        de_turno: turmaById.get(
+          matriculas.find((m) => m.id === r.matricula_id_atual)?.turma_id
+        )?.turno ?? null,
+        para_serie: r.serie_nome_alvo,
+        para_turma: r.turma_nome_alvo,
+        para_turno: r.turno_alvo
+      })),
+    criados: resolved
+      .filter((r) => r.status === "insert_matricula")
+      .map((r) => ({
+        aluno_id: r.aluno_id,
+        nome: r.aluno_nome,
+        serie_id_alvo: r.serie_id_alvo,
+        turma_id_alvo: r.turma_id_alvo,
+        para_serie: r.serie_nome_alvo,
+        para_turma: r.turma_nome_alvo,
+        para_turno: r.turno_alvo
+      })),
+    orfaos_planilha: orfaos.map((o) => ({
+      nome_raw: o.nome_raw,
+      sheet: o.sheet,
+      turma_label: o.turma_label,
+      motivo: o.motivo
+    })),
+    extras_sistema: extras
+  };
+
+  const ts = new Date().toISOString().replace(/[:.]/g, "-");
+  const reportPath = `${REPORT_DIR}/reconcile-2026-${mode.toLowerCase()}-${ts}.json`;
+  mkdirSync(REPORT_DIR, { recursive: true });
+  writeFileSync(reportPath, JSON.stringify(report, null, 2), "utf8");
+  console.log(`\nRelatório gravado em ${reportPath}`);
 }
 
 main().catch((e) => {
