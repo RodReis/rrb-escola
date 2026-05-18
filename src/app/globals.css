@@ -96,6 +96,7 @@ input,
 select,
 textarea {
   width: 100%;
+  min-width: 0;
   border: 1px solid rgb(var(--color-line));
   border-radius: var(--radius-ui);
   background: rgb(var(--color-surface));
