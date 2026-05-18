@@ -1,5 +1,5 @@
 import { StudentStatementSection } from "@/components/finance/student-statement-section";
-import { ExportStudentButton } from "@/components/pdf/export-student-button";
+import { StudentHeaderActions } from "@/components/students/student-header-actions";
 import { StudentSheetView } from "@/components/students/student-sheet";
 import { ButtonLink } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -10,6 +10,10 @@ export default async function StudentPage({ params, searchParams }: { params: { 
   const student = await getStudentSheet(params.id);
   const fotoSrc = await getSignedFotoUrl(student.foto_url);
   const activeEnrollment = student.matriculas.find((item) => item.status === "ativa") ?? student.matriculas[0];
+  const matriculaAtivaForDocs = student.matriculas.find((m) => m.status === "ativa") ?? null;
+  const matriculaAtivaPayload = matriculaAtivaForDocs
+    ? { id: matriculaAtivaForDocs.id, codigo: matriculaAtivaForDocs.codigo ?? null }
+    : null;
 
   return (
     <div className="grid gap-6">
@@ -24,11 +28,11 @@ export default async function StudentPage({ params, searchParams }: { params: { 
             {activeEnrollment?.turmas?.nome ? <span>{activeEnrollment.turmas.nome}</span> : null}
           </div>
         </div>
-        <div className="flex flex-wrap gap-2">
+        <div className="flex flex-wrap items-center gap-2">
           <ButtonLink href="/alunos" variant="secondary">Voltar</ButtonLink>
           <ButtonLink href={`/alunos/${student.id}/boletim`} variant="secondary">Boletim</ButtonLink>
           <ButtonLink href={`/alunos/${student.id}/editar`} variant="primary">Editar</ButtonLink>
-          <ExportStudentButton student={student} />
+          <StudentHeaderActions student={student} matriculaAtiva={matriculaAtivaPayload} />
         </div>
       </header>
       <StudentSheetView student={student} fotoSrc={fotoSrc} geradoEm={new Date()} />
