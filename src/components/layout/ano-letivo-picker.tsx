@@ -1,7 +1,7 @@
 "use client";
 
 import { Suspense } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { ChevronDown } from "lucide-react";
 
 interface Props {
@@ -10,6 +10,7 @@ interface Props {
 
 function AnoLetivoPickerInner({ anos }: Props) {
   const router = useRouter();
+  const pathname = usePathname();
   const searchParams = useSearchParams();
   const current = Number(searchParams.get("ano")) || new Date().getFullYear();
 
@@ -17,7 +18,7 @@ function AnoLetivoPickerInner({ anos }: Props) {
     const sp = new URLSearchParams(searchParams.toString());
     sp.set("ano", String(ano));
     sp.set("competencia", `${ano}-01`);
-    router.push(`/?${sp.toString()}`);
+    router.push(`${pathname}?${sp.toString()}`);
   }
 
   return (
