@@ -60,8 +60,15 @@ export function QuickDocumentActions({ alunoId, matriculaAtiva, onExportFichaPdf
         toast.error(res.error ?? "Erro ao gerar documento.");
         return;
       }
-      downloadBase64Docx(res.base64, res.nomeArquivo);
+      try {
+        downloadBase64Docx(res.base64, res.nomeArquivo);
+      } catch {
+        toast.error("Documento gerado no servidor, mas falha ao iniciar download.");
+        return;
+      }
       toast.success(`Documento gerado: ${res.nomeArquivo}`);
+    } catch {
+      toast.error("Erro inesperado ao gerar documento.");
     } finally {
       setLoadingTipo(null);
       setDropdownOpen(false);

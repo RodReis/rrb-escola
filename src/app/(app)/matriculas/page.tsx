@@ -35,14 +35,6 @@ export default async function MatriculasPage({
 
   return (
     <div className="grid gap-8">
-      {alunoPre && (
-        <script
-          dangerouslySetInnerHTML={{
-            __html:
-              "document.getElementById('nova-matricula')?.scrollIntoView({behavior:'smooth',block:'start'});",
-          }}
-        />
-      )}
       <PageHeader
         breadcrumb={[{ label: "Acadêmico", href: "/" }, { label: "Matrículas" }]}
         title="Matrículas"
@@ -103,6 +95,14 @@ export default async function MatriculasPage({
         <MatriculasFilters counts={counts} />
         <MatriculasTable matriculas={filtered} />
       </div>
+      {alunoPre && (
+        <script
+          dangerouslySetInnerHTML={{
+            __html:
+              "document.getElementById('nova-matricula')?.scrollIntoView({behavior:'smooth',block:'start'});",
+          }}
+        />
+      )}
     </div>
   );
 }
