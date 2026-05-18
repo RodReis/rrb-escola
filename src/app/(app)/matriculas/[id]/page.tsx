@@ -54,7 +54,7 @@ export default async function EnrollmentDetailPage({
   const totalAttendance = detail.totals.presencas + detail.totals.faltas;
 
   return (
-    <div className="grid gap-0">
+    <div className="grid gap-0 overflow-hidden rounded-panel border border-line bg-surface shadow-soft">
       {/* Header */}
       <header className="flex flex-wrap items-end justify-between gap-4 border-b border-line bg-surface px-6 py-7">
         <div>
@@ -91,7 +91,7 @@ export default async function EnrollmentDetailPage({
       </section>
 
       {/* Tab bar */}
-      <div className="sticky top-0 z-10 bg-surface shadow-soft">
+      <div className="sticky top-0 z-10 w-full bg-surface shadow-soft">
         <EnrollmentTabs />
       </div>
 
