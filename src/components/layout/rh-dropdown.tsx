@@ -4,14 +4,15 @@ import { useState, useRef, useEffect } from "react";
 import { createPortal } from "react-dom";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Briefcase, Building2, UsersRound, Wallet, SlidersHorizontal, ChevronDown } from "lucide-react";
+import { Briefcase, Building2, UsersRound, Wallet, SlidersHorizontal, ChevronDown, FileText } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const rhItems = [
   { href: "/rh/empresas", label: "Empresas", icon: Building2 },
   { href: "/rh/funcionarios", label: "Funcionários", icon: UsersRound },
   { href: "/rh/folha", label: "Folha", icon: Wallet },
-  { href: "/rh/brackets", label: "Brackets", icon: SlidersHorizontal }
+  { href: "/rh/brackets", label: "Brackets", icon: SlidersHorizontal },
+  { href: "/rh/documentos", label: "Documentos", icon: FileText }
 ];
 
 const rhHrefs = rhItems.map((i) => i.href);
