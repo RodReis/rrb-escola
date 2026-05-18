@@ -5,6 +5,7 @@ import { FileText, Download, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Panel } from "@/components/ui/card";
 import { generateDocxAction } from "@/lib/actions/documents-generate";
+import { downloadBase64Docx } from "@/lib/documents/download-client";
 import { TIPO_TEMPLATE, TEMPLATE_META, type TipoTemplate } from "@/lib/documents/templates";
 import type { StudentDocument } from "@/lib/data/documents";
 
@@ -40,14 +41,7 @@ export function DocumentGenerator({ matriculaId, documentosIniciais }: Props) {
         setErro(result.error ?? "Erro desconhecido.");
         return;
       }
-      const bytes = Uint8Array.from(atob(result.base64), (c) => c.charCodeAt(0));
-      const blob = new Blob([bytes], { type: "application/vnd.openxmlformats-officedocument.wordprocessingml.document" });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement("a");
-      a.href = url;
-      a.download = result.nomeArquivo;
-      a.click();
-      URL.revokeObjectURL(url);
+      downloadBase64Docx(result.base64, result.nomeArquivo);
 
       const res = await fetch(`/api/matriculas/${matriculaId}/documentos`);
       if (res.ok) setDocumentos(await res.json());
