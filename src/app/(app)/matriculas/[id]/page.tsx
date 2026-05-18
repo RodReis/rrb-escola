@@ -4,6 +4,7 @@ import { Card, Panel } from "@/components/ui/card";
 import { GenerateChargesButton } from "@/components/finance/generate-charges-button";
 import { DocumentGenerator } from "@/components/matriculas/document-generator";
 import { EnrollmentTabs } from "@/components/matriculas/enrollment-tabs";
+import { StudentCombobox } from "@/components/matriculas/student-combobox";
 import { updateEnrollmentAction, updateEnrollmentStatusAction } from "@/lib/actions/academics";
 import { money } from "@/lib/constants";
 import { getEnrollmentDetail } from "@/lib/data/enrollments";
@@ -106,10 +107,8 @@ export default async function EnrollmentDetailPage({
             </div>
             <form action={updateEnrollmentAction} className="grid gap-4 md:grid-cols-4">
               <input type="hidden" name="id" value={enrollment.id} />
-              <label>Aluno
-                <select name="aluno_id" defaultValue={enrollment.aluno_id} required>
-                  {alunos.map((item) => <option key={item.id} value={item.id}>{item.nome}</option>)}
-                </select>
+              <label className="md:col-span-2">Aluno
+                <StudentCombobox alunos={alunos} defaultValue={{ id: enrollment.aluno_id, nome: student?.nome ?? "", matricula_codigo: student?.matricula_codigo ?? "" }} />
               </label>
               <label>Série
                 <select name="serie_id" defaultValue={enrollment.serie_id} required>

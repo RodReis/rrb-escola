@@ -5,10 +5,10 @@ import { Search } from "lucide-react";
 
 type Aluno = { id: string; nome: string; matricula_codigo: string };
 
-export function StudentCombobox({ alunos }: { alunos: Aluno[] }) {
-  const [query, setQuery] = useState("");
+export function StudentCombobox({ alunos, defaultValue }: { alunos: Aluno[]; defaultValue?: Aluno }) {
+  const [query, setQuery] = useState(defaultValue?.nome ?? "");
   const [open, setOpen] = useState(false);
-  const [selected, setSelected] = useState<Aluno | null>(null);
+  const [selected, setSelected] = useState<Aluno | null>(defaultValue ?? null);
   const containerRef = useRef<HTMLDivElement>(null);
 
   const filtered = query.length < 1
