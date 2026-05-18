@@ -87,11 +87,11 @@ Templates ficam em `public/templates/` (subdir novo, separado dos `.doc` origina
 | `{SERIE_ALUNO}` | `series.nome` |
 | `{TURNO_ALUNO}` | `turmas.turno` (uppercase: MATUTINO etc.) |
 | `{TIPOENSINO_ALUNO}` | `series.tipo_ensino` |
-| `{RG_PAI_ALUNO}` | `responsaveis_aluno.rg` onde relação = pai/masculino |
-| `{CPF_PAI_ALUNO}` | `responsaveis_aluno.cpf` idem |
-| `{ENDERECO_PAI_ALUNO}` | endereço do responsável pai |
-| `{RG_MAE_ALUNO}` | `responsaveis_aluno.rg` onde relação = mãe/feminino |
-| `{CPF_MAE_ALUNO}` | `responsaveis_aluno.cpf` idem |
+| `{RG_PAI_ALUNO}` | `responsaveis_aluno.rg` WHERE `relacao IN ('pai','padrasto')` ORDER BY `responsavel_financeiro DESC` LIMIT 1 |
+| `{CPF_PAI_ALUNO}` | idem |
+| `{ENDERECO_PAI_ALUNO}` | endereço do responsável pai (mesmo critério) |
+| `{RG_MAE_ALUNO}` | `responsaveis_aluno.rg` WHERE `relacao IN ('mae','madrasta')` ORDER BY `responsavel_financeiro DESC` LIMIT 1 |
+| `{CPF_MAE_ALUNO}` | idem |
 | `{ENDERECO_MAE_ALUNO}` | endereço do responsável mãe |
 | `{ENDERECO_RESP}` | endereço do responsável com `responsavel_financeiro = true` |
 | `{RAZAO_SOCIAL_EMPRESA}` | `escolas.razao_social` |
