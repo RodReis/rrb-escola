@@ -83,10 +83,16 @@ function isValidCompetencia(v: string | undefined): v is string {
   return typeof v === "string" && /^\d{4}-\d{2}$/.test(v);
 }
 
+function isValidAno(val: string | undefined): boolean {
+  if (!val) return false;
+  const n = Number(val);
+  return Number.isInteger(n) && n >= 2000 && n <= 2100;
+}
+
 export default async function DashboardPage({
   searchParams,
 }: {
-  searchParams: Promise<{ aba?: string; competencia?: string }>;
+  searchParams: Promise<{ aba?: string; competencia?: string; ano?: string }>;
 }) {
   const params = await searchParams;
   const aba = parseTab(params.aba);
@@ -94,6 +100,7 @@ export default async function DashboardPage({
   const session = await requireSession();
   const escolaId = session.profile.escola_id;
   const competencia = isValidCompetencia(params.competencia) ? params.competencia : currentCompetencia();
+  const anoLetivo = isValidAno(params.ano) ? Number(params.ano) : new Date().getFullYear();
 
   const config = await getEscolaConfig(escolaId);
   const isPropria = config.gestaoFinanceira === "propria";
@@ -129,28 +136,28 @@ export default async function DashboardPage({
   ] = await Promise.all([
     getHero(competencia, escolaId),
     getRevenueTrend(6, escolaId),
-    getOcupacao(escolaId),
-    getStageBreakdown(competencia, escolaId),
+    getOcupacao(escolaId, anoLetivo),
+    getStageBreakdown(competencia, escolaId, anoLetivo),
     getTicketMedio(6, escolaId),
     getFolhaRatio(competencia, escolaId),
     getFolhaPorEmpresa(competencia, escolaId),
-    getAlertas(competencia, config.gestaoFinanceira, escolaId),
-    getBeneficios(escolaId),
+    getAlertas(competencia, config.gestaoFinanceira, escolaId, anoLetivo),
+    getBeneficios(escolaId, anoLetivo),
     getAniversariantes(escolaId, 10),
-    getFrequenciaResumo(escolaId, 30),
-    getRankingTurmas(escolaId, 10),
+    getFrequenciaResumo(escolaId, 30, anoLetivo),
+    getRankingTurmas(escolaId, 10, anoLetivo),
     getTopCategoriasDespesas(competencia, escolaId, 6),
-    getRealizadoVsProjetado(competencia, escolaId),
-    getFrequenciaPorTurma(escolaId, 30),
+    getRealizadoVsProjetado(competencia, escolaId, anoLetivo),
+    getFrequenciaPorTurma(escolaId, 30, anoLetivo),
     getEvasao(escolaId),
     getFrequenciaDetalhada(escolaId, 60),
     getMediasPorDisciplina(escolaId),
     getPedagogicoSummary(escolaId),
     getRankingAlunos(escolaId, undefined, 10),
-    getAniversariantesMatricula(escolaId, 10),
+    getAniversariantesMatricula(escolaId, 10, anoLetivo),
     getProximasCobrancas(escolaId, 7),
     getSaudeSistema(escolaId),
-    getSaldoYTD(escolaId),
+    getSaldoYTD(escolaId, anoLetivo),
     getPedagogicoOverview(escolaId),
     isPropria
       ? getInadimplencia(competencia, escolaId)
