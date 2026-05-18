@@ -4,7 +4,7 @@ import { useState } from "react";
 import { FileText, Download, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Panel } from "@/components/ui/card";
-import { generateDocumentoAction, generateDocxAction } from "@/lib/actions/documents-generate";
+import { generateDocxAction } from "@/lib/actions/documents-generate";
 import { TIPO_TEMPLATE, TEMPLATE_META, type TipoTemplate } from "@/lib/documents/templates";
 import type { StudentDocument } from "@/lib/data/documents";
 
@@ -27,12 +27,12 @@ export function DocumentGenerator({ matriculaId, documentosIniciais }: Props) {
   const [tipoSelecionado, setTipoSelecionado] = useState<TipoTemplate>(
     TIPO_TEMPLATE.CONTRATO_COLEGIO
   );
-  const [loading, setLoading] = useState<"pdf" | "docx" | null>(null);
+  const [loading, setLoading] = useState(false);
   const [erro, setErro] = useState<string | null>(null);
   const [documentos, setDocumentos] = useState<StudentDocument[]>(documentosIniciais);
 
   async function handleGerarDocx() {
-    setLoading("docx");
+    setLoading(true);
     setErro(null);
     try {
       const result = await generateDocxAction(matriculaId, tipoSelecionado);
@@ -49,31 +49,10 @@ export function DocumentGenerator({ matriculaId, documentosIniciais }: Props) {
       a.click();
       URL.revokeObjectURL(url);
     } finally {
-      setLoading(null);
+      setLoading(false);
     }
   }
 
-  async function handleGerarPdf() {
-    setLoading("pdf");
-    setErro(null);
-    try {
-      const result = await generateDocumentoAction(matriculaId, tipoSelecionado);
-      if (!result.success) {
-        setErro(result.error ?? "Erro desconhecido.");
-      } else {
-        if (result.url) {
-          window.open(result.url, "_blank");
-        }
-        const res = await fetch(`/api/matriculas/${matriculaId}/documentos`);
-        if (res.ok) {
-          const novos = await res.json();
-          setDocumentos(novos);
-        }
-      }
-    } finally {
-      setLoading(null);
-    }
-  }
 
   return (
     <Panel className="grid gap-5">
@@ -86,7 +65,7 @@ export function DocumentGenerator({ matriculaId, documentosIniciais }: Props) {
             value={tipoSelecionado}
             onChange={(e) => setTipoSelecionado(e.target.value as TipoTemplate)}
             className="rounded-ui border border-line bg-surface px-3 py-2 text-sm text-ink"
-            disabled={loading !== null}
+            disabled={loading}
           >
             {Object.values(TIPO_TEMPLATE).map((tipo) => (
               <option key={tipo} value={tipo}>
@@ -95,18 +74,11 @@ export function DocumentGenerator({ matriculaId, documentosIniciais }: Props) {
             ))}
           </select>
         </label>
-        <Button variant="accent" onClick={handleGerarDocx} disabled={loading !== null}>
-          {loading === "docx" ? (
+        <Button variant="accent" onClick={handleGerarDocx} disabled={loading}>
+          {loading ? (
             <><Loader2 size={16} className="animate-spin" /> Gerando...</>
           ) : (
             "Baixar .docx"
-          )}
-        </Button>
-        <Button variant="secondary" onClick={handleGerarPdf} disabled={loading !== null}>
-          {loading === "pdf" ? (
-            <><Loader2 size={16} className="animate-spin" /> Gerando...</>
-          ) : (
-            "Gerar PDF"
           )}
         </Button>
       </div>
