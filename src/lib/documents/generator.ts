@@ -44,7 +44,25 @@ async function docxBufferToHtml(docxBuffer: Buffer): Promise<string> {
       ],
     }
   );
-  return result.value;
+
+  // Wrap leading image paragraphs in a centered header row.
+  // The .docx header is a 3-column table with logos; mammoth flattens it to
+  // consecutive <p><img ...></p> blocks. We collect them and re-wrap.
+  let html = result.value;
+  html = html.replace(
+    /^((?:<p[^>]*><img[^>]*\/?><\/p>\s*)+)/,
+    (_match: string, block: string) => {
+      // Extract individual img tags
+      const imgRe = /<img[^>]*\/?>/g;
+      const imgs: string[] = [];
+      let imgMatch: RegExpExecArray | null;
+      while ((imgMatch = imgRe.exec(block)) !== null) imgs.push(imgMatch[0]);
+      if (imgs.length <= 1) return block;
+      return `<div class="doc-header">${imgs.map((img) => `<div class="doc-header-cell">${img}</div>`).join("")}</div>`;
+    }
+  );
+
+  return html;
 }
 
 async function htmlToPdf(html: string): Promise<Buffer> {
@@ -79,6 +97,11 @@ async function htmlToPdf(html: string): Promise<Buffer> {
   em { font-style: italic; }
   table { width: 100%; border-collapse: collapse; margin: 8pt 0; }
   td, th { border: 1px solid #ccc; padding: 4pt 6pt; font-size: 10pt; }
+  .doc-header { display: flex; justify-content: center; align-items: center; gap: 24pt; margin-bottom: 12pt; }
+  .doc-header-cell { text-align: center; }
+  .doc-header-cell img { max-height: 80pt; max-width: 160pt; object-fit: contain; }
+  /* single leading image (e.g. integrado header) — also center it */
+  body > p:first-child > img:only-child { display: block; margin: 0 auto 12pt; max-height: 80pt; }
   @media print {
     body { padding: 0; }
   }
