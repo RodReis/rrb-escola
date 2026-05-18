@@ -4,6 +4,7 @@ export const TIPO_TEMPLATE = {
   DECLARACAO_FREQUENCIA: "declaracao_frequencia",
   DECLARACAO_TRANSFERENCIA: "declaracao_transferencia",
   TERMO_RESPONSABILIDADE: "termo_responsabilidade",
+  TERMO_RESPONSABILIDADE_INTEGRADO: "termo_responsabilidade_integrado",
 } as const;
 
 export type TipoTemplate = (typeof TIPO_TEMPLATE)[keyof typeof TIPO_TEMPLATE];
@@ -33,8 +34,13 @@ export const TEMPLATE_META: Record<
     tipoDocumento: "declaracao",
   },
   termo_responsabilidade: {
-    label: "Termo de Responsabilidade",
+    label: "Termo de Responsabilidade — Pinguinho",
     arquivo: "termo-responsabilidade.docx",
+    tipoDocumento: "termo",
+  },
+  termo_responsabilidade_integrado: {
+    label: "Termo de Responsabilidade — Colégio Integrado",
+    arquivo: "termo-responsabilidade-integrado.docx",
     tipoDocumento: "termo",
   },
 };
