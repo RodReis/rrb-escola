@@ -11,6 +11,8 @@ import { getEnrollmentDetail } from "@/lib/data/enrollments";
 import { getEnrollmentChargesPreview } from "@/lib/data/finance";
 import { getAcademicData } from "@/lib/data/lookups";
 import { getMatriculaDocumentos } from "@/lib/data/documents";
+import { requireSession } from "@/lib/auth/session";
+import { getTemplatesAtivos } from "@/lib/data/templates";
 
 const statuses = ["ativa", "cancelada", "transferida", "concluida"];
 
@@ -52,6 +54,10 @@ export default async function EnrollmentDetailPage({
   const turma = one(enrollment.turmas);
   const plan = one(enrollment.planos);
   const totalAttendance = detail.totals.presencas + detail.totals.faltas;
+
+  const session = await requireSession();
+  const templatesAtivos = await getTemplatesAtivos(session.profile.escola_id);
+  const templatesLite = templatesAtivos.map((t) => ({ id: t.id, nome: t.nome, categoria: t.categoria }));
 
   return (
     <div className="grid gap-0 overflow-hidden rounded-panel border border-line bg-surface shadow-soft">
@@ -188,7 +194,7 @@ export default async function EnrollmentDetailPage({
 
         {/* ── DOCUMENTOS ─────────────────────────────────────────── */}
         {tab === "documentos" && (
-          <DocumentGenerator matriculaId={id} documentosIniciais={documentos} />
+          <DocumentGenerator matriculaId={id} templates={templatesLite} documentosIniciais={documentos} />
         )}
 
         {/* ── FREQUÊNCIA ─────────────────────────────────────────── */}

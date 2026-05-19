@@ -5,6 +5,8 @@ import { ButtonLink } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { getStudentSheet } from "@/lib/data/students";
 import { getSignedFotoUrl } from "@/lib/storage/photos";
+import { requireSession } from "@/lib/auth/session";
+import { getTemplatesAtivos } from "@/lib/data/templates";
 
 export default async function StudentPage({ params, searchParams }: { params: { id: string }; searchParams: { ext_de?: string; ext_ate?: string } }) {
   const student = await getStudentSheet(params.id);
@@ -15,15 +17,21 @@ export default async function StudentPage({ params, searchParams }: { params: { 
     ? { id: matriculaAtivaForDocs.id, codigo: matriculaAtivaForDocs.codigo ?? null }
     : null;
 
+  const session = await requireSession();
+  const templatesAtivos = await getTemplatesAtivos(session.profile.escola_id);
+  const templatesLite = templatesAtivos.map((t) => ({ id: t.id, nome: t.nome }));
+
   return (
     <div className="grid gap-6">
       <header className="flex flex-wrap items-end justify-between gap-4 border-b border-line bg-paper px-6 py-7">
         <div>
           <p className="ds-kicker">Gestao / Ficha do aluno</p>
-          <h1 className="mt-7 font-serif text-4xl text-ink">{student.nome}</h1>
+          <div className="mt-7 flex flex-wrap items-center gap-3">
+            <h1 className="font-serif text-4xl text-ink">{student.nome}</h1>
+            {activeEnrollment ? <Badge tone="green">{activeEnrollment.status}</Badge> : null}
+          </div>
           <div className="mt-3 flex flex-wrap items-center gap-2 text-sm text-muted">
             <span>Matricula {student.matricula_codigo}</span>
-            {activeEnrollment ? <Badge tone="green">{activeEnrollment.status}</Badge> : null}
             {activeEnrollment?.series?.nome ? <span>{activeEnrollment.series.nome}</span> : null}
             {activeEnrollment?.turmas?.nome ? <span>{activeEnrollment.turmas.nome}</span> : null}
           </div>
@@ -32,7 +40,7 @@ export default async function StudentPage({ params, searchParams }: { params: { 
           <ButtonLink href="/alunos" variant="secondary">Voltar</ButtonLink>
           <ButtonLink href={`/alunos/${student.id}/boletim`} variant="secondary">Boletim</ButtonLink>
           <ButtonLink href={`/alunos/${student.id}/editar`} variant="primary">Editar</ButtonLink>
-          <StudentHeaderActions student={student} matriculaAtiva={matriculaAtivaPayload} />
+          <StudentHeaderActions student={student} matriculaAtiva={matriculaAtivaPayload} templates={templatesLite} />
         </div>
       </header>
       <StudentSheetView student={student} fotoSrc={fotoSrc} geradoEm={new Date()} />
