@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Plus, Search } from "lucide-react";
+import { Plus, Search, Pencil, KeyRound, UserX, UserCheck } from "lucide-react";
 import { requirePermission } from "@/lib/auth/session";
 import { createServerClient } from "@/lib/supabase/server";
 import {
@@ -165,23 +165,46 @@ export default async function UsuariosPage({
                     </StatusPill>
                   </td>
                   <td className="text-right">
-                    <div className="inline-flex items-center gap-2">
-                      <Link href={`/usuarios/${p.id}/editar`} className="text-xs font-semibold text-brand hover:underline">
-                        Editar
+                    <div className="inline-flex items-center gap-1">
+                      <Link
+                        href={`/usuarios/${p.id}/editar`}
+                        title="Editar"
+                        aria-label="Editar"
+                        className="inline-flex h-8 w-8 items-center justify-center rounded-md text-brand hover:bg-brand/10"
+                      >
+                        <Pencil size={15} />
                       </Link>
                       <form action={resetPasswordAction} className="inline">
                         <input type="hidden" name="perfilId" value={p.id} />
-                        <button className="text-xs font-semibold text-warning hover:underline">Resetar senha</button>
+                        <button
+                          title="Resetar senha"
+                          aria-label="Resetar senha"
+                          className="inline-flex h-8 w-8 items-center justify-center rounded-md text-warning hover:bg-warning/10"
+                        >
+                          <KeyRound size={15} />
+                        </button>
                       </form>
                       {p.ativo ? (
                         <form action={deactivateUserAction} className="inline">
                           <input type="hidden" name="perfilId" value={p.id} />
-                          <button className="text-xs font-semibold text-danger hover:underline">Desativar</button>
+                          <button
+                            title="Desativar"
+                            aria-label="Desativar"
+                            className="inline-flex h-8 w-8 items-center justify-center rounded-md text-danger hover:bg-danger/10"
+                          >
+                            <UserX size={15} />
+                          </button>
                         </form>
                       ) : (
                         <form action={reactivateUserAction} className="inline">
                           <input type="hidden" name="perfilId" value={p.id} />
-                          <button className="text-xs font-semibold text-success hover:underline">Reativar</button>
+                          <button
+                            title="Reativar"
+                            aria-label="Reativar"
+                            className="inline-flex h-8 w-8 items-center justify-center rounded-md text-success hover:bg-success/10"
+                          >
+                            <UserCheck size={15} />
+                          </button>
                         </form>
                       )}
                     </div>
