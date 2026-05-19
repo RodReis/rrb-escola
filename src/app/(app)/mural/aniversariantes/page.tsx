@@ -42,12 +42,13 @@ export default async function MuralAniversariantesPage() {
                   className="flex items-center gap-4 rounded-panel bg-surface p-5 shadow-soft ring-1 ring-gold/30"
                 >
                   <Avatar src={foto} name={a.nome} size={72} />
-                  <div className="min-w-0">
+                  <div className="min-w-0 flex-1">
                     <p className="truncate text-xl font-bold text-ink">{a.nome}</p>
                     <p className="mt-1 inline-flex items-center gap-1 rounded-pill bg-gold px-3 py-1 text-xs font-bold text-paper">
                       <Cake size={12} /> Aniversário hoje
                     </p>
                   </div>
+                  <span className="shrink-0 text-2xl font-bold text-gold">{a.idade}</span>
                 </article>
               );
             })}
@@ -66,7 +67,7 @@ export default async function MuralAniversariantesPage() {
             </p>
           </div>
           <ul className="grid gap-3 md:grid-cols-2 lg:grid-cols-3">
-            {proximos.map((a, i) => {
+            {proximos.map((a) => {
               const idxOnSigned = items.findIndex((x) => x.alunoId === a.alunoId);
               const fotoPath = items[idxOnSigned]?.fotoUrl ?? null;
               const foto = fotoPath ? signed.get(fotoPath) ?? null : null;
@@ -79,7 +80,7 @@ export default async function MuralAniversariantesPage() {
                   <div className="min-w-0 flex-1">
                     <p className="truncate font-semibold text-ink">{a.nome}</p>
                     <p className="text-xs text-ink/55">
-                      {a.diaSemana} · {String(a.dia).padStart(2, "0")}/{MESES[a.mes - 1]}
+                      {a.diaSemana} · {String(a.dia).padStart(2, "0")}/{MESES[a.mes - 1]} · faz {a.idade}a
                     </p>
                   </div>
                   <span className="grid h-10 w-10 shrink-0 place-items-center rounded-pill bg-gold/15 text-sm font-bold text-gold">
