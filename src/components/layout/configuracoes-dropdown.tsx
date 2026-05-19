@@ -10,6 +10,7 @@ import {
   UsersRound,
   Webhook,
   Tags,
+  ShieldCheck,
   ChevronDown,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -17,6 +18,7 @@ import { cn } from "@/lib/utils";
 const items = [
   { href: "/configuracoes/escola", label: "Dados da escola", icon: School },
   { href: "/usuarios", label: "Usuários", icon: UsersRound },
+  { href: "/configuracoes/perfis", label: "Perfis e Permissões", icon: ShieldCheck },
   { href: "/configuracoes/webhook", label: "Webhook", icon: Webhook },
   { href: "/despesas/categorias", label: "Categorias despesa", icon: Tags },
 ];
