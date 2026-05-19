@@ -6,6 +6,15 @@ import { requirePermission } from "@/lib/auth/session";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { setUserCreatedFlash } from "@/lib/actions/user-flash";
 import { formText } from "@/lib/utils";
+import {
+  sendEmail,
+  renderPasswordResetEmail,
+  renderUserCreatedEmail,
+} from "@/lib/email/resend";
+
+function getAppUrl(): string {
+  return process.env.NEXT_PUBLIC_APP_URL ?? process.env.APP_URL ?? "http://localhost:3000";
+}
 
 async function readPerfil(formData: FormData, escolaId: string): Promise<string> {
   const raw = formText(formData, "perfil");
@@ -58,9 +67,18 @@ export async function createUserAction(formData: FormData) {
     redirect(`/usuarios/novo?erro=perfil`);
   }
 
+  const emailResult = await sendEmail({
+    to: email,
+    subject: "RRB Escola — Sua conta foi criada",
+    html: renderUserCreatedEmail({ nome, email, password, appUrl: getAppUrl() }),
+  });
+  if (!emailResult.ok) {
+    console.warn(`[users] email send fail (createUser ${email}): ${emailResult.reason}`);
+  }
+
   setUserCreatedFlash(email, password);
   revalidatePath("/usuarios");
-  redirect("/usuarios?criado=1");
+  redirect(emailResult.ok ? "/usuarios?criado=1&email=1" : "/usuarios?criado=1");
 }
 
 export async function updateUserAction(formData: FormData) {
@@ -132,7 +150,27 @@ export async function resetPasswordAction(formData: FormData) {
   const { error } = await admin.auth.admin.updateUserById(perfil.user_id, { password });
   if (error) redirect(`/usuarios?erro=${encodeURIComponent(error.message)}`);
 
+  const { data: perfilFull } = await admin
+    .from("perfis")
+    .select("nome")
+    .eq("id", perfilId)
+    .maybeSingle();
+
+  const emailResult = await sendEmail({
+    to: perfil.email,
+    subject: "RRB Escola — Sua senha foi redefinida",
+    html: renderPasswordResetEmail({
+      nome: perfilFull?.nome ?? perfil.email,
+      email: perfil.email,
+      password,
+      appUrl: getAppUrl(),
+    }),
+  });
+  if (!emailResult.ok) {
+    console.warn(`[users] email send fail (resetPassword ${perfil.email}): ${emailResult.reason}`);
+  }
+
   setUserCreatedFlash(perfil.email, password);
   revalidatePath("/usuarios");
-  redirect("/usuarios?senha=1");
+  redirect(emailResult.ok ? "/usuarios?senha=1&email=1" : "/usuarios?senha=1");
 }

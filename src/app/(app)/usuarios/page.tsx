@@ -31,6 +31,7 @@ export default async function UsuariosPage({
     desativado?: string;
     reativado?: string;
     senha?: string;
+    email?: string;
     atualizado?: string;
     erro?: string;
     q?: string;
@@ -84,7 +85,11 @@ export default async function UsuariosPage({
       {flash && (
         <div className="rounded-ui bg-success/10 p-4 text-sm font-semibold text-success">
           {sp.senha ? "Nova senha gerada" : "Usuário criado"} para <strong>{flash.email}</strong>. Senha: <code className="font-mono">{flash.password}</code>
-          <p className="mt-1 text-xs font-medium text-ink/55">Anote agora — não será exibida novamente.</p>
+          <p className="mt-1 text-xs font-medium text-ink/55">
+            {sp.email
+              ? "Email enviado com as credenciais. Senha não será exibida novamente."
+              : "Email NÃO enviado (Resend não configurado). Anote agora — não será exibida novamente."}
+          </p>
         </div>
       )}
       {sp.desativado && <div className="rounded-ui bg-success/10 p-4 text-sm font-semibold text-success">Usuário desativado.</div>}
@@ -141,7 +146,7 @@ export default async function UsuariosPage({
               <th>Email</th>
               <th>Perfil</th>
               <th>Status</th>
-              <th className="text-right">Ações</th>
+              <th className="w-[140px] text-center">Ações</th>
             </tr>
           </thead>
           <tbody>
@@ -164,8 +169,8 @@ export default async function UsuariosPage({
                       {p.ativo ? "Ativo" : "Inativo"}
                     </StatusPill>
                   </td>
-                  <td className="text-right">
-                    <div className="inline-flex items-center gap-1">
+                  <td className="text-center">
+                    <div className="inline-flex items-center justify-center gap-1">
                       <Link
                         href={`/usuarios/${p.id}/editar`}
                         title="Editar"
