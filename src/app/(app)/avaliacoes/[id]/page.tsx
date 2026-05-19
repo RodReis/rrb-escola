@@ -1,5 +1,5 @@
 import { notFound, redirect } from "next/navigation";
-import { ClipboardList, Save, Trash2 } from "lucide-react";
+import { ClipboardList, Save, Trash2, Users, Pencil } from "lucide-react";
 import { Panel } from "@/components/ui/card";
 import { PageHeader } from "@/components/ui/page-header";
 import { getAvaliacaoDetalhe } from "@/lib/data/pedagogico";
@@ -51,7 +51,7 @@ export default async function AvaliacaoDetailPage({
 
       <Panel className="grid gap-4">
         <div className="flex items-center gap-2">
-          <ClipboardList size={16} className="text-brand" />
+          <Pencil size={16} className="text-brand" />
           <h2 className="font-bold text-ink">Dados da avaliação</h2>
         </div>
         <form action={updateAvaliacaoAction} className="grid gap-3 md:grid-cols-3">
@@ -106,7 +106,10 @@ export default async function AvaliacaoDetailPage({
 
       <Panel className="grid gap-4">
         <div className="flex items-center justify-between gap-3">
-          <h2 className="font-bold text-ink">Lançamento de notas</h2>
+          <h2 className="flex items-center gap-2 font-bold text-ink">
+            <ClipboardList size={16} className="text-brand" />
+            Lançamento de notas
+          </h2>
           <div className="text-right">
             <p className="text-xs text-ink/55">{aval.notasLancadas} de {aval.totalAlunos} alunos</p>
             <div className="mt-1 h-1.5 w-32 rounded-pill bg-muted overflow-hidden">
@@ -119,7 +122,10 @@ export default async function AvaliacaoDetailPage({
         </div>
 
         {aval.alunos.length === 0 ? (
-          <p className="text-sm text-ink/60">Nenhum aluno matriculado na turma.</p>
+          <div className="flex flex-col items-center justify-center gap-2 py-10 text-ink/40">
+            <Users size={28} />
+            <p className="text-sm font-medium">Nenhum aluno matriculado na turma.</p>
+          </div>
         ) : (
           <form action={lancarNotasAction}>
             <input type="hidden" name="avaliacao_id" value={aval.id} />

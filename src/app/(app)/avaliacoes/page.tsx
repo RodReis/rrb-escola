@@ -51,7 +51,13 @@ export default async function AvaliacoesPage() {
 
       {avaliacoes.length === 0 && (
         <Panel>
-          <p className="text-sm text-ink/60">Nenhuma avaliação cadastrada. Crie a primeira para começar.</p>
+          <div className="flex flex-col items-center justify-center gap-2 py-10 text-ink/40">
+            <ClipboardList size={28} />
+            <p className="text-sm font-medium">Nenhuma avaliação cadastrada.</p>
+            <ButtonLink href="/avaliacoes/nova" variant="ghost" className="mt-2">
+              <Plus size={14} /> Cadastrar primeira
+            </ButtonLink>
+          </div>
         </Panel>
       )}
 
