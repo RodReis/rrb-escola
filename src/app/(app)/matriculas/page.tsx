@@ -1,4 +1,4 @@
-import { Plus } from "lucide-react";
+import { Plus, UserPlus } from "lucide-react";
 import { createEnrollmentAction } from "@/lib/actions/academics";
 import { getEnrollments } from "@/lib/data/enrollments";
 import { getAcademicData } from "@/lib/data/lookups";
@@ -53,7 +53,10 @@ export default async function MatriculasPage({
       <Panel id="nova-matricula" className="grid gap-5">
         <div>
           <p className="text-[0.66rem] font-bold uppercase tracking-[0.14em] text-ink/55">Nova matrícula</p>
-          <h2 className="mt-1 text-xl font-bold text-ink">Cadastrar vínculo acadêmico</h2>
+          <h2 className="mt-1 flex items-center gap-2 text-xl font-bold text-ink">
+            <UserPlus size={20} className="text-brand" />
+            Cadastrar vínculo acadêmico
+          </h2>
         </div>
         <form action={createEnrollmentAction} className="grid gap-4 md:grid-cols-4">
           <label className="md:col-span-2">Aluno

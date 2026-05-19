@@ -1,3 +1,4 @@
+import { ArrowLeft, Calendar, Pencil, Receipt, Wallet, History } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { ButtonLink } from "@/components/ui/button";
 import { Card, Panel } from "@/components/ui/card";
@@ -71,7 +72,9 @@ export default async function EnrollmentDetailPage({
           </p>
         </div>
         <div className="flex flex-wrap gap-2">
-          <ButtonLink href="/matriculas" variant="secondary">Voltar</ButtonLink>
+          <ButtonLink href="/matriculas" variant="secondary">
+            <ArrowLeft size={14} /> Voltar
+          </ButtonLink>
           {student?.id ? <ButtonLink href={`/alunos/${student.id}`} variant="primary">Ficha do aluno</ButtonLink> : null}
         </div>
       </header>
@@ -109,7 +112,10 @@ export default async function EnrollmentDetailPage({
           <Panel className="grid gap-5">
             <div>
               <p className="ds-kicker">Cadastro</p>
-              <h2 className="mt-2 font-serif text-2xl text-ink">Editar matrícula</h2>
+              <h2 className="mt-2 flex items-center gap-2 font-serif text-2xl text-ink">
+                <Pencil size={20} className="text-brand" />
+                Editar matrícula
+              </h2>
             </div>
             <form action={updateEnrollmentAction} className="grid gap-4 md:grid-cols-4">
               <input type="hidden" name="id" value={enrollment.id} />
@@ -153,11 +159,19 @@ export default async function EnrollmentDetailPage({
             <Panel className="grid gap-4">
               <div>
                 <p className="ds-kicker">Financeiro</p>
-                <h2 className="mt-2 font-serif text-2xl text-ink">Histórico financeiro</h2>
+                <h2 className="mt-2 flex items-center gap-2 font-serif text-2xl text-ink">
+                  <Receipt size={20} className="text-brand" />
+                  Histórico financeiro
+                </h2>
                 <GenerateChargesButton matriculaId={enrollment.id} preview={chargesPreview} />
               </div>
               <div className="grid gap-2">
-                {detail.charges.length === 0 ? <p className="text-sm text-muted">Nenhuma cobrança vinculada.</p> : null}
+                {detail.charges.length === 0 ? (
+                  <div className="flex flex-col items-center justify-center gap-2 rounded-ui bg-muted/30 py-8 text-ink/40">
+                    <Receipt size={24} />
+                    <p className="text-sm">Nenhuma cobrança vinculada.</p>
+                  </div>
+                ) : null}
                 {detail.charges.map((charge) => (
                   <div key={charge.id} className="grid gap-3 border-b border-line py-3 text-sm last:border-b-0 md:grid-cols-[1fr_110px_110px_90px]">
                     <div>
@@ -175,10 +189,18 @@ export default async function EnrollmentDetailPage({
             <Panel className="grid gap-4">
               <div>
                 <p className="ds-kicker">Baixas</p>
-                <h2 className="mt-2 font-serif text-2xl text-ink">Pagamentos</h2>
+                <h2 className="mt-2 flex items-center gap-2 font-serif text-2xl text-ink">
+                  <Wallet size={20} className="text-brand" />
+                  Pagamentos
+                </h2>
               </div>
               <div className="grid gap-2">
-                {detail.payments.length === 0 ? <p className="text-sm text-muted">Nenhum pagamento vinculado.</p> : null}
+                {detail.payments.length === 0 ? (
+                  <div className="flex flex-col items-center justify-center gap-2 rounded-ui bg-muted/30 py-8 text-ink/40">
+                    <Wallet size={24} />
+                    <p className="text-sm">Nenhum pagamento vinculado.</p>
+                  </div>
+                ) : null}
                 {detail.payments.map((payment) => (
                   <div key={payment.id} className="border-b border-line py-3 text-sm last:border-b-0">
                     <strong className="text-lg text-ink">{money.format(Number(payment.valor_pago ?? 0))}</strong>
@@ -202,10 +224,18 @@ export default async function EnrollmentDetailPage({
           <Panel className="grid gap-4">
             <div>
               <p className="ds-kicker">Presença</p>
-              <h2 className="mt-2 font-serif text-2xl text-ink">Histórico de frequência</h2>
+              <h2 className="mt-2 flex items-center gap-2 font-serif text-2xl text-ink">
+                <Calendar size={20} className="text-brand" />
+                Histórico de frequência
+              </h2>
             </div>
             <div className="grid gap-2">
-              {detail.attendance.length === 0 ? <p className="text-sm text-muted">Nenhuma frequência vinculada.</p> : null}
+              {detail.attendance.length === 0 ? (
+                <div className="flex flex-col items-center justify-center gap-2 rounded-ui bg-muted/30 py-8 text-ink/40">
+                  <Calendar size={24} />
+                  <p className="text-sm">Nenhuma frequência vinculada.</p>
+                </div>
+              ) : null}
               {detail.attendance.map((item) => (
                 <div key={item.id} className="grid gap-2 border-b border-line py-3 text-sm last:border-b-0 md:grid-cols-[140px_110px_1fr]">
                   <strong>{dateText(item.data_aula)}</strong>
@@ -222,10 +252,18 @@ export default async function EnrollmentDetailPage({
           <Panel className="grid gap-4">
             <div>
               <p className="ds-kicker">Auditoria</p>
-              <h2 className="mt-2 font-serif text-2xl text-ink">Alterações da matrícula</h2>
+              <h2 className="mt-2 flex items-center gap-2 font-serif text-2xl text-ink">
+                <History size={20} className="text-brand" />
+                Alterações da matrícula
+              </h2>
             </div>
             <div className="grid gap-2">
-              {detail.history.length === 0 ? <p className="text-sm text-muted">Nenhuma alteração registrada.</p> : null}
+              {detail.history.length === 0 ? (
+                <div className="flex flex-col items-center justify-center gap-2 rounded-ui bg-muted/30 py-8 text-ink/40">
+                  <History size={24} />
+                  <p className="text-sm">Nenhuma alteração registrada.</p>
+                </div>
+              ) : null}
               {detail.history.map((item) => (
                 <div key={item.id} className="grid gap-2 border-b border-line py-3 text-sm last:border-b-0 md:grid-cols-[170px_120px_1fr]">
                   <strong>{new Date(item.created_at).toLocaleString("pt-BR")}</strong>
