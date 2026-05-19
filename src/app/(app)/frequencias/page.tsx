@@ -1,4 +1,4 @@
-import { CalendarCheck, Plus } from "lucide-react";
+import { CalendarCheck, Plus, ClipboardList } from "lucide-react";
 import { createAttendanceAction } from "@/lib/actions/attendance";
 import { getAttendanceData } from "@/lib/data/attendance";
 import { getAcademicData } from "@/lib/data/lookups";
@@ -74,7 +74,10 @@ export default async function FrequenciasPage() {
       <Panel className="grid gap-5">
         <div>
           <p className="ds-kicker">Registro avulso</p>
-          <h2 className="mt-2 text-xl font-black text-ink">Lancamento de frequencia</h2>
+          <h2 className="mt-2 flex items-center gap-2 text-xl font-black text-ink">
+            <Plus size={20} className="text-brand" />
+            Lancamento de frequencia
+          </h2>
         </div>
         <form action={createAttendanceAction} className="grid gap-4 md:grid-cols-5">
           <label className="md:col-span-2">
@@ -121,8 +124,11 @@ export default async function FrequenciasPage() {
             <tbody>
               {frequencias.length === 0 ? (
                 <tr>
-                  <td colSpan={4} className="px-5 py-8 text-center text-sm font-medium text-ink/60">
-                    Nenhum registro de frequencia.
+                  <td colSpan={4} className="px-5 py-12">
+                    <div className="flex flex-col items-center justify-center gap-2 text-ink/40">
+                      <ClipboardList size={28} />
+                      <p className="text-sm font-medium">Nenhum registro de frequencia.</p>
+                    </div>
                   </td>
                 </tr>
               ) : null}

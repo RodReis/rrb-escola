@@ -1,4 +1,4 @@
-import { ArrowLeft, CalendarCheck } from "lucide-react";
+import { ArrowLeft, CalendarCheck, Filter, Users } from "lucide-react";
 import { saveClassAttendanceAction } from "@/lib/actions/attendance";
 import { getClassAttendanceData } from "@/lib/data/attendance";
 import { ButtonLink } from "@/components/ui/button";
@@ -69,7 +69,10 @@ export default async function ChamadaPage({ searchParams }: { searchParams: Sear
       <Panel className="grid gap-5">
         <div>
           <p className="ds-kicker">Filtro</p>
-          <h2 className="mt-2 text-xl font-black text-ink">Selecionar turma e data</h2>
+          <h2 className="mt-2 flex items-center gap-2 text-xl font-black text-ink">
+            <Filter size={20} className="text-brand" />
+            Selecionar turma e data
+          </h2>
         </div>
         <form action="/frequencias/chamada" className="grid gap-4 md:grid-cols-[1fr_220px_150px]">
           <label>
@@ -100,7 +103,10 @@ export default async function ChamadaPage({ searchParams }: { searchParams: Sear
           <span>Justificativa</span>
         </div>
         {data.students.length === 0 ? (
-          <div className="p-5 text-sm font-medium text-ink/60">Nenhum aluno ativo nesta turma.</div>
+          <div className="flex flex-col items-center justify-center gap-2 py-12 text-ink/40">
+            <Users size={28} />
+            <p className="text-sm font-medium">Nenhum aluno ativo nesta turma.</p>
+          </div>
         ) : (
           data.students.map((row) => (
             <div key={row.alunoId} className="grid gap-3 border-t border-line px-5 py-4 lg:grid-cols-[120px_1fr_150px_1.2fr] lg:items-center">
