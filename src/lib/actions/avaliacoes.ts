@@ -2,7 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { createServerClient } from "@/lib/supabase/server";
-import { requireSession } from "@/lib/auth/session";
+import { requirePermission } from "@/lib/auth/session";
 import { DEFAULT_SCHOOL_ID } from "@/lib/constants";
 import { formNumber, formText } from "@/lib/utils";
 
@@ -15,7 +15,7 @@ function readTipo(formData: FormData): (typeof TIPOS)[number] {
 }
 
 export async function createAvaliacaoAction(formData: FormData) {
-  const session = await requireSession();
+  const session = await requirePermission("avaliacoes", "create");
   const supabase = await createServerClient();
 
   const disciplinaId = formText(formData, "disciplina_id");
@@ -49,7 +49,7 @@ export async function createAvaliacaoAction(formData: FormData) {
 }
 
 export async function updateAvaliacaoAction(formData: FormData) {
-  await requireSession();
+  await requirePermission("avaliacoes", "update");
   const supabase = await createServerClient();
   const id = formText(formData, "id");
   if (!id) throw new Error("ID obrigatório");
@@ -76,7 +76,7 @@ export async function updateAvaliacaoAction(formData: FormData) {
 }
 
 export async function deleteAvaliacaoAction(formData: FormData) {
-  await requireSession();
+  await requirePermission("avaliacoes", "delete");
   const supabase = await createServerClient();
   const id = formText(formData, "id");
   if (!id) throw new Error("ID obrigatório");
@@ -91,7 +91,8 @@ export async function deleteAvaliacaoAction(formData: FormData) {
 }
 
 export async function lancarNotasAction(formData: FormData) {
-  const session = await requireSession();
+  // Lançamento de notas — gate como `update` em avaliações.
+  const session = await requirePermission("avaliacoes", "update");
   const supabase = await createServerClient();
 
   const avaliacaoId = formText(formData, "avaliacao_id");

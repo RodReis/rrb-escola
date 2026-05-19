@@ -2,7 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
-import { requireSession } from "@/lib/auth/session";
+import { requirePermission } from "@/lib/auth/session";
 import { DEFAULT_SCHOOL_ID } from "@/lib/constants";
 import { generateChargesForEnrollment } from "@/lib/server/generate-charges";
 import { parsePdfStudents, parseSpreadsheetStudents, type StudentImportData } from "@/lib/server/student-import-parser";
@@ -88,7 +88,7 @@ async function validateImportRows(
 }
 
 export async function uploadStudentImportAction(formData: FormData) {
-  await requireSession();
+  await requirePermission("importacoes", "create");
   const file = formData.get("arquivo");
   if (!(file instanceof File) || file.size === 0) return;
   if (!isPdf(file) && !isSpreadsheet(file)) throw new Error("Envie um PDF, XLSX, XLS ou CSV.");
@@ -155,7 +155,7 @@ export async function uploadStudentImportAction(formData: FormData) {
 export const uploadStudentPdfAction = uploadStudentImportAction;
 
 export async function updateImportStudentRowAction(formData: FormData) {
-  await requireSession();
+  await requirePermission("importacoes", "update");
   const id = formText(formData, "id");
   const arquivoId = formText(formData, "arquivo_id");
   if (!id || !arquivoId) return;
@@ -208,7 +208,7 @@ export async function updateImportStudentRowAction(formData: FormData) {
 }
 
 export async function processImportStudentBatchAction(formData: FormData) {
-  await requireSession();
+  await requirePermission("importacoes", "update");
   const arquivoId = formText(formData, "arquivo_id");
   if (!arquivoId) return;
 
@@ -364,7 +364,7 @@ export async function processImportStudentBatchAction(formData: FormData) {
 }
 
 export async function markImportProcessedAction(formData: FormData) {
-  await requireSession();
+  await requirePermission("importacoes", "update");
   const id = formText(formData, "id");
   const status = formText(formData, "status");
   if (!id || !status) return;

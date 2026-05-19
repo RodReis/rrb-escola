@@ -3,13 +3,13 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { createServerClient } from "@/lib/supabase/server";
-import { requireAdmin } from "@/lib/auth/session";
+import { requirePermission } from "@/lib/auth/session";
 import { formText } from "@/lib/utils";
 
 const IMG_TYPES = new Set(["image/jpeg", "image/png", "image/webp", "image/svg+xml"]);
 
 export async function uploadEscolaLogoAction(formData: FormData) {
-  const session = await requireAdmin();
+  const session = await requirePermission("configuracoes.escola", "update");
   const file = formData.get("logo");
   if (!(file instanceof File) || file.size === 0) {
     redirect("/configuracoes/escola?erro=sem_arquivo");
@@ -43,7 +43,7 @@ export async function uploadEscolaLogoAction(formData: FormData) {
 }
 
 export async function removeEscolaLogoAction() {
-  const session = await requireAdmin();
+  const session = await requirePermission("configuracoes.escola", "update");
   const supabase = await createServerClient();
 
   await supabase.from("escolas").update({ logo_url: null }).eq("id", session.profile.escola_id);
@@ -54,7 +54,7 @@ export async function removeEscolaLogoAction() {
 }
 
 export async function updateEscolaAction(formData: FormData) {
-  const session = await requireAdmin();
+  const session = await requirePermission("configuracoes.escola", "update");
   const supabase = await createServerClient();
 
   await supabase

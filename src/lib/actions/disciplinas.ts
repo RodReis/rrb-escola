@@ -2,12 +2,12 @@
 
 import { revalidatePath } from "next/cache";
 import { createServerClient } from "@/lib/supabase/server";
-import { requireSession } from "@/lib/auth/session";
+import { requirePermission } from "@/lib/auth/session";
 import { DEFAULT_SCHOOL_ID } from "@/lib/constants";
 import { formNumber, formText } from "@/lib/utils";
 
 export async function createDisciplinaAction(formData: FormData) {
-  await requireSession();
+  await requirePermission("disciplinas", "create");
   const supabase = await createServerClient();
 
   const serieId = formText(formData, "serie_id");
@@ -26,7 +26,7 @@ export async function createDisciplinaAction(formData: FormData) {
 }
 
 export async function updateDisciplinaAction(formData: FormData) {
-  await requireSession();
+  await requirePermission("disciplinas", "update");
   const supabase = await createServerClient();
 
   const id = formText(formData, "id");
@@ -47,7 +47,7 @@ export async function updateDisciplinaAction(formData: FormData) {
 }
 
 export async function deleteDisciplinaAction(formData: FormData) {
-  await requireSession();
+  await requirePermission("disciplinas", "delete");
   const supabase = await createServerClient();
 
   const id = formText(formData, "id");
@@ -63,7 +63,8 @@ export async function deleteDisciplinaAction(formData: FormData) {
 }
 
 export async function createAtribuicaoAction(formData: FormData) {
-  await requireSession();
+  // Atribuição professor↔disciplina↔turma — gate via módulo `professores`.
+  await requirePermission("professores", "create");
   const supabase = await createServerClient();
 
   const perfilId = formText(formData, "perfil_id");
@@ -82,7 +83,7 @@ export async function createAtribuicaoAction(formData: FormData) {
 }
 
 export async function deleteAtribuicaoAction(formData: FormData) {
-  await requireSession();
+  await requirePermission("professores", "delete");
   const supabase = await createServerClient();
 
   const id = formText(formData, "id");

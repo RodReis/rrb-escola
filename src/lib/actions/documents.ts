@@ -1,12 +1,13 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { requireSession } from "@/lib/auth/session";
+import { requirePermission } from "@/lib/auth/session";
 import { createServerClient } from "@/lib/supabase/server";
 import { formText } from "@/lib/utils";
 
 export async function uploadStudentDocumentAction(formData: FormData) {
-  await requireSession();
+  // Documento anexado a um aluno — gate via módulo `alunos`.
+  await requirePermission("alunos", "update");
   const alunoId = formText(formData, "aluno_id");
   const tipoDocumento = formText(formData, "tipo_documento") ?? "outro";
   const file = formData.get("documento");
@@ -44,7 +45,7 @@ export async function uploadStudentDocumentAction(formData: FormData) {
 }
 
 export async function removeStudentDocumentAction(formData: FormData) {
-  await requireSession();
+  await requirePermission("alunos", "update");
   const alunoId = formText(formData, "aluno_id");
   const documentoId = formText(formData, "documento_id");
   const storagePath = formText(formData, "storage_path");

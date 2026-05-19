@@ -2,7 +2,7 @@
 
 import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
-import { requirePerfil } from "@/lib/auth/session";
+import { requirePermission } from "@/lib/auth/session";
 import { createServerClient } from "@/lib/supabase/server";
 import { CompanySchema, CompanyUpdateSchema, EmployeeSchema, EmployeeUpdateSchema } from "@/lib/validation/rh";
 
@@ -11,7 +11,7 @@ function firstError(error: { issues: { message: string }[] }) {
 }
 
 export async function createCompanyAction(formData: FormData) {
-  await requirePerfil(["admin"]);
+  await requirePermission("rh.empresas", "create");
 
   const parsed = CompanySchema.safeParse({
     name: String(formData.get("name") ?? "").trim(),
@@ -37,7 +37,7 @@ export async function createCompanyAction(formData: FormData) {
 }
 
 export async function updateCompanyAction(formData: FormData) {
-  await requirePerfil(["admin"]);
+  await requirePermission("rh.empresas", "update");
 
   const parsed = CompanyUpdateSchema.safeParse({
     id: String(formData.get("id") ?? ""),
@@ -71,7 +71,7 @@ export async function updateCompanyAction(formData: FormData) {
 }
 
 export async function toggleCompanyAction(formData: FormData) {
-  await requirePerfil(["admin"]);
+  await requirePermission("rh.empresas", "update");
   const id = String(formData.get("id") ?? "");
   const ativo = formData.get("ativo") === "on";
 
@@ -105,7 +105,7 @@ function readEmployeeForm(formData: FormData) {
 }
 
 export async function createEmployeeAction(formData: FormData) {
-  await requirePerfil(["admin", "secretaria"]);
+  await requirePermission("rh.funcionarios", "create");
 
   const parsed = EmployeeSchema.safeParse(readEmployeeForm(formData));
   if (!parsed.success) {
@@ -141,7 +141,7 @@ export async function createEmployeeAction(formData: FormData) {
 }
 
 export async function updateEmployeeAction(formData: FormData) {
-  await requirePerfil(["admin", "secretaria"]);
+  await requirePermission("rh.funcionarios", "update");
 
   const id = String(formData.get("id") ?? "");
   const parsed = EmployeeUpdateSchema.safeParse({
@@ -186,7 +186,7 @@ export async function updateEmployeeAction(formData: FormData) {
 }
 
 export async function toggleEmployeeAction(formData: FormData) {
-  await requirePerfil(["admin", "secretaria"]);
+  await requirePermission("rh.funcionarios", "update");
   const id = String(formData.get("id") ?? "");
   const ativo = formData.get("ativo") === "on";
 
@@ -201,7 +201,7 @@ export async function toggleEmployeeAction(formData: FormData) {
 }
 
 export async function deleteEmployeeAction(formData: FormData) {
-  await requirePerfil(["admin"]);
+  await requirePermission("rh.funcionarios", "delete");
   const id = String(formData.get("id") ?? "");
 
   if (!id) redirect("/rh/funcionarios?erro=ID inválido");

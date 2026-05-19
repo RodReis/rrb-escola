@@ -2,14 +2,14 @@
 
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
-import { requireSession } from "@/lib/auth/session";
+import { requirePermission } from "@/lib/auth/session";
 import { DEFAULT_SCHOOL_ID } from "@/lib/constants";
 import { createServerClient } from "@/lib/supabase/server";
 import { formText, formBoolean } from "@/lib/utils";
 import { categoriaSchema } from "@/lib/validation/despesas";
 
 export async function createCategoriaAction(formData: FormData) {
-  await requireSession();
+  await requirePermission("despesas", "create");
   const parsed = categoriaSchema.safeParse({
     nome: formText(formData, "nome"),
     ativo: formBoolean(formData, "ativo")
@@ -26,7 +26,7 @@ export async function createCategoriaAction(formData: FormData) {
 }
 
 export async function updateCategoriaAction(formData: FormData) {
-  await requireSession();
+  await requirePermission("despesas", "update");
   const id = formText(formData, "id");
   if (!id) redirect("/despesas/categorias?erro=id");
   const parsed = categoriaSchema.safeParse({
@@ -46,7 +46,7 @@ export async function updateCategoriaAction(formData: FormData) {
 }
 
 export async function deleteCategoriaAction(formData: FormData) {
-  await requireSession();
+  await requirePermission("despesas", "delete");
   const id = formText(formData, "id");
   if (!id) redirect("/despesas/categorias?erro=id");
 

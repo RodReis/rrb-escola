@@ -2,7 +2,7 @@
 
 import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
-import { requirePerfil } from "@/lib/auth/session";
+import { requirePermission } from "@/lib/auth/session";
 import { createServerClient } from "@/lib/supabase/server";
 import { BracketSchema, NewVigenciaSchema } from "@/lib/validation/payroll";
 
@@ -11,7 +11,7 @@ function firstError(error: { issues: { message: string }[] }) {
 }
 
 export async function upsertBracketAction(formData: FormData) {
-  await requirePerfil(["admin"]);
+  await requirePermission("rh.folha", "update");
 
   const parsed = BracketSchema.safeParse({
     table: String(formData.get("table") ?? ""),
@@ -52,7 +52,7 @@ export async function upsertBracketAction(formData: FormData) {
 }
 
 export async function deleteBracketAction(formData: FormData) {
-  await requirePerfil(["admin"]);
+  await requirePermission("rh.folha", "delete");
   const table = String(formData.get("table") ?? "");
   const id = String(formData.get("id") ?? "");
   if (table !== "inss" && table !== "ir") redirect("/rh/brackets?erro=Tabela inválida");
@@ -68,7 +68,7 @@ export async function deleteBracketAction(formData: FormData) {
 }
 
 export async function createBracketVigenciaAction(formData: FormData) {
-  await requirePerfil(["admin"]);
+  await requirePermission("rh.folha", "create");
   const parsed = NewVigenciaSchema.safeParse({
     table: String(formData.get("table") ?? ""),
     vigencia_inicio: String(formData.get("vigencia_inicio") ?? ""),
@@ -122,7 +122,7 @@ export async function createBracketVigenciaAction(formData: FormData) {
 }
 
 export async function deleteVigenciaAction(formData: FormData) {
-  await requirePerfil(["admin"]);
+  await requirePermission("rh.folha", "delete");
   const table = String(formData.get("table") ?? "");
   const vigencia = String(formData.get("vigencia") ?? "");
   if (table !== "inss" && table !== "ir") redirect("/rh/brackets?erro=Tabela inválida");

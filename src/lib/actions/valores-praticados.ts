@@ -2,7 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { createServerClient } from "@/lib/supabase/server";
-import { requireSession } from "@/lib/auth/session";
+import { requirePermission } from "@/lib/auth/session";
 import { DEFAULT_SCHOOL_ID } from "@/lib/constants";
 import { SEGMENTOS, type SegmentoSerie } from "@/lib/data/valores-praticados";
 
@@ -41,7 +41,7 @@ function readAnoLetivo(formData: FormData): number {
 }
 
 export async function upsertValorPraticadoAction(formData: FormData) {
-  await requireSession();
+  await requirePermission("valores-praticados", "update");
   const supabase = await createServerClient();
 
   const anoLetivo = readAnoLetivo(formData);
@@ -65,7 +65,7 @@ export async function upsertValorPraticadoAction(formData: FormData) {
 }
 
 export async function criarAnoLetivoAction(formData: FormData) {
-  await requireSession();
+  await requirePermission("valores-praticados", "create");
   const supabase = await createServerClient();
   const anoLetivo = readAnoLetivo(formData);
 
@@ -88,7 +88,7 @@ export async function criarAnoLetivoAction(formData: FormData) {
 }
 
 export async function removerAnoLetivoAction(formData: FormData) {
-  await requireSession();
+  await requirePermission("valores-praticados", "delete");
   const supabase = await createServerClient();
   const anoLetivo = readAnoLetivo(formData);
 

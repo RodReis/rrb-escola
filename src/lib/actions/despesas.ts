@@ -2,7 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
-import { requireSession } from "@/lib/auth/session";
+import { requirePermission } from "@/lib/auth/session";
 import { DEFAULT_SCHOOL_ID } from "@/lib/constants";
 import { createServerClient } from "@/lib/supabase/server";
 import { formNumber, formText } from "@/lib/utils";
@@ -13,7 +13,7 @@ function competenciaFromDate(d: string) {
 }
 
 export async function createDespesaAction(formData: FormData) {
-  const session = await requireSession();
+  const session = await requirePermission("despesas", "create");
   const parsed = despesaSchema.safeParse({
     descricao: formText(formData, "descricao"),
     categoria_id: formText(formData, "categoria_id"),
@@ -48,7 +48,7 @@ export async function createDespesaAction(formData: FormData) {
 }
 
 export async function updateDespesaAction(formData: FormData) {
-  await requireSession();
+  await requirePermission("despesas", "update");
   const id = formText(formData, "id");
   if (!id) redirect("/despesas?erro=id");
 
@@ -82,7 +82,7 @@ export async function updateDespesaAction(formData: FormData) {
 }
 
 export async function payDespesaAction(formData: FormData) {
-  await requireSession();
+  await requirePermission("despesas", "update");
   const id = formText(formData, "id");
   const data_pagamento = formText(formData, "data_pagamento") ?? new Date().toISOString().slice(0, 10);
   const forma_pagamento = formText(formData, "forma_pagamento");
@@ -103,7 +103,7 @@ export async function payDespesaAction(formData: FormData) {
 }
 
 export async function cancelDespesaAction(formData: FormData) {
-  await requireSession();
+  await requirePermission("despesas", "update");
   const id = formText(formData, "id");
   if (!id) redirect("/despesas?erro=id");
 
@@ -133,7 +133,7 @@ function shiftVencimento(dataOrigem: string, fromMes: string, toMes: string): st
 }
 
 export async function duplicateMonthAction(formData: FormData) {
-  const session = await requireSession();
+  const session = await requirePermission("despesas", "create");
   const toCompetencia = formText(formData, "to") ?? new Date().toISOString().slice(0, 7);
   const fromCompetencia = adjacentMes(toCompetencia, -1);
 
@@ -181,7 +181,7 @@ export async function duplicateMonthAction(formData: FormData) {
 }
 
 export async function uploadComprovanteAction(formData: FormData) {
-  await requireSession();
+  await requirePermission("despesas", "update");
   const id = formText(formData, "id");
   const file = formData.get("file");
   if (!id) redirect("/despesas?erro=id");
@@ -216,7 +216,7 @@ export async function uploadComprovanteAction(formData: FormData) {
 }
 
 export async function removeComprovanteAction(formData: FormData) {
-  await requireSession();
+  await requirePermission("despesas", "update");
   const id = formText(formData, "id");
   const path = formText(formData, "path");
   if (!id || !path) redirect("/despesas?erro=id");
@@ -234,7 +234,7 @@ export async function removeComprovanteAction(formData: FormData) {
 }
 
 export async function getComprovanteUrlAction(path: string): Promise<string | null> {
-  await requireSession();
+  await requirePermission("despesas", "read");
   const supabase = await createServerClient();
   const { data, error } = await supabase.storage
     .from("despesas-comprovantes")

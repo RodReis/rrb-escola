@@ -1,13 +1,13 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { requireSession } from "@/lib/auth/session";
+import { requirePermission } from "@/lib/auth/session";
 import { DEFAULT_SCHOOL_ID } from "@/lib/constants";
 import { createServerClient } from "@/lib/supabase/server";
 import { formBoolean, formText } from "@/lib/utils";
 
 export async function createAttendanceAction(formData: FormData) {
-  await requireSession();
+  await requirePermission("frequencias", "create");
   const alunoId = formText(formData, "aluno_id");
   if (!alunoId) return;
 
@@ -27,7 +27,7 @@ export async function createAttendanceAction(formData: FormData) {
 }
 
 export async function saveClassAttendanceAction(formData: FormData) {
-  await requireSession();
+  await requirePermission("frequencias", "create");
   const date = formText(formData, "data_aula") ?? new Date().toISOString().slice(0, 10);
   const turmaId = formText(formData, "turma_id");
   const alunoIds = formData.getAll("aluno_id").filter((value): value is string => typeof value === "string");

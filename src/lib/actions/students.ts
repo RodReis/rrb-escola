@@ -2,7 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
-import { requireSession } from "@/lib/auth/session";
+import { requirePermission } from "@/lib/auth/session";
 import { DEFAULT_SCHOOL_ID } from "@/lib/constants";
 import { generateChargesForEnrollment } from "@/lib/server/generate-charges";
 import { createServerClient } from "@/lib/supabase/server";
@@ -27,7 +27,7 @@ function readPercentualBolsa(formData: FormData, tipo: TipoVagaInput): number {
 }
 
 export async function createStudentAction(formData: FormData) {
-  await requireSession();
+  await requirePermission("alunos", "create");
   const supabase = await createServerClient();
   const nome = formText(formData, "nome");
   const matricula = formText(formData, "matricula_codigo");
@@ -161,7 +161,7 @@ export async function createStudentAction(formData: FormData) {
 }
 
 export async function updateStudentAction(formData: FormData) {
-  await requireSession();
+  await requirePermission("alunos", "update");
   const supabase = await createServerClient();
   const alunoId = formText(formData, "aluno_id");
   // getAll + last: hidden carries the saved value; visible input (aba pessoal) appended after → last wins
@@ -362,7 +362,7 @@ export async function updateStudentAction(formData: FormData) {
 }
 
 export async function toggleStudentAction(formData: FormData) {
-  await requireSession();
+  await requirePermission("alunos", "update");
   const alunoId = formText(formData, "aluno_id");
   const ativo = formBoolean(formData, "ativo");
   if (!alunoId) return;
@@ -379,7 +379,7 @@ export async function toggleStudentAction(formData: FormData) {
 }
 
 export async function addStudentAddressAction(formData: FormData) {
-  await requireSession();
+  await requirePermission("alunos", "update");
   const alunoId = formText(formData, "aluno_id");
   const logradouro = formText(formData, "logradouro");
   if (!alunoId || !logradouro) return;
@@ -402,7 +402,7 @@ export async function addStudentAddressAction(formData: FormData) {
 }
 
 export async function addStudentContactAction(formData: FormData) {
-  await requireSession();
+  await requirePermission("alunos", "update");
   const alunoId = formText(formData, "aluno_id");
   const nome = formText(formData, "nome");
   if (!alunoId || !nome) return;
@@ -423,7 +423,7 @@ export async function addStudentContactAction(formData: FormData) {
 }
 
 export async function addStudentGuardianAction(formData: FormData) {
-  await requireSession();
+  await requirePermission("alunos", "update");
   const alunoId = formText(formData, "aluno_id");
   const nome = formText(formData, "nome");
   if (!alunoId || !nome) return;
@@ -446,7 +446,7 @@ export async function addStudentGuardianAction(formData: FormData) {
 }
 
 export async function addStudentAuthorizedPersonAction(formData: FormData) {
-  await requireSession();
+  await requirePermission("alunos", "update");
   const alunoId = formText(formData, "aluno_id");
   const nome = formText(formData, "nome");
   if (!alunoId || !nome) return;
@@ -466,7 +466,7 @@ export async function addStudentAuthorizedPersonAction(formData: FormData) {
 }
 
 export async function removeStudentRelatedRecordAction(formData: FormData) {
-  await requireSession();
+  await requirePermission("alunos", "update");
   const alunoId = formText(formData, "aluno_id");
   const table = formText(formData, "table");
   const id = formText(formData, "id");
@@ -483,7 +483,7 @@ export async function removeStudentRelatedRecordAction(formData: FormData) {
 }
 
 export async function uploadStudentPhotoAction(formData: FormData) {
-  await requireSession();
+  await requirePermission("alunos", "update");
   const alunoId = formText(formData, "aluno_id");
   const file = formData.get("foto");
   if (!alunoId || !(file instanceof File) || file.size === 0) return;

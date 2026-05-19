@@ -1,13 +1,13 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { requireSession } from "@/lib/auth/session";
+import { requirePermission } from "@/lib/auth/session";
 import { DEFAULT_SCHOOL_ID } from "@/lib/constants";
 import { createServerClient } from "@/lib/supabase/server";
 import { formBoolean, formNumber, formText } from "@/lib/utils";
 
 export async function createSerieAction(formData: FormData) {
-  await requireSession();
+  await requirePermission("series", "create");
   const nome = formText(formData, "nome");
   if (!nome) return;
   const supabase = await createServerClient();
@@ -20,7 +20,7 @@ export async function createSerieAction(formData: FormData) {
 }
 
 export async function updateSerieAction(formData: FormData) {
-  await requireSession();
+  await requirePermission("series", "update");
   const id = formText(formData, "id");
   const nome = formText(formData, "nome");
   if (!id || !nome) return;
@@ -42,7 +42,7 @@ export async function updateSerieAction(formData: FormData) {
 }
 
 export async function createTurmaAction(formData: FormData) {
-  await requireSession();
+  await requirePermission("turmas", "create");
   const nome = formText(formData, "nome");
   const serieId = formText(formData, "serie_id");
   if (!nome || !serieId) return;
@@ -59,7 +59,7 @@ export async function createTurmaAction(formData: FormData) {
 }
 
 export async function updateTurmaAction(formData: FormData) {
-  await requireSession();
+  await requirePermission("turmas", "update");
   const id = formText(formData, "id");
   const nome = formText(formData, "nome");
   const serieId = formText(formData, "serie_id");
@@ -84,7 +84,7 @@ export async function updateTurmaAction(formData: FormData) {
 }
 
 export async function createPlanAction(formData: FormData) {
-  await requireSession();
+  await requirePermission("planos", "create");
   const nome = formText(formData, "nome");
   if (!nome) return;
   const supabase = await createServerClient();
@@ -101,7 +101,7 @@ export async function createPlanAction(formData: FormData) {
 }
 
 export async function updatePlanAction(formData: FormData) {
-  await requireSession();
+  await requirePermission("planos", "update");
   const id = formText(formData, "id");
   const nome = formText(formData, "nome");
   if (!id || !nome) return;
@@ -127,7 +127,7 @@ export async function updatePlanAction(formData: FormData) {
 }
 
 export async function createEnrollmentAction(formData: FormData) {
-  await requireSession();
+  await requirePermission("matriculas", "create");
   const alunoId = formText(formData, "aluno_id");
   const serieId = formText(formData, "serie_id");
   const turmaId = formText(formData, "turma_id");
@@ -157,7 +157,7 @@ export async function createEnrollmentAction(formData: FormData) {
 }
 
 export async function updateEnrollmentAction(formData: FormData) {
-  await requireSession();
+  await requirePermission("matriculas", "update");
   const id = formText(formData, "id");
   const alunoId = formText(formData, "aluno_id");
   const serieId = formText(formData, "serie_id");
@@ -189,7 +189,7 @@ export async function updateEnrollmentAction(formData: FormData) {
 }
 
 export async function updateEnrollmentStatusAction(formData: FormData) {
-  await requireSession();
+  await requirePermission("matriculas", "update");
   const id = formText(formData, "id");
   const alunoId = formText(formData, "aluno_id");
   const status = formText(formData, "status");
@@ -211,7 +211,7 @@ export async function updateEnrollmentStatusAction(formData: FormData) {
 }
 
 export async function toggleSerieAction(formData: FormData) {
-  await requireSession();
+  await requirePermission("series", "update");
   const id = formText(formData, "id");
   if (!id) return;
   const supabase = await createServerClient();
@@ -224,7 +224,7 @@ export async function toggleSerieAction(formData: FormData) {
 }
 
 export async function toggleTurmaAction(formData: FormData) {
-  await requireSession();
+  await requirePermission("turmas", "update");
   const id = formText(formData, "id");
   if (!id) return;
   const supabase = await createServerClient();
@@ -237,7 +237,7 @@ export async function toggleTurmaAction(formData: FormData) {
 }
 
 export async function togglePlanAction(formData: FormData) {
-  await requireSession();
+  await requirePermission("planos", "update");
   const id = formText(formData, "id");
   if (!id) return;
   const supabase = await createServerClient();

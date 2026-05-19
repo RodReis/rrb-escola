@@ -2,14 +2,14 @@
 
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
-import { requireSession } from "@/lib/auth/session";
+import { requirePermission } from "@/lib/auth/session";
 import { DEFAULT_SCHOOL_ID } from "@/lib/constants";
 import { generateChargesForEnrollment } from "@/lib/server/generate-charges";
 import { createServerClient } from "@/lib/supabase/server";
 import { formNumber, formText } from "@/lib/utils";
 
 export async function createChargeAction(formData: FormData) {
-  await requireSession();
+  await requirePermission("financeiro.cobrancas", "create");
   const alunoId = formText(formData, "aluno_id");
   const descricao = formText(formData, "descricao");
   if (!alunoId || !descricao) return;
@@ -32,7 +32,7 @@ export async function createChargeAction(formData: FormData) {
 }
 
 export async function updateChargeAction(formData: FormData) {
-  await requireSession();
+  await requirePermission("financeiro.cobrancas", "update");
   const cobrancaId = formText(formData, "cobranca_id");
   if (!cobrancaId) redirect("/financeiro?erro=id");
 
@@ -54,7 +54,7 @@ export async function updateChargeAction(formData: FormData) {
 }
 
 export async function payChargeAction(formData: FormData) {
-  const session = await requireSession();
+  const session = await requirePermission("financeiro.cobrancas", "update");
   const cobrancaId = formText(formData, "cobranca_id");
   const alunoId = formText(formData, "aluno_id");
   const valorPago = formNumber(formData, "valor_pago");
@@ -84,7 +84,7 @@ export async function payChargeAction(formData: FormData) {
 }
 
 export async function cancelPaymentAction(formData: FormData) {
-  const session = await requireSession();
+  const session = await requirePermission("financeiro.cobrancas", "update");
   const pagamentoId = formText(formData, "pagamento_id");
   const motivo = formText(formData, "motivo") ?? "Sem motivo informado";
   if (!pagamentoId) redirect("/financeiro?erro=id");
@@ -106,7 +106,7 @@ export async function cancelPaymentAction(formData: FormData) {
 }
 
 export async function cancelChargeAction(formData: FormData) {
-  await requireSession();
+  await requirePermission("financeiro.cobrancas", "update");
   const cobrancaId = formText(formData, "cobranca_id");
   if (!cobrancaId) return;
 
@@ -121,7 +121,7 @@ export async function cancelChargeAction(formData: FormData) {
 }
 
 export async function generateChargesForEnrollmentAction(formData: FormData) {
-  await requireSession();
+  await requirePermission("financeiro.cobrancas", "create");
   const matriculaId = formText(formData, "matricula_id");
   if (!matriculaId) redirect("/matriculas?erro=id");
 

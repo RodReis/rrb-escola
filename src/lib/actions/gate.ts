@@ -1,7 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { requireSession } from "@/lib/auth/session";
+import { requirePermission } from "@/lib/auth/session";
 import { DEFAULT_SCHOOL_ID } from "@/lib/constants";
 import { registerGateEvent } from "@/lib/server/gate-events";
 import { sendGuardianNotification } from "@/lib/server/guardian-notifications";
@@ -9,7 +9,7 @@ import { createServerClient } from "@/lib/supabase/server";
 import { formBoolean, formNumber, formText } from "@/lib/utils";
 
 export async function registerGateEventAction(formData: FormData) {
-  await requireSession();
+  await requirePermission("portaria", "create");
   const alunoId = formText(formData, "aluno_id");
   const deviceId = formText(formData, "dispositivo_id");
   const type = formText(formData, "tipo");
@@ -31,7 +31,7 @@ export async function registerGateEventAction(formData: FormData) {
 }
 
 export async function saveStudentGateSettingsAction(formData: FormData) {
-  await requireSession();
+  await requirePermission("portaria", "update");
   const alunoId = formText(formData, "aluno_id");
   if (!alunoId) return;
 
@@ -68,7 +68,7 @@ export async function saveStudentGateSettingsAction(formData: FormData) {
 }
 
 export async function createGateDeviceAction(formData: FormData) {
-  await requireSession();
+  await requirePermission("portaria", "create");
   const nome = formText(formData, "nome");
   if (!nome) return;
 
@@ -86,7 +86,7 @@ export async function createGateDeviceAction(formData: FormData) {
 }
 
 export async function updateGateDeviceAction(formData: FormData) {
-  await requireSession();
+  await requirePermission("portaria", "update");
   const id = formText(formData, "id");
   const nome = formText(formData, "nome");
   if (!id || !nome) return;
@@ -109,7 +109,7 @@ export async function updateGateDeviceAction(formData: FormData) {
 }
 
 export async function toggleGateDeviceAction(formData: FormData) {
-  await requireSession();
+  await requirePermission("portaria", "update");
   const id = formText(formData, "id");
   if (!id) return;
 
@@ -126,7 +126,7 @@ export async function toggleGateDeviceAction(formData: FormData) {
 }
 
 export async function retryGuardianNotificationAction(formData: FormData) {
-  await requireSession();
+  await requirePermission("portaria", "update");
   const id = formText(formData, "notificacao_id");
   if (!id) return;
 

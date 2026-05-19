@@ -2,12 +2,12 @@
 
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
-import { requireSession } from "@/lib/auth/session";
+import { requirePermission } from "@/lib/auth/session";
 import { createServerClient } from "@/lib/supabase/server";
 import { formText } from "@/lib/utils";
 
 export async function setConsentAction(formData: FormData) {
-  await requireSession();
+  await requirePermission("portaria", "update");
   const alunoId = formText(formData, "aluno_id");
   const responsavelId = formText(formData, "responsavel_id");
   const autorizado = formText(formData, "autorizado") === "true";
@@ -64,7 +64,7 @@ type SaveBiometryInput = {
 };
 
 export async function saveBiometryAction(input: SaveBiometryInput) {
-  await requireSession();
+  await requirePermission("portaria", "create");
   if (!input.alunoId) throw new Error("aluno_id requerido");
   if (input.embedding.length !== 128) throw new Error("embedding deve ter 128 dimensoes");
 

@@ -3,7 +3,7 @@
 import { randomUUID } from "crypto";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
-import { requireSession } from "@/lib/auth/session";
+import { requirePermission } from "@/lib/auth/session";
 import { createServerClient } from "@/lib/supabase/server";
 import { extractPlaceholders } from "@/lib/documents/placeholders";
 import { validateMapping, inferDefaultMapping, type Mapping } from "@/lib/documents/schema-catalog";
@@ -18,7 +18,7 @@ function sanitizeNome(nome: string): string {
 }
 
 export async function uploadTemplateAction(formData: FormData) {
-  const session = await requireSession();
+  const session = await requirePermission("documentos.templates", "create");
   const escolaId = session.profile.escola_id;
 
   const file = formData.get("arquivo");
@@ -75,7 +75,7 @@ export async function uploadTemplateAction(formData: FormData) {
 }
 
 export async function saveTemplateMappingsAction(formData: FormData) {
-  const session = await requireSession();
+  const session = await requirePermission("documentos.templates", "update");
   const escolaId = session.profile.escola_id;
   const templateId = String(formData.get("template_id") ?? "");
   const mappingsJson = String(formData.get("mappings") ?? "[]");
@@ -116,7 +116,7 @@ export async function saveTemplateMappingsAction(formData: FormData) {
 }
 
 export async function updateTemplateAction(formData: FormData) {
-  const session = await requireSession();
+  const session = await requirePermission("documentos.templates", "update");
   const escolaId = session.profile.escola_id;
   const templateId = String(formData.get("template_id") ?? "");
   const nome = sanitizeNome(String(formData.get("nome") ?? ""));
@@ -139,7 +139,7 @@ export async function updateTemplateAction(formData: FormData) {
 }
 
 export async function toggleTemplateAtivoAction(formData: FormData) {
-  const session = await requireSession();
+  const session = await requirePermission("documentos.templates", "update");
   const escolaId = session.profile.escola_id;
   const templateId = String(formData.get("template_id") ?? "");
   const ativo = String(formData.get("ativo") ?? "") === "1";
@@ -157,7 +157,7 @@ export async function toggleTemplateAtivoAction(formData: FormData) {
 }
 
 export async function deleteTemplateAction(formData: FormData) {
-  const session = await requireSession();
+  const session = await requirePermission("documentos.templates", "delete");
   const escolaId = session.profile.escola_id;
   const templateId = String(formData.get("template_id") ?? "");
   if (!templateId) throw new Error("template_id obrigatório.");

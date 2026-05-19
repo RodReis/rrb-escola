@@ -2,7 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
-import { requireAdmin } from "@/lib/auth/session";
+import { requirePermission } from "@/lib/auth/session";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { setUserCreatedFlash } from "@/lib/actions/user-flash";
 import { formText } from "@/lib/utils";
@@ -24,7 +24,7 @@ function generatePassword() {
 }
 
 export async function createUserAction(formData: FormData) {
-  const session = await requireAdmin();
+  const session = await requirePermission("usuarios", "create");
   const email = formText(formData, "email");
   const nome = formText(formData, "nome");
   if (!email || !nome) redirect("/usuarios/novo?erro=campos");
@@ -59,7 +59,7 @@ export async function createUserAction(formData: FormData) {
 }
 
 export async function updateUserAction(formData: FormData) {
-  await requireAdmin();
+  await requirePermission("usuarios", "update");
   const perfilId = formText(formData, "perfilId");
   const nome = formText(formData, "nome");
   if (!perfilId || !nome) redirect(`/usuarios?erro=campos`);
@@ -78,7 +78,7 @@ export async function updateUserAction(formData: FormData) {
 }
 
 export async function deactivateUserAction(formData: FormData) {
-  const session = await requireAdmin();
+  const session = await requirePermission("usuarios", "update");
   const perfilId = formText(formData, "perfilId");
   if (!perfilId) redirect("/usuarios?erro=id");
   if (perfilId === session.profile.id) redirect("/usuarios?erro=self");
@@ -95,7 +95,7 @@ export async function deactivateUserAction(formData: FormData) {
 }
 
 export async function reactivateUserAction(formData: FormData) {
-  await requireAdmin();
+  await requirePermission("usuarios", "update");
   const perfilId = formText(formData, "perfilId");
   if (!perfilId) redirect("/usuarios?erro=id");
 
@@ -111,7 +111,7 @@ export async function reactivateUserAction(formData: FormData) {
 }
 
 export async function resetPasswordAction(formData: FormData) {
-  await requireAdmin();
+  await requirePermission("usuarios", "update");
   const perfilId = formText(formData, "perfilId");
   if (!perfilId) redirect("/usuarios?erro=id");
 

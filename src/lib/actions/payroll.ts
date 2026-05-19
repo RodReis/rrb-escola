@@ -2,7 +2,7 @@
 
 import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
-import { requirePerfil } from "@/lib/auth/session";
+import { requirePermission } from "@/lib/auth/session";
 import { createServerClient } from "@/lib/supabase/server";
 import { PayrollSchema } from "@/lib/validation/payroll";
 import { calcAll, calcProventosBase, type PayrollInput as CalcInput } from "@/lib/payroll/calculators";
@@ -48,7 +48,7 @@ function readPayrollForm(formData: FormData) {
 }
 
 export async function upsertPayrollAction(formData: FormData) {
-  await requirePerfil(["admin", "financeiro"]);
+  await requirePermission("rh.folha", "update");
 
   const parsed = PayrollSchema.safeParse(readPayrollForm(formData));
   if (!parsed.success) {
@@ -155,7 +155,7 @@ export async function upsertPayrollAction(formData: FormData) {
 }
 
 export async function closePeriodAction(formData: FormData) {
-  const session = await requirePerfil(["admin"]);
+  const session = await requirePermission("rh.folha", "update");
   const dbMonth = urlToDbMonth(String(formData.get("mes") ?? ""));
   const supabase = await createServerClient();
 
@@ -178,7 +178,7 @@ export async function closePeriodAction(formData: FormData) {
 }
 
 export async function reopenPeriodAction(formData: FormData) {
-  await requirePerfil(["admin"]);
+  await requirePermission("rh.folha", "update");
   const dbMonth = urlToDbMonth(String(formData.get("mes") ?? ""));
   const supabase = await createServerClient();
 
@@ -194,7 +194,7 @@ export async function reopenPeriodAction(formData: FormData) {
 }
 
 export async function generateMonthAction(formData: FormData) {
-  await requirePerfil(["admin", "financeiro"]);
+  await requirePermission("rh.folha", "create");
   const urlMonth = String(formData.get("mes") ?? "");
   const dbMonth = urlToDbMonth(urlMonth);
 
@@ -317,7 +317,7 @@ export async function generateMonthAction(formData: FormData) {
 }
 
 export async function syncNewEmployeesAction(formData: FormData) {
-  await requirePerfil(["admin", "financeiro"]);
+  await requirePermission("rh.folha", "create");
   const urlMonth = String(formData.get("mes") ?? "");
   const dbMonth = urlToDbMonth(urlMonth);
 

@@ -1,7 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { requireSession } from "@/lib/auth/session";
+import { requirePermission } from "@/lib/auth/session";
 import { createServerClient } from "@/lib/supabase/server";
 import { generateDocxFromBuffer } from "@/lib/documents/generator-v2";
 import { resolveMappings, type ResolverContext } from "@/lib/documents/resolver";
@@ -11,7 +11,8 @@ export async function generateFromTemplateAction(
   matriculaId: string,
   templateId: string,
 ): Promise<{ success: boolean; base64?: string; nomeArquivo?: string; error?: string; warning?: string }> {
-  const session = await requireSession();
+  // Geração de documento a partir de template — requer leitura de templates.
+  const session = await requirePermission("documentos.templates", "read");
   const escolaId = session.profile.escola_id;
   const supabase = await createServerClient();
 

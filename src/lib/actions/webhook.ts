@@ -2,11 +2,11 @@
 
 import { revalidatePath } from "next/cache";
 import { createServerClient } from "@/lib/supabase/server";
-import { requireSession } from "@/lib/auth/session";
+import { requirePermission } from "@/lib/auth/session";
 import { formText } from "@/lib/utils";
 
 export async function updateWebhookAction(formData: FormData) {
-  const session = await requireSession();
+  const session = await requirePermission("configuracoes.webhook", "update");
   const supabase = await createServerClient();
 
   const url = formText(formData, "webhook_url");
@@ -21,7 +21,7 @@ export async function updateWebhookAction(formData: FormData) {
 }
 
 export async function testWebhookAction() {
-  const session = await requireSession();
+  const session = await requirePermission("configuracoes.webhook", "update");
   const supabase = await createServerClient();
 
   const { data: escola } = await supabase
