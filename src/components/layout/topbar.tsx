@@ -11,33 +11,7 @@ import type { SessionProfile } from "@/lib/auth/session";
 import { listNotificacoes } from "@/lib/data/notificacoes";
 import { createServerClient } from "@/lib/supabase/server";
 import { getPublicUrl } from "@/lib/storage/public-urls";
-import {
-  School,
-  UsersRound,
-  HandHeart,
-  FileText,
-  Layers3,
-  GraduationCap,
-  ClipboardList,
-  ClipboardCheck,
-  UserCheck,
-  CalendarCheck,
-  DoorOpen,
-  Cake,
-  Network,
-  Inbox,
-  Building2,
-  Wallet,
-  SlidersHorizontal,
-  BarChart3,
-  Receipt,
-  ReceiptText,
-  CreditCard,
-  AlertCircle,
-  Webhook,
-  Tags,
-  ShieldCheck,
-} from "lucide-react";
+import { School } from "lucide-react";
 import { AnoLetivoPicker } from "@/components/layout/ano-letivo-picker";
 import { can, ROTA_PARA_MODULO, type PermissionMap } from "@/lib/auth/permissions";
 
@@ -51,43 +25,43 @@ const secondaryItems: Array<{ href: string; label: string; icon: TopbarIconName 
 ];
 
 const SECRETARIA_ITEMS: DropdownItem[] = [
-  { href: "/alunos", label: "Alunos", Icon: UsersRound },
-  { href: "/bolsistas", label: "Bolsistas", Icon: HandHeart },
-  { href: "/matriculas", label: "Matrículas", Icon: FileText },
-  { href: "/series", label: "Séries", Icon: Layers3 },
-  { href: "/turmas", label: "Turmas", Icon: GraduationCap },
-  { href: "/disciplinas", label: "Disciplinas", Icon: ClipboardList },
-  { href: "/avaliacoes", label: "Avaliações", Icon: ClipboardCheck },
-  { href: "/professores/atribuicoes", label: "Atribuições", Icon: UserCheck },
-  { href: "/frequencias", label: "Frequência", Icon: CalendarCheck },
-  { href: "/portaria", label: "Portaria", Icon: DoorOpen },
-  { href: "/mural/aniversariantes", label: "Mural aniversários", Icon: Cake },
-  { href: "/organograma", label: "Organograma", Icon: Network },
-  { href: "/importacoes", label: "Importações", Icon: Inbox },
+  { href: "/alunos", label: "Alunos", iconName: "UsersRound" },
+  { href: "/bolsistas", label: "Bolsistas", iconName: "HandHeart" },
+  { href: "/matriculas", label: "Matrículas", iconName: "FileText" },
+  { href: "/series", label: "Séries", iconName: "Layers3" },
+  { href: "/turmas", label: "Turmas", iconName: "GraduationCap" },
+  { href: "/disciplinas", label: "Disciplinas", iconName: "ClipboardList" },
+  { href: "/avaliacoes", label: "Avaliações", iconName: "ClipboardCheck" },
+  { href: "/professores/atribuicoes", label: "Atribuições", iconName: "UserCheck" },
+  { href: "/frequencias", label: "Frequência", iconName: "CalendarCheck" },
+  { href: "/portaria", label: "Portaria", iconName: "DoorOpen" },
+  { href: "/mural/aniversariantes", label: "Mural aniversários", iconName: "Cake" },
+  { href: "/organograma", label: "Organograma", iconName: "Network" },
+  { href: "/importacoes", label: "Importações", iconName: "Inbox" },
 ];
 
 const RH_ITEMS: DropdownItem[] = [
-  { href: "/rh/empresas", label: "Empresas", Icon: Building2 },
-  { href: "/rh/funcionarios", label: "Funcionários", Icon: UsersRound },
-  { href: "/rh/folha", label: "Folha", Icon: Wallet },
-  { href: "/rh/brackets", label: "Brackets", Icon: SlidersHorizontal },
-  { href: "/rh/documentos", label: "Documentos", Icon: FileText },
+  { href: "/rh/empresas", label: "Empresas", iconName: "Building2" },
+  { href: "/rh/funcionarios", label: "Funcionários", iconName: "UsersRound" },
+  { href: "/rh/folha", label: "Folha", iconName: "Wallet" },
+  { href: "/rh/brackets", label: "Brackets", iconName: "SlidersHorizontal" },
+  { href: "/rh/documentos", label: "Documentos", iconName: "FileText" },
 ];
 
 const FINANCEIRO_ITEMS: DropdownItem[] = [
-  { href: "/financeiro", label: "Financeiro", Icon: BarChart3 },
-  { href: "/despesas", label: "Despesas", Icon: Receipt },
-  { href: "/valores-praticados", label: "Valores praticados", Icon: ReceiptText },
-  { href: "/planos", label: "Planos", Icon: CreditCard },
-  { href: "/relatorios/inadimplencia", label: "Inadimplência", Icon: AlertCircle },
+  { href: "/financeiro", label: "Financeiro", iconName: "BarChart3" },
+  { href: "/despesas", label: "Despesas", iconName: "Receipt" },
+  { href: "/valores-praticados", label: "Valores praticados", iconName: "ReceiptText" },
+  { href: "/planos", label: "Planos", iconName: "CreditCard" },
+  { href: "/relatorios/inadimplencia", label: "Inadimplência", iconName: "AlertCircle" },
 ];
 
 const CONFIG_ITEMS: DropdownItem[] = [
-  { href: "/configuracoes/escola", label: "Dados da escola", Icon: School },
-  { href: "/usuarios", label: "Usuários", Icon: UsersRound },
-  { href: "/configuracoes/perfis", label: "Perfis e Permissões", Icon: ShieldCheck },
-  { href: "/configuracoes/webhook", label: "Webhook", Icon: Webhook },
-  { href: "/despesas/categorias", label: "Categorias despesa", Icon: Tags },
+  { href: "/configuracoes/escola", label: "Dados da escola", iconName: "School" },
+  { href: "/usuarios", label: "Usuários", iconName: "UsersRound" },
+  { href: "/configuracoes/perfis", label: "Perfis e Permissões", iconName: "ShieldCheck" },
+  { href: "/configuracoes/webhook", label: "Webhook", iconName: "Webhook" },
+  { href: "/despesas/categorias", label: "Categorias despesa", iconName: "Tags" },
 ];
 
 function filterByPermissions(

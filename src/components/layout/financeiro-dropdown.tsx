@@ -7,6 +7,7 @@ import { usePathname } from "next/navigation";
 import { BarChart3, ChevronDown } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { DropdownItem } from "./secretaria-dropdown";
+import { ICON_MAP } from "./dropdown-icons";
 
 export function FinanceiroDropdown({ items }: { items: DropdownItem[] }) {
   const pathname = usePathname();
@@ -69,7 +70,7 @@ export function FinanceiroDropdown({ items }: { items: DropdownItem[] }) {
               onMouseDown={(e) => e.stopPropagation()}
             >
               {items.map((item) => {
-                const Icon = item.Icon;
+                const Icon = ICON_MAP[item.iconName] ?? ICON_MAP.FileText;
                 const active = pathname === item.href || pathname.startsWith(`${item.href}/`);
                 return (
                   <Link

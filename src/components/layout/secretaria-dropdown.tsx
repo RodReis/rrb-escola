@@ -4,13 +4,14 @@ import { useState, useRef, useEffect } from "react";
 import { createPortal } from "react-dom";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { BookOpen, ChevronDown, type LucideIcon } from "lucide-react";
+import { BookOpen, ChevronDown } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { ICON_MAP } from "./dropdown-icons";
 
 export type DropdownItem = {
   href: string;
   label: string;
-  Icon: LucideIcon;
+  iconName: string;
 };
 
 export function SecretariaDropdown({ items }: { items: DropdownItem[] }) {
@@ -75,7 +76,7 @@ export function SecretariaDropdown({ items }: { items: DropdownItem[] }) {
               onMouseDown={(e) => e.stopPropagation()}
             >
               {items.map((item) => {
-                const Icon = item.Icon;
+                const Icon = ICON_MAP[item.iconName] ?? ICON_MAP.FileText;
                 const active = pathname === item.href || pathname.startsWith(`${item.href}/`);
                 return (
                   <Link
