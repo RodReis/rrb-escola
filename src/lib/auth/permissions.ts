@@ -43,7 +43,7 @@ export const MODULOS = {
   // rh
   "rh.funcionarios": { grupo: "rh", nome: "Funcionários" },
   "rh.empresas": { grupo: "rh", nome: "Empresas" },
-  "rh.folha": { grupo: "rh", nome: "Folha" },
+  "rh.folha": { grupo: "rh", nome: "Folha de Pagamento" },
   "rh.templates": { grupo: "rh", nome: "Templates RH" },
   // academico
   series: { grupo: "academico", nome: "Séries" },
@@ -62,6 +62,9 @@ export const MODULOS = {
 
 export type ModuloCodigo = keyof typeof MODULOS;
 
+// IMPORTANT: Every key in MODULOS MUST have a matching row in the DB seed
+// (supabase/migrations/202605300001_rbac_permissoes.sql, section 6).
+// When adding a module: update MODULOS + DB seed (modulos + role_permissoes) + ROTA_PARA_MODULO.
 export const MODULO_CODIGOS = Object.keys(MODULOS) as ModuloCodigo[];
 
 export type PermissionMap = Partial<Record<ModuloCodigo, {
@@ -79,7 +82,9 @@ export function modulosDoGrupo(grupo: Grupo): ModuloCodigo[] {
   return MODULO_CODIGOS.filter((m) => MODULOS[m].grupo === grupo);
 }
 
-// Mapa rota → módulo (usado para route gating e filtro de menus)
+// Mapa rota → módulo (usado para route gating e filtro de menus).
+// Matching strategy: longest-prefix match against pathname.
+// Sub-routes (e.g. /alunos/[id]/editar) inherit from their parent entry.
 export const ROTA_PARA_MODULO: Record<string, ModuloCodigo> = {
   "/alunos": "alunos",
   "/matriculas": "matriculas",
