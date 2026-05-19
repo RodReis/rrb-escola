@@ -1234,6 +1234,8 @@ export type AniversarioSemanaRow = {
   diaSemana: string;
   fotoUrl: string | null;
   hoje: boolean;
+  idade: number;
+  dataLabel: string;
 };
 
 export async function getAniversariantesSemana(
@@ -1269,14 +1271,27 @@ export async function getAniversariantesSemana(
     if (vistos.has(aluno.id)) continue;
 
     const parts = String(aluno.data_nascimento).split("-").map(Number);
+    const anoNasc = parts[0];
     const mm = parts[1];
     const dd = parts[2];
-    if (!mm || !dd) continue;
+    if (!anoNasc || !mm || !dd) continue;
 
     const slot = janela.find((j) => j.mes === mm && j.dia === dd);
     if (!slot) continue;
 
     vistos.add(aluno.id);
+
+    // Idade que faz neste aniversario.
+    // Para janela 7 dias: se aniversario ja passou no ano corrente, e' a do proximo ano.
+    const anoCorrente = hoje.getFullYear();
+    const jaPassou =
+      mm < hoje.getMonth() + 1 ||
+      (mm === hoje.getMonth() + 1 && dd < hoje.getDate());
+    const anoAniv = jaPassou ? anoCorrente + 1 : anoCorrente;
+    const idade = anoAniv - anoNasc;
+
+    const dataLabel = `${slot.rotulo.toLowerCase()} ${String(dd).padStart(2, "0")}/${String(mm).padStart(2, "0")}`;
+
     rows.push({
       alunoId: aluno.id,
       nome: aluno.nome ?? "—",
@@ -1285,6 +1300,8 @@ export async function getAniversariantesSemana(
       diaSemana: slot.rotulo,
       fotoUrl: aluno.foto_url ?? null,
       hoje: dd === hoje.getDate() && mm === hoje.getMonth() + 1,
+      idade,
+      dataLabel,
     });
   }
 

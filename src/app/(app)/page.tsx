@@ -8,6 +8,7 @@ import {
   getAlertas,
   getAniversariantes,
   getAniversariantesMatricula,
+  getAniversariantesSemana,
   getBeneficios,
   getEscolaConfig,
   getFolhaPorEmpresa,
@@ -34,6 +35,7 @@ import {
 } from "@/lib/data/dashboard-executive";
 import { AlertList } from "@/components/dashboard/alert-list";
 import { AniversariantesCard } from "@/components/dashboard/aniversariantes-card";
+import { AniversariantesSemanaCard } from "@/components/dashboard/aniversariantes-semana-card";
 import { AniversarioMatriculaCard } from "@/components/dashboard/aniversario-matricula-card";
 import { BeneficiosCard } from "@/components/dashboard/beneficios-card";
 import { BolsistasReceitaCard } from "@/components/dashboard/bolsistas-receita-card";
@@ -188,6 +190,7 @@ export default async function DashboardPage({
     pedagogicoOverview,
     slot2,
     slot5,
+    aniversariantesSemana,
   ] = await Promise.all([
     showFinanceiroCobrancas ? getHero(competencia, escolaId) : null,
     showFinanceiroCobrancas ? getRevenueTrend(6, escolaId) : null,
@@ -224,6 +227,7 @@ export default async function DashboardPage({
           ? getTopDevedores(5, escolaId)
           : getRenovacoesPendentes(5, escolaId))
       : null,
+    showAlunos ? getAniversariantesSemana(escolaId) : null,
   ]);
 
   // slot2 currently is computed but not rendered in the original page (was unused).
@@ -335,6 +339,10 @@ export default async function DashboardPage({
           </section>
 
           {showMatriculas && stages && <StageTable rows={stages} />}
+
+          {showAlunos && aniversariantesSemana && (
+            <AniversariantesSemanaCard items={aniversariantesSemana} />
+          )}
 
           <section className="grid gap-6 lg:grid-cols-2">
             {showTurmas && rankingTurmas && <RankingTurmasCard items={rankingTurmas} />}

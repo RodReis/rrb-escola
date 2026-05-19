@@ -1,6 +1,5 @@
 import Link from "next/link";
 import { ArrowUpRight } from "lucide-react";
-import { money } from "@/lib/constants";
 import type { StageBreakdownRow } from "@/lib/data/dashboard-executive";
 
 const LABELS: Record<string, string> = {
@@ -37,10 +36,8 @@ export function StageTable({ rows }: { rows: StageBreakdownRow[] }) {
   const sorted = [...rows].sort((a, b) => ordemEtapa(a.etapa) - ordemEtapa(b.etapa));
   const totalAlunos = sorted.reduce((s, r) => s + r.alunos, 0);
   const totalBolsistas = sorted.reduce((s, r) => s + r.bolsistas, 0);
-  const totalReceita = sorted.reduce((s, r) => s + r.receita, 0);
   const totalCapacidade = sorted.reduce((s, r) => s + r.capacidade, 0);
   const totalVagas = sorted.reduce((s, r) => s + r.vagasLivres, 0);
-  const ticketMedio = totalAlunos > 0 ? totalReceita / totalAlunos : 0;
   const ocupacaoTotal = totalCapacidade > 0 ? totalAlunos / totalCapacidade : 0;
 
   return (
@@ -58,8 +55,6 @@ export function StageTable({ rows }: { rows: StageBreakdownRow[] }) {
               <th className="px-2 py-2 text-right">Bolsistas</th>
               <th className="px-2 py-2 text-right">Capacidade</th>
               <th className="px-2 py-2 text-right">Vagas livres</th>
-              <th className="px-2 py-2 text-right">Receita</th>
-              <th className="px-2 py-2 text-right">Ticket</th>
               <th className="px-2 py-2 text-left w-44">Ocupação</th>
             </tr>
           </thead>
@@ -107,8 +102,6 @@ export function StageTable({ rows }: { rows: StageBreakdownRow[] }) {
                       </span>
                     )}
                   </td>
-                  <td className="px-2 py-3 text-right font-semibold text-ink">{money.format(r.receita)}</td>
-                  <td className="px-2 py-3 text-right text-ink/70">{money.format(r.ticket)}</td>
                   <td className="px-2 py-3">
                     <div className="flex items-center gap-2">
                       <div className="h-2 w-full rounded-pill bg-muted overflow-hidden">
@@ -136,8 +129,6 @@ export function StageTable({ rows }: { rows: StageBreakdownRow[] }) {
                   {totalVagas} livres
                 </span>
               </td>
-              <td className="px-2 py-3 text-right">{money.format(totalReceita)}</td>
-              <td className="px-2 py-3 text-right">{money.format(ticketMedio)}</td>
               <td className="px-2 py-3">
                 <div className="flex items-center gap-2">
                   <div className="h-2 w-full rounded-pill bg-muted overflow-hidden">
