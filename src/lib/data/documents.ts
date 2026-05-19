@@ -32,7 +32,7 @@ export async function getStudentDocuments(alunoId: string): Promise<StudentDocum
   return (data ?? []).map((d) => ({ ...d, signed_url: urlMap[d.storage_path] ?? null }));
 }
 
-const TIPOS_GERADOS = ["contrato", "declaracao", "termo"] as const;
+const TIPOS_GERADOS = ["contrato", "declaracao", "termo", "outro"] as const;
 
 export async function getMatriculaDocumentos(alunoId: string): Promise<StudentDocument[]> {
   const supabase = await createServerClient();

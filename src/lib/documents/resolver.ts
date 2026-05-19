@@ -167,10 +167,12 @@ async function runComputed(
     case "ano_letivo_atual":
       return String(now.getFullYear());
     case "cidade_data_extenso": {
-      const { data } = await supabase.from("escolas").select("nome").eq("id", ctx.escolaId).maybeSingle();
-      // No schema atual, escolas só tem `nome`. Usamos "Trindade" como padrão da cidade.
-      void data;
-      return formatCidadeDataExtenso(null, now);
+      const { data } = await supabase
+        .from("escolas")
+        .select("cidade")
+        .eq("id", ctx.escolaId)
+        .maybeSingle();
+      return formatCidadeDataExtenso((data?.cidade as string | null) ?? null, now);
     }
     case "idade_atual": {
       const { data } = await supabase.from("alunos").select("data_nascimento").eq("id", ctx.alunoId).maybeSingle();

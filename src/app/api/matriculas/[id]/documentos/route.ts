@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { requireSession } from "@/lib/auth/session";
 import { createServerClient } from "@/lib/supabase/server";
 
-const TIPOS_GERADOS = ["contrato", "declaracao", "termo"];
+const TIPOS_GERADOS = ["contrato", "declaracao", "termo", "outro"];
 
 export async function GET(
   _req: Request,
