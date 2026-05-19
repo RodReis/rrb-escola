@@ -14,32 +14,35 @@ export function SaudeSistemaCard({ data }: { data: SaudeSistemaData }) {
 
   return (
     <article className={`rounded-panel bg-surface bg-gradient-to-br ${colorCfg.grad} p-6 shadow-soft`}>
-      <div className="flex items-center gap-2">
-        <span className={`grid h-9 w-9 place-items-center rounded-ui ${colorCfg.bg} ${colorCfg.text}`}>
-          <Activity size={16} />
-        </span>
-        <p className="text-[0.66rem] font-bold uppercase tracking-kicker text-ink/55">
-          Saúde do sistema
-        </p>
-        <span className={`ml-auto rounded-pill px-2 py-0.5 text-[0.66rem] font-bold uppercase ${colorCfg.bg} ${colorCfg.text}`}>
+      <div className="flex items-start justify-between gap-2">
+        <div className="flex items-center gap-2">
+          <span className={`grid h-9 w-9 place-items-center rounded-ui ${colorCfg.bg} ${colorCfg.text}`}>
+            <Activity size={16} />
+          </span>
+          <div>
+            <h3 className="text-sm font-bold text-ink">Saúde do sistema</h3>
+            <p className="text-[0.66rem] text-ink/55">configurações pendentes</p>
+          </div>
+        </div>
+        <span className={`shrink-0 rounded-pill px-2 py-0.5 text-[0.66rem] font-bold uppercase ${colorCfg.bg} ${colorCfg.text}`}>
           {data.okCount}/{data.totalChecks}
         </span>
       </div>
 
-      <div className="mt-3">
-        <div className="flex items-baseline justify-between">
-          <strong className={`text-2xl font-bold ${colorCfg.text}`}>{pct.toFixed(0)}%</strong>
-          <span className="text-xs text-ink/55">configurado</span>
+      <div className="mt-4">
+        <div className="flex items-baseline gap-2">
+          <strong className={`text-3xl font-bold leading-none ${colorCfg.text}`}>{pct.toFixed(0)}%</strong>
+          <span className="text-[0.66rem] uppercase tracking-kicker text-ink/45">configurado</span>
         </div>
-        <div className="mt-1 h-1.5 w-full rounded-pill bg-muted overflow-hidden">
+        <div className="mt-3 h-1.5 w-full rounded-pill bg-muted overflow-hidden">
           <div
-            className={`h-1.5 ${status === "success" ? "bg-success" : status === "warning" ? "bg-warning" : "bg-danger"}`}
+            className={`h-1.5 ${status === "success" ? "bg-success" : status === "warning" ? "bg-warning" : "bg-danger"} transition-all`}
             style={{ width: `${pct}%` }}
           />
         </div>
       </div>
 
-      <ul className="mt-4 grid gap-2">
+      <ul className="mt-5 grid gap-2">
         {data.itens.map((i) => {
           const Icon = i.ok ? CheckCircle2 : AlertCircle;
           return (

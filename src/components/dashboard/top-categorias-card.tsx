@@ -14,25 +14,38 @@ const BAR_COLORS = [
 export function TopCategoriasCard({ items }: { items: CategoriaDespesaRow[] }) {
   const total = items.reduce((s, r) => s + r.total, 0);
 
+  const totalCount = items.reduce((s, r) => s + r.count, 0);
+
   return (
     <article className="rounded-panel bg-surface p-6 shadow-soft">
-      <div className="flex items-center gap-2">
-        <span className="grid h-9 w-9 place-items-center rounded-ui bg-danger/10 text-danger">
-          <Layers size={16} />
-        </span>
-        <p className="text-[0.66rem] font-bold uppercase tracking-kicker text-ink/55">
-          Top categorias de despesa
-        </p>
+      <div className="flex items-start justify-between gap-4">
+        <div className="flex items-center gap-2">
+          <span className="grid h-9 w-9 place-items-center rounded-ui bg-danger/10 text-danger">
+            <Layers size={16} />
+          </span>
+          <div>
+            <h3 className="text-sm font-bold text-ink">Top categorias de despesa</h3>
+            <p className="text-[0.66rem] text-ink/55">distribuição mensal</p>
+          </div>
+        </div>
+        {items.length > 0 && (
+          <div className="text-right">
+            <strong className="block text-lg font-bold text-ink leading-none">{money.format(total)}</strong>
+            <p className="mt-0.5 text-[0.6rem] font-semibold uppercase tracking-kicker text-ink/45">
+              {totalCount} despesas
+            </p>
+          </div>
+        )}
       </div>
 
       {items.length === 0 ? (
-        <p className="mt-4 text-sm text-ink/60">Sem despesas neste mês.</p>
+        <div className="mt-6 flex flex-col items-center justify-center gap-2 rounded-ui bg-muted/30 py-8 text-ink/40">
+          <Layers size={24} />
+          <p className="text-sm">Sem despesas neste mês.</p>
+        </div>
       ) : (
         <>
-          <strong className="mt-3 block text-2xl font-bold text-ink">{money.format(total)}</strong>
-          <p className="text-xs text-ink/55">total de {items.reduce((s, r) => s + r.count, 0)} despesas</p>
-
-          <ul className="mt-4 grid gap-3">
+          <ul className="mt-5 grid gap-3">
             {items.map((r, i) => {
               const pct = total > 0 ? (r.total / total) * 100 : 0;
               const color = BAR_COLORS[i % BAR_COLORS.length];

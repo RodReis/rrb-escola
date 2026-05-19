@@ -32,35 +32,39 @@ export function FolhaRatioCard({
 
   return (
     <article className={`rounded-panel bg-surface bg-gradient-to-br ${cfg.grad} p-6 shadow-soft`}>
-      <div className="flex items-center gap-2">
-        <span className={`grid h-9 w-9 place-items-center rounded-ui ${cfg.chip}`}>
-          <PieChart size={16} />
+      <div className="flex items-start justify-between gap-3">
+        <div className="flex items-center gap-2">
+          <span className={`grid h-9 w-9 place-items-center rounded-ui ${cfg.chip}`}>
+            <PieChart size={16} />
+          </span>
+          <div>
+            <h3 className="text-sm font-bold text-ink">Folha / Receita</h3>
+            <p className="text-[0.66rem] text-ink/55">indicador trabalhista</p>
+          </div>
+        </div>
+        <span className={`shrink-0 rounded-pill px-2 py-0.5 text-[0.6rem] font-semibold uppercase tracking-kicker ${cfg.chip}`}>
+          {statusLabel}
         </span>
-        <p className="text-[0.66rem] font-bold uppercase tracking-kicker text-ink/55">Folha / Receita</p>
       </div>
 
-      <div className="mt-3 flex items-baseline gap-2">
-        <strong className={`text-3xl font-bold ${cfg.text}`}>{(pct * 100).toFixed(1)}%</strong>
-        <span className={`rounded-pill px-2 py-0.5 text-[0.66rem] font-semibold uppercase tracking-kicker ${cfg.chip}`}>{statusLabel}</span>
-      </div>
-
-      <div className="mt-2">
+      <div className="mt-4 flex items-baseline gap-2">
+        <strong className={`text-4xl font-bold leading-none ${cfg.text}`}>{(pct * 100).toFixed(1)}%</strong>
         <DeltaBadge current={data.ratio * 100} previous={data.ratioPrev * 100} invert />
       </div>
 
-      <div className="mt-3 h-2.5 w-full rounded-pill bg-muted overflow-hidden">
+      <div className="mt-4 h-2.5 w-full rounded-pill bg-muted overflow-hidden">
         <div className={`h-2.5 rounded-pill ${cfg.bar} transition-all`} style={{ width: `${pct * 100}%` }} />
       </div>
 
       {serieVisual.length >= 2 && (
         <div className={`mt-3 flex items-center gap-2 ${cfg.spark}`}>
           <TrendSpark values={serieVisual} width={120} height={28} />
-          <span className="text-[0.66rem] uppercase tracking-kicker text-ink/55">6m</span>
+          <span className="text-[0.66rem] uppercase tracking-kicker text-ink/45">últ 6m</span>
         </div>
       )}
 
-      <p className="mt-2 text-sm text-ink/60">
-        {money.format(data.folha)} / {money.format(data.receita)}
+      <p className="mt-3 text-xs text-ink/55">
+        {money.format(data.folha)} <span className="text-ink/30">/</span> {money.format(data.receita)}
       </p>
     </article>
   );

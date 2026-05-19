@@ -35,16 +35,19 @@ export function FrequenciaCard({ data, porTurma = [] }: Props) {
 
   return (
     <article className={`rounded-panel bg-surface bg-gradient-to-br ${cfg.grad} p-6 shadow-soft`}>
-      <div className="flex items-center gap-2">
-        <span className={`grid h-9 w-9 place-items-center rounded-ui ${cfg.chip}`}>
-          <CalendarCheck size={16} />
-        </span>
-        <p className="text-[0.66rem] font-bold uppercase tracking-kicker text-ink/55">
-          Frequência (30 dias)
-        </p>
+      <div className="flex items-start justify-between gap-2">
+        <div className="flex items-center gap-2">
+          <span className={`grid h-9 w-9 place-items-center rounded-ui ${cfg.chip}`}>
+            <CalendarCheck size={16} />
+          </span>
+          <div>
+            <h3 className="text-sm font-bold text-ink">Frequência</h3>
+            <p className="text-[0.66rem] text-ink/55">últimos 30 dias</p>
+          </div>
+        </div>
         <Link
           href="/frequencias"
-          className="ml-auto text-ink/40 hover:text-ink/70"
+          className="text-ink/40 hover:text-ink/70"
           aria-label="Ver detalhes"
         >
           <ArrowUpRight size={14} />
@@ -52,11 +55,14 @@ export function FrequenciaCard({ data, porTurma = [] }: Props) {
       </div>
 
       {data.totalRegistros === 0 ? (
-        <p className="mt-4 text-sm text-ink/60">Sem registros de frequência nos últimos 30 dias.</p>
+        <div className="mt-6 flex flex-col items-center justify-center gap-2 rounded-ui bg-muted/30 py-8 text-ink/40">
+          <CalendarCheck size={24} />
+          <p className="text-sm text-center px-3">Sem registros nos últimos 30 dias.</p>
+        </div>
       ) : (
         <>
-          <div className="mt-3 flex items-baseline gap-2">
-            <strong className={`text-3xl font-bold ${cfg.text}`}>{pct.toFixed(1)}%</strong>
+          <div className="mt-4 flex items-baseline gap-2">
+            <strong className={`text-4xl font-bold leading-none ${cfg.text}`}>{pct.toFixed(1)}%</strong>
             <span className="text-xs text-ink/55">presença média</span>
           </div>
 

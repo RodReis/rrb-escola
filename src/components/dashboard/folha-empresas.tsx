@@ -10,16 +10,30 @@ export function FolhaEmpresas({ items }: { items: FolhaEmpresaRow[] }) {
 
   return (
     <article className="rounded-panel bg-surface p-6 shadow-soft">
-      <div className="flex items-center gap-2">
-        <span className="grid h-9 w-9 place-items-center rounded-ui bg-brand/10 text-brand">
-          <Building2 size={16} />
-        </span>
-        <p className="text-[0.66rem] font-bold uppercase tracking-kicker text-ink/55">Folha por empresa</p>
+      <div className="flex items-start justify-between gap-4">
+        <div className="flex items-center gap-2">
+          <span className="grid h-9 w-9 place-items-center rounded-ui bg-brand/10 text-brand">
+            <Building2 size={16} />
+          </span>
+          <div>
+            <h3 className="text-sm font-bold text-ink">Folha por empresa</h3>
+            <p className="text-[0.66rem] text-ink/55">distribuição por CNPJ</p>
+          </div>
+        </div>
+        {items.length > 0 && (
+          <div className="text-right">
+            <strong className="block text-lg font-bold text-ink leading-none">{money.format(totalBruto)}</strong>
+            <p className="mt-0.5 text-[0.6rem] font-semibold uppercase tracking-kicker text-ink/45">bruto total</p>
+          </div>
+        )}
       </div>
       {items.length === 0 ? (
-        <p className="mt-4 text-sm text-ink/60">Sem folha processada neste mês.</p>
+        <div className="mt-6 flex flex-col items-center justify-center gap-2 rounded-ui bg-muted/30 py-8 text-ink/40">
+          <Building2 size={24} />
+          <p className="text-sm">Sem folha processada neste mês.</p>
+        </div>
       ) : (
-        <ul className="mt-4 grid gap-5">
+        <ul className="mt-5 grid gap-5">
           {items.map((r, i) => {
             const pct = totalBruto > 0 ? (r.bruto / totalBruto) * 100 : 0;
             const barColor = COLORS[i % COLORS.length];

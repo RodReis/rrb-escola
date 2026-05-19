@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { CalendarClock, ArrowUpRight } from "lucide-react";
 import { money } from "@/lib/constants";
+import { Avatar } from "@/components/ui/avatar";
 import type { ProximaCobrancaRow } from "@/lib/data/dashboard-executive";
 
 function badgeDias(dias: number): { text: string; cls: string } {
@@ -15,31 +16,43 @@ export function ProximasCobrancasCard({ items }: { items: ProximaCobrancaRow[] }
 
   return (
     <article className="rounded-panel bg-surface p-6 shadow-soft">
-      <div className="flex items-center gap-2">
-        <span className="grid h-9 w-9 place-items-center rounded-ui bg-warning/10 text-warning">
-          <CalendarClock size={16} />
-        </span>
-        <p className="text-[0.66rem] font-bold uppercase tracking-kicker text-ink/55">
-          Próximas cobranças (7 dias)
-        </p>
-        <span className="ml-auto text-xs font-semibold text-ink/70">{money.format(total)}</span>
+      <div className="flex items-start justify-between gap-4">
+        <div className="flex items-center gap-2">
+          <span className="grid h-9 w-9 place-items-center rounded-ui bg-warning/10 text-warning">
+            <CalendarClock size={16} />
+          </span>
+          <div>
+            <h3 className="text-sm font-bold text-ink">Próximas cobranças</h3>
+            <p className="text-[0.66rem] text-ink/55">próximos 7 dias</p>
+          </div>
+        </div>
+        {items.length > 0 && (
+          <div className="text-right">
+            <strong className="block text-lg font-bold text-ink leading-none">{money.format(total)}</strong>
+            <p className="mt-0.5 text-[0.6rem] font-semibold uppercase tracking-kicker text-ink/45">total</p>
+          </div>
+        )}
       </div>
 
       {items.length === 0 ? (
-        <p className="mt-4 text-sm text-ink/60">Nenhuma cobrança nos próximos 7 dias.</p>
+        <div className="mt-6 flex flex-col items-center justify-center gap-2 rounded-ui bg-muted/30 py-8 text-ink/40">
+          <CalendarClock size={24} />
+          <p className="text-sm">Nenhuma cobrança nos próximos 7 dias.</p>
+        </div>
       ) : (
-        <ul className="mt-4 grid gap-2">
+        <ul className="mt-5 grid gap-2">
           {items.map((c) => {
             const b = badgeDias(c.diasAteVencimento);
             return (
               <li key={c.cobrancaId}>
                 <Link
                   href={c.alunoId ? `/alunos/${c.alunoId}` : "/financeiro"}
-                  className="flex items-center gap-3 rounded-ui border border-line p-3 hover:bg-muted/40"
+                  className="flex items-center gap-3 rounded-ui border border-line p-3 transition hover:bg-muted/40"
                 >
                   <span className={`grid h-9 w-12 shrink-0 place-items-center rounded-pill text-[0.66rem] font-bold uppercase tracking-kicker ${b.cls}`}>
                     {b.text}
                   </span>
+                  <Avatar name={c.alunoNome} src={c.fotoUrl} size={32} />
                   <div className="min-w-0 flex-1">
                     <p className="truncate text-sm font-semibold text-ink">{c.alunoNome}</p>
                     <p className="truncate text-xs text-ink/55">{c.descricao}</p>

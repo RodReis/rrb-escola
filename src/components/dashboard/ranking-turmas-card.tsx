@@ -26,29 +26,48 @@ const TURNO_LABEL: Record<string, string> = {
 export function RankingTurmasCard({ items }: { items: TurmaRankingRow[] }) {
   return (
     <article className="rounded-panel bg-surface p-6 shadow-soft">
-      <div className="flex items-center gap-2">
-        <span className="grid h-9 w-9 place-items-center rounded-ui bg-brand/10 text-brand">
-          <Trophy size={16} />
-        </span>
-        <p className="text-[0.66rem] font-bold uppercase tracking-kicker text-ink/55">
-          Ranking de turmas
-        </p>
-        <span className="ml-auto text-xs text-ink/55">por ocupação</span>
+      <div className="flex items-start justify-between gap-4">
+        <div className="flex items-center gap-2">
+          <span className="grid h-9 w-9 place-items-center rounded-ui bg-brand/10 text-brand">
+            <Trophy size={16} />
+          </span>
+          <div>
+            <h3 className="text-sm font-bold text-ink">Ranking de turmas</h3>
+            <p className="text-[0.66rem] text-ink/55">por ocupação</p>
+          </div>
+        </div>
+        {items.length > 0 && (
+          <span className="rounded-pill bg-brand/15 px-2 py-0.5 text-[0.66rem] font-bold text-brand">
+            Top {items.length}
+          </span>
+        )}
       </div>
 
       {items.length === 0 ? (
-        <p className="mt-4 text-sm text-ink/60">Nenhuma turma ativa no ano corrente.</p>
+        <div className="mt-6 flex flex-col items-center justify-center gap-2 rounded-ui bg-muted/30 py-8 text-ink/40">
+          <Trophy size={24} />
+          <p className="text-sm">Nenhuma turma ativa no ano corrente.</p>
+        </div>
       ) : (
-        <ul className="mt-4 grid gap-2">
+        <ul className="mt-5 grid gap-2">
           {items.map((t, i) => {
             const overbook = t.ocupacao > 1;
             const pctVisual = Math.min(t.ocupacao, 1) * 100;
             const dotColor = SEG_COLOR[t.segmento] ?? "bg-ink/30";
+            const isTop3 = i < 3;
             return (
-              <li key={t.turmaId} className="rounded-ui border border-line p-3 hover:bg-muted/40">
+              <li
+                key={t.turmaId}
+                className={`rounded-ui border p-3 transition hover:bg-muted/40 ${
+                  isTop3 ? "border-brand/30 bg-gradient-to-r from-brand/5 to-transparent" : "border-line"
+                }`}
+              >
                 <div className="flex items-center gap-3">
                   <span className={`grid h-7 w-7 shrink-0 place-items-center rounded-pill text-xs font-bold ${
-                    i === 0 ? "bg-brand text-paper" : "bg-muted text-ink/60"
+                    i === 0 ? "bg-brand text-paper shadow-soft" :
+                    i === 1 ? "bg-clay text-paper shadow-soft" :
+                    i === 2 ? "bg-gold text-paper shadow-soft" :
+                    "bg-muted text-ink/60"
                   }`}>
                     {i + 1}
                   </span>

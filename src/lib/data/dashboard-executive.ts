@@ -579,6 +579,7 @@ export async function getInadimplencia(
 export type DevedorRow = {
   alunoId: string;
   nome: string;
+  fotoUrl: string | null;
   valor: number;
   diasVencimento: number;
 };
@@ -593,21 +594,22 @@ export async function getTopDevedores(
 
   const { data } = await supabase
     .from("cobrancas")
-    .select("valor_final, data_vencimento, matriculas(aluno_id, alunos(nome))")
+    .select("valor_final, data_vencimento, matriculas(aluno_id, alunos(nome, foto_url))")
     .eq("escola_id", escolaId)
     .in("status", ["vencida", "parcial"])
     .lte("data_vencimento", hojeStr);
 
+  type AlunoRow = { nome: string; foto_url: string | null };
   type Row = {
     valor_final: number | null;
     data_vencimento: string;
     matriculas:
-      | { aluno_id: string; alunos: { nome: string } | { nome: string }[] | null }
-      | { aluno_id: string; alunos: { nome: string } | { nome: string }[] | null }[]
+      | { aluno_id: string; alunos: AlunoRow | AlunoRow[] | null }
+      | { aluno_id: string; alunos: AlunoRow | AlunoRow[] | null }[]
       | null;
   };
 
-  const porAluno = new Map<string, { nome: string; valor: number; vencimento: string }>();
+  const porAluno = new Map<string, { nome: string; fotoUrl: string | null; valor: number; vencimento: string }>();
   for (const c of ((data ?? []) as unknown as Row[])) {
     const matRel = Array.isArray(c.matriculas) ? c.matriculas[0] : c.matriculas;
     const alunoId = matRel?.aluno_id;
@@ -618,7 +620,8 @@ export async function getTopDevedores(
         : matRel.alunos
       : null;
     const nome = alunoRel?.nome ?? "—";
-    const acc = porAluno.get(alunoId) ?? { nome, valor: 0, vencimento: c.data_vencimento };
+    const fotoUrl = alunoRel?.foto_url ?? null;
+    const acc = porAluno.get(alunoId) ?? { nome, fotoUrl, valor: 0, vencimento: c.data_vencimento };
     acc.valor += Number(c.valor_final ?? 0);
     if (c.data_vencimento < acc.vencimento) acc.vencimento = c.data_vencimento;
     porAluno.set(alunoId, acc);
@@ -629,7 +632,7 @@ export async function getTopDevedores(
     const vencUTC = Date.UTC(vy, vm - 1, vd);
     const hojeUTC = Date.UTC(hoje.getFullYear(), hoje.getMonth(), hoje.getDate());
     const dias = Math.floor((hojeUTC - vencUTC) / (1000 * 60 * 60 * 24));
-    return { alunoId, nome: v.nome, valor: v.valor, diasVencimento: dias };
+    return { alunoId, nome: v.nome, fotoUrl: v.fotoUrl, valor: v.valor, diasVencimento: dias };
   });
 
   rows.sort((a, b) => b.valor - a.valor);
@@ -658,6 +661,7 @@ export type RenovacaoRow = {
   matriculaId: string;
   alunoId: string;
   alunoNome: string;
+  fotoUrl: string | null;
   anoLetivo: number;
   diasRestantes: number;
 };
@@ -673,7 +677,7 @@ export async function getRenovacoesPendentes(
 
   const { data } = await supabase
     .from("matriculas")
-    .select("id, aluno_id, ano_letivo, data_matricula, alunos(nome)")
+    .select("id, aluno_id, ano_letivo, data_matricula, alunos(nome, foto_url)")
     .eq("escola_id", escolaId)
     .eq("status", "ativa")
     .eq("ano_letivo", anoLetivo)
@@ -690,10 +694,12 @@ export async function getRenovacoesPendentes(
       const fimAno = Date.UTC(anoLetivo, 11, 31);
       diasRestantes = Math.floor((fimAno - hojeUTC) / (1000 * 60 * 60 * 24));
     }
+    const aluno = Array.isArray(m.alunos) ? m.alunos[0] : m.alunos;
     return {
       matriculaId: m.id,
       alunoId: m.aluno_id,
-      alunoNome: Array.isArray(m.alunos) ? (m.alunos[0]?.nome ?? "—") : (m.alunos?.nome ?? "—"),
+      alunoNome: aluno?.nome ?? "—",
+      fotoUrl: aluno?.foto_url ?? null,
       anoLetivo: m.ano_letivo,
       diasRestantes,
     };
@@ -1401,6 +1407,7 @@ export type ProximaCobrancaRow = {
   cobrancaId: string;
   alunoId: string;
   alunoNome: string;
+  fotoUrl: string | null;
   descricao: string;
   valor: number;
   dataVencimento: string;
@@ -1423,7 +1430,7 @@ export async function getProximasCobrancas(
     .from("cobrancas")
     .select(`
       id, descricao, valor_final, data_vencimento, status,
-      matriculas(aluno_id, alunos(nome))
+      matriculas(aluno_id, alunos(nome, foto_url))
     `)
     .eq("escola_id", escolaId)
     .gte("data_vencimento", hojeStr)
@@ -1442,6 +1449,7 @@ export async function getProximasCobrancas(
       cobrancaId: c.id,
       alunoId: matricula?.aluno_id ?? "",
       alunoNome: aluno?.nome ?? "—",
+      fotoUrl: aluno?.foto_url ?? null,
       descricao: c.descricao ?? "—",
       valor: Number(c.valor_final ?? 0),
       dataVencimento: c.data_vencimento,

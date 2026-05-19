@@ -53,6 +53,7 @@ import { ProximasCobrancasCard } from "@/components/dashboard/proximas-cobrancas
 import { RankingAlunosCard } from "@/components/dashboard/ranking-alunos-card";
 import { RankingTurmasCard } from "@/components/dashboard/ranking-turmas-card";
 import { RealizadoProjetadoCard } from "@/components/dashboard/realizado-projetado-card";
+import { ResumoAlunosCard } from "@/components/dashboard/resumo-alunos-card";
 import { SaldoYTDCard } from "@/components/dashboard/saldo-ytd-card";
 import { SaudeSistemaCard } from "@/components/dashboard/saude-sistema-card";
 import { TopCategoriasCard } from "@/components/dashboard/top-categorias-card";
@@ -288,9 +289,13 @@ export default async function DashboardPage({
           </section>
 
           {showFinanceiroCobrancas && realizadoVsProjetado && (
-            <RealizadoProjetadoCard data={realizadoVsProjetado} />
+            <>
+              <SectionHeader title="Performance e projeção" subtitle="Realizado vs projetado por etapa" />
+              <RealizadoProjetadoCard data={realizadoVsProjetado} />
+            </>
           )}
 
+          <SectionHeader title="Alertas e tendência" subtitle="Sinais de atenção e evolução mensal" />
           <section className="grid gap-6 lg:grid-cols-3">
             <AlertList items={alertas} />
             {showFinanceiroCobrancas && trend && (
@@ -299,6 +304,12 @@ export default async function DashboardPage({
               </div>
             )}
           </section>
+
+          {((showFinanceiroCobrancas && isPropria && proximasCobrancas) ||
+            (showDespesas && topCategorias) ||
+            (showRhFolha && folhaEmpresas)) && (
+            <SectionHeader title="Operação" subtitle="Cobranças, despesas e folha do mês" />
+          )}
 
           {showFinanceiroCobrancas && isPropria && proximasCobrancas && (
             <ProximasCobrancasCard items={proximasCobrancas} />
@@ -326,28 +337,17 @@ export default async function DashboardPage({
               <FrequenciaCard data={frequencia} porTurma={frequenciaPorTurma} />
             )}
             {showBolsistas && beneficios && <BeneficiosCard data={beneficios} />}
-            {showAlunos && ocupacao && (
-              <article className="rounded-panel bg-surface p-6 shadow-soft">
-                <p className="text-[0.66rem] font-bold uppercase tracking-kicker text-ink/55">Resumo</p>
-                <dl className="mt-4 grid gap-3">
-                  <div className="flex items-baseline justify-between">
-                    <dt className="text-sm text-ink/70">Pagantes</dt>
-                    <dd className="text-xl font-bold text-ink">{ocupacao.pagantes}</dd>
-                  </div>
-                  <div className="flex items-baseline justify-between">
-                    <dt className="text-sm text-ink/70">Beneficiados</dt>
-                    <dd className="text-xl font-bold text-accent">{ocupacao.beneficiados}</dd>
-                  </div>
-                  <div className="flex items-baseline justify-between border-t border-line pt-3">
-                    <dt className="text-sm font-semibold text-ink">Total ativos</dt>
-                    <dd className="text-2xl font-bold text-brand">{ocupacao.ocupadas}</dd>
-                  </div>
-                </dl>
-              </article>
-            )}
+            {showAlunos && ocupacao && <ResumoAlunosCard ocupacao={ocupacao} />}
           </section>
 
-          {showMatriculas && stages && <StageTable rows={stages} />}
+          {showMatriculas && stages && (
+            <>
+              <SectionHeader title="Matrículas e ocupação" subtitle="Distribuição por etapa de ensino" />
+              <StageTable rows={stages} />
+            </>
+          )}
+
+          <SectionHeader title="Aniversários e fidelidade" subtitle="Datas para celebrar com os alunos" />
 
           {showAlunos && aniversariantesSemana && (
             <AniversariantesSemanaCard items={aniversariantesSemana} />
@@ -364,6 +364,11 @@ export default async function DashboardPage({
             )}
             <SaudeSistemaCard data={saudeSistema} />
           </section>
+
+          {((!isPropria && showMatriculas && slot5) ||
+            (isPropria && showFinanceiroCobrancas && slot5)) && (
+            <SectionHeader title="Operação" subtitle="Renovações e inadimplência" />
+          )}
 
           {!isPropria && showMatriculas && slot5 && (
             <RenovacoesPendentes items={slot5 as RenovacaoRow[]} />

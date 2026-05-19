@@ -20,22 +20,28 @@ export function AniversarioMatriculaCard({ items }: { items: AniversarioMatricul
 
   return (
     <article className="rounded-panel bg-surface bg-gradient-to-br from-brand/10 to-transparent p-6 shadow-soft">
-      <div className="flex items-center gap-2">
-        <span className="grid h-9 w-9 place-items-center rounded-ui bg-brand/15 text-brand">
-          <Trophy size={16} />
-        </span>
-        <p className="text-[0.66rem] font-bold uppercase tracking-kicker text-ink/55">
-          Aniversário na escola · {mesLabel}
-        </p>
+      <div className="flex items-start justify-between gap-2">
+        <div className="flex items-center gap-2">
+          <span className="grid h-9 w-9 place-items-center rounded-ui bg-brand/15 text-brand">
+            <Trophy size={16} />
+          </span>
+          <div>
+            <h3 className="text-sm font-bold text-ink">Aniversário na escola</h3>
+            <p className="text-[0.66rem] text-ink/55">{mesLabel} · fidelidade</p>
+          </div>
+        </div>
         {items.length > 0 && (
-          <span className="ml-auto inline-flex items-center justify-center rounded-pill bg-brand/15 px-2 py-0.5 text-[0.66rem] font-bold text-brand">
+          <span className="rounded-pill bg-brand/15 px-2 py-0.5 text-[0.66rem] font-bold text-brand">
             {items.length}
           </span>
         )}
       </div>
 
       {items.length === 0 && (
-        <p className="mt-4 text-sm text-ink/60">Nenhum aniversário de matrícula neste mês.</p>
+        <div className="mt-6 flex flex-col items-center justify-center gap-2 rounded-ui bg-muted/30 py-8 text-ink/40">
+          <Trophy size={24} />
+          <p className="text-sm">Nenhum aniversário de matrícula este mês.</p>
+        </div>
       )}
 
       {hoje.length > 0 && (

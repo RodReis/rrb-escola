@@ -11,22 +11,28 @@ export function AniversariantesCard({ items }: { items: AniversarianteRow[] }) {
 
   return (
     <article className="rounded-panel bg-surface bg-gradient-to-br from-gold/10 to-transparent p-6 shadow-soft">
-      <div className="flex items-center gap-2">
-        <span className="grid h-9 w-9 place-items-center rounded-ui bg-gold/15 text-gold">
-          <Cake size={16} />
-        </span>
-        <p className="text-[0.66rem] font-bold uppercase tracking-kicker text-ink/55">
-          Aniversariantes · {mesLabel}
-        </p>
+      <div className="flex items-start justify-between gap-2">
+        <div className="flex items-center gap-2">
+          <span className="grid h-9 w-9 place-items-center rounded-ui bg-gold/15 text-gold">
+            <Cake size={16} />
+          </span>
+          <div>
+            <h3 className="text-sm font-bold text-ink">Aniversariantes do mês</h3>
+            <p className="text-[0.66rem] text-ink/55">{mesLabel}</p>
+          </div>
+        </div>
         {items.length > 0 && (
-          <span className="ml-auto inline-flex items-center justify-center rounded-pill bg-gold/20 px-2 py-0.5 text-[0.66rem] font-bold text-gold">
+          <span className="rounded-pill bg-gold/20 px-2 py-0.5 text-[0.66rem] font-bold text-gold">
             {items.length}
           </span>
         )}
       </div>
 
       {items.length === 0 && (
-        <p className="mt-4 text-sm text-ink/60">Nenhum aniversário neste mês.</p>
+        <div className="mt-6 flex flex-col items-center justify-center gap-2 rounded-ui bg-muted/30 py-8 text-ink/40">
+          <Cake size={24} />
+          <p className="text-sm">Nenhum aniversário neste mês.</p>
+        </div>
       )}
 
       {aniversariantesHoje.length > 0 && (

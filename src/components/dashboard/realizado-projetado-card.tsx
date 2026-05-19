@@ -24,16 +24,25 @@ export function RealizadoProjetadoCard({ data }: { data: RealizadoVsProjetadoDat
 
   return (
     <article className="rounded-panel bg-surface p-6 shadow-soft">
-      <div className="flex items-center gap-2">
-        <span className="grid h-9 w-9 place-items-center rounded-ui bg-brand/10 text-brand">
-          <Target size={16} />
-        </span>
-        <p className="text-[0.66rem] font-bold uppercase tracking-kicker text-ink/55">
-          Realizado vs Projetado
-        </p>
+      <div className="flex items-start justify-between gap-4">
+        <div className="flex items-center gap-2">
+          <span className="grid h-9 w-9 place-items-center rounded-ui bg-brand/10 text-brand">
+            <Target size={16} />
+          </span>
+          <div>
+            <h3 className="text-sm font-bold text-ink">Realizado vs Projetado</h3>
+            <p className="text-[0.66rem] text-ink/55">por etapa de ensino</p>
+          </div>
+        </div>
+        <div className="text-right">
+          <strong className={`block text-2xl font-bold leading-none ${pct >= 95 ? "text-success" : pct >= 80 ? "text-warning" : "text-danger"}`}>
+            {pct.toFixed(1)}%
+          </strong>
+          <p className="mt-0.5 text-[0.6rem] font-semibold uppercase tracking-kicker text-ink/45">taxa de realização</p>
+        </div>
       </div>
 
-      <div className="mt-4 grid gap-3 md:grid-cols-3">
+      <div className="mt-5 grid gap-3 md:grid-cols-3">
         <div className="rounded-ui bg-muted/40 p-3">
           <p className="text-[0.66rem] uppercase tracking-kicker text-ink/55">Projetado</p>
           <strong className="mt-1 block text-xl font-bold text-ink">{money.format(data.projetado)}</strong>
@@ -52,23 +61,15 @@ export function RealizadoProjetadoCard({ data }: { data: RealizadoVsProjetadoDat
         </div>
       </div>
 
-      <div className="mt-4">
-        <div className="flex items-baseline justify-between">
-          <span className="text-sm text-ink/60">Taxa de realização</span>
-          <strong className={`text-lg font-bold ${pct >= 95 ? "text-success" : pct >= 80 ? "text-warning" : "text-danger"}`}>
-            {pct.toFixed(1)}%
-          </strong>
-        </div>
-        <div className="mt-2 h-2 w-full rounded-pill bg-muted overflow-hidden">
-          <div
-            className={`h-2 rounded-pill ${pct >= 95 ? "bg-success" : pct >= 80 ? "bg-warning" : "bg-danger"}`}
-            style={{ width: `${pctVisual}%` }}
-          />
-        </div>
+      <div className="mt-4 h-2 w-full rounded-pill bg-muted overflow-hidden">
+        <div
+          className={`h-2 rounded-pill ${pct >= 95 ? "bg-success" : pct >= 80 ? "bg-warning" : "bg-danger"} transition-all`}
+          style={{ width: `${pctVisual}%` }}
+        />
       </div>
 
-      <div className="mt-5 grid gap-2">
-        <p className="text-[0.66rem] uppercase tracking-kicker text-ink/55">Por etapa</p>
+      <div className="mt-6 grid gap-2">
+        <p className="text-[0.66rem] font-bold uppercase tracking-kicker text-ink/55">Por etapa</p>
         {data.porEtapa.map((e) => {
           const pctEtapa = e.projetado > 0 ? (e.realizado / e.projetado) * 100 : 0;
           const dotColor = SEG_COLOR[e.etapa] ?? "bg-ink/30";

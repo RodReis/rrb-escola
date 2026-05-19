@@ -1,5 +1,6 @@
 "use client";
 
+import { LineChart } from "lucide-react";
 import { Area, AreaChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 import { money } from "@/lib/constants";
 import type { RevenueTrendPoint } from "@/lib/data/dashboard-executive";
@@ -20,8 +21,16 @@ export function RevenueTrendChart({ data }: { data: RevenueTrendPoint[] }) {
 
   return (
     <article className="rounded-panel bg-surface p-6 shadow-soft">
-      <p className="text-[0.66rem] font-bold uppercase tracking-kicker text-ink/55">Receita × Custos (6 meses)</p>
-      <div className="mt-4 h-64">
+      <div className="flex items-center gap-2">
+        <span className="grid h-9 w-9 place-items-center rounded-ui bg-brand/10 text-brand">
+          <LineChart size={16} />
+        </span>
+        <div>
+          <h3 className="text-sm font-bold text-ink">Receita × Custos</h3>
+          <p className="text-[0.66rem] text-ink/55">tendência últimos 6 meses</p>
+        </div>
+      </div>
+      <div className="mt-5 h-64">
         <ResponsiveContainer width="100%" height="100%">
           <AreaChart data={chartData} margin={{ top: 8, right: 8, left: 0, bottom: 0 }}>
             <defs>

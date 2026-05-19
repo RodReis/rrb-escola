@@ -23,15 +23,20 @@ const ORDEM: TipoVaga[] = ["bolsa_integral", "bolsa_parcial", "permuta", "gratui
 export function BeneficiosCard({ data }: { data: BeneficiosData }) {
   return (
     <article className="rounded-panel bg-surface bg-gradient-to-br from-accent/10 to-transparent p-6 shadow-soft">
-      <div className="flex items-center gap-2">
-        <span className="grid h-9 w-9 place-items-center rounded-ui bg-accent/15 text-accent">
-          <HandHeart size={16} />
-        </span>
-        <p className="text-[0.66rem] font-bold uppercase tracking-kicker text-ink/55">Benefícios concedidos</p>
+      <div className="flex items-start justify-between gap-2">
+        <div className="flex items-center gap-2">
+          <span className="grid h-9 w-9 place-items-center rounded-ui bg-accent/15 text-accent">
+            <HandHeart size={16} />
+          </span>
+          <div>
+            <h3 className="text-sm font-bold text-ink">Benefícios</h3>
+            <p className="text-[0.66rem] text-ink/55">bolsas, permutas e gratuidades</p>
+          </div>
+        </div>
       </div>
 
-      <strong className="mt-3 block text-3xl font-bold text-ink">{data.total}</strong>
-      <p className="text-sm text-ink/60">alunos beneficiados</p>
+      <strong className="mt-4 block text-4xl font-bold leading-none text-ink">{data.total}</strong>
+      <p className="mt-1 text-[0.66rem] uppercase tracking-kicker text-ink/45">alunos beneficiados</p>
 
       <ul className="mt-4 grid gap-2">
         {ORDEM.map((tipo) => {
