@@ -23,6 +23,7 @@ export type FrequenciaDetalhada = {
     alunoId: string;
     nome: string;
     turma: string;
+    fotoUrl: string | null;
     faltas: number;
     presencas: number;
     taxa: number;
@@ -112,7 +113,7 @@ export async function getFrequenciaDetalhada(
 
   const { data: freqs } = await supabase
     .from("frequencias")
-    .select("data_aula, presente, aluno_id, alunos(nome), matriculas(turmas(nome))")
+    .select("data_aula, presente, aluno_id, alunos(nome, foto_url), matriculas(turmas(nome))")
     .eq("escola_id", escolaId)
     .gte("data_aula", desdeStr)
     .lte("data_aula", hojeStr);
@@ -120,7 +121,7 @@ export async function getFrequenciaDetalhada(
   // Heatmap por dia
   const porDia = new Map<string, { p: number; f: number }>();
   // Top faltosos
-  const porAluno = new Map<string, { nome: string; turma: string; p: number; f: number }>();
+  const porAluno = new Map<string, { nome: string; turma: string; fotoUrl: string | null; p: number; f: number }>();
 
   for (const r of ((freqs ?? []) as any[])) {
     const dia = porDia.get(r.data_aula) ?? { p: 0, f: 0 };
@@ -134,6 +135,7 @@ export async function getFrequenciaDetalhada(
     const acc = porAluno.get(r.aluno_id) ?? {
       nome: aluno?.nome ?? "—",
       turma: turma?.nome ?? "—",
+      fotoUrl: aluno?.foto_url ?? null,
       p: 0,
       f: 0,
     };
@@ -156,6 +158,7 @@ export async function getFrequenciaDetalhada(
       alunoId,
       nome: v.nome,
       turma: v.turma,
+      fotoUrl: v.fotoUrl,
       faltas: v.f,
       presencas: v.p,
       taxa: v.p + v.f > 0 ? v.p / (v.p + v.f) : 0,
@@ -558,6 +561,7 @@ export type AlunoRankingRow = {
   turma: string;
   serie: string;
   segmento: string;
+  fotoUrl: string | null;
   mediaGeral: number;
   disciplinasComMedia: number;
 };
@@ -595,7 +599,7 @@ export async function getRankingAlunos(
 
   const { data: alunos } = await supabase
     .from("alunos")
-    .select("id, nome")
+    .select("id, nome, foto_url")
     .in("id", alunoIds);
 
   const matriculaIds = Array.from(porAluno.values()).map((a) => a.matriculaId);
@@ -604,9 +608,9 @@ export async function getRankingAlunos(
     .select("id, turmas(nome, series(nome, segmento))")
     .in("id", matriculaIds);
 
-  const nomeMap = new Map<string, string>();
-  for (const a of (alunos ?? []) as Array<{ id: string; nome: string }>) {
-    nomeMap.set(a.id, a.nome);
+  const nomeMap = new Map<string, { nome: string; fotoUrl: string | null }>();
+  for (const a of (alunos ?? []) as Array<{ id: string; nome: string; foto_url: string | null }>) {
+    nomeMap.set(a.id, { nome: a.nome, fotoUrl: a.foto_url ?? null });
   }
 
   const matMap = new Map<string, { turma: string; serie: string; segmento: string }>();
@@ -622,13 +626,15 @@ export async function getRankingAlunos(
 
   const rows: AlunoRankingRow[] = Array.from(porAluno.entries()).map(([alunoId, a]) => {
     const info = matMap.get(a.matriculaId) ?? { turma: "—", serie: "—", segmento: "outros" };
+    const aluno = nomeMap.get(alunoId);
     return {
       alunoId,
       matriculaId: a.matriculaId,
-      nome: nomeMap.get(alunoId) ?? "—",
+      nome: aluno?.nome ?? "—",
       turma: info.turma,
       serie: info.serie,
       segmento: info.segmento,
+      fotoUrl: aluno?.fotoUrl ?? null,
       mediaGeral: a.count > 0 ? a.soma / a.count : 0,
       disciplinasComMedia: a.count,
     };

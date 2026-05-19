@@ -90,6 +90,15 @@ function isValidAno(val: string | undefined): boolean {
 
 type DashTab = "financeiro" | "alunos" | "pedagogico";
 
+function SectionHeader({ title, subtitle }: { title: string; subtitle?: string }) {
+  return (
+    <header className="flex items-baseline gap-3 border-l-2 border-brand/40 pl-3">
+      <h2 className="text-base font-bold text-ink">{title}</h2>
+      {subtitle && <p className="text-xs text-ink/55">{subtitle}</p>}
+    </header>
+  );
+}
+
 export default async function DashboardPage({
   searchParams,
 }: {
@@ -370,14 +379,26 @@ export default async function DashboardPage({
           {showAvaliacoes && pedagogicoOverview && (
             <PedagogicoOverviewSection data={pedagogicoOverview} />
           )}
-          <section className="grid gap-6 lg:grid-cols-2">
-            {showAlunos && evasao && <EvasaoCard data={evasao} />}
-            {showFrequencias && freqDetalhada && <FrequenciaHeatmap data={freqDetalhada} />}
-          </section>
-          {showAvaliacoes && mediasDisc && pedagogicoSummary && (
-            <MediasDisciplinasCard rows={mediasDisc} summary={pedagogicoSummary} />
+
+          {(showAlunos || showFrequencias) && (evasao || freqDetalhada) && (
+            <>
+              <SectionHeader title="Permanência e frequência" subtitle="Como os alunos estão comparecendo e mantendo vínculo" />
+              <section className="grid gap-6 lg:grid-cols-2">
+                {showAlunos && evasao && <EvasaoCard data={evasao} />}
+                {showFrequencias && freqDetalhada && <FrequenciaHeatmap data={freqDetalhada} />}
+              </section>
+            </>
           )}
-          {showAvaliacoes && rankingAlunos && <RankingAlunosCard items={rankingAlunos} />}
+
+          {showAvaliacoes && (mediasDisc || rankingAlunos) && (
+            <>
+              <SectionHeader title="Desempenho acadêmico" subtitle="Notas, médias e destaques" />
+              {mediasDisc && pedagogicoSummary && (
+                <MediasDisciplinasCard rows={mediasDisc} summary={pedagogicoSummary} />
+              )}
+              {rankingAlunos && <RankingAlunosCard items={rankingAlunos} />}
+            </>
+          )}
         </>
       )}
     </div>
