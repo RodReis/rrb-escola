@@ -7,7 +7,13 @@
       "Skill(superpowers:subagent-driven-development:*)",
       "mcp__claude_ai_Supabase__execute_sql",
       "WebFetch(domain:api.anthropic.com)",
-      "Read(//c/Users/rodri/AppData/Local/Temp/design_out/rrb-escola/**)"
+      "Read(//c/Users/rodri/AppData/Local/Temp/design_out/rrb-escola/**)",
+      "Skill(superpowers:finishing-a-development-branch)",
+      "Skill(superpowers:finishing-a-development-branch:*)",
+      "Skill(superpowers:executing-plans)",
+      "Skill(superpowers:executing-plans:*)",
+      "Read(//c/Users/rodri/.claude/skills/brainstorming/**)",
+      "Read(//c/Users/rodri/.agents/skills/brainstorming/**)"
     ]
   }
 }
