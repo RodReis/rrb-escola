@@ -201,8 +201,8 @@ export default async function DashboardPage({
           <section className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
             <FolhaRatioCard data={folhaRatio} />
             <TicketCard data={ticket} />
-            <SaldoYTDCard data={saldoYTD} />
             <BolsistasReceitaCard data={beneficios} />
+            <SaldoYTDCard data={saldoYTD} />
           </section>
 
           <RealizadoProjetadoCard data={realizadoVsProjetado} />
