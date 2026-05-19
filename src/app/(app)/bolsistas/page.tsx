@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { GraduationCap, HandCoins, Sparkles, Mail, Phone, ArrowRight, type LucideIcon } from "lucide-react";
+import { GraduationCap, HandCoins, Sparkles, Mail, Phone, ArrowRight, HandHeart, type LucideIcon } from "lucide-react";
 import { PageHeader } from "@/components/ui/page-header";
 import { Avatar } from "@/components/ui/avatar";
 import { listBolsistas, type TipoVagaBolsa } from "@/lib/data/bolsistas";
@@ -110,8 +110,11 @@ export default async function BolsistasPage() {
             <tbody>
               {bolsistas.length === 0 ? (
                 <tr>
-                  <td colSpan={7} className="px-4 py-12 text-center text-ink/55">
-                    Nenhum bolsista no ano letivo corrente.
+                  <td colSpan={7} className="px-4 py-14">
+                    <div className="flex flex-col items-center justify-center gap-2 text-ink/40">
+                      <HandHeart size={28} />
+                      <p className="text-sm font-medium">Nenhum bolsista no ano letivo corrente.</p>
+                    </div>
                   </td>
                 </tr>
               ) : (
