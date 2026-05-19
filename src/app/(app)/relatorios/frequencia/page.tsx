@@ -3,6 +3,7 @@ import { Panel } from "@/components/ui/card";
 import { PageHeader } from "@/components/ui/page-header";
 import { DataTableShell } from "@/components/ui/data-table";
 import { getAttendanceReport } from "@/lib/data/attendance";
+import { requirePermission } from "@/lib/auth/session";
 
 type SearchParams = { inicio?: string; fim?: string };
 
@@ -11,6 +12,7 @@ function dateText(value: string) {
 }
 
 export default async function RelatorioFrequenciaPage({ searchParams }: { searchParams: SearchParams }) {
+  await requirePermission("relatorios", "read");
   const report = await getAttendanceReport(searchParams.inicio, searchParams.fim);
 
   return (

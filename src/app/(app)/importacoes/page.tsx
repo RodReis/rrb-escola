@@ -4,6 +4,7 @@ import { getImportedFiles } from "@/lib/data/imports";
 import { Badge } from "@/components/ui/badge";
 import { ButtonLink } from "@/components/ui/button";
 import { Card, Panel } from "@/components/ui/card";
+import { requirePermission } from "@/lib/auth/session";
 
 function tone(status: string) {
   if (status === "processado") return "green";
@@ -16,6 +17,7 @@ function dateText(value: string) {
 }
 
 export default async function ImportacoesPage() {
+  await requirePermission("importacoes", "read");
   const files = await getImportedFiles();
   const processed = files.filter((file) => file.status === "processado").length;
   const pending = files.filter((file) => file.status === "pendente").length;

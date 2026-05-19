@@ -4,6 +4,7 @@ import { ValorPraticadoInput } from "@/components/valores/valor-praticado-input"
 import { CriarAnoForm } from "@/components/valores/criar-ano-form";
 import { listValoresPraticados, SEGMENTOS, type SegmentoSerie, type ValorPraticado } from "@/lib/data/valores-praticados";
 import { removerAnoLetivoAction } from "@/lib/actions/valores-praticados";
+import { requirePermission } from "@/lib/auth/session";
 
 const SEG_LABEL: Record<SegmentoSerie, string> = {
   INFANTIL: "Educação Infantil",
@@ -37,6 +38,7 @@ function buildMatrix(valores: ValorPraticado[]): Map<number, Map<SegmentoSerie, 
 }
 
 export default async function ValoresPraticadosPage() {
+  await requirePermission("valores-praticados", "read");
   const valores = await listValoresPraticados();
   const matrix = buildMatrix(valores);
   const anos = Array.from(matrix.keys()).sort((a, b) => b - a);

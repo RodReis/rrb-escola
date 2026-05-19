@@ -8,6 +8,7 @@ import {
   deleteDisciplinaAction,
   updateDisciplinaAction,
 } from "@/lib/actions/disciplinas";
+import { requirePermission } from "@/lib/auth/session";
 
 const SEG_LABEL: Record<string, string> = {
   INFANTIL: "Ed. Infantil",
@@ -24,6 +25,7 @@ const SEG_COLOR: Record<string, string> = {
 };
 
 export default async function DisciplinasPage() {
+  await requirePermission("disciplinas", "read");
   const [disciplinas, { series }] = await Promise.all([
     listDisciplinas(),
     getAcademicData(),

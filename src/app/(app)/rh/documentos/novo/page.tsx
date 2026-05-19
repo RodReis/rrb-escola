@@ -1,9 +1,9 @@
 import { PageHeader } from "@/components/ui/page-header";
-import { requireSession } from "@/lib/auth/session";
+import { requirePermission } from "@/lib/auth/session";
 import { TemplateMetaForm } from "@/components/rh/documentos/template-meta-form";
 
 export default async function NovoTemplatePage() {
-  await requireSession();
+  await requirePermission("rh.templates", "create");
   return (
     <div className="grid gap-6">
       <PageHeader

@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { requireAdmin } from "@/lib/auth/session";
+import { requirePermission } from "@/lib/auth/session";
 import { createServerClient } from "@/lib/supabase/server";
 import { updateUserAction } from "@/lib/actions/users";
 
@@ -13,7 +13,7 @@ export default async function EditarUsuarioPage({
   params: Promise<{ id: string }>;
   searchParams: Promise<{ erro?: string }>;
 }) {
-  await requireAdmin();
+  await requirePermission("usuarios", "update");
   const { id } = await params;
   const sp = await searchParams;
 

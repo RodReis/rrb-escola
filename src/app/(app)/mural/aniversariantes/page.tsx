@@ -3,10 +3,12 @@ import { PageHeader } from "@/components/ui/page-header";
 import { Avatar } from "@/components/ui/avatar";
 import { getAniversariantesSemana } from "@/lib/data/dashboard-executive";
 import { getSignedFotoUrls } from "@/lib/storage/photos";
+import { requirePermission } from "@/lib/auth/session";
 
 const MESES = ["Jan","Fev","Mar","Abr","Mai","Jun","Jul","Ago","Set","Out","Nov","Dez"];
 
 export default async function MuralAniversariantesPage() {
+  await requirePermission("mural", "read");
   const items = await getAniversariantesSemana();
   const signed = await getSignedFotoUrls(items.map((i) => i.fotoUrl));
 

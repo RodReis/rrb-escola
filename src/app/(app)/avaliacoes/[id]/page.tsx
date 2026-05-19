@@ -8,6 +8,7 @@ import {
   lancarNotasAction,
   updateAvaliacaoAction,
 } from "@/lib/actions/avaliacoes";
+import { requirePermission } from "@/lib/auth/session";
 
 const TIPO_LABEL: Record<string, string> = {
   prova: "Prova",
@@ -28,6 +29,7 @@ export default async function AvaliacaoDetailPage({
 }: {
   params: Promise<{ id: string }>;
 }) {
+  await requirePermission("avaliacoes", "read");
   const { id } = await params;
   const aval = await getAvaliacaoDetalhe(id);
   if (!aval) notFound();

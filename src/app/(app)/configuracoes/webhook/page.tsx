@@ -1,12 +1,12 @@
 import { Webhook, Save, Send } from "lucide-react";
 import { Panel } from "@/components/ui/card";
 import { PageHeader } from "@/components/ui/page-header";
-import { requireSession } from "@/lib/auth/session";
+import { requirePermission } from "@/lib/auth/session";
 import { createServerClient } from "@/lib/supabase/server";
 import { testWebhookAction, updateWebhookAction } from "@/lib/actions/webhook";
 
 export default async function WebhookConfigPage() {
-  const session = await requireSession();
+  const session = await requirePermission("configuracoes.webhook", "read");
   const supabase = await createServerClient();
 
   const { data: escola } = await supabase

@@ -10,6 +10,7 @@ import { StudentFilters } from "@/components/students/student-filters";
 import { getStudentsReport, listStudents, getStudentSegmentCounts } from "@/lib/data/students";
 import { toggleStudentAction } from "@/lib/actions/students";
 import { getSignedFotoUrls } from "@/lib/storage/photos";
+import { requirePermission } from "@/lib/auth/session";
 
 type EnrollmentRef = {
   status?: string | null;
@@ -30,6 +31,7 @@ export default async function StudentsPage({
 }: {
   searchParams: Promise<Record<string, string>>;
 }) {
+  await requirePermission("alunos", "read");
   const params = await searchParams;
   const filters = {
     nome:     params.nome     || undefined,

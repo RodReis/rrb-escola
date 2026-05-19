@@ -1,7 +1,7 @@
 import { Plus } from "lucide-react";
 import { ButtonLink } from "@/components/ui/button";
 import { PageHeader } from "@/components/ui/page-header";
-import { requireSession } from "@/lib/auth/session";
+import { requirePermission } from "@/lib/auth/session";
 import { listTemplates, type TemplateRow } from "@/lib/data/templates";
 import { TemplatesTable } from "@/components/rh/documentos/templates-table";
 
@@ -12,7 +12,7 @@ export default async function DocumentosPage({
 }: {
   searchParams: Promise<{ categoria?: string; status?: string }>;
 }) {
-  const session = await requireSession();
+  const session = await requirePermission("rh.templates", "read");
   const params = await searchParams;
   const categoria = (CATEGORIAS as readonly string[]).includes(params.categoria ?? "")
     ? (params.categoria as TemplateRow["categoria"])

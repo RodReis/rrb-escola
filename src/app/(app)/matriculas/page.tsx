@@ -7,12 +7,14 @@ import { Panel } from "@/components/ui/card";
 import { StudentCombobox } from "@/components/matriculas/student-combobox";
 import { MatriculasTable } from "@/components/matriculas/matriculas-table";
 import { MatriculasFilters } from "@/components/matriculas/matriculas-filters";
+import { requirePermission } from "@/lib/auth/session";
 
 export default async function MatriculasPage({
   searchParams,
 }: {
   searchParams: Promise<Record<string, string>>;
 }) {
+  await requirePermission("matriculas", "read");
   const { status = "", nome = "", aluno_id = "" } = await searchParams;
 
   const [{ alunos, series, turmas, planos }, all, filtered] = await Promise.all([

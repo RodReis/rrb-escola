@@ -5,6 +5,7 @@ import { Avatar } from "@/components/ui/avatar";
 import { listBolsistas, type TipoVagaBolsa } from "@/lib/data/bolsistas";
 import { getSignedFotoUrls } from "@/lib/storage/photos";
 import { money } from "@/lib/constants";
+import { requirePermission } from "@/lib/auth/session";
 
 const TIPO_LABEL: Record<TipoVagaBolsa, string> = {
   bolsa_integral: "Bolsa integral",
@@ -35,6 +36,7 @@ const SEGMENTO_LABEL: Record<string, string> = {
 };
 
 export default async function BolsistasPage() {
+  await requirePermission("bolsistas", "read");
   const bolsistas = await listBolsistas();
   const signedFotos = await getSignedFotoUrls(bolsistas.map((b) => b.fotoUrl));
 

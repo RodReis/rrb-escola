@@ -11,8 +11,10 @@ import {
   createAtribuicaoAction,
   deleteAtribuicaoAction,
 } from "@/lib/actions/disciplinas";
+import { requirePermission } from "@/lib/auth/session";
 
 export default async function AtribuicoesPage() {
+  await requirePermission("professores", "read");
   const [atribuicoes, disciplinas, professores, { turmas }] = await Promise.all([
     listAtribuicoes(),
     listDisciplinas(),

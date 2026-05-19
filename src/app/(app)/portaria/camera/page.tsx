@@ -1,8 +1,10 @@
 import { GateCameraConsole } from "@/components/gate/gate-camera-console";
 import { ButtonLink } from "@/components/ui/button";
 import { getGateData } from "@/lib/data/gate";
+import { requirePermission } from "@/lib/auth/session";
 
 export default async function GateCameraPage() {
+  await requirePermission("portaria", "read");
   const data = await getGateData();
 
   return (

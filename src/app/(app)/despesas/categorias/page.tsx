@@ -7,6 +7,7 @@ import {
   updateCategoriaAction
 } from "@/lib/actions/categorias-despesa";
 import { getCategorias } from "@/lib/data/despesas";
+import { requirePermission } from "@/lib/auth/session";
 
 export const dynamic = "force-dynamic";
 
@@ -15,6 +16,7 @@ export default async function CategoriasDespesaPage({
 }: {
   searchParams: Promise<{ erro?: string }>;
 }) {
+  await requirePermission("despesas", "read");
   const { erro } = await searchParams;
   const categorias = await getCategorias();
 

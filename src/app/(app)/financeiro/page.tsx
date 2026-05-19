@@ -12,6 +12,7 @@ import { getFinanceData } from "@/lib/data/finance";
 import { getAcademicData } from "@/lib/data/lookups";
 import { displayStatus, isUnpaid } from "@/lib/finance/charge-status";
 import { saldoDevedor, totalPago } from "@/lib/finance/charge-totals";
+import { requirePermission } from "@/lib/auth/session";
 
 const statusTone: Record<string, StatusTone> = {
   aberta: "warning",
@@ -41,6 +42,7 @@ function adjacentMes(competencia: string, delta: number) {
 }
 
 export default async function FinanceiroPage({ searchParams }: { searchParams: Promise<{ mes?: string }> }) {
+  await requirePermission("financeiro.cobrancas", "read");
   const params = await searchParams;
   const now = new Date();
   const defaultMes = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`;

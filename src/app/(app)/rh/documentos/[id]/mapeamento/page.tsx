@@ -1,13 +1,13 @@
 import { notFound } from "next/navigation";
 import { PageHeader } from "@/components/ui/page-header";
-import { requireSession } from "@/lib/auth/session";
+import { requirePermission } from "@/lib/auth/session";
 import { createServerClient } from "@/lib/supabase/server";
 import { getTemplate } from "@/lib/data/templates";
 import { extractPlaceholders } from "@/lib/documents/placeholders";
 import { MappingForm } from "@/components/rh/documentos/mapping-form";
 
 export default async function MapeamentoPage({ params }: { params: Promise<{ id: string }> }) {
-  const session = await requireSession();
+  const session = await requirePermission("rh.templates", "update");
   const { id } = await params;
   const tpl = await getTemplate(id, session.profile.escola_id);
   if (!tpl) notFound();

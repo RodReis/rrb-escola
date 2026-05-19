@@ -1,8 +1,10 @@
 import { StudentForm } from "@/components/students/student-form";
 import { ButtonLink } from "@/components/ui/button";
 import { getStudentFormOptions } from "@/lib/data/students";
+import { requirePermission } from "@/lib/auth/session";
 
 export default async function NewStudentPage() {
+  await requirePermission("alunos", "create");
   const options = await getStudentFormOptions();
 
   return (

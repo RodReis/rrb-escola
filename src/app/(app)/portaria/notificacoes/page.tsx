@@ -3,6 +3,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button, ButtonLink } from "@/components/ui/button";
 import { retryGuardianNotificationAction } from "@/lib/actions/gate";
 import { getGateNotifications } from "@/lib/data/gate";
+import { requirePermission } from "@/lib/auth/session";
 
 const filters = [
   { href: "/portaria/notificacoes", label: "Todas", value: "" },
@@ -20,6 +21,7 @@ function statusTone(status: string): "green" | "red" | "gold" | "gray" {
 }
 
 export default async function GateNotificationsPage({ searchParams }: { searchParams: { status?: string } }) {
+  await requirePermission("portaria", "read");
   const selectedStatus = searchParams.status ?? "";
   const notifications = await getGateNotifications(selectedStatus);
 

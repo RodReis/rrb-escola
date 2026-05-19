@@ -4,8 +4,10 @@ import { PageHeader } from "@/components/ui/page-header";
 import { getAcademicData } from "@/lib/data/lookups";
 import { listDisciplinas } from "@/lib/data/pedagogico";
 import { createAvaliacaoAction } from "@/lib/actions/avaliacoes";
+import { requirePermission } from "@/lib/auth/session";
 
 export default async function NovaAvaliacaoPage() {
+  await requirePermission("avaliacoes", "read");
   const [disciplinas, { turmas }] = await Promise.all([
     listDisciplinas(),
     getAcademicData(),

@@ -6,7 +6,7 @@ import { NewVigenciaButton } from "@/components/rh/brackets/new-vigencia-button"
 import { VigenciaSelect } from "@/components/rh/brackets/vigencia-select";
 import { DeleteVigenciaButton } from "@/components/rh/brackets/delete-vigencia-button";
 import { listBracketVigencias, listBracketsByVigencia } from "@/lib/data/brackets";
-import { requirePerfil } from "@/lib/auth/session";
+import { requirePermission } from "@/lib/auth/session";
 import type { InssBracketRow, IrBracketRow } from "@/lib/data/brackets";
 
 export const dynamic = "force-dynamic";
@@ -16,7 +16,7 @@ export default async function BracketsPage({
 }: {
   searchParams: Promise<{ tab?: string; vigencia?: string; ok?: string; erro?: string }>;
 }) {
-  await requirePerfil(["admin"]);
+  await requirePermission("rh.folha", "read");
   const sp = await searchParams;
 
   const [inssVigencias, irVigencias] = await Promise.all([

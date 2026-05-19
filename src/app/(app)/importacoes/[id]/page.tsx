@@ -5,6 +5,7 @@ import { Button, ButtonLink } from "@/components/ui/button";
 import { Card, Panel } from "@/components/ui/card";
 import { processImportStudentBatchAction, updateImportStudentRowAction } from "@/lib/actions/imports";
 import { getImportDetail } from "@/lib/data/imports";
+import { requirePermission } from "@/lib/auth/session";
 
 function tone(status: string): "green" | "red" | "gold" | "gray" {
   if (status === "pronto" || status === "importado" || status === "processado") return "green";
@@ -18,6 +19,7 @@ function dateText(value: string) {
 }
 
 export default async function ImportDetailPage({ params }: { params: { id: string } }) {
+  await requirePermission("importacoes", "read");
   const { file, rows } = await getImportDetail(params.id);
   const summary = [
     ["Linhas", String(file.total_linhas)],

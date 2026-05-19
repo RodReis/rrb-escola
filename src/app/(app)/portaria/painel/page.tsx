@@ -3,6 +3,7 @@ import { Button, ButtonLink } from "@/components/ui/button";
 import { Card, Panel } from "@/components/ui/card";
 import { ExportGateDailyStatusButton } from "@/components/pdf/export-gate-daily-status-button";
 import { getGateDailyStatus } from "@/lib/data/gate";
+import { requirePermission } from "@/lib/auth/session";
 
 function statusTone(status: string): "green" | "red" | "gray" {
   if (status === "dentro") return "green";
@@ -26,6 +27,7 @@ function formatTime(value: string | null) {
 }
 
 export default async function GateDailyPanelPage({ searchParams }: { searchParams: { data?: string } }) {
+  await requirePermission("portaria", "read");
   const panel = await getGateDailyStatus(searchParams.data);
 
   return (

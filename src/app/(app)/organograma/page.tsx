@@ -3,6 +3,7 @@ import { OrganogramaSidebar } from "@/components/organograma/sidebar";
 import { OrganogramaDrillPanel } from "@/components/organograma/drill-panel";
 import { PageHeader } from "@/components/ui/page-header";
 import { getOrganogramaTree, getOrganogramaDrill } from "@/lib/data/organograma";
+import { requirePermission } from "@/lib/auth/session";
 
 function isValidAno(val: string | undefined): boolean {
   if (!val) return false;
@@ -15,6 +16,7 @@ export default async function OrganogramaPage({
 }: {
   searchParams: Promise<{ turma?: string; ano?: string }>;
 }) {
+  await requirePermission("organograma", "read");
   const params = await searchParams;
   const turmaId = params.turma ?? null;
   const anoLetivo = isValidAno(params.ano) ? Number(params.ano) : new Date().getFullYear();

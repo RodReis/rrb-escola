@@ -6,8 +6,10 @@ import { PageHeader } from "@/components/ui/page-header";
 import { StatusPill } from "@/components/ui/status-pill";
 import { money } from "@/lib/constants";
 import { getAcademicData } from "@/lib/data/lookups";
+import { requirePermission } from "@/lib/auth/session";
 
 export default async function PlanosPage() {
+  await requirePermission("planos", "read");
   const { planos } = await getAcademicData();
   const activePlans = planos.filter((item) => item.ativo).length;
   const monthlyAverage = planos.length

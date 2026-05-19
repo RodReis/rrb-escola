@@ -9,7 +9,7 @@ import { ClosePeriodButton } from "@/components/rh/payroll/close-period-button";
 import { PayrollMonthTable } from "@/components/rh/payroll/payroll-month-table";
 import { PayrollSummaryCard } from "@/components/rh/payroll/payroll-summary-card";
 import { ExportMonthButtons } from "@/components/rh/payroll/export-month-buttons";
-import { requirePerfil } from "@/lib/auth/session";
+import { requirePermission } from "@/lib/auth/session";
 import { isValidUrlMonth, urlToDbMonth, monthLabel } from "@/lib/payroll/date-utils";
 import {
   listPayrollByMonth,
@@ -27,7 +27,7 @@ export default async function FolhaMesPage({
   params: Promise<{ mes: string }>;
   searchParams: Promise<{ ok?: string; erro?: string }>;
 }) {
-  const session = await requirePerfil(["admin", "financeiro"]);
+  const session = await requirePermission("rh.folha", "read");
   const { mes } = await params;
   const sp = await searchParams;
 

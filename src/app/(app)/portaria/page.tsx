@@ -5,6 +5,7 @@ import { PageHeader } from "@/components/ui/page-header";
 import { StatusPill, type StatusTone } from "@/components/ui/status-pill";
 import { registerGateEventAction } from "@/lib/actions/gate";
 import { getGateData } from "@/lib/data/gate";
+import { requirePermission } from "@/lib/auth/session";
 
 function statusTone(status: string): StatusTone {
   if (status === "enviada") return "success";
@@ -14,6 +15,7 @@ function statusTone(status: string): StatusTone {
 }
 
 export default async function PortariaPage() {
+  await requirePermission("portaria", "read");
   const data = await getGateData();
   const defaultDevice = data.devices[0]?.id ?? "";
 

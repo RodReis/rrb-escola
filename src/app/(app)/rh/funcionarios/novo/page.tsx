@@ -3,14 +3,14 @@ import { Panel } from "@/components/ui/card";
 import { EmployeeForm } from "@/components/rh/employee-form";
 import { createEmployeeAction } from "@/lib/actions/rh";
 import { listCompanies } from "@/lib/data/rh";
-import { requirePerfil } from "@/lib/auth/session";
+import { requirePermission } from "@/lib/auth/session";
 
 export default async function NovoFuncionarioPage({
   searchParams
 }: {
   searchParams: Promise<{ erro?: string; company?: string }>;
 }) {
-  await requirePerfil(["admin", "secretaria"]);
+  await requirePermission("rh.funcionarios", "create");
   const params = await searchParams;
   const companies = await listCompanies({ includeInactive: false });
 

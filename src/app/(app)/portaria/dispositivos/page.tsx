@@ -3,8 +3,10 @@ import { Button, ButtonLink } from "@/components/ui/button";
 import { Panel } from "@/components/ui/card";
 import { createGateDeviceAction, toggleGateDeviceAction, updateGateDeviceAction } from "@/lib/actions/gate";
 import { getGateDevices } from "@/lib/data/gate";
+import { requirePermission } from "@/lib/auth/session";
 
 export default async function GateDevicesPage() {
+  await requirePermission("portaria", "read");
   const devices = await getGateDevices();
 
   return (

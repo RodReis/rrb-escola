@@ -5,8 +5,10 @@ import { Panel } from "@/components/ui/card";
 import { PageHeader } from "@/components/ui/page-header";
 import { StatusPill } from "@/components/ui/status-pill";
 import { getAcademicData } from "@/lib/data/lookups";
+import { requirePermission } from "@/lib/auth/session";
 
 export default async function SeriesPage() {
+  await requirePermission("series", "read");
   const { series, turmas } = await getAcademicData();
   const activeSeries = series.filter((item) => item.ativo).length;
 

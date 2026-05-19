@@ -7,7 +7,7 @@ import { DataTableShell } from "@/components/ui/data-table";
 import { StatusPill, type StatusTone } from "@/components/ui/status-pill";
 import { Avatar } from "@/components/ui/avatar";
 import { getCompanyById, getCompanySummary, listEmployees } from "@/lib/data/rh";
-import { requireSession } from "@/lib/auth/session";
+import { requirePermission } from "@/lib/auth/session";
 
 export const dynamic = "force-dynamic";
 
@@ -30,7 +30,7 @@ export default async function EmpresaDetailPage({
 }: {
   params: Promise<{ id: string }>;
 }) {
-  const session = await requireSession();
+  const session = await requirePermission("rh.empresas", "read");
   const { id } = await params;
   const canMutate = session.profile.perfil === "admin" || session.profile.perfil === "secretaria";
 

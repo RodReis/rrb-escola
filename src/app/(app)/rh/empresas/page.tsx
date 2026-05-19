@@ -3,7 +3,7 @@ import { ButtonLink } from "@/components/ui/button";
 import { PageHeader } from "@/components/ui/page-header";
 import { CompanyCard } from "@/components/rh/company-card";
 import { listCompanies, getCompanySummary } from "@/lib/data/rh";
-import { requireSession } from "@/lib/auth/session";
+import { requirePermission } from "@/lib/auth/session";
 
 export const dynamic = "force-dynamic";
 
@@ -12,7 +12,7 @@ export default async function EmpresasPage({
 }: {
   searchParams: Promise<{ ok?: string; erro?: string }>;
 }) {
-  const session = await requireSession();
+  const session = await requirePermission("rh.empresas", "read");
   const params = await searchParams;
   const isAdmin = session.profile.perfil === "admin";
 

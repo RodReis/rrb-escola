@@ -2,7 +2,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { PageHeader } from "@/components/ui/page-header";
 import { Panel } from "@/components/ui/card";
-import { requireSession } from "@/lib/auth/session";
+import { requirePermission } from "@/lib/auth/session";
 import { createServerClient } from "@/lib/supabase/server";
 import { getTemplate } from "@/lib/data/templates";
 import { extractPlaceholders } from "@/lib/documents/placeholders";
@@ -11,7 +11,7 @@ import { MappingForm } from "@/components/rh/documentos/mapping-form";
 import { DeleteTemplateButton } from "@/components/rh/documentos/delete-template-button";
 
 export default async function EditTemplatePage({ params }: { params: Promise<{ id: string }> }) {
-  const session = await requireSession();
+  const session = await requirePermission("rh.templates", "update");
   const { id } = await params;
   const tpl = await getTemplate(id, session.profile.escola_id);
   if (!tpl) notFound();

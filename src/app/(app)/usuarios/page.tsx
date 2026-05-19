@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { Plus, Search } from "lucide-react";
-import { requireAdmin } from "@/lib/auth/session";
+import { requirePermission } from "@/lib/auth/session";
 import { createServerClient } from "@/lib/supabase/server";
 import {
   deactivateUserAction,
@@ -38,7 +38,7 @@ export default async function UsuariosPage({
     status?: string;
   }>;
 }) {
-  await requireAdmin();
+  await requirePermission("usuarios", "read");
   const sp = await searchParams;
 
   const supabase = await createServerClient();

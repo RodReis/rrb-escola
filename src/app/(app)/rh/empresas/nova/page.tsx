@@ -2,14 +2,14 @@ import { PageHeader } from "@/components/ui/page-header";
 import { Panel } from "@/components/ui/card";
 import { CompanyForm } from "@/components/rh/company-form";
 import { createCompanyAction } from "@/lib/actions/rh";
-import { requirePerfil } from "@/lib/auth/session";
+import { requirePermission } from "@/lib/auth/session";
 
 export default async function NovaEmpresaPage({
   searchParams
 }: {
   searchParams: Promise<{ erro?: string }>;
 }) {
-  await requirePerfil(["admin"]);
+  await requirePermission("rh.empresas", "create");
   const params = await searchParams;
 
   return (

@@ -4,7 +4,7 @@ import { Panel } from "@/components/ui/card";
 import { EmployeeForm } from "@/components/rh/employee-form";
 import { updateEmployeeAction } from "@/lib/actions/rh";
 import { listCompanies, getEmployeeById } from "@/lib/data/rh";
-import { requirePerfil } from "@/lib/auth/session";
+import { requirePermission } from "@/lib/auth/session";
 
 export default async function EditarFuncionarioPage({
   params,
@@ -13,7 +13,7 @@ export default async function EditarFuncionarioPage({
   params: Promise<{ id: string }>;
   searchParams: Promise<{ erro?: string }>;
 }) {
-  await requirePerfil(["admin", "secretaria"]);
+  await requirePermission("rh.funcionarios", "update");
   const { id } = await params;
   const sp = await searchParams;
 

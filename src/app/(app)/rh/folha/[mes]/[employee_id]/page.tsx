@@ -4,7 +4,7 @@ import { ButtonLink } from "@/components/ui/button";
 import { PageHeader } from "@/components/ui/page-header";
 import { PayrollRowForm } from "@/components/rh/payroll/payroll-row-form";
 import { HoleritePdfButton } from "@/components/rh/payroll/holerite-pdf-button";
-import { requirePerfil } from "@/lib/auth/session";
+import { requirePermission } from "@/lib/auth/session";
 import { isValidUrlMonth, urlToDbMonth, monthLabel } from "@/lib/payroll/date-utils";
 import { getPayrollByEmployeeMonth, getPayrollPeriod } from "@/lib/data/payroll";
 import { getBracketsForMonth } from "@/lib/data/brackets";
@@ -18,7 +18,7 @@ export default async function FolhaEmployeeMonthPage({
   params: Promise<{ mes: string; employee_id: string }>;
   searchParams: Promise<{ ok?: string; erro?: string }>;
 }) {
-  await requirePerfil(["admin", "financeiro"]);
+  await requirePermission("rh.folha", "read");
   const { mes, employee_id } = await params;
   const sp = await searchParams;
 

@@ -13,6 +13,7 @@ import {
   totalPago,
   totalVencido
 } from "@/lib/despesas/totals";
+import { requirePermission } from "@/lib/auth/session";
 
 export const dynamic = "force-dynamic";
 
@@ -33,6 +34,7 @@ export default async function DespesasPage({
 }: {
   searchParams: Promise<{ mes?: string; categoria_id?: string; status?: string; tipo?: string; erro?: string }>;
 }) {
+  await requirePermission("despesas", "read");
   const params = await searchParams;
   const now = new Date();
   const defaultMes = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`;

@@ -5,8 +5,10 @@ import { PageHeader } from "@/components/ui/page-header";
 import { StatusPill } from "@/components/ui/status-pill";
 import { createTurmaAction, toggleTurmaAction, updateTurmaAction } from "@/lib/actions/academics";
 import { getAcademicData } from "@/lib/data/lookups";
+import { requirePermission } from "@/lib/auth/session";
 
 export default async function TurmasPage() {
+  await requirePermission("turmas", "read");
   const { series, turmas } = await getAcademicData();
   const activeClasses = turmas.filter((item) => item.ativo).length;
   const currentYear = new Date().getFullYear();

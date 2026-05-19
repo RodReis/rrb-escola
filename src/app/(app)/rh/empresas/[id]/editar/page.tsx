@@ -4,7 +4,7 @@ import { Panel } from "@/components/ui/card";
 import { CompanyForm } from "@/components/rh/company-form";
 import { updateCompanyAction } from "@/lib/actions/rh";
 import { getCompanyById } from "@/lib/data/rh";
-import { requirePerfil } from "@/lib/auth/session";
+import { requirePermission } from "@/lib/auth/session";
 
 export default async function EditarEmpresaPage({
   params,
@@ -13,7 +13,7 @@ export default async function EditarEmpresaPage({
   params: Promise<{ id: string }>;
   searchParams: Promise<{ erro?: string }>;
 }) {
-  await requirePerfil(["admin"]);
+  await requirePermission("rh.empresas", "update");
   const { id } = await params;
   const sp = await searchParams;
 

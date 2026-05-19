@@ -1,11 +1,11 @@
 import Link from "next/link";
-import { requireAdmin } from "@/lib/auth/session";
+import { requirePermission } from "@/lib/auth/session";
 import { createUserAction } from "@/lib/actions/users";
 
 export const dynamic = "force-dynamic";
 
 export default async function NovoUsuarioPage({ searchParams }: { searchParams: { erro?: string } }) {
-  await requireAdmin();
+  await requirePermission("usuarios", "create");
 
   return (
     <section className="ds-section max-w-lg">

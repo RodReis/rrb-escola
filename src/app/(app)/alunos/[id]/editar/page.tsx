@@ -11,6 +11,7 @@ import { getStudentDocuments } from "@/lib/data/documents";
 import { getStudentGateSettings } from "@/lib/data/gate";
 import { getStudentSheet } from "@/lib/data/students";
 import { getSignedFotoUrl } from "@/lib/storage/photos";
+import { requirePermission } from "@/lib/auth/session";
 
 export default async function EditStudentPage({
   params,
@@ -19,6 +20,7 @@ export default async function EditStudentPage({
   params: Promise<{ id: string }>;
   searchParams: Promise<Record<string, string>>;
 }) {
+  await requirePermission("alunos", "update");
   const { id } = await params;
   const { tab = "dados" } = await searchParams;
 

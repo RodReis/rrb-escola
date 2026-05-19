@@ -1,7 +1,7 @@
 import { School, Save, ImageIcon, Trash2 } from "lucide-react";
 import { Panel } from "@/components/ui/card";
 import { PageHeader } from "@/components/ui/page-header";
-import { requireAdmin } from "@/lib/auth/session";
+import { requirePermission } from "@/lib/auth/session";
 import { createServerClient } from "@/lib/supabase/server";
 import { getPublicUrl } from "@/lib/storage/public-urls";
 import {
@@ -29,7 +29,7 @@ export default async function EscolaConfigPage({
 }: {
   searchParams: Promise<Record<string, string>>;
 }) {
-  const session = await requireAdmin();
+  const session = await requirePermission("configuracoes.escola", "read");
   const sp = await searchParams;
   const supabase = await createServerClient();
 

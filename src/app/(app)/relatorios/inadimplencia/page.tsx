@@ -6,6 +6,7 @@ import { DataTableShell } from "@/components/ui/data-table";
 import { StatusPill, type StatusTone } from "@/components/ui/status-pill";
 import { money } from "@/lib/constants";
 import { getDelinquencyReport, type DelinquencyFilters as Filters } from "@/lib/data/finance";
+import { requirePermission } from "@/lib/auth/session";
 
 export const dynamic = "force-dynamic";
 
@@ -28,6 +29,7 @@ function parseFilters(sp: { de?: string; ate?: string; status?: string | string[
 }
 
 export default async function InadimplenciaPage({ searchParams }: { searchParams: { de?: string; ate?: string; status?: string | string[]; aluno?: string } }) {
+  await requirePermission("relatorios", "read");
   const filters = parseFilters(searchParams);
   const report = await getDelinquencyReport(filters);
 

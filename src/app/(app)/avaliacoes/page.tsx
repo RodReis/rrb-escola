@@ -4,6 +4,7 @@ import { ButtonLink } from "@/components/ui/button";
 import { Panel } from "@/components/ui/card";
 import { PageHeader } from "@/components/ui/page-header";
 import { listAvaliacoes } from "@/lib/data/pedagogico";
+import { requirePermission } from "@/lib/auth/session";
 
 const TIPO_LABEL: Record<string, string> = {
   prova: "Prova",
@@ -22,6 +23,7 @@ const TIPO_COLOR: Record<string, string> = {
 };
 
 export default async function AvaliacoesPage() {
+  await requirePermission("avaliacoes", "read");
   const avaliacoes = await listAvaliacoes();
 
   // Agrupa por bimestre

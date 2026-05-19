@@ -5,8 +5,10 @@ import { PageHeader } from "@/components/ui/page-header";
 import { DataTableShell } from "@/components/ui/data-table";
 import { StatusPill } from "@/components/ui/status-pill";
 import { getStudentsReport } from "@/lib/data/students";
+import { requirePermission } from "@/lib/auth/session";
 
 export default async function RelatorioAlunosPage() {
+  await requirePermission("relatorios", "read");
   const rows = await getStudentsReport();
   const ativos = rows.filter((item) => item.ativo).length;
   const inativos = rows.length - ativos;

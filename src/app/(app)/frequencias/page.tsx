@@ -5,6 +5,7 @@ import { getAcademicData } from "@/lib/data/lookups";
 import { Badge } from "@/components/ui/badge";
 import { ButtonLink } from "@/components/ui/button";
 import { Card, Panel } from "@/components/ui/card";
+import { requirePermission } from "@/lib/auth/session";
 
 function dateText(value: string | null | undefined) {
   if (!value) return "-";
@@ -12,6 +13,7 @@ function dateText(value: string | null | undefined) {
 }
 
 export default async function FrequenciasPage() {
+  await requirePermission("frequencias", "read");
   const [{ alunos }, frequencias] = await Promise.all([getAcademicData(), getAttendanceData()]);
 
   const presencas = frequencias.filter((item) => item.presente).length;
