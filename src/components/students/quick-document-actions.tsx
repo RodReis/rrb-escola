@@ -56,6 +56,9 @@ export function QuickDocumentActions({ alunoId, matriculaAtiva, templates, onExp
         return;
       }
       toast.success(`Documento gerado: ${res.nomeArquivo}`);
+      if (res.warning) {
+        toast.warning(res.warning, { duration: 8000 });
+      }
     } catch {
       toast.error("Erro inesperado ao gerar documento.");
     } finally {

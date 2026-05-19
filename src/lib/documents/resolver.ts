@@ -57,6 +57,31 @@ function formatEndereco(e: Record<string, unknown> | null): string {
   return parts.join(", ");
 }
 
+const DATE_COLUMNS = new Set([
+  "data_nascimento",
+  "data_matricula",
+  "data_aula",
+  "data_vencimento",
+  "data_pagamento",
+  "created_at",
+  "updated_at",
+]);
+
+function formatDateBR(value: unknown): string {
+  if (typeof value !== "string" || !value) return "";
+  // ISO date (yyyy-mm-dd) ou ISO datetime
+  const m = /^(\d{4})-(\d{2})-(\d{2})/.exec(value);
+  if (!m) return value;
+  return `${m[3]}/${m[2]}/${m[1]}`;
+}
+
+function formatCellValue(column: string, value: unknown): string {
+  if (value === null || value === undefined) return "";
+  if (DATE_COLUMNS.has(column)) return formatDateBR(value);
+  if (typeof value === "boolean") return value ? "Sim" : "Não";
+  return String(value);
+}
+
 function calcularIdade(dataNasc: string | null): string {
   if (!dataNasc) return "";
   const nasc = new Date(`${dataNasc}T00:00:00Z`);
@@ -251,7 +276,7 @@ export async function resolveMappings(
       const rows = loaded.get(m.table) ?? [];
       const row = applyFilter(rows, m.filter);
       const v = row ? row[m.column] : null;
-      out[m.placeholder] = v === null || v === undefined ? "" : String(v);
+      out[m.placeholder] = formatCellValue(m.column, v);
       continue;
     }
   }

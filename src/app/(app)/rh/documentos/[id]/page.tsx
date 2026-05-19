@@ -24,6 +24,16 @@ export default async function EditTemplatePage({ params }: { params: Promise<{ i
     placeholders = extractPlaceholders(buf);
   }
 
+  // Heurística: placeholder cujo nome NÃO contém "NOME" mas está mapeado pra alunos.nome — provável default não-revisado.
+  const suspectMappings = tpl.mappings.filter((m) => {
+    if (m.type !== "tabela") return false;
+    if (m.table !== "alunos" || m.column !== "nome") return false;
+    return !m.placeholder.toUpperCase().includes("NOME");
+  });
+  const unmappedPlaceholders = placeholders.filter(
+    (ph) => !tpl.mappings.some((m) => m.placeholder === ph),
+  );
+
   return (
     <div className="grid gap-6">
       <PageHeader
@@ -35,6 +45,31 @@ export default async function EditTemplatePage({ params }: { params: Promise<{ i
         title={tpl.nome}
         description={`Categoria: ${tpl.categoria} · Gerados: ${tpl.gerado_count.toLocaleString("pt-BR")}`}
       />
+
+      {(suspectMappings.length > 0 || unmappedPlaceholders.length > 0) && (
+        <div className="rounded-ui border border-gold/40 bg-gold/10 p-4 text-sm text-ink">
+          <p className="font-semibold">Configuração incompleta</p>
+          <ul className="mt-2 list-disc pl-5 text-xs">
+            {suspectMappings.length > 0 && (
+              <li>
+                <strong>{suspectMappings.length}</strong> placeholder(s) ainda usam o default <code>alunos.nome</code>:
+                {" "}
+                {suspectMappings.slice(0, 5).map((m) => m.placeholder).join(", ")}
+                {suspectMappings.length > 5 ? "…" : ""}
+              </li>
+            )}
+            {unmappedPlaceholders.length > 0 && (
+              <li>
+                <strong>{unmappedPlaceholders.length}</strong> placeholder(s) detectados no .docx sem mapping:
+                {" "}
+                {unmappedPlaceholders.slice(0, 5).join(", ")}
+                {unmappedPlaceholders.length > 5 ? "…" : ""}
+              </li>
+            )}
+          </ul>
+          <p className="mt-2 text-xs">Revise os mappings abaixo antes de gerar documentos.</p>
+        </div>
+      )}
 
       <Panel className="grid max-w-2xl gap-4">
         <h2 className="font-serif text-xl text-ink">Metadados</h2>

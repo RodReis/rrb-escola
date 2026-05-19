@@ -10,7 +10,7 @@ import { validateMapping, type Mapping } from "@/lib/documents/schema-catalog";
 export async function generateFromTemplateAction(
   matriculaId: string,
   templateId: string,
-): Promise<{ success: boolean; base64?: string; nomeArquivo?: string; error?: string }> {
+): Promise<{ success: boolean; base64?: string; nomeArquivo?: string; error?: string; warning?: string }> {
   const session = await requireSession();
   const escolaId = session.profile.escola_id;
   const supabase = await createServerClient();
@@ -49,8 +49,11 @@ export async function generateFromTemplateAction(
 
   // 5) Gera .docx
   let docxBuffer: Buffer;
+  let missingPlaceholders: string[] = [];
   try {
-    docxBuffer = generateDocxFromBuffer(templateBuffer, variables);
+    const result = generateDocxFromBuffer(templateBuffer, variables);
+    docxBuffer = result.buffer;
+    missingPlaceholders = result.missing;
   } catch (err) {
     return { success: false, error: err instanceof Error ? err.message : "Erro ao gerar docx." };
   }
@@ -104,9 +107,14 @@ export async function generateFromTemplateAction(
   revalidatePath(`/matriculas/${matriculaId}`);
   revalidatePath(`/alunos/${alunoId}`);
 
+  const warning = missingPlaceholders.length > 0
+    ? `Atenção: ${missingPlaceholders.length} placeholder(s) sem mapping (${missingPlaceholders.slice(0, 3).join(", ")}${missingPlaceholders.length > 3 ? "…" : ""}). Edite o template em /rh/documentos.`
+    : undefined;
+
   return {
     success: true,
     base64: docxBuffer.toString("base64"),
     nomeArquivo,
+    warning,
   };
 }

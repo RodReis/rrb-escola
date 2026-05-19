@@ -4,9 +4,16 @@ import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
 import { Download } from "lucide-react";
 import type { StudentSheet } from "@/lib/types";
+import { formatDateBR } from "@/lib/dates";
 
 function value(text: unknown) {
   return text ? String(text) : "";
+}
+
+const DATE_COLS = new Set(["data_nascimento", "data_matricula", "data_aula", "data_vencimento", "data_pagamento"]);
+function dval(col: string, v: unknown) {
+  if (DATE_COLS.has(col)) return formatDateBR(typeof v === "string" ? v : v instanceof Date ? v : null);
+  return value(v);
 }
 
 export function exportStudentPdf(student: StudentSheet) {
@@ -25,7 +32,7 @@ export function exportStudentPdf(student: StudentSheet) {
     headStyles: { fillColor: [232, 232, 232], textColor: 0, halign: "center" },
     body: [
       [{ content: "Dados do Aluno", colSpan: 4, styles: { halign: "center", fontStyle: "bold", fillColor: [232, 232, 232] } }],
-      [`Matricula\n${student.matricula_codigo}`, `Nome\n${student.nome}`, `Sexo\n${value(student.sexo)}`, `Dt. Nascimento\n${value(student.data_nascimento)}`],
+      [`Matricula\n${student.matricula_codigo}`, `Nome\n${student.nome}`, `Sexo\n${value(student.sexo)}`, `Dt. Nascimento\n${dval("data_nascimento", student.data_nascimento)}`],
       [`Naturalidade\n${value(student.naturalidade)}`, `Celular\n${value(student.celular)}`, `CPF\n${value(student.cpf)}`, `RG\n${value(student.rg)}`],
       [{ content: `Endereco\n${value(address?.logradouro)}`, colSpan: 2 }, `Cidade\n${value(address?.cidade)}-${value(address?.uf)}`, `CEP\n${value(address?.cep)}`],
       [`E-Mail\n${value(student.email)}`, `Cod. INEP\n${value(student.codigo_inep)}`, `Etnia\n${value(student.etnia)}`, `Informacoes adicionais\n${value(student.informacoes_adicionais)}`]
@@ -57,7 +64,7 @@ export function exportStudentPdf(student: StudentSheet) {
       value(item.turmas?.nome),
       value(item.planos?.nome),
       value(item.status),
-      value(item.data_matricula),
+      dval("data_matricula", item.data_matricula),
       value(item.idade_na_matricula)
     ])
   });

@@ -101,3 +101,97 @@ export function validateMapping(m: unknown): m is Mapping {
   }
   return false;
 }
+
+// Default fallback. Quando heurística não casar nada.
+const FALLBACK_DEFAULT: Mapping = {
+  placeholder: "",
+  type: "tabela",
+  table: "alunos",
+  column: "nome",
+  filter: null,
+};
+
+function tabela(placeholder: string, table: string, column: string, filter: AllowedFilter | null = null): Mapping {
+  return { placeholder, type: "tabela", table, column, filter };
+}
+function computed(placeholder: string, fn: ComputedFn): Mapping {
+  return { placeholder, type: "computed", fn };
+}
+
+/**
+ * Infere mapping default a partir do nome do placeholder.
+ * Casa-insensitive. Retorna `alunos.nome` como fallback se nada casar.
+ */
+export function inferDefaultMapping(placeholder: string): Mapping {
+  const name = placeholder.toUpperCase();
+
+  // Computed primeiro — nomes exatos
+  if (name === "DATA_HOJE_EXTENSO") return computed(placeholder, "data_hoje_extenso");
+  if (name === "CIDADE_DATA_EXTENSO") return computed(placeholder, "cidade_data_extenso");
+  if (name === "ANO_LETIVO_ATUAL") return computed(placeholder, "ano_letivo_atual");
+  if (name.startsWith("IDADE")) return computed(placeholder, "idade_atual");
+  if (name.startsWith("TIPOENSINO") || name.startsWith("TIPO_ENSINO")) return computed(placeholder, "tipo_ensino_via_series_segmentos");
+  if (name.startsWith("ENDERECO")) {
+    // Endereço de aluno/responsável formatado por padrão.
+    if (!name.endsWith("_EMPRESA")) return computed(placeholder, "endereco_principal_formatado");
+  }
+
+  // Empresa/escola
+  if (name.endsWith("_EMPRESA") || name.endsWith("_ESCOLA")) {
+    if (name.startsWith("CNPJ")) return tabela(placeholder, "escolas", "cnpj");
+    if (name.startsWith("RAZAO_SOCIAL") || name.startsWith("FANTASIA") || name.startsWith("NOME")) return tabela(placeholder, "escolas", "nome");
+    if (name.startsWith("TELEFONE")) return tabela(placeholder, "escolas", "telefone");
+    if (name.startsWith("EMAIL")) return tabela(placeholder, "escolas", "email");
+    if (name.startsWith("CEP")) return tabela(placeholder, "escolas", "cep");
+    if (name.startsWith("CIDADE")) return tabela(placeholder, "escolas", "cidade");
+    if (name.startsWith("UF") || name.startsWith("ESTADO")) return tabela(placeholder, "escolas", "uf");
+    if (name.startsWith("LOGRADOURO") || name.startsWith("ENDERECO")) return tabela(placeholder, "escolas", "endereco");
+    return tabela(placeholder, "escolas", "nome");
+  }
+
+  // Filtro por sufixo
+  let filter: AllowedFilter | null = null;
+  if (name.endsWith("_RESP") || name.includes("_RESPONSAVEL")) filter = "financeiro";
+  else if (name.endsWith("_PAI") || name.startsWith("PAI_")) filter = "pai";
+  else if (name.endsWith("_MAE") || name.startsWith("MAE_")) filter = "mae";
+
+  // Responsável (pai/mãe/financeiro)
+  if (filter) {
+    if (name.startsWith("NOME") || name.includes("_NOME")) return tabela(placeholder, "responsaveis_aluno", "nome", filter);
+    if (name.startsWith("CPF") || name.includes("_CPF")) return tabela(placeholder, "responsaveis_aluno", "cpf", filter);
+    if (name.startsWith("RG") || name.includes("_RG")) return tabela(placeholder, "responsaveis_aluno", "rg", filter);
+    if (name.startsWith("TELEFONE") || name.includes("_TELEFONE")) return tabela(placeholder, "responsaveis_aluno", "telefone", filter);
+    if (name.startsWith("CELULAR") || name.includes("_CELULAR")) return tabela(placeholder, "responsaveis_aluno", "celular", filter);
+    if (name.startsWith("EMAIL") || name.includes("_EMAIL")) return tabela(placeholder, "responsaveis_aluno", "email", filter);
+    if (name.startsWith("PROFISSAO")) return tabela(placeholder, "responsaveis_aluno", "profissao", filter);
+    // Default pra responsável: nome
+    return tabela(placeholder, "responsaveis_aluno", "nome", filter);
+  }
+
+  // Sufixo _ALUNO ou sem sufixo → campos do aluno / acadêmicos
+  if (name.startsWith("SERIE")) return tabela(placeholder, "series", "nome");
+  if (name.startsWith("TURMA")) return tabela(placeholder, "turmas", "nome");
+  if (name.startsWith("TURNO")) return tabela(placeholder, "turmas", "turno");
+  if (name.startsWith("PLANO")) return tabela(placeholder, "planos", "nome");
+  if (name.startsWith("ANO_LETIVO") || name.startsWith("ANOLETIVO")) return tabela(placeholder, "matriculas", "ano_letivo", "ativa");
+  if (name.startsWith("MATRICULA_CODIGO") || name.startsWith("CODIGO_MATRICULA")) return tabela(placeholder, "alunos", "matricula_codigo");
+  if (name.startsWith("DT") || name.startsWith("DATA_NASC") || name.startsWith("DATANASC") || name.startsWith("NASCIMENTO")) return tabela(placeholder, "alunos", "data_nascimento");
+  if (name.startsWith("NATURALIDADE")) return tabela(placeholder, "alunos", "naturalidade");
+  if (name.startsWith("CPF")) return tabela(placeholder, "alunos", "cpf");
+  if (name.startsWith("RG")) return tabela(placeholder, "alunos", "rg");
+  if (name.startsWith("SEXO") || name.startsWith("GENERO")) return tabela(placeholder, "alunos", "sexo");
+  if (name.startsWith("ETNIA")) return tabela(placeholder, "alunos", "etnia");
+  if (name.startsWith("EMAIL")) return tabela(placeholder, "alunos", "email");
+  if (name.startsWith("CELULAR") || name.startsWith("TELEFONE")) return tabela(placeholder, "alunos", "celular");
+  if (name.startsWith("CODIGO_INEP") || name.startsWith("INEP")) return tabela(placeholder, "alunos", "codigo_inep");
+
+  // PAI_ALUNO / MAE_ALUNO sem campo específico: nome do pai/mãe
+  if (name.startsWith("PAI") || name === "FILIACAO_PAI") return tabela(placeholder, "responsaveis_aluno", "nome", "pai");
+  if (name.startsWith("MAE") || name === "FILIACAO_MAE") return tabela(placeholder, "responsaveis_aluno", "nome", "mae");
+
+  // NOME_ALUNO ou NOME
+  if (name === "NOME" || name === "NOME_ALUNO" || name.startsWith("NOME")) return tabela(placeholder, "alunos", "nome");
+
+  // Fallback total: nome do aluno
+  return { ...FALLBACK_DEFAULT, placeholder };
+}

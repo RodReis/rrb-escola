@@ -3,6 +3,7 @@
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
 import { Download } from "lucide-react";
+import { formatDateBR } from "@/lib/dates";
 
 type FinanceRow = {
   descricao: string;
@@ -33,11 +34,11 @@ export function ExportFinanceButton({ rows }: { rows: FinanceRow[] }) {
         row.alunos?.nome ?? "",
         row.descricao,
         row.competencia,
-        row.data_vencimento,
+        formatDateBR(row.data_vencimento),
         row.status,
         Number(row.valor_final).toLocaleString("pt-BR", { style: "currency", currency: "BRL" }),
         row.pagamentos?.[0]
-          ? `${row.pagamentos[0].data_pagamento} - ${Number(row.pagamentos[0].valor_pago).toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}`
+          ? `${formatDateBR(row.pagamentos[0].data_pagamento)} - ${Number(row.pagamentos[0].valor_pago).toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}`
           : ""
       ]),
       styles: { fontSize: 8, cellPadding: 2 },

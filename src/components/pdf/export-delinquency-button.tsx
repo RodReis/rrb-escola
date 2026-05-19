@@ -52,7 +52,7 @@ export function ExportDelinquencyButton({ rows, filters }: Props) {
           aluno?.nome ?? "",
           row.descricao,
           row.competencia,
-          row.data_vencimento,
+          dateText(row.data_vencimento),
           row.status,
           Number(row.valor_final).toLocaleString("pt-BR", { style: "currency", currency: "BRL" })
         ];

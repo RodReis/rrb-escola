@@ -6,7 +6,7 @@ import { redirect } from "next/navigation";
 import { requireSession } from "@/lib/auth/session";
 import { createServerClient } from "@/lib/supabase/server";
 import { extractPlaceholders } from "@/lib/documents/placeholders";
-import { validateMapping, type Mapping } from "@/lib/documents/schema-catalog";
+import { validateMapping, inferDefaultMapping, type Mapping } from "@/lib/documents/schema-catalog";
 
 const DOCX_MIME =
   "application/vnd.openxmlformats-officedocument.wordprocessingml.document";
@@ -54,13 +54,7 @@ export async function uploadTemplateAction(formData: FormData) {
     .upload(storagePath, buffer, { contentType: DOCX_MIME, upsert: false });
   if (upErr) throw upErr;
 
-  const initialMappings: Mapping[] = placeholders.map((p) => ({
-    placeholder: p,
-    type: "tabela",
-    table: "alunos",
-    column: "nome",
-    filter: null,
-  }));
+  const initialMappings: Mapping[] = placeholders.map((p) => inferDefaultMapping(p));
 
   const { error: insErr } = await supabase.from("templates_documentos").insert({
     id: templateId,

@@ -43,6 +43,9 @@ export function DocumentGenerator({ matriculaId, templates, documentosIniciais }
       }
       downloadBase64Docx(res.base64, res.nomeArquivo);
       toast.success(`Documento gerado: ${res.nomeArquivo}`);
+      if (res.warning) {
+        toast.warning(res.warning, { duration: 8000 });
+      }
 
       const r = await fetch(`/api/matriculas/${matriculaId}/documentos`);
       if (r.ok) setDocumentos(await r.json());
