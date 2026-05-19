@@ -9,10 +9,19 @@ const TABS: Array<{ id: Tab; label: string; icon: LucideIcon }> = [
   { id: "pedagogico", label: "Pedagógico", icon: BookOpen },
 ];
 
-export function DashboardTabs({ active, competencia }: { active: Tab; competencia?: string }) {
+export function DashboardTabs({
+  active,
+  competencia,
+  visible,
+}: {
+  active: Tab;
+  competencia?: string;
+  visible?: ReadonlyArray<Tab>;
+}) {
+  const allowed = visible ?? (["financeiro", "alunos", "pedagogico"] as const);
   return (
     <nav className="flex gap-1 border-b border-line">
-      {TABS.map((t) => {
+      {TABS.filter((t) => allowed.includes(t.id)).map((t) => {
         const Icon = t.icon;
         const isActive = t.id === active;
         const qs = new URLSearchParams({ aba: t.id });

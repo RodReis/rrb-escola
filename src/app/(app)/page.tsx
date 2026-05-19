@@ -2,6 +2,7 @@ import { Download, Plus, Upload } from "lucide-react";
 import { ButtonLink } from "@/components/ui/button";
 import { PageHeader } from "@/components/ui/page-header";
 import { requireSession } from "@/lib/auth/session";
+import { can, type ModuloCodigo } from "@/lib/auth/permissions";
 import {
   currentCompetencia,
   getAlertas,
@@ -29,9 +30,7 @@ import {
   getTopCategoriasDespesas,
   getTopDevedores,
   type DevedorRow,
-  type InadimplenciaData,
   type RenovacaoRow,
-  type RepasseData,
 } from "@/lib/data/dashboard-executive";
 import { AlertList } from "@/components/dashboard/alert-list";
 import { AniversariantesCard } from "@/components/dashboard/aniversariantes-card";
@@ -65,12 +64,10 @@ import {
 } from "@/lib/data/pedagogico";
 import { MetricRing } from "@/components/dashboard/metric-ring";
 import { RenovacoesPendentes } from "@/components/dashboard/renovacoes-pendentes";
-import { RepasseCard } from "@/components/dashboard/repasse-card";
 import { RevenueTrendChart } from "@/components/dashboard/revenue-trend-chart";
 import { StageTable } from "@/components/dashboard/stage-table";
 import { TicketCard } from "@/components/dashboard/ticket-card";
 import { TopDevedores } from "@/components/dashboard/top-devedores";
-import { money } from "@/lib/constants";
 
 const MESES = ["Jan","Fev","Mar","Abr","Mai","Jun","Jul","Ago","Set","Out","Nov","Dez"];
 
@@ -89,22 +86,80 @@ function isValidAno(val: string | undefined): boolean {
   return Number.isInteger(n) && n >= 2000 && n <= 2100;
 }
 
+type DashTab = "financeiro" | "alunos" | "pedagogico";
+
 export default async function DashboardPage({
   searchParams,
 }: {
   searchParams: Promise<{ aba?: string; competencia?: string; ano?: string }>;
 }) {
   const params = await searchParams;
-  const aba = parseTab(params.aba);
 
   const session = await requireSession();
   const escolaId = session.profile.escola_id;
+  const perms = session.permissions;
+  const isAdmin = session.profile.perfil === "admin";
+
+  const has = (modulo: ModuloCodigo): boolean => isAdmin || can(perms, modulo, "read");
+
+  // Module flags
+  const showFinanceiroCobrancas = has("financeiro.cobrancas");
+  const showDespesas = has("despesas");
+  const showBolsistas = has("bolsistas");
+  const showRhFolha = has("rh.folha");
+  const showAlunos = has("alunos");
+  const showMatriculas = has("matriculas");
+  const showFrequencias = has("frequencias");
+  const showTurmas = has("turmas");
+  const showAvaliacoes = has("avaliacoes");
+
+  // Tab visibility
+  const tabFinanceiroVisible =
+    showFinanceiroCobrancas || showDespesas || showBolsistas || showRhFolha;
+  const tabAlunosVisible =
+    showAlunos || showMatriculas || showFrequencias || showTurmas;
+  const tabPedagogicoVisible = showAvaliacoes || showFrequencias;
+
+  const tabsVisiveis: DashTab[] = [];
+  if (tabFinanceiroVisible) tabsVisiveis.push("financeiro");
+  if (tabAlunosVisible) tabsVisiveis.push("alunos");
+  if (tabPedagogicoVisible) tabsVisiveis.push("pedagogico");
+
   const competencia = isValidCompetencia(params.competencia) ? params.competencia : currentCompetencia();
   const anoLetivo = isValidAno(params.ano) ? Number(params.ano) : new Date().getFullYear();
+
+  // Header action button flags
+  const showExportar = isAdmin || can(perms, "relatorios", "read");
+  const showImportar = isAdmin || can(perms, "importacoes", "create");
+  const showNovoAluno = isAdmin || can(perms, "alunos", "create");
+
+  // Empty state when zero tabs available
+  if (tabsVisiveis.length === 0) {
+    return (
+      <div className="grid gap-8">
+        <PageHeader
+          breadcrumb={[{ label: "Gestão" }, { label: "Dashboard" }]}
+          title="Dashboard"
+          counter={mesLabel(competencia)}
+          description="Visão executiva para tomada de decisão."
+        />
+        <div className="rounded-ui bg-muted p-12 text-center text-ink/55">
+          Seu perfil não tem permissão para visualizar nenhum dashboard. Contate um administrador.
+        </div>
+      </div>
+    );
+  }
+
+  // Resolve active tab against visible set
+  const abaRequested = parseTab(params.aba);
+  const tabEfetiva: DashTab = tabsVisiveis.includes(abaRequested)
+    ? abaRequested
+    : (tabsVisiveis[0] as DashTab);
 
   const config = await getEscolaConfig(escolaId);
   const isPropria = config.gestaoFinanceira === "propria";
 
+  // Build gated query slots. Order MUST match the destructure below.
   const [
     hero,
     trend,
@@ -134,40 +189,48 @@ export default async function DashboardPage({
     slot2,
     slot5,
   ] = await Promise.all([
-    getHero(competencia, escolaId),
-    getRevenueTrend(6, escolaId),
-    getOcupacao(escolaId, anoLetivo),
-    getStageBreakdown(competencia, escolaId, anoLetivo),
-    getTicketMedio(6, escolaId),
-    getFolhaRatio(competencia, escolaId),
-    getFolhaPorEmpresa(competencia, escolaId),
+    showFinanceiroCobrancas ? getHero(competencia, escolaId) : null,
+    showFinanceiroCobrancas ? getRevenueTrend(6, escolaId) : null,
+    showAlunos ? getOcupacao(escolaId, anoLetivo) : null,
+    showMatriculas ? getStageBreakdown(competencia, escolaId, anoLetivo) : null,
+    showFinanceiroCobrancas ? getTicketMedio(6, escolaId) : null,
+    showRhFolha ? getFolhaRatio(competencia, escolaId) : null,
+    showRhFolha ? getFolhaPorEmpresa(competencia, escolaId) : null,
     getAlertas(competencia, config.gestaoFinanceira, escolaId, anoLetivo),
-    getBeneficios(escolaId, anoLetivo),
-    getAniversariantes(escolaId, 10),
-    getFrequenciaResumo(escolaId, 30, anoLetivo),
-    getRankingTurmas(escolaId, 10, anoLetivo),
-    getTopCategoriasDespesas(competencia, escolaId, 6),
-    getRealizadoVsProjetado(competencia, escolaId, anoLetivo),
-    getFrequenciaPorTurma(escolaId, 30, anoLetivo),
-    getEvasao(escolaId),
-    getFrequenciaDetalhada(escolaId, 60),
-    getMediasPorDisciplina(escolaId),
-    getPedagogicoSummary(escolaId),
-    getRankingAlunos(escolaId, undefined, 10),
-    getAniversariantesMatricula(escolaId, 10, anoLetivo),
-    getProximasCobrancas(escolaId, 7),
+    showBolsistas ? getBeneficios(escolaId, anoLetivo) : null,
+    showAlunos ? getAniversariantes(escolaId, 10) : null,
+    showFrequencias ? getFrequenciaResumo(escolaId, 30, anoLetivo) : null,
+    showTurmas ? getRankingTurmas(escolaId, 10, anoLetivo) : null,
+    showDespesas ? getTopCategoriasDespesas(competencia, escolaId, 6) : null,
+    showFinanceiroCobrancas ? getRealizadoVsProjetado(competencia, escolaId, anoLetivo) : null,
+    showFrequencias ? getFrequenciaPorTurma(escolaId, 30, anoLetivo) : null,
+    showAlunos ? getEvasao(escolaId) : null,
+    showFrequencias ? getFrequenciaDetalhada(escolaId, 60) : null,
+    showAvaliacoes ? getMediasPorDisciplina(escolaId) : null,
+    showAvaliacoes ? getPedagogicoSummary(escolaId) : null,
+    showAvaliacoes ? getRankingAlunos(escolaId, undefined, 10) : null,
+    showAlunos ? getAniversariantesMatricula(escolaId, 10, anoLetivo) : null,
+    showFinanceiroCobrancas ? getProximasCobrancas(escolaId, 7) : null,
     getSaudeSistema(escolaId),
-    getSaldoYTD(escolaId, anoLetivo),
-    getPedagogicoOverview(escolaId),
-    isPropria
-      ? getInadimplencia(competencia, escolaId)
-      : getRepasseRecebido(competencia, escolaId),
-    isPropria
-      ? getTopDevedores(5, escolaId)
-      : getRenovacoesPendentes(5, escolaId),
+    showFinanceiroCobrancas ? getSaldoYTD(escolaId, anoLetivo) : null,
+    showAvaliacoes ? getPedagogicoOverview(escolaId) : null,
+    showFinanceiroCobrancas
+      ? (isPropria
+          ? getInadimplencia(competencia, escolaId)
+          : getRepasseRecebido(competencia, escolaId))
+      : null,
+    (showFinanceiroCobrancas || showMatriculas)
+      ? (isPropria
+          ? getTopDevedores(5, escolaId)
+          : getRenovacoesPendentes(5, escolaId))
+      : null,
   ]);
 
-  const ocupacaoPct = ocupacao.total > 0 ? ocupacao.ocupadas / ocupacao.total : 0;
+  // slot2 currently is computed but not rendered in the original page (was unused).
+  // Keep variable to preserve ordering.
+  void slot2;
+
+  const ocupacaoPct = ocupacao && ocupacao.total > 0 ? ocupacao.ocupadas / ocupacao.total : 0;
 
   return (
     <div className="grid gap-8">
@@ -179,106 +242,134 @@ export default async function DashboardPage({
         actions={
           <>
             <CompetenciaPicker current={competencia} />
-            <ButtonLink href="/relatorios/alunos" variant="secondary">
-              <Download size={14} /> Exportar
-            </ButtonLink>
-            <ButtonLink href="/importacoes" variant="secondary">
-              <Upload size={14} /> Importar
-            </ButtonLink>
-            <ButtonLink href="/alunos/novo" variant="primary">
-              <Plus size={14} /> Novo aluno
-            </ButtonLink>
+            {showExportar && (
+              <ButtonLink href="/relatorios/alunos" variant="secondary">
+                <Download size={14} /> Exportar
+              </ButtonLink>
+            )}
+            {showImportar && (
+              <ButtonLink href="/importacoes" variant="secondary">
+                <Upload size={14} /> Importar
+              </ButtonLink>
+            )}
+            {showNovoAluno && (
+              <ButtonLink href="/alunos/novo" variant="primary">
+                <Plus size={14} /> Novo aluno
+              </ButtonLink>
+            )}
           </>
         }
       />
 
-      <DashboardTabs active={aba} competencia={competencia} />
+      <DashboardTabs active={tabEfetiva} competencia={competencia} visible={tabsVisiveis} />
 
-      {aba === "financeiro" && (
+      {tabEfetiva === "financeiro" && (
         <>
-          <HeroFinancial data={hero} />
+          {showFinanceiroCobrancas && hero && <HeroFinancial data={hero} />}
 
           <section className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
-            <FolhaRatioCard data={folhaRatio} />
-            <TicketCard data={ticket} />
-            <BolsistasReceitaCard data={beneficios} />
-            <SaldoYTDCard data={saldoYTD} />
+            {showRhFolha && folhaRatio && <FolhaRatioCard data={folhaRatio} />}
+            {showFinanceiroCobrancas && ticket && <TicketCard data={ticket} />}
+            {showBolsistas && beneficios && <BolsistasReceitaCard data={beneficios} />}
+            {showFinanceiroCobrancas && saldoYTD && <SaldoYTDCard data={saldoYTD} />}
           </section>
 
-          <RealizadoProjetadoCard data={realizadoVsProjetado} />
+          {showFinanceiroCobrancas && realizadoVsProjetado && (
+            <RealizadoProjetadoCard data={realizadoVsProjetado} />
+          )}
 
           <section className="grid gap-6 lg:grid-cols-3">
             <AlertList items={alertas} />
-            <div className="lg:col-span-2">
-              <RevenueTrendChart data={trend} />
-            </div>
+            {showFinanceiroCobrancas && trend && (
+              <div className="lg:col-span-2">
+                <RevenueTrendChart data={trend} />
+              </div>
+            )}
           </section>
 
-          {isPropria && <ProximasCobrancasCard items={proximasCobrancas} />}
+          {showFinanceiroCobrancas && isPropria && proximasCobrancas && (
+            <ProximasCobrancasCard items={proximasCobrancas} />
+          )}
 
           <section className="grid gap-6 lg:grid-cols-2">
-            <TopCategoriasCard items={topCategorias} />
-            <FolhaEmpresas items={folhaEmpresas} />
+            {showDespesas && topCategorias && <TopCategoriasCard items={topCategorias} />}
+            {showRhFolha && folhaEmpresas && <FolhaEmpresas items={folhaEmpresas} />}
           </section>
         </>
       )}
 
-      {aba === "alunos" && (
+      {tabEfetiva === "alunos" && (
         <>
           <section className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
-            <MetricRing
-              label="Ocupação"
-              percent={ocupacaoPct}
-              centerLabel="Vagas"
-              centerValue={`${ocupacao.ocupadas}/${ocupacao.total}`}
-            />
-            <FrequenciaCard data={frequencia} porTurma={frequenciaPorTurma} />
-            <BeneficiosCard data={beneficios} />
-            <article className="rounded-panel bg-surface p-6 shadow-soft">
-              <p className="text-[0.66rem] font-bold uppercase tracking-kicker text-ink/55">Resumo</p>
-              <dl className="mt-4 grid gap-3">
-                <div className="flex items-baseline justify-between">
-                  <dt className="text-sm text-ink/70">Pagantes</dt>
-                  <dd className="text-xl font-bold text-ink">{ocupacao.pagantes}</dd>
-                </div>
-                <div className="flex items-baseline justify-between">
-                  <dt className="text-sm text-ink/70">Beneficiados</dt>
-                  <dd className="text-xl font-bold text-accent">{ocupacao.beneficiados}</dd>
-                </div>
-                <div className="flex items-baseline justify-between border-t border-line pt-3">
-                  <dt className="text-sm font-semibold text-ink">Total ativos</dt>
-                  <dd className="text-2xl font-bold text-brand">{ocupacao.ocupadas}</dd>
-                </div>
-              </dl>
-            </article>
+            {showAlunos && ocupacao && (
+              <MetricRing
+                label="Ocupação"
+                percent={ocupacaoPct}
+                centerLabel="Vagas"
+                centerValue={`${ocupacao.ocupadas}/${ocupacao.total}`}
+              />
+            )}
+            {showFrequencias && frequencia && frequenciaPorTurma && (
+              <FrequenciaCard data={frequencia} porTurma={frequenciaPorTurma} />
+            )}
+            {showBolsistas && beneficios && <BeneficiosCard data={beneficios} />}
+            {showAlunos && ocupacao && (
+              <article className="rounded-panel bg-surface p-6 shadow-soft">
+                <p className="text-[0.66rem] font-bold uppercase tracking-kicker text-ink/55">Resumo</p>
+                <dl className="mt-4 grid gap-3">
+                  <div className="flex items-baseline justify-between">
+                    <dt className="text-sm text-ink/70">Pagantes</dt>
+                    <dd className="text-xl font-bold text-ink">{ocupacao.pagantes}</dd>
+                  </div>
+                  <div className="flex items-baseline justify-between">
+                    <dt className="text-sm text-ink/70">Beneficiados</dt>
+                    <dd className="text-xl font-bold text-accent">{ocupacao.beneficiados}</dd>
+                  </div>
+                  <div className="flex items-baseline justify-between border-t border-line pt-3">
+                    <dt className="text-sm font-semibold text-ink">Total ativos</dt>
+                    <dd className="text-2xl font-bold text-brand">{ocupacao.ocupadas}</dd>
+                  </div>
+                </dl>
+              </article>
+            )}
           </section>
 
-          <StageTable rows={stages} />
+          {showMatriculas && stages && <StageTable rows={stages} />}
 
           <section className="grid gap-6 lg:grid-cols-2">
-            <RankingTurmasCard items={rankingTurmas} />
-            <AniversariantesCard items={aniversariantes} />
+            {showTurmas && rankingTurmas && <RankingTurmasCard items={rankingTurmas} />}
+            {showAlunos && aniversariantes && <AniversariantesCard items={aniversariantes} />}
           </section>
 
           <section className="grid gap-6 lg:grid-cols-2">
-            <AniversarioMatriculaCard items={aniversariantesMatricula} />
+            {showAlunos && aniversariantesMatricula && (
+              <AniversarioMatriculaCard items={aniversariantesMatricula} />
+            )}
             <SaudeSistemaCard data={saudeSistema} />
           </section>
 
-          {!isPropria && <RenovacoesPendentes items={slot5 as RenovacaoRow[]} />}
-          {isPropria && <TopDevedores items={slot5 as DevedorRow[]} />}
+          {!isPropria && showMatriculas && slot5 && (
+            <RenovacoesPendentes items={slot5 as RenovacaoRow[]} />
+          )}
+          {isPropria && showFinanceiroCobrancas && slot5 && (
+            <TopDevedores items={slot5 as DevedorRow[]} />
+          )}
         </>
       )}
 
-      {aba === "pedagogico" && (
+      {tabEfetiva === "pedagogico" && (
         <>
-          <PedagogicoOverviewSection data={pedagogicoOverview} />
+          {showAvaliacoes && pedagogicoOverview && (
+            <PedagogicoOverviewSection data={pedagogicoOverview} />
+          )}
           <section className="grid gap-6 lg:grid-cols-2">
-            <EvasaoCard data={evasao} />
-            <FrequenciaHeatmap data={freqDetalhada} />
+            {showAlunos && evasao && <EvasaoCard data={evasao} />}
+            {showFrequencias && freqDetalhada && <FrequenciaHeatmap data={freqDetalhada} />}
           </section>
-          <MediasDisciplinasCard rows={mediasDisc} summary={pedagogicoSummary} />
-          <RankingAlunosCard items={rankingAlunos} />
+          {showAvaliacoes && mediasDisc && pedagogicoSummary && (
+            <MediasDisciplinasCard rows={mediasDisc} summary={pedagogicoSummary} />
+          )}
+          {showAvaliacoes && rankingAlunos && <RankingAlunosCard items={rankingAlunos} />}
         </>
       )}
     </div>
