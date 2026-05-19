@@ -28,7 +28,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
 
   return (
     <div className="ds-shell">
-      <Topbar perfil={session.profile} anosLetivos={anosLetivos} />
+      <Topbar perfil={session.profile} anosLetivos={anosLetivos} permissions={session.permissions} />
       <main>
         <div className="mx-auto min-h-[calc(100vh-72px)] max-w-7xl px-4 py-6 sm:px-6 lg:px-8">{children}</div>
       </main>
