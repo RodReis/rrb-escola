@@ -1,4 +1,4 @@
-import { ExternalLink, UploadCloud } from "lucide-react";
+import { ExternalLink, UploadCloud, FileUp, Inbox } from "lucide-react";
 import { markImportProcessedAction, uploadStudentImportAction } from "@/lib/actions/imports";
 import { getImportedFiles } from "@/lib/data/imports";
 import { Badge } from "@/components/ui/badge";
@@ -71,7 +71,10 @@ export default async function ImportacoesPage() {
       <Panel className="grid gap-5">
         <div>
           <p className="ds-kicker">Novo arquivo</p>
-          <h2 className="mt-2 text-xl font-black text-ink">Enviar arquivo de alunos</h2>
+          <h2 className="mt-2 flex items-center gap-2 text-xl font-black text-ink">
+            <FileUp size={20} className="text-brand" />
+            Enviar arquivo de alunos
+          </h2>
         </div>
         <form action={uploadStudentImportAction} className="grid gap-4 md:grid-cols-[1fr_1fr_190px]">
           <label>
@@ -92,7 +95,10 @@ export default async function ImportacoesPage() {
       <section className="grid gap-3">
         {files.length === 0 ? (
           <Panel>
-            <p className="text-sm font-medium text-ink/60">Nenhum arquivo importado ainda.</p>
+            <div className="flex flex-col items-center justify-center gap-2 py-10 text-ink/40">
+              <Inbox size={28} />
+              <p className="text-sm font-medium">Nenhum arquivo importado ainda.</p>
+            </div>
           </Panel>
         ) : null}
         {files.map((file) => (

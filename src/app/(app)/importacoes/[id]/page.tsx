@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { CheckCircle2, ExternalLink, Save } from "lucide-react";
+import { CheckCircle2, ExternalLink, Save, ArrowLeft, AlertCircle, Inbox } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button, ButtonLink } from "@/components/ui/button";
 import { Card, Panel } from "@/components/ui/card";
@@ -48,7 +48,9 @@ export default async function ImportDetailPage({ params }: { params: { id: strin
           </div>
         </div>
         <div className="flex flex-wrap gap-2">
-          <ButtonLink href="/importacoes" variant="secondary">Voltar</ButtonLink>
+          <ButtonLink href="/importacoes" variant="secondary">
+            <ArrowLeft size={14} /> Voltar
+          </ButtonLink>
           <form action={processImportStudentBatchAction}>
             <input type="hidden" name="arquivo_id" value={file.id} />
             <Button variant="accent">
@@ -71,7 +73,10 @@ export default async function ImportDetailPage({ params }: { params: { id: strin
       <section className="grid gap-4">
         {rows.length === 0 ? (
           <Panel>
-            <p className="text-sm text-muted">Nenhuma linha foi extraida deste arquivo.</p>
+            <div className="flex flex-col items-center justify-center gap-2 py-10 text-ink/40">
+              <Inbox size={28} />
+              <p className="text-sm font-medium">Nenhuma linha foi extraida deste arquivo.</p>
+            </div>
           </Panel>
         ) : null}
 
@@ -96,8 +101,9 @@ export default async function ImportDetailPage({ params }: { params: { id: strin
               </div>
 
               {row.erros.length ? (
-                <div className="rounded-ui border border-clay/30 bg-clay/10 p-3 text-sm font-semibold text-clay">
-                  {row.erros.join(" ")}
+                <div className="flex items-start gap-2 rounded-ui border border-clay/30 bg-clay/10 p-3 text-sm font-semibold text-clay">
+                  <AlertCircle size={16} className="mt-0.5 shrink-0" />
+                  <span>{row.erros.join(" ")}</span>
                 </div>
               ) : null}
 
