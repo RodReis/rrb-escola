@@ -1,3 +1,4 @@
+import { ArrowLeft, Filter, Users } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button, ButtonLink } from "@/components/ui/button";
 import { Card, Panel } from "@/components/ui/card";
@@ -42,11 +43,16 @@ export default async function GateDailyPanelPage({ searchParams }: { searchParam
         </div>
         <div className="flex flex-wrap gap-2">
           <ExportGateDailyStatusButton rows={panel.rows} date={panel.date} />
-          <ButtonLink href="/portaria" variant="secondary">Voltar para portaria</ButtonLink>
+          <ButtonLink href="/portaria" variant="secondary">
+            <ArrowLeft size={14} /> Voltar para portaria
+          </ButtonLink>
         </div>
       </header>
 
       <Panel>
+        <div className="mb-3 flex items-center gap-2 text-xs font-bold uppercase tracking-kicker text-ink/55">
+          <Filter size={12} /> Filtrar por data
+        </div>
         <form action="/portaria/painel" className="grid gap-4 md:grid-cols-[220px_140px]">
           <label>Data<input type="date" name="data" defaultValue={panel.date} /></label>
           <Button className="self-end" variant="accent">Filtrar</Button>
@@ -80,6 +86,12 @@ export default async function GateDailyPanelPage({ searchParams }: { searchParam
         </div>
 
         <div className="grid bg-paper/70">
+          {panel.rows.length === 0 && (
+            <div className="flex flex-col items-center justify-center gap-2 py-12 text-ink/40">
+              <Users size={28} />
+              <p className="text-sm font-medium">Sem alunos para este dia.</p>
+            </div>
+          )}
           {panel.rows.map((row) => (
             <div key={row.aluno_id} className="grid gap-3 border-b border-line px-4 py-4 last:border-b-0 xl:grid-cols-[0.7fr_1.6fr_0.7fr_0.8fr_0.8fr_0.8fr_0.6fr]">
               <span className="font-bold">{row.matricula_codigo}</span>

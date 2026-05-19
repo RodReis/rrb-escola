@@ -1,4 +1,4 @@
-import { RefreshCcw } from "lucide-react";
+import { RefreshCcw, ArrowLeft, Bell } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button, ButtonLink } from "@/components/ui/button";
 import { retryGuardianNotificationAction } from "@/lib/actions/gate";
@@ -35,7 +35,9 @@ export default async function GateNotificationsPage({ searchParams }: { searchPa
             Acompanhe mensagens enviadas, pendentes, simuladas e tentativas com erro.
           </p>
         </div>
-        <ButtonLink href="/portaria" variant="secondary">Voltar para portaria</ButtonLink>
+        <ButtonLink href="/portaria" variant="secondary">
+          <ArrowLeft size={14} /> Voltar para portaria
+        </ButtonLink>
       </header>
 
       <nav className="flex flex-wrap gap-2">
@@ -55,7 +57,12 @@ export default async function GateNotificationsPage({ searchParams }: { searchPa
         </div>
 
         <div className="grid bg-paper/70">
-          {notifications.length === 0 ? <p className="p-5 text-sm text-muted">Nenhuma notificacao encontrada.</p> : null}
+          {notifications.length === 0 ? (
+            <div className="flex flex-col items-center justify-center gap-2 py-12 text-ink/40">
+              <Bell size={28} />
+              <p className="text-sm font-medium">Nenhuma notificacao encontrada.</p>
+            </div>
+          ) : null}
           {notifications.map((notification) => (
             <div key={notification.id} className="grid gap-3 border-b border-line px-4 py-4 last:border-b-0 lg:grid-cols-[1.3fr_0.7fr_0.8fr_0.8fr]">
               <div>

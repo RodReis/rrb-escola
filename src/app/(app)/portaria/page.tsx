@@ -1,4 +1,4 @@
-import { DoorOpen } from "lucide-react";
+import { DoorOpen, Bell, Activity, Inbox } from "lucide-react";
 import { Button, ButtonLink } from "@/components/ui/button";
 import { Panel } from "@/components/ui/card";
 import { PageHeader } from "@/components/ui/page-header";
@@ -75,8 +75,17 @@ export default async function PortariaPage() {
 
       <section className="grid gap-4 lg:grid-cols-2">
         <Panel className="grid gap-4">
-          <h2 className="font-serif text-2xl text-ink">Eventos recentes</h2>
+          <h2 className="flex items-center gap-2 font-serif text-2xl text-ink">
+            <Activity size={20} className="text-brand" />
+            Eventos recentes
+          </h2>
           <div className="grid gap-2">
+            {data.events.length === 0 && (
+              <div className="flex flex-col items-center justify-center gap-2 py-8 text-ink/40">
+                <Inbox size={24} />
+                <p className="text-sm">Nenhum evento registrado ainda.</p>
+              </div>
+            )}
             {data.events.map((event) => (
               <div key={event.id} className="border-b border-line py-3 text-sm last:border-b-0">
                 <strong>{event.alunos?.nome}</strong>
@@ -90,10 +99,19 @@ export default async function PortariaPage() {
 
         <Panel className="grid gap-4">
           <div className="flex items-center justify-between gap-3">
-            <h2 className="font-serif text-2xl text-ink">Mensagens</h2>
+            <h2 className="flex items-center gap-2 font-serif text-2xl text-ink">
+              <Bell size={20} className="text-brand" />
+              Mensagens
+            </h2>
             <ButtonLink href="/portaria/notificacoes" variant="secondary">Ver todas</ButtonLink>
           </div>
           <div className="grid gap-2">
+            {data.notifications.length === 0 && (
+              <div className="flex flex-col items-center justify-center gap-2 py-8 text-ink/40">
+                <Bell size={24} />
+                <p className="text-sm">Nenhuma notificacao enviada.</p>
+              </div>
+            )}
             {data.notifications.map((notification) => (
               <div key={notification.id} className="border-b border-line py-3 text-sm last:border-b-0">
                 <strong>{notification.alunos?.nome}</strong>

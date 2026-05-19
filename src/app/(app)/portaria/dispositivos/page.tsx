@@ -1,3 +1,4 @@
+import { ArrowLeft, Plus, Cpu } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button, ButtonLink } from "@/components/ui/button";
 import { Panel } from "@/components/ui/card";
@@ -19,10 +20,15 @@ export default async function GateDevicesPage() {
             Cadastre cameras, totens e pontos de acesso usados nos registros da portaria.
           </p>
         </div>
-        <ButtonLink href="/portaria" variant="secondary">Voltar para portaria</ButtonLink>
+        <ButtonLink href="/portaria" variant="secondary">
+          <ArrowLeft size={14} /> Voltar para portaria
+        </ButtonLink>
       </header>
 
       <Panel>
+        <div className="mb-4 flex items-center gap-2 text-xs font-bold uppercase tracking-kicker text-ink/55">
+          <Plus size={12} /> Novo dispositivo
+        </div>
         <form action={createGateDeviceAction} className="grid gap-4 md:grid-cols-[1fr_1fr_180px_140px]">
           <label>Nome<input name="nome" placeholder="Camera entrada principal" required /></label>
           <label>Local<input name="local" placeholder="Entrada principal" /></label>
@@ -41,7 +47,10 @@ export default async function GateDevicesPage() {
       <section className="grid gap-3">
         {devices.length === 0 ? (
           <Panel>
-            <p className="text-sm font-medium text-muted">Nenhum dispositivo cadastrado.</p>
+            <div className="flex flex-col items-center justify-center gap-2 py-10 text-ink/40">
+              <Cpu size={28} />
+              <p className="text-sm font-medium">Nenhum dispositivo cadastrado.</p>
+            </div>
           </Panel>
         ) : null}
         {devices.map((device) => (

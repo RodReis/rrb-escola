@@ -1,3 +1,4 @@
+import { ArrowLeft } from "lucide-react";
 import { GateCameraConsole } from "@/components/gate/gate-camera-console";
 import { ButtonLink } from "@/components/ui/button";
 import { getGateData } from "@/lib/data/gate";
@@ -18,7 +19,7 @@ export default async function GateCameraPage() {
           </p>
         </div>
         <ButtonLink href="/portaria" variant="secondary">
-          Voltar para portaria
+          <ArrowLeft size={14} /> Voltar para portaria
         </ButtonLink>
       </header>
 
