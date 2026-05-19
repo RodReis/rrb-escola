@@ -4,28 +4,11 @@ import { useState, useRef, useEffect } from "react";
 import { createPortal } from "react-dom";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import {
-  Settings,
-  School,
-  UsersRound,
-  Webhook,
-  Tags,
-  ShieldCheck,
-  ChevronDown,
-} from "lucide-react";
+import { Settings, ChevronDown } from "lucide-react";
 import { cn } from "@/lib/utils";
+import type { DropdownItem } from "./secretaria-dropdown";
 
-const items = [
-  { href: "/configuracoes/escola", label: "Dados da escola", icon: School },
-  { href: "/usuarios", label: "Usuários", icon: UsersRound },
-  { href: "/configuracoes/perfis", label: "Perfis e Permissões", icon: ShieldCheck },
-  { href: "/configuracoes/webhook", label: "Webhook", icon: Webhook },
-  { href: "/despesas/categorias", label: "Categorias despesa", icon: Tags },
-];
-
-const hrefs = items.map((i) => i.href);
-
-export function ConfiguracoesDropdown() {
+export function ConfiguracoesDropdown({ items }: { items: DropdownItem[] }) {
   const pathname = usePathname();
   const [open, setOpen] = useState(false);
   const [mounted, setMounted] = useState(false);
@@ -33,6 +16,7 @@ export function ConfiguracoesDropdown() {
   const ref = useRef<HTMLDivElement>(null);
   const btnRef = useRef<HTMLButtonElement>(null);
 
+  const hrefs = items.map((i) => i.href);
   const isActive = hrefs.some((h) => pathname === h || pathname.startsWith(`${h}/`));
 
   useEffect(() => { setMounted(true); }, []);
@@ -52,6 +36,8 @@ export function ConfiguracoesDropdown() {
     const r = btnRef.current.getBoundingClientRect();
     setPos({ left: r.left, top: r.bottom + 6, width: 200 });
   }, [open]);
+
+  if (items.length === 0) return null;
 
   return (
     <div ref={ref} className="relative shrink-0">
@@ -79,7 +65,7 @@ export function ConfiguracoesDropdown() {
               onMouseDown={(e) => e.stopPropagation()}
             >
               {items.map((item) => {
-                const Icon = item.icon;
+                const Icon = item.Icon;
                 const active = pathname === item.href || pathname.startsWith(`${item.href}/`);
                 return (
                   <Link

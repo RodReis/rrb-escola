@@ -4,44 +4,16 @@ import { useState, useRef, useEffect } from "react";
 import { createPortal } from "react-dom";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import {
-  BookOpen,
-  Cake,
-  CalendarCheck,
-  ClipboardCheck,
-  ClipboardList,
-  DoorOpen,
-  FileText,
-  GraduationCap,
-  HandHeart,
-  Inbox,
-  Layers3,
-  Network,
-  UserCheck,
-  UsersRound,
-  ChevronDown
-} from "lucide-react";
+import { BookOpen, ChevronDown, type LucideIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
 
-const secretariaItems = [
-  { href: "/alunos", label: "Alunos", icon: UsersRound },
-  { href: "/bolsistas", label: "Bolsistas", icon: HandHeart },
-  { href: "/matriculas", label: "Matrículas", icon: FileText },
-  { href: "/series", label: "Séries", icon: Layers3 },
-  { href: "/turmas", label: "Turmas", icon: GraduationCap },
-  { href: "/disciplinas", label: "Disciplinas", icon: ClipboardList },
-  { href: "/avaliacoes", label: "Avaliações", icon: ClipboardCheck },
-  { href: "/professores/atribuicoes", label: "Atribuições", icon: UserCheck },
-  { href: "/frequencias", label: "Frequência", icon: CalendarCheck },
-  { href: "/portaria", label: "Portaria", icon: DoorOpen },
-  { href: "/mural/aniversariantes", label: "Mural aniversários", icon: Cake },
-  { href: "/organograma", label: "Organograma", icon: Network },
-  { href: "/importacoes", label: "Importações", icon: Inbox }
-];
+export type DropdownItem = {
+  href: string;
+  label: string;
+  Icon: LucideIcon;
+};
 
-const secretariaHrefs = secretariaItems.map((i) => i.href);
-
-export function SecretariaDropdown() {
+export function SecretariaDropdown({ items }: { items: DropdownItem[] }) {
   const pathname = usePathname();
   const [open, setOpen] = useState(false);
   const [mounted, setMounted] = useState(false);
@@ -49,7 +21,8 @@ export function SecretariaDropdown() {
   const ref = useRef<HTMLDivElement>(null);
   const btnRef = useRef<HTMLButtonElement>(null);
 
-  const isActive = secretariaHrefs.some(
+  const hrefs = items.map((i) => i.href);
+  const isActive = hrefs.some(
     (href) => pathname === href || pathname.startsWith(`${href}/`)
   );
 
@@ -73,6 +46,8 @@ export function SecretariaDropdown() {
     const r = btnRef.current.getBoundingClientRect();
     setPos({ left: r.left, top: r.bottom + 6, width: 192 });
   }, [open]);
+
+  if (items.length === 0) return null;
 
   return (
     <div ref={ref} className="relative shrink-0">
@@ -99,8 +74,8 @@ export function SecretariaDropdown() {
               className="rounded-[10px] border border-[#1B3FB8]/20 bg-white shadow-[0_14px_40px_-10px_rgba(0,0,0,0.18),0_2px_8px_-4px_rgba(0,0,0,0.08)] p-1"
               onMouseDown={(e) => e.stopPropagation()}
             >
-              {secretariaItems.map((item) => {
-                const Icon = item.icon;
+              {items.map((item) => {
+                const Icon = item.Icon;
                 const active = pathname === item.href || pathname.startsWith(`${item.href}/`);
                 return (
                   <Link

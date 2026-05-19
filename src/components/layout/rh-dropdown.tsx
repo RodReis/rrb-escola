@@ -4,20 +4,11 @@ import { useState, useRef, useEffect } from "react";
 import { createPortal } from "react-dom";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Briefcase, Building2, UsersRound, Wallet, SlidersHorizontal, ChevronDown, FileText } from "lucide-react";
+import { Briefcase, ChevronDown } from "lucide-react";
 import { cn } from "@/lib/utils";
+import type { DropdownItem } from "./secretaria-dropdown";
 
-const rhItems = [
-  { href: "/rh/empresas", label: "Empresas", icon: Building2 },
-  { href: "/rh/funcionarios", label: "Funcionários", icon: UsersRound },
-  { href: "/rh/folha", label: "Folha", icon: Wallet },
-  { href: "/rh/brackets", label: "Brackets", icon: SlidersHorizontal },
-  { href: "/rh/documentos", label: "Documentos", icon: FileText }
-];
-
-const rhHrefs = rhItems.map((i) => i.href);
-
-export function RhDropdown() {
+export function RhDropdown({ items }: { items: DropdownItem[] }) {
   const pathname = usePathname();
   const [open, setOpen] = useState(false);
   const [mounted, setMounted] = useState(false);
@@ -25,7 +16,8 @@ export function RhDropdown() {
   const ref = useRef<HTMLDivElement>(null);
   const btnRef = useRef<HTMLButtonElement>(null);
 
-  const isActive = rhHrefs.some((href) => pathname === href || pathname.startsWith(`${href}/`));
+  const hrefs = items.map((i) => i.href);
+  const isActive = hrefs.some((href) => pathname === href || pathname.startsWith(`${href}/`));
 
   useEffect(() => { setMounted(true); }, []);
 
@@ -44,6 +36,8 @@ export function RhDropdown() {
     const r = btnRef.current.getBoundingClientRect();
     setPos({ left: r.left, top: r.bottom + 6, width: 192 });
   }, [open]);
+
+  if (items.length === 0) return null;
 
   return (
     <div ref={ref} className="relative shrink-0">
@@ -70,8 +64,8 @@ export function RhDropdown() {
               className="rounded-[10px] border border-[#1B3FB8]/20 bg-white shadow-[0_14px_40px_-10px_rgba(0,0,0,0.18),0_2px_8px_-4px_rgba(0,0,0,0.08)] p-1"
               onMouseDown={(e) => e.stopPropagation()}
             >
-              {rhItems.map((item) => {
-                const Icon = item.icon;
+              {items.map((item) => {
+                const Icon = item.Icon;
                 const active = pathname === item.href || pathname.startsWith(`${item.href}/`);
                 return (
                   <Link

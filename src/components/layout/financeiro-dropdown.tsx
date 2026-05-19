@@ -4,27 +4,11 @@ import { useState, useRef, useEffect } from "react";
 import { createPortal } from "react-dom";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import {
-  BarChart3,
-  CreditCard,
-  ReceiptText,
-  Receipt,
-  AlertCircle,
-  ChevronDown,
-} from "lucide-react";
+import { BarChart3, ChevronDown } from "lucide-react";
 import { cn } from "@/lib/utils";
+import type { DropdownItem } from "./secretaria-dropdown";
 
-const financeiroItems = [
-  { href: "/financeiro", label: "Financeiro", icon: BarChart3 },
-  { href: "/despesas", label: "Despesas", icon: Receipt },
-  { href: "/valores-praticados", label: "Valores praticados", icon: ReceiptText },
-  { href: "/planos", label: "Planos", icon: CreditCard },
-  { href: "/relatorios/inadimplencia", label: "Inadimplência", icon: AlertCircle },
-];
-
-const financeiroHrefs = financeiroItems.map((i) => i.href);
-
-export function FinanceiroDropdown() {
+export function FinanceiroDropdown({ items }: { items: DropdownItem[] }) {
   const pathname = usePathname();
   const [open, setOpen] = useState(false);
   const [mounted, setMounted] = useState(false);
@@ -32,7 +16,8 @@ export function FinanceiroDropdown() {
   const ref = useRef<HTMLDivElement>(null);
   const btnRef = useRef<HTMLButtonElement>(null);
 
-  const isActive = financeiroHrefs.some(
+  const hrefs = items.map((i) => i.href);
+  const isActive = hrefs.some(
     (href) => pathname === href || pathname.startsWith(`${href}/`)
   );
 
@@ -55,6 +40,8 @@ export function FinanceiroDropdown() {
     const r = btnRef.current.getBoundingClientRect();
     setPos({ left: r.left, top: r.bottom + 6, width: 200 });
   }, [open]);
+
+  if (items.length === 0) return null;
 
   return (
     <div ref={ref} className="relative shrink-0">
@@ -81,8 +68,8 @@ export function FinanceiroDropdown() {
               className="rounded-[10px] border border-[#1B3FB8]/20 bg-white shadow-[0_14px_40px_-10px_rgba(0,0,0,0.18),0_2px_8px_-4px_rgba(0,0,0,0.08)] p-1"
               onMouseDown={(e) => e.stopPropagation()}
             >
-              {financeiroItems.map((item) => {
-                const Icon = item.icon;
+              {items.map((item) => {
+                const Icon = item.Icon;
                 const active = pathname === item.href || pathname.startsWith(`${item.href}/`);
                 return (
                   <Link
