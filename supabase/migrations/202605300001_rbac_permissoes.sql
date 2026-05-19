@@ -13,6 +13,11 @@ create table roles (
 
 create index idx_roles_escola on roles(escola_id);
 
+-- Trigger updated_at on roles
+create trigger roles_updated_at
+  before update on roles
+  for each row execute function set_updated_at();
+
 -- 2) Catálogo de módulos
 create table modulos (
   codigo text primary key,
@@ -42,6 +47,12 @@ insert into roles (codigo, nome, sistema) values
   ('professor', 'Professor', true);
 
 -- 5) FK perfis.perfil → roles.codigo
+-- Convert perfis.perfil from ENUM to text for FK compatibility with roles.codigo
+alter table perfis alter column perfil drop default;
+alter table perfis alter column perfil type text using perfil::text;
+alter table perfis alter column perfil set default 'admin';
+-- Keep perfil_usuario enum type alive (used by other policies/views/RPCs)
+
 alter table perfis add constraint perfis_perfil_fk
   foreign key (perfil) references roles(codigo);
 
@@ -102,7 +113,8 @@ select 'financeiro', codigo,
   case when grupo = 'financeiro' then true else false end,
   case when grupo = 'financeiro' then true else false end
 from modulos
-where grupo in ('financeiro','secretaria','academico','rh','operacional');
+where grupo in ('financeiro','secretaria','academico','rh')
+   or codigo = 'relatorios';
 
 -- 10) Seed role_permissoes — professor
 insert into role_permissoes (role_codigo, modulo_codigo, pode_ler, pode_criar, pode_editar, pode_deletar)
@@ -118,7 +130,8 @@ select 'professor', codigo,
   case when grupo = 'pedagogico' then true else false end,
   case when grupo = 'pedagogico' then true else false end
 from modulos
-where grupo in ('pedagogico','secretaria','academico','operacional');
+where grupo in ('pedagogico','secretaria','academico')
+   or codigo = 'relatorios';
 
 -- 11) RLS
 alter table roles enable row level security;
@@ -130,11 +143,12 @@ create policy "roles read all" on roles for select to authenticated using (true)
 create policy "roles admin manage" on roles for all to authenticated
   using (
     (select perfil from current_perfil()) = 'admin'
-    and (escola_id = (select escola_id from current_perfil()) or escola_id is null)
+    and escola_id = (select escola_id from current_perfil())
   )
   with check (
     (select perfil from current_perfil()) = 'admin'
-    and (escola_id = (select escola_id from current_perfil()) or sistema = false)
+    and escola_id = (select escola_id from current_perfil())
+    and sistema = false
   );
 
 create policy "role_permissoes read all" on role_permissoes for select to authenticated using (true);
@@ -163,3 +177,5 @@ returns boolean as $$
     false
   );
 $$ language sql stable security definer set search_path = public;
+
+grant execute on function has_permission(text, text) to authenticated;
