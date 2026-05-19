@@ -1,5 +1,6 @@
-import { Plus } from "lucide-react";
+import { Plus, Filter } from "lucide-react";
 import { ButtonLink } from "@/components/ui/button";
+import { Panel } from "@/components/ui/card";
 import { PageHeader } from "@/components/ui/page-header";
 import { requirePermission } from "@/lib/auth/session";
 import { listTemplates, type TemplateRow } from "@/lib/data/templates";
@@ -35,27 +36,32 @@ export default async function DocumentosPage({
         }
       />
 
-      <form className="flex flex-wrap items-center gap-3 text-sm">
-        <label className="flex items-center gap-2">
-          Categoria
-          <select name="categoria" defaultValue={categoria ?? ""} className="rounded-ui border border-line bg-surface px-3 py-1.5 text-sm">
-            <option value="">Todas</option>
-            <option value="declaracao">Declaração</option>
-            <option value="termo">Termo</option>
-            <option value="contrato">Contrato</option>
-            <option value="outro">Outro</option>
-          </select>
-        </label>
-        <label className="flex items-center gap-2">
-          Status
-          <select name="status" defaultValue={status} className="rounded-ui border border-line bg-surface px-3 py-1.5 text-sm">
-            <option value="todos">Todos</option>
-            <option value="ativo">Ativos</option>
-            <option value="inativo">Inativos</option>
-          </select>
-        </label>
-        <button className="ds-button ds-button-secondary">Filtrar</button>
-      </form>
+      <Panel className="p-5">
+        <div className="mb-3 flex items-center gap-2 text-xs font-bold uppercase tracking-kicker text-ink/55">
+          <Filter size={12} /> Filtros
+        </div>
+        <form className="flex flex-wrap items-end gap-3 text-sm">
+          <label className="flex items-center gap-2">
+            Categoria
+            <select name="categoria" defaultValue={categoria ?? ""} className="rounded-ui border border-line bg-surface px-3 py-1.5 text-sm">
+              <option value="">Todas</option>
+              <option value="declaracao">Declaração</option>
+              <option value="termo">Termo</option>
+              <option value="contrato">Contrato</option>
+              <option value="outro">Outro</option>
+            </select>
+          </label>
+          <label className="flex items-center gap-2">
+            Status
+            <select name="status" defaultValue={status} className="rounded-ui border border-line bg-surface px-3 py-1.5 text-sm">
+              <option value="todos">Todos</option>
+              <option value="ativo">Ativos</option>
+              <option value="inativo">Inativos</option>
+            </select>
+          </label>
+          <button className="ds-button ds-button-secondary">Filtrar</button>
+        </form>
+      </Panel>
 
       <TemplatesTable templates={templates} />
     </div>

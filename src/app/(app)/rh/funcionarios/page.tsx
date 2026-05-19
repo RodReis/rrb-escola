@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Plus, Pencil } from "lucide-react";
+import { Plus, Pencil, Users, CheckCircle2, AlertCircle } from "lucide-react";
 import { ButtonLink } from "@/components/ui/button";
 import { PageHeader } from "@/components/ui/page-header";
 import { DataTableShell } from "@/components/ui/data-table";
@@ -79,12 +79,16 @@ export default async function FuncionariosPage({
       />
 
       {params.ok ? (
-        <div className="rounded-ui bg-success/10 p-3 text-sm font-semibold text-success">
+        <div className="flex items-center gap-2 rounded-ui bg-success/10 p-3 text-sm font-semibold text-success">
+          <CheckCircle2 size={16} />
           Funcionário {params.ok} com sucesso.
         </div>
       ) : null}
       {params.erro ? (
-        <div className="rounded-ui bg-danger/10 p-3 text-sm font-semibold text-danger">{params.erro}</div>
+        <div className="flex items-center gap-2 rounded-ui bg-danger/10 p-3 text-sm font-semibold text-danger">
+          <AlertCircle size={16} />
+          {params.erro}
+        </div>
       ) : null}
 
       <DataTableShell
@@ -113,8 +117,11 @@ export default async function FuncionariosPage({
           <tbody>
             {employees.length === 0 ? (
               <tr>
-                <td colSpan={canMutate ? 8 : 7} className="text-center text-ink/50 py-10">
-                  Nenhum funcionário encontrado.
+                <td colSpan={canMutate ? 8 : 7} className="py-12">
+                  <div className="flex flex-col items-center justify-center gap-2 text-ink/40">
+                    <Users size={28} />
+                    <p className="text-sm">Nenhum funcionário encontrado.</p>
+                  </div>
                 </td>
               </tr>
             ) : null}

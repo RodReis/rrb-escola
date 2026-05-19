@@ -1,4 +1,4 @@
-import { Plus } from "lucide-react";
+import { Plus, Building2, CheckCircle2, AlertCircle } from "lucide-react";
 import { ButtonLink } from "@/components/ui/button";
 import { PageHeader } from "@/components/ui/page-header";
 import { CompanyCard } from "@/components/rh/company-card";
@@ -48,19 +48,24 @@ export default async function EmpresasPage({
       />
 
       {params.ok ? (
-        <div className="rounded-ui bg-success/10 p-3 text-sm font-semibold text-success">
+        <div className="flex items-center gap-2 rounded-ui bg-success/10 p-3 text-sm font-semibold text-success">
+          <CheckCircle2 size={16} />
           Empresa {params.ok} com sucesso.
         </div>
       ) : null}
       {params.erro ? (
-        <div className="rounded-ui bg-danger/10 p-3 text-sm font-semibold text-danger">{params.erro}</div>
+        <div className="flex items-center gap-2 rounded-ui bg-danger/10 p-3 text-sm font-semibold text-danger">
+          <AlertCircle size={16} />
+          {params.erro}
+        </div>
       ) : null}
 
       {companies.length === 0 ? (
-        <div className="rounded-panel border border-line bg-surface p-10 text-center">
-          <p className="text-sm font-medium text-ink/65">Nenhuma empresa cadastrada.</p>
+        <div className="flex flex-col items-center justify-center gap-2 rounded-panel border border-line bg-surface py-14 text-ink/40">
+          <Building2 size={32} />
+          <p className="text-sm font-medium">Nenhuma empresa cadastrada.</p>
           {isAdmin ? (
-            <ButtonLink href="/rh/empresas/nova" variant="primary" className="mt-4">
+            <ButtonLink href="/rh/empresas/nova" variant="primary" className="mt-3">
               <Plus size={14} /> Cadastrar primeira empresa
             </ButtonLink>
           ) : null}

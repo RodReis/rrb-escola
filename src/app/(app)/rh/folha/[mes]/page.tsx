@@ -1,4 +1,5 @@
 import { notFound } from "next/navigation";
+import { AlertCircle, CheckCircle2, Lock, Calculator } from "lucide-react";
 import { ButtonLink } from "@/components/ui/button";
 import { PageHeader } from "@/components/ui/page-header";
 import { Panel } from "@/components/ui/card";
@@ -65,23 +66,31 @@ export default async function FolhaMesPage({
       />
 
       {sp.ok ? (
-        <div className="rounded-ui bg-success/10 p-3 text-sm font-semibold text-success">
+        <div className="flex items-center gap-2 rounded-ui bg-success/10 p-3 text-sm font-semibold text-success">
+          <CheckCircle2 size={16} />
           Operação <strong>{sp.ok}</strong> concluída.
         </div>
       ) : null}
       {sp.erro ? (
-        <div className="rounded-ui bg-danger/10 p-3 text-sm font-semibold text-danger">{sp.erro}</div>
+        <div className="flex items-center gap-2 rounded-ui bg-danger/10 p-3 text-sm font-semibold text-danger">
+          <AlertCircle size={16} />
+          {sp.erro}
+        </div>
       ) : null}
 
       {fechado ? (
-        <div className="rounded-ui bg-warning/10 border border-warning/30 p-3 text-sm font-semibold text-warning">
+        <div className="flex items-center gap-2 rounded-ui bg-warning/10 border border-warning/30 p-3 text-sm font-semibold text-warning">
+          <Lock size={16} />
           Mês fechado em {period.closed_at ? new Date(period.closed_at).toLocaleString("pt-BR") : "—"}. Edições bloqueadas.
         </div>
       ) : null}
 
       {needing.length > 0 && rows.length > 0 && canUpdate ? (
         <div className="rounded-ui bg-brand/10 p-3 text-sm font-semibold text-brand flex items-center justify-between gap-3">
-          <span>{needing.length} funcionário(s) ativo(s) sem lançamento neste mês.</span>
+          <span className="flex items-center gap-2">
+            <AlertCircle size={16} />
+            {needing.length} funcionário(s) ativo(s) sem lançamento neste mês.
+          </span>
           <GenerateMonthButton mes={mes} hasPayrolls={true} />
         </div>
       ) : null}
@@ -97,10 +106,11 @@ export default async function FolhaMesPage({
       </Panel>
 
       {rows.length === 0 ? (
-        <div className="rounded-panel border border-line bg-surface p-10 text-center">
-          <p className="text-sm font-medium text-ink/65">Folha de {monthLabel(mes)} ainda não foi gerada.</p>
+        <div className="flex flex-col items-center justify-center gap-2 rounded-panel border border-line bg-surface py-14 text-ink/40">
+          <Calculator size={32} />
+          <p className="text-sm font-medium">Folha de {monthLabel(mes)} ainda não foi gerada.</p>
           {canUpdate ? (
-            <div className="mt-4 inline-block">
+            <div className="mt-3">
               <GenerateMonthButton mes={mes} hasPayrolls={false} />
             </div>
           ) : null}

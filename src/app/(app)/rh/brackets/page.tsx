@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { AlertCircle, CheckCircle2, ArrowLeft, Calculator } from "lucide-react";
 import { Panel } from "@/components/ui/card";
 import { PageHeader } from "@/components/ui/page-header";
 import { BracketsTable } from "@/components/rh/brackets/brackets-table";
@@ -41,15 +42,23 @@ export default async function BracketsPage({
       />
 
       {sp.ok ? (
-        <div className="rounded-ui bg-success/10 p-3 text-sm font-semibold text-success">Operação concluída.</div>
+        <div className="flex items-center gap-2 rounded-ui bg-success/10 p-3 text-sm font-semibold text-success">
+          <CheckCircle2 size={16} />
+          Operação concluída.
+        </div>
       ) : null}
       {sp.erro ? (
-        <div className="rounded-ui bg-danger/10 p-3 text-sm font-semibold text-danger">{sp.erro}</div>
+        <div className="flex items-center gap-2 rounded-ui bg-danger/10 p-3 text-sm font-semibold text-danger">
+          <AlertCircle size={16} />
+          {sp.erro}
+        </div>
       ) : null}
 
       <Panel className="grid gap-4 p-5">
         <div className="flex items-center justify-between gap-3">
-          <h2 className="text-lg font-bold text-ink">INSS</h2>
+          <h2 className="flex items-center gap-2 text-lg font-bold text-ink">
+            <Calculator size={18} className="text-brand" /> INSS
+          </h2>
           <div className="flex items-center gap-2">
             {inssVigencias.length > 0 ? (
               <VigenciaSelect table="inss" vigencias={inssVigencias} current={inssVigSel} />
@@ -69,7 +78,9 @@ export default async function BracketsPage({
 
       <Panel className="grid gap-4 p-5">
         <div className="flex items-center justify-between gap-3">
-          <h2 className="text-lg font-bold text-ink">IRRF</h2>
+          <h2 className="flex items-center gap-2 text-lg font-bold text-ink">
+            <Calculator size={18} className="text-brand" /> IRRF
+          </h2>
           <div className="flex items-center gap-2">
             {irVigencias.length > 0 ? (
               <VigenciaSelect table="ir" vigencias={irVigencias} current={irVigSel} />
@@ -88,7 +99,9 @@ export default async function BracketsPage({
       </Panel>
 
       <Panel className="p-4 text-xs text-ink/55">
-        <Link href="/rh/folha" className="font-semibold text-brand hover:underline">← Voltar para folha</Link>
+        <Link href="/rh/folha" className="inline-flex items-center gap-1 font-semibold text-brand hover:underline">
+          <ArrowLeft size={12} /> Voltar para folha
+        </Link>
       </Panel>
     </div>
   );

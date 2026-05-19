@@ -1,5 +1,5 @@
 import { notFound } from "next/navigation";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, AlertCircle, CheckCircle2, Lock } from "lucide-react";
 import { ButtonLink } from "@/components/ui/button";
 import { PageHeader } from "@/components/ui/page-header";
 import { PayrollRowForm } from "@/components/rh/payroll/payroll-row-form";
@@ -59,22 +59,28 @@ export default async function FolhaEmployeeMonthPage({
       />
 
       {sp.ok ? (
-        <div className="rounded-ui bg-success/10 p-3 text-sm font-semibold text-success">
+        <div className="flex items-center gap-2 rounded-ui bg-success/10 p-3 text-sm font-semibold text-success">
+          <CheckCircle2 size={16} />
           Lançamento salvo.
         </div>
       ) : null}
       {sp.erro ? (
-        <div className="rounded-ui bg-danger/10 p-3 text-sm font-semibold text-danger">{sp.erro}</div>
+        <div className="flex items-center gap-2 rounded-ui bg-danger/10 p-3 text-sm font-semibold text-danger">
+          <AlertCircle size={16} />
+          {sp.erro}
+        </div>
       ) : null}
 
       {disabled ? (
-        <div className="rounded-ui bg-warning/10 border border-warning/30 p-3 text-sm font-semibold text-warning">
+        <div className="flex items-center gap-2 rounded-ui bg-warning/10 border border-warning/30 p-3 text-sm font-semibold text-warning">
+          <Lock size={16} />
           Mês fechado. Reabra para editar.
         </div>
       ) : null}
 
       {brackets.inss.length === 0 || brackets.ir.length === 0 ? (
-        <div className="rounded-ui bg-danger/10 p-3 text-sm font-semibold text-danger">
+        <div className="flex items-center gap-2 rounded-ui bg-danger/10 p-3 text-sm font-semibold text-danger">
+          <AlertCircle size={16} />
           Brackets INSS/IR não configurados para esta competência. Acesse <strong>/rh/brackets</strong> para cadastrar.
         </div>
       ) : null}

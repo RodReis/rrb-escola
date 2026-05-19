@@ -1,4 +1,5 @@
 import { notFound } from "next/navigation";
+import { AlertCircle } from "lucide-react";
 import { PageHeader } from "@/components/ui/page-header";
 import { Panel } from "@/components/ui/card";
 import { CompanyForm } from "@/components/rh/company-form";
@@ -33,7 +34,10 @@ export default async function EditarEmpresaPage({
       />
 
       {sp.erro ? (
-        <div className="rounded-ui bg-danger/10 p-3 text-sm font-semibold text-danger">{sp.erro}</div>
+        <div className="flex items-center gap-2 rounded-ui bg-danger/10 p-3 text-sm font-semibold text-danger">
+          <AlertCircle size={16} />
+          {sp.erro}
+        </div>
       ) : null}
 
       <Panel className="p-6">

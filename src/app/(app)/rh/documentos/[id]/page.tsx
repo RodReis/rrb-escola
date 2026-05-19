@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import { AlertCircle, FileText, Settings, Pencil } from "lucide-react";
 import { PageHeader } from "@/components/ui/page-header";
 import { Panel } from "@/components/ui/card";
 import { requirePermission } from "@/lib/auth/session";
@@ -48,7 +49,10 @@ export default async function EditTemplatePage({ params }: { params: Promise<{ i
 
       {(suspectMappings.length > 0 || unmappedPlaceholders.length > 0) && (
         <div className="rounded-ui border border-gold/40 bg-gold/10 p-4 text-sm text-ink">
-          <p className="font-semibold">Configuração incompleta</p>
+          <p className="flex items-center gap-2 font-semibold">
+            <AlertCircle size={16} className="text-gold" />
+            Configuração incompleta
+          </p>
           <ul className="mt-2 list-disc pl-5 text-xs">
             {suspectMappings.length > 0 && (
               <li>
@@ -72,7 +76,9 @@ export default async function EditTemplatePage({ params }: { params: Promise<{ i
       )}
 
       <Panel className="grid max-w-2xl gap-4">
-        <h2 className="font-serif text-xl text-ink">Metadados</h2>
+        <h2 className="flex items-center gap-2 font-serif text-xl text-ink">
+          <FileText size={18} className="text-brand" /> Metadados
+        </h2>
         <form action={updateTemplateAction} className="grid gap-3">
           <input type="hidden" name="template_id" value={tpl.id} />
           <label className="grid gap-1 text-sm">
@@ -103,13 +109,15 @@ export default async function EditTemplatePage({ params }: { params: Promise<{ i
           </form>
           {tpl.gerado_count === 0 && <DeleteTemplateButton templateId={tpl.id} nome={tpl.nome} />}
           <Link href={`/rh/documentos/${tpl.id}/mapeamento`} className="ds-button ds-button-secondary">
-            Editar mappings
+            <Pencil size={14} /> Editar mappings
           </Link>
         </div>
       </Panel>
 
       <Panel className="grid gap-3">
-        <h2 className="font-serif text-xl text-ink">Mappings</h2>
+        <h2 className="flex items-center gap-2 font-serif text-xl text-ink">
+          <Settings size={18} className="text-brand" /> Mappings
+        </h2>
         <MappingForm
           templateId={tpl.id}
           initial={tpl.mappings}

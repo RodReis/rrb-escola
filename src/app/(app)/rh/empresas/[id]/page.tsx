@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { Plus } from "lucide-react";
+import { Plus, Users } from "lucide-react";
 import { ButtonLink } from "@/components/ui/button";
 import { PageHeader } from "@/components/ui/page-header";
 import { DataTableShell } from "@/components/ui/data-table";
@@ -86,8 +86,11 @@ export default async function EmpresaDetailPage({
           <tbody>
             {employees.length === 0 ? (
               <tr>
-                <td colSpan={6} className="text-center text-ink/50 py-10">
-                  Nenhum funcionário vinculado a esta empresa.
+                <td colSpan={6} className="py-12">
+                  <div className="flex flex-col items-center justify-center gap-2 text-ink/40">
+                    <Users size={28} />
+                    <p className="text-sm">Nenhum funcionário vinculado a esta empresa.</p>
+                  </div>
                 </td>
               </tr>
             ) : null}
