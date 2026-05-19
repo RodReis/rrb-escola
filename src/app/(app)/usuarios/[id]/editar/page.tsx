@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import { requirePermission } from "@/lib/auth/session";
 import { createServerClient } from "@/lib/supabase/server";
 import { updateUserAction } from "@/lib/actions/users";
+import { listRoles } from "@/lib/data/permissoes";
 
 export const dynamic = "force-dynamic";
 
@@ -13,7 +14,7 @@ export default async function EditarUsuarioPage({
   params: Promise<{ id: string }>;
   searchParams: Promise<{ erro?: string }>;
 }) {
-  await requirePermission("usuarios", "update");
+  const session = await requirePermission("usuarios", "update");
   const { id } = await params;
   const sp = await searchParams;
 
@@ -25,6 +26,8 @@ export default async function EditarUsuarioPage({
     .maybeSingle();
 
   if (!perfil) notFound();
+
+  const roles = await listRoles(session.profile.escola_id);
 
   return (
     <section className="ds-section max-w-lg">
@@ -53,10 +56,11 @@ export default async function EditarUsuarioPage({
         <label>
           Perfil
           <select name="perfil" defaultValue={perfil.perfil} required>
-            <option value="admin">Admin</option>
-            <option value="secretaria">Secretaria</option>
-            <option value="financeiro">Financeiro</option>
-            <option value="professor">Professor</option>
+            {roles.map((r) => (
+              <option key={r.codigo} value={r.codigo}>
+                {r.codigo === "admin" ? "Administrador" : r.nome}
+              </option>
+            ))}
           </select>
         </label>
         <div className="flex gap-3">

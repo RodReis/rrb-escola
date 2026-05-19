@@ -1,11 +1,13 @@
 import Link from "next/link";
 import { requirePermission } from "@/lib/auth/session";
 import { createUserAction } from "@/lib/actions/users";
+import { listRoles } from "@/lib/data/permissoes";
 
 export const dynamic = "force-dynamic";
 
 export default async function NovoUsuarioPage({ searchParams }: { searchParams: { erro?: string } }) {
-  await requirePermission("usuarios", "create");
+  const session = await requirePermission("usuarios", "create");
+  const roles = await listRoles(session.profile.escola_id);
 
   return (
     <section className="ds-section max-w-lg">
@@ -39,10 +41,11 @@ export default async function NovoUsuarioPage({ searchParams }: { searchParams: 
         <label>
           Perfil
           <select name="perfil" defaultValue="admin" required>
-            <option value="admin">Admin</option>
-            <option value="secretaria">Secretaria</option>
-            <option value="financeiro">Financeiro</option>
-            <option value="professor">Professor</option>
+            {roles.map((r) => (
+              <option key={r.codigo} value={r.codigo}>
+                {r.codigo === "admin" ? "Administrador" : r.nome}
+              </option>
+            ))}
           </select>
         </label>
         <div className="flex gap-3">

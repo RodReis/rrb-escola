@@ -10,6 +10,7 @@ import { DeleteEmployeeButton } from "@/components/rh/delete-employee-button";
 import { ToggleEmployeeButton } from "@/components/rh/toggle-employee-button";
 import { listCompanies, listEmployees, getEmployeeSegmentCounts } from "@/lib/data/rh";
 import { requirePermission } from "@/lib/auth/session";
+import { can } from "@/lib/auth/permissions";
 
 export const dynamic = "force-dynamic";
 
@@ -35,7 +36,7 @@ export default async function FuncionariosPage({
   const session = await requirePermission("rh.funcionarios", "read");
   const params = await searchParams;
   const isAdmin = session.profile.perfil === "admin";
-  const canMutate = isAdmin || session.profile.perfil === "secretaria";
+  const canMutate = isAdmin || can(session.permissions, "rh.funcionarios", "update");
 
   const filters = {
     search: params.search || undefined,

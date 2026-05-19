@@ -8,6 +8,7 @@ import { StatusPill, type StatusTone } from "@/components/ui/status-pill";
 import { Avatar } from "@/components/ui/avatar";
 import { getCompanyById, getCompanySummary, listEmployees } from "@/lib/data/rh";
 import { requirePermission } from "@/lib/auth/session";
+import { can } from "@/lib/auth/permissions";
 
 export const dynamic = "force-dynamic";
 
@@ -32,7 +33,8 @@ export default async function EmpresaDetailPage({
 }) {
   const session = await requirePermission("rh.empresas", "read");
   const { id } = await params;
-  const canMutate = session.profile.perfil === "admin" || session.profile.perfil === "secretaria";
+  const isAdmin = session.profile.perfil === "admin";
+  const canMutate = isAdmin || can(session.permissions, "rh.empresas", "update");
 
   const company = await getCompanyById(id);
   if (!company) notFound();

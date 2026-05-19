@@ -10,6 +10,7 @@ import { PayrollMonthTable } from "@/components/rh/payroll/payroll-month-table";
 import { PayrollSummaryCard } from "@/components/rh/payroll/payroll-summary-card";
 import { ExportMonthButtons } from "@/components/rh/payroll/export-month-buttons";
 import { requirePermission } from "@/lib/auth/session";
+import { can } from "@/lib/auth/permissions";
 import { isValidUrlMonth, urlToDbMonth, monthLabel } from "@/lib/payroll/date-utils";
 import {
   listPayrollByMonth,
@@ -34,6 +35,7 @@ export default async function FolhaMesPage({
   if (!isValidUrlMonth(mes)) notFound();
   const dbMonth = urlToDbMonth(mes);
   const isAdmin = session.profile.perfil === "admin";
+  const canUpdate = isAdmin || can(session.permissions, "rh.folha", "update");
 
   const [rows, period, summary, needing] = await Promise.all([
     listPayrollByMonth(dbMonth),
@@ -55,8 +57,8 @@ export default async function FolhaMesPage({
           <div className="flex flex-wrap items-center gap-2">
             <MonthNav mes={mes} />
             <span className="mx-1 h-5 w-px bg-line" />
-            <GenerateMonthButton mes={mes} hasPayrolls={rows.length > 0} />
-            {isAdmin ? <ClosePeriodButton mes={mes} status={period.status} /> : null}
+            {canUpdate ? <GenerateMonthButton mes={mes} hasPayrolls={rows.length > 0} /> : null}
+            {canUpdate ? <ClosePeriodButton mes={mes} status={period.status} /> : null}
             <ExportMonthButtons rows={rows} mes={mes} />
           </div>
         }
@@ -77,7 +79,7 @@ export default async function FolhaMesPage({
         </div>
       ) : null}
 
-      {needing.length > 0 && rows.length > 0 ? (
+      {needing.length > 0 && rows.length > 0 && canUpdate ? (
         <div className="rounded-ui bg-brand/10 p-3 text-sm font-semibold text-brand flex items-center justify-between gap-3">
           <span>{needing.length} funcionário(s) ativo(s) sem lançamento neste mês.</span>
           <GenerateMonthButton mes={mes} hasPayrolls={true} />
@@ -97,12 +99,14 @@ export default async function FolhaMesPage({
       {rows.length === 0 ? (
         <div className="rounded-panel border border-line bg-surface p-10 text-center">
           <p className="text-sm font-medium text-ink/65">Folha de {monthLabel(mes)} ainda não foi gerada.</p>
-          <div className="mt-4 inline-block">
-            <GenerateMonthButton mes={mes} hasPayrolls={false} />
-          </div>
+          {canUpdate ? (
+            <div className="mt-4 inline-block">
+              <GenerateMonthButton mes={mes} hasPayrolls={false} />
+            </div>
+          ) : null}
         </div>
       ) : (
-        <PayrollMonthTable rows={rows} mes={mes} canEdit={!fechado} />
+        <PayrollMonthTable rows={rows} mes={mes} canEdit={!fechado && canUpdate} />
       )}
     </div>
   );

@@ -140,9 +140,9 @@ create policy "perfil ativo full access biometrias aluno" on public.biometrias_a
   using (exists (select 1 from alunos a where a.id = biometrias_aluno.aluno_id and a.escola_id = (select escola_id from current_perfil())))
   with check (exists (select 1 from alunos a where a.id = biometrias_aluno.aluno_id and a.escola_id = (select escola_id from current_perfil())));
 
-create policy "categorias_despesa_rw" on public.categorias_despesa for all to public
-  using (escola_id = (select escola_id from current_perfil()) and (select perfil from current_perfil()) = any(array['admin','financeiro']))
-  with check (escola_id = (select escola_id from current_perfil()) and (select perfil from current_perfil()) = any(array['admin','financeiro']));
+create policy "categorias_despesa_rw" on public.categorias_despesa for all to authenticated
+  using (escola_id = (select escola_id from current_perfil()))
+  with check (escola_id = (select escola_id from current_perfil()));
 
 create policy "perfil ativo full access cobrancas" on public.cobrancas for all to authenticated
   using (escola_id = (select escola_id from current_perfil()))
@@ -156,9 +156,9 @@ create policy "perfil ativo full access contatos" on public.contatos_aluno for a
   using (exists (select 1 from alunos a where a.id = contatos_aluno.aluno_id and a.escola_id = (select escola_id from current_perfil())))
   with check (exists (select 1 from alunos a where a.id = contatos_aluno.aluno_id and a.escola_id = (select escola_id from current_perfil())));
 
-create policy "despesas_rw" on public.despesas for all to public
-  using (escola_id = (select escola_id from current_perfil()) and (select perfil from current_perfil()) = any(array['admin','financeiro']))
-  with check (escola_id = (select escola_id from current_perfil()) and (select perfil from current_perfil()) = any(array['admin','financeiro']));
+create policy "despesas_rw" on public.despesas for all to authenticated
+  using (escola_id = (select escola_id from current_perfil()))
+  with check (escola_id = (select escola_id from current_perfil()));
 
 create policy "perfil ativo full access dispositivos acesso" on public.dispositivos_acesso for all to authenticated
   using (escola_id = (select escola_id from current_perfil()))
@@ -242,9 +242,9 @@ create policy "perfil ativo full access turmas" on public.turmas for all to auth
   using (escola_id = (select escola_id from current_perfil()))
   with check (escola_id = (select escola_id from current_perfil()));
 
-create policy "despesas_comprovantes_rw" on storage.objects for all to public
-  using (bucket_id = 'despesas-comprovantes' and (select perfil from current_perfil()) = any(array['admin','financeiro']))
-  with check (bucket_id = 'despesas-comprovantes' and (select perfil from current_perfil()) = any(array['admin','financeiro']));
+create policy "despesas_comprovantes_rw" on storage.objects for all to authenticated
+  using (bucket_id = 'despesas-comprovantes' and exists (select 1 from current_perfil()))
+  with check (bucket_id = 'despesas-comprovantes' and exists (select 1 from current_perfil()));
 
 create policy "perfil ativo delete biometrias" on storage.objects for delete to authenticated
   using (bucket_id = 'biometrias-alunos' and exists (select 1 from current_perfil()));
@@ -385,11 +385,11 @@ create policy "roles read all" on roles for select to authenticated using (true)
 create policy "roles admin manage" on roles for all to authenticated
   using (
     (select perfil from current_perfil()) = 'admin'
-    and escola_id = (select escola_id from current_perfil())
+    and (escola_id = (select escola_id from current_perfil()) or escola_id is null)
   )
   with check (
     (select perfil from current_perfil()) = 'admin'
-    and escola_id = (select escola_id from current_perfil())
+    and (escola_id = (select escola_id from current_perfil()) or escola_id is null)
     and sistema = false
   );
 

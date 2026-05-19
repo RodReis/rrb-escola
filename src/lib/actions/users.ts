@@ -7,12 +7,17 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import { setUserCreatedFlash } from "@/lib/actions/user-flash";
 import { formText } from "@/lib/utils";
 
-const PERFIS = ["admin", "secretaria", "financeiro", "professor"] as const;
-type PerfilTipo = (typeof PERFIS)[number];
-
-function readPerfil(formData: FormData): PerfilTipo {
+async function readPerfil(formData: FormData, escolaId: string): Promise<string> {
   const raw = formText(formData, "perfil");
-  if (raw && (PERFIS as readonly string[]).includes(raw)) return raw as PerfilTipo;
+  if (!raw) return "admin";
+  const admin = createAdminClient();
+  const { data } = await admin
+    .from("roles")
+    .select("codigo")
+    .or(`escola_id.is.null,escola_id.eq.${escolaId}`)
+    .eq("codigo", raw)
+    .maybeSingle();
+  if (data) return data.codigo;
   return "admin";
 }
 
@@ -29,7 +34,7 @@ export async function createUserAction(formData: FormData) {
   const nome = formText(formData, "nome");
   if (!email || !nome) redirect("/usuarios/novo?erro=campos");
 
-  const perfil = readPerfil(formData);
+  const perfil = await readPerfil(formData, session.profile.escola_id);
   const password = generatePassword();
   const admin = createAdminClient();
   const { data: created, error } = await admin.auth.admin.createUser({
@@ -59,12 +64,12 @@ export async function createUserAction(formData: FormData) {
 }
 
 export async function updateUserAction(formData: FormData) {
-  await requirePermission("usuarios", "update");
+  const session = await requirePermission("usuarios", "update");
   const perfilId = formText(formData, "perfilId");
   const nome = formText(formData, "nome");
   if (!perfilId || !nome) redirect(`/usuarios?erro=campos`);
 
-  const perfil = readPerfil(formData);
+  const perfil = await readPerfil(formData, session.profile.escola_id);
   const admin = createAdminClient();
 
   const { error } = await admin
