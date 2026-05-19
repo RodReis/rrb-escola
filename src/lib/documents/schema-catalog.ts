@@ -48,7 +48,7 @@ export const ALLOWED_TABLES: Record<string, AllowedTableConfig> = {
   series:  { columns: ["nome"],          filters: [] },
   turmas:  { columns: ["nome", "turno"], filters: [] },
   planos:  { columns: ["nome", "valor"], filters: [] },
-  escolas: { columns: ["nome"],          filters: [] },
+  escolas: { columns: ["nome", "cnpj", "telefone", "email", "endereco", "cidade", "uf", "cep"], filters: [] },
 };
 
 export const COMPUTED_FNS = [
