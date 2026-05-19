@@ -7,6 +7,7 @@ import { PageHeader } from "@/components/ui/page-header";
 import { getBoletim } from "@/lib/data/pedagogico";
 import { getSignedFotoUrls } from "@/lib/storage/photos";
 import { ExportBoletimButton } from "@/components/pdf/export-boletim-button";
+import { requirePermission } from "@/lib/auth/session";
 
 function colorMedia(media: number | null): string {
   if (media === null) return "bg-muted text-ink/40";
@@ -23,6 +24,7 @@ export default async function BoletimPage({
   params: Promise<{ id: string }>;
   searchParams: Promise<{ ano?: string }>;
 }) {
+  await requirePermission("avaliacoes", "read");
   const { id } = await params;
   const sp = await searchParams;
   const ano = sp.ano ? Number(sp.ano) : new Date().getFullYear();

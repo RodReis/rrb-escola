@@ -5,7 +5,7 @@ import { ButtonLink } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { getStudentSheet } from "@/lib/data/students";
 import { getSignedFotoUrl } from "@/lib/storage/photos";
-import { requireSession } from "@/lib/auth/session";
+import { requirePermission } from "@/lib/auth/session";
 import { getTemplatesAtivos } from "@/lib/data/templates";
 
 export default async function StudentPage({ params, searchParams }: { params: { id: string }; searchParams: { ext_de?: string; ext_ate?: string } }) {
@@ -17,7 +17,7 @@ export default async function StudentPage({ params, searchParams }: { params: { 
     ? { id: matriculaAtivaForDocs.id, codigo: matriculaAtivaForDocs.codigo ?? null }
     : null;
 
-  const session = await requireSession();
+  const session = await requirePermission("alunos", "read");
   const templatesAtivos = await getTemplatesAtivos(session.profile.escola_id);
   const templatesLite = templatesAtivos.map((t) => ({ id: t.id, nome: t.nome }));
 

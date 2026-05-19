@@ -3,6 +3,7 @@ import { Panel } from "@/components/ui/card";
 import { DespesaForm } from "@/components/despesas/despesa-form";
 import { createDespesaAction } from "@/lib/actions/despesas";
 import { getCategorias } from "@/lib/data/despesas";
+import { requirePermission } from "@/lib/auth/session";
 
 export const dynamic = "force-dynamic";
 
@@ -11,6 +12,7 @@ export default async function NovaDespesaPage({
 }: {
   searchParams: Promise<{ erro?: string; mes?: string }>;
 }) {
+  await requirePermission("despesas", "create");
   const { erro } = await searchParams;
   const categorias = await getCategorias({ onlyAtivos: true });
 

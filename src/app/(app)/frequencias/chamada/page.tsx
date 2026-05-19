@@ -3,6 +3,7 @@ import { saveClassAttendanceAction } from "@/lib/actions/attendance";
 import { getClassAttendanceData } from "@/lib/data/attendance";
 import { ButtonLink } from "@/components/ui/button";
 import { Card, Panel } from "@/components/ui/card";
+import { requirePermission } from "@/lib/auth/session";
 
 type SearchParams = {
   turma_id?: string;
@@ -10,6 +11,7 @@ type SearchParams = {
 };
 
 export default async function ChamadaPage({ searchParams }: { searchParams: SearchParams }) {
+  await requirePermission("frequencias", "update");
   const data = await getClassAttendanceData(searchParams.turma_id, searchParams.data_aula);
 
   const summary = [

@@ -5,6 +5,7 @@ import { DespesaForm } from "@/components/despesas/despesa-form";
 import { UploadComprovante } from "@/components/despesas/upload-comprovante";
 import { updateDespesaAction } from "@/lib/actions/despesas";
 import { getCategorias, getDespesaById } from "@/lib/data/despesas";
+import { requirePermission } from "@/lib/auth/session";
 
 export const dynamic = "force-dynamic";
 
@@ -15,6 +16,7 @@ export default async function EditarDespesaPage({
   params: Promise<{ id: string }>;
   searchParams: Promise<{ erro?: string }>;
 }) {
+  await requirePermission("despesas", "update");
   const { id } = await params;
   const { erro } = await searchParams;
   const [despesa, categorias] = await Promise.all([
