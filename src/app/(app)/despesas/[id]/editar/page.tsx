@@ -1,4 +1,5 @@
 import { notFound } from "next/navigation";
+import { AlertCircle, FileText, Paperclip } from "lucide-react";
 import { PageHeader } from "@/components/ui/page-header";
 import { Panel } from "@/components/ui/card";
 import { DespesaForm } from "@/components/despesas/despesa-form";
@@ -34,11 +35,16 @@ export default async function EditarDespesaPage({
       />
 
       {erro ? (
-        <div className="rounded-ui bg-danger/10 p-3 text-sm font-semibold text-danger">{erro}</div>
+        <div className="flex items-center gap-2 rounded-ui bg-danger/10 p-3 text-sm font-semibold text-danger">
+          <AlertCircle size={16} />
+          {erro}
+        </div>
       ) : null}
 
       <Panel className="p-6">
-        <h2 className="mb-3 text-sm font-semibold uppercase tracking-wide text-muted">Dados</h2>
+        <h2 className="mb-4 flex items-center gap-2 text-xs font-bold uppercase tracking-kicker text-ink/55">
+          <FileText size={12} /> Dados
+        </h2>
         <DespesaForm
           action={updateDespesaAction}
           categorias={categorias}
@@ -48,7 +54,9 @@ export default async function EditarDespesaPage({
       </Panel>
 
       <Panel className="p-6">
-        <h2 className="mb-3 text-sm font-semibold uppercase tracking-wide text-muted">Comprovante</h2>
+        <h2 className="mb-4 flex items-center gap-2 text-xs font-bold uppercase tracking-kicker text-ink/55">
+          <Paperclip size={12} /> Comprovante
+        </h2>
         <UploadComprovante despesaId={despesa.id} currentPath={despesa.comprovante_path} />
       </Panel>
     </div>

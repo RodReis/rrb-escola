@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { ChevronLeft, ChevronRight, Plus, Copy } from "lucide-react";
+import { ChevronLeft, ChevronRight, Plus, Copy, Filter, Receipt, AlertCircle, Tag } from "lucide-react";
 import { ButtonLink, Button } from "@/components/ui/button";
 import { PageHeader } from "@/components/ui/page-header";
 import { Panel } from "@/components/ui/card";
@@ -72,22 +72,25 @@ export default async function DespesasPage({
       />
 
       {params.erro ? (
-        <div className="rounded-ui bg-danger/10 p-3 text-sm font-semibold text-danger">{params.erro}</div>
+        <div className="flex items-center gap-2 rounded-ui bg-danger/10 p-3 text-sm font-semibold text-danger">
+          <AlertCircle size={16} />
+          {params.erro}
+        </div>
       ) : null}
 
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <div className="flex items-center gap-2">
+        <div className="inline-flex items-center gap-1 rounded-pill border border-line bg-surface p-1">
           <Link
             href={`/despesas?mes=${adjacentMes(competencia, -1)}`}
-            className="inline-flex h-9 w-9 items-center justify-center rounded-ui border border-line bg-surface hover:bg-muted"
+            className="inline-flex h-8 w-8 items-center justify-center rounded-pill text-ink/60 transition hover:bg-muted hover:text-ink"
             aria-label="Mês anterior"
           >
             <ChevronLeft size={16} />
           </Link>
-          <div className="text-lg font-semibold">{mesLabel(competencia)}</div>
+          <div className="px-3 text-sm font-semibold text-ink tabular-nums">{mesLabel(competencia)}</div>
           <Link
             href={`/despesas?mes=${adjacentMes(competencia, 1)}`}
-            className="inline-flex h-9 w-9 items-center justify-center rounded-ui border border-line bg-surface hover:bg-muted"
+            className="inline-flex h-8 w-8 items-center justify-center rounded-pill text-ink/60 transition hover:bg-muted hover:text-ink"
             aria-label="Próximo mês"
           >
             <ChevronRight size={16} />
@@ -101,14 +104,20 @@ export default async function DespesasPage({
               <Copy size={14} /> Duplicar mês anterior
             </Button>
           </form>
+          <ButtonLink href="/despesas/categorias" variant="ghost">
+            <Tag size={14} /> Categorias
+          </ButtonLink>
           <ButtonLink href={`/despesas/nova?mes=${competencia}`} variant="primary">
             <Plus size={14} /> Nova despesa
           </ButtonLink>
-          <ButtonLink href="/despesas/categorias" variant="ghost">Categorias</ButtonLink>
         </div>
       </div>
 
       <Panel className="p-5">
+        <div className="mb-3 flex items-center gap-2 text-xs font-bold uppercase tracking-kicker text-ink/55">
+          <Filter size={12} />
+          Filtros
+        </div>
         <form className="flex flex-wrap items-end gap-3">
           <input type="hidden" name="mes" value={competencia} />
           <label>
@@ -143,28 +152,41 @@ export default async function DespesasPage({
       </Panel>
 
       <Panel className="p-5">
-        <h2 className="mb-3 text-sm font-semibold uppercase tracking-wide text-muted">Despesas do mês</h2>
+        <div className="mb-4 flex items-center justify-between">
+          <h2 className="text-sm font-bold uppercase tracking-kicker text-ink/55">Despesas do mês</h2>
+          {despesas.length > 0 && (
+            <span className="text-xs text-ink/45">{despesas.length} {despesas.length === 1 ? "registro" : "registros"}</span>
+          )}
+        </div>
         {despesas.length === 0 ? (
-          <p className="text-sm text-muted">Nenhuma despesa neste mês.</p>
+          <div className="flex flex-col items-center justify-center gap-2 rounded-ui bg-muted/30 py-12 text-ink/40">
+            <Receipt size={28} />
+            <p className="text-sm">Nenhuma despesa neste mês.</p>
+            <ButtonLink href={`/despesas/nova?mes=${competencia}`} variant="ghost" className="mt-2">
+              <Plus size={14} /> Cadastrar primeira
+            </ButtonLink>
+          </div>
         ) : (
-          <table className="w-full text-sm">
-            <thead>
-              <tr className="text-left text-xs uppercase tracking-wide text-muted">
-                <th className="py-2">Descrição</th>
-                <th className="py-2">Categoria</th>
-                <th className="py-2">Tipo</th>
-                <th className="py-2">Fornecedor</th>
-                <th className="py-2">Venc.</th>
-                <th className="py-2">Pago em</th>
-                <th className="py-2 text-right">Valor</th>
-                <th className="py-2">Status</th>
-                <th className="py-2 text-right">Ações</th>
-              </tr>
-            </thead>
-            <tbody>
-              {despesas.map((d) => <DespesaRow key={d.id} d={d} />)}
-            </tbody>
-          </table>
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="border-b border-line text-left text-[0.66rem] font-bold uppercase tracking-kicker text-ink/55">
+                  <th className="py-2 px-3">Descrição</th>
+                  <th className="py-2 px-3">Categoria</th>
+                  <th className="py-2 px-3">Tipo</th>
+                  <th className="py-2 px-3">Fornecedor</th>
+                  <th className="py-2 px-3">Venc.</th>
+                  <th className="py-2 px-3">Pago em</th>
+                  <th className="py-2 px-3 text-right">Valor</th>
+                  <th className="py-2 px-3">Status</th>
+                  <th className="py-2 px-3 text-right">Ações</th>
+                </tr>
+              </thead>
+              <tbody>
+                {despesas.map((d) => <DespesaRow key={d.id} d={d} />)}
+              </tbody>
+            </table>
+          </div>
         )}
       </Panel>
     </div>
