@@ -1,6 +1,8 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { cookies } from "next/headers";
+import { redirect } from "next/navigation";
 import { requirePermission } from "@/lib/auth/session";
 import { DEFAULT_SCHOOL_ID } from "@/lib/constants";
 import { createServerClient } from "@/lib/supabase/server";
@@ -268,4 +270,73 @@ export async function rematricularAlunoAction(matriculaId: string): Promise<{ er
   revalidatePath("/alunos");
 
   return { novaMatriculaId: data as string };
+}
+
+export type RematricularLoteResultado = {
+  anoDestino: number;
+  ok: { nome: string; novaMatriculaId: string }[];
+  errors: { nome: string; motivo: string }[];
+};
+
+export async function rematricularLoteAction(formData: FormData) {
+  await requirePermission("matriculas", "create");
+
+  const serieDestId = formData.get("serie_dest_id") as string;
+  const anoLetivo = parseInt(formData.get("ano_letivo") as string, 10);
+  const matriculaIds = formData.getAll("matricula_ids") as string[];
+
+  if (!serieDestId || !anoLetivo || matriculaIds.length === 0) {
+    return;
+  }
+
+  const supabase = await createServerClient();
+
+  // Fetch nome map to avoid N+1
+  const { data: nomeData } = await supabase
+    .from("matriculas")
+    .select("id, alunos!inner(nome)")
+    .in("id", matriculaIds)
+    .eq("escola_id", DEFAULT_SCHOOL_ID);
+
+  const nomeMap: Record<string, string> = {};
+  for (const row of nomeData ?? []) {
+    nomeMap[row.id] = (Array.isArray(row.alunos) ? row.alunos[0] : row.alunos as { nome: string }).nome;
+  }
+
+  const resultado: RematricularLoteResultado = {
+    anoDestino: anoLetivo + 1,
+    ok: [],
+    errors: [],
+  };
+
+  for (const matriculaId of matriculaIds) {
+    const nome = nomeMap[matriculaId] ?? "Aluno desconhecido";
+    const { data, error } = await supabase.rpc("rematriculate", {
+      p_matricula_id: matriculaId,
+      p_serie_dest_id: serieDestId,
+    });
+
+    if (error) {
+      const msg = error.message ?? "";
+      let motivo = "Erro inesperado";
+      if (msg.includes("not_found")) motivo = "Matrícula não encontrada";
+      else if (msg.includes("not_active")) motivo = "Matrícula não está ativa";
+      else if (msg.includes("already_enrolled")) motivo = `Já possui matrícula ativa em ${anoLetivo + 1}`;
+      else if (msg.includes("invalid_serie_dest")) motivo = "Série destino inválida";
+      resultado.errors.push({ nome, motivo });
+    } else {
+      resultado.ok.push({ nome, novaMatriculaId: data as string });
+    }
+  }
+
+  const cookieStore = await cookies();
+  cookieStore.set("rematricula_lote_result", JSON.stringify(resultado), {
+    maxAge: 60,
+    httpOnly: true,
+    path: "/",
+  });
+
+  revalidatePath("/matriculas");
+  revalidatePath("/alunos");
+  redirect("/matriculas/rematricula-lote/resultado");
 }
