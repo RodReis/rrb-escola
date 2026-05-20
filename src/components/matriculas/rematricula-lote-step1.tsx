@@ -37,6 +37,7 @@ export async function RematricularLoteStep1() {
             <option value="">Selecione…</option>
             {turmas
               .filter((t) => t.ativo)
+              .sort((a, b) => Number(b.ano_letivo) - Number(a.ano_letivo))
               .map((t) => (
                 <option key={t.id} value={t.id}>
                   {t.ano_letivo} — {(t.series as { nome: string } | null)?.nome} — {t.nome}
