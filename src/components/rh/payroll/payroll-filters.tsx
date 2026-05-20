@@ -2,6 +2,7 @@
 
 import { useRouter, useSearchParams, usePathname } from "next/navigation";
 import { useCallback } from "react";
+import { X } from "lucide-react";
 import { SearchInline } from "@/components/ui/search-inline";
 
 export function PayrollFilters({
@@ -26,13 +27,14 @@ export function PayrollFilters({
     [router, pathname, searchParams]
   );
 
+  const hasFilters = search || companyId;
+
   return (
-    <div className="flex w-full flex-wrap items-center gap-3">
+    <div className="flex items-center gap-0 rounded-ui border border-line bg-surface shadow-soft overflow-hidden">
       <SearchInline
         defaultValue={search}
         placeholder="Buscar por nome ou CPF..."
-        bordered
-        containerClassName="flex-1 min-w-[240px]"
+        containerClassName="flex-1 px-3 py-2"
         onChange={(e) => {
           const value = (e.target as HTMLInputElement).value;
           clearTimeout((window as unknown as Record<string, ReturnType<typeof setTimeout>>)._payrollSearchTimer);
@@ -43,10 +45,12 @@ export function PayrollFilters({
         }}
       />
 
+      <div className="w-px self-stretch bg-line" />
+
       <select
         value={companyId}
         onChange={(e) => update("companyId", e.target.value)}
-        className="h-9 rounded-ui border border-line bg-surface px-3 text-sm text-ink focus:outline-none focus:ring-2 focus:ring-brand/40"
+        className="h-full min-w-[180px] bg-transparent px-3 py-2 text-sm text-ink focus:outline-none cursor-pointer"
       >
         <option value="">Todas as empresas</option>
         {companies.map((c) => (
@@ -54,14 +58,19 @@ export function PayrollFilters({
         ))}
       </select>
 
-      {(search || companyId) && (
-        <button
-          type="button"
-          className="text-xs font-semibold text-ink/55 hover:text-brand"
-          onClick={() => router.push(pathname)}
-        >
-          Limpar filtros
-        </button>
+      {hasFilters && (
+        <>
+          <div className="w-px self-stretch bg-line" />
+          <button
+            type="button"
+            title="Limpar filtros"
+            className="flex items-center gap-1.5 px-3 py-2 text-xs font-semibold text-ink/50 hover:text-brand hover:bg-brand/5 transition-colors"
+            onClick={() => router.push(pathname)}
+          >
+            <X size={13} strokeWidth={2.5} />
+            Limpar
+          </button>
+        </>
       )}
     </div>
   );
