@@ -333,6 +333,8 @@ export async function rematricularLoteAction(formData: FormData) {
   cookieStore.set("rematricula_lote_result", JSON.stringify(resultado), {
     maxAge: 60,
     httpOnly: true,
+    sameSite: "lax",
+    secure: process.env.NODE_ENV === "production",
     path: "/",
   });
 
