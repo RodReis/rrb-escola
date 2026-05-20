@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { Bell, BellRing, AlertCircle, AlertTriangle, Info, Check, CheckCheck } from "lucide-react";
+import { Bell, BellRing, AlertCircle, AlertTriangle, Info, CheckCheck, BellOff } from "lucide-react";
 import { createBrowserSupabase } from "@/lib/supabase/browser";
 import { markAllNotificacoesLidasAction, markNotificacaoLidaAction } from "@/lib/actions/notificacoes";
 import type { NotificacaoRow, NotificacaoSeveridade } from "@/lib/data/notificacoes";
@@ -156,7 +156,10 @@ export function NotificationBell({ perfilId, escolaId, initial }: Props) {
 
           <div className="max-h-[400px] overflow-y-auto">
             {items.length === 0 ? (
-              <p className="p-6 text-center text-sm text-ink/60">Nenhuma notificação.</p>
+              <div className="flex flex-col items-center justify-center gap-2 py-8 text-ink/40">
+                <BellOff size={24} />
+                <p className="text-sm">Nenhuma notificação.</p>
+              </div>
             ) : (
               <ul>
                 {items.map((n) => {
