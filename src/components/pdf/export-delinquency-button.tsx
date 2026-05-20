@@ -35,7 +35,7 @@ export function ExportDelinquencyButton({ rows, filters }: Props) {
     if (filters) {
       doc.setFont("helvetica", "normal");
       doc.setFontSize(9);
-      doc.text(`Periodo: ${dateText(filters.de)} a ${dateText(filters.ate)}`, 12, 20);
+      doc.text(`Período: ${dateText(filters.de)} a ${dateText(filters.ate)}`, 12, 20);
       doc.text(`Status: ${filters.statuses.join(", ") || "-"}`, 12, 25);
       doc.text(`Aluno: ${filters.aluno || "Todos"}`, 12, 30);
       startY = 35;

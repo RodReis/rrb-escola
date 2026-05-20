@@ -127,7 +127,7 @@ export default async function FrequenciasPage() {
                   <td colSpan={4} className="px-5 py-12">
                     <div className="flex flex-col items-center justify-center gap-2 text-ink/40">
                       <ClipboardList size={28} />
-                      <p className="text-sm font-medium">Nenhum registro de frequencia.</p>
+                      <p className="text-sm font-medium">Nenhum registro de frequência.</p>
                     </div>
                   </td>
                 </tr>

@@ -21,7 +21,7 @@ export function StudentForm({ options }: { options: Options }) {
     <form action={createStudentAction} className="grid gap-5">
       <Section title="Ficha do Aluno - Dados do Aluno">
         <div className="grid gap-4 md:grid-cols-4">
-          <label>Matricula<input name="matricula_codigo" required /></label>
+          <label>Matrícula<input name="matricula_codigo" required /></label>
           <label className="md:col-span-2">Nome<input name="nome" required /></label>
           <label>Sexo<select name="sexo"><option>Feminino</option><option>Masculino</option><option>Outro</option></select></label>
           <label>Dt. Nascimento<input name="data_nascimento" type="date" /></label>
@@ -35,17 +35,17 @@ export function StudentForm({ options }: { options: Options }) {
           <label>Livro<input name="certidao_livro" /></label>
           <label>Folha<input name="certidao_folha" /></label>
           <label>No.<input name="certidao_numero" /></label>
-          <label>Cartorio<input name="certidao_cartorio" /></label>
+          <label>Cartório<input name="certidao_cartorio" /></label>
           <label className="md:col-span-2">E-mail<input name="email" type="email" /></label>
           <label className="md:col-span-2">Disciplina eletiva<input name="disciplina_eletiva" /></label>
-          <label className="md:col-span-2">Informacoes adicionais<input name="informacoes_adicionais" /></label>
+          <label className="md:col-span-2">Informações adicionais<input name="informacoes_adicionais" /></label>
         </div>
       </Section>
 
-      <Section title="Endereco">
+      <Section title="Endereço">
         <div className="grid gap-4 md:grid-cols-6">
-          <label className="md:col-span-4">Endereco<input name="logradouro" /></label>
-          <label>Numero<input name="numero" /></label>
+          <label className="md:col-span-4">Endereço<input name="logradouro" /></label>
+          <label>Número<input name="numero" /></label>
           <label>CEP<input name="cep" /></label>
           <label className="md:col-span-2">Bairro<input name="bairro" /></label>
           <label className="md:col-span-2">Cidade<input name="cidade" /></label>
@@ -63,7 +63,7 @@ export function StudentForm({ options }: { options: Options }) {
         </div>
       </Section>
 
-      <Section title="Responsaveis do Aluno">
+      <Section title="Responsáveis do Aluno">
         <div className="grid gap-4 md:grid-cols-6">
           <label className="md:col-span-2">Nome<input name="responsavel_nome" /></label>
           <label>CPF<input name="responsavel_cpf" /></label>
@@ -74,12 +74,12 @@ export function StudentForm({ options }: { options: Options }) {
         </div>
       </Section>
 
-      <Section title="Relacao de Matriculas">
+      <Section title="Relação de Matrículas">
         <div className="grid gap-4 md:grid-cols-6">
-          <label>Serie<select name="serie_id"><option value="">Selecione</option>{options.series.map((item) => <option key={item.id} value={item.id}>{item.nome}</option>)}</select></label>
+          <label>Série<select name="serie_id"><option value="">Selecione</option>{options.series.map((item) => <option key={item.id} value={item.id}>{item.nome}</option>)}</select></label>
           <label>Turma<select name="turma_id"><option value="">Selecione</option>{options.turmas.map((item) => <option key={item.id} value={item.id}>{item.nome} - {item.ano_letivo}</option>)}</select></label>
           <label>Plano<select name="plano_id"><option value="">Selecione</option>{options.planos.map((item) => <option key={item.id} value={item.id}>{item.nome}</option>)}</select></label>
-          <label>Data Matricula<input name="data_matricula" type="date" /></label>
+          <label>Data Matrícula<input name="data_matricula" type="date" /></label>
           <label>Idade<input name="idade_na_matricula" type="number" /></label>
           <label>Ano letivo<input name="ano_letivo" type="number" defaultValue={new Date().getFullYear()} /></label>
           <label>Tipo de vaga

@@ -32,7 +32,7 @@ export default async function StudentPage({ params, searchParams }: { params: { 
             {activeEnrollment ? <Badge tone="green">{activeEnrollment.status}</Badge> : null}
           </div>
           <div className="mt-3 flex flex-wrap items-center gap-2 text-sm text-muted">
-            <span>Matricula {student.matricula_codigo}</span>
+            <span>Matrícula {student.matricula_codigo}</span>
             {activeEnrollment?.series?.nome ? <span>{activeEnrollment.series.nome}</span> : null}
             {activeEnrollment?.turmas?.nome ? <span>{activeEnrollment.turmas.nome}</span> : null}
           </div>

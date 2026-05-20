@@ -30,7 +30,7 @@ export async function StudentStatementSection({ alunoId, searchParams }: {
 
       <div className="grid gap-2 text-sm">
         {statement.charges.length === 0 ? (
-          <p className="text-muted">Nenhuma cobranca no periodo.</p>
+          <p className="text-muted">Nenhuma cobrança no período.</p>
         ) : statement.charges.map((c) => (
           <div key={c.id} className="grid gap-2 border-b border-line py-2 md:grid-cols-[1fr_120px_120px_120px]">
             <strong className="text-ink">{c.descricao}</strong>

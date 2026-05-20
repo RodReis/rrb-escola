@@ -14,9 +14,9 @@ type Props = {
 };
 
 const errorMessages: Record<Exclude<ExtractionResult, { ok: true }>["error"], string> = {
-  no_face: "Nenhum rosto detectado. Aproxime-se da camera.",
-  multiple_faces: "Varios rostos detectados. Apenas o aluno deve aparecer.",
-  low_score: "Foto pouco nitida. Melhore a iluminacao.",
+  no_face: "Nenhum rosto detectado. Aproxime-se da câmera.",
+  multiple_faces: "Vários rostos detectados. Apenas o aluno deve aparecer.",
+  low_score: "Foto pouco nítida. Melhore a iluminação.",
   too_small: "Rosto muito pequeno. Aproxime-se.",
   off_center: "Centralize o rosto no quadro."
 };

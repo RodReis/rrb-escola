@@ -76,7 +76,7 @@ export default async function GateDailyPanelPage({ searchParams }: { searchParam
 
       <section className="overflow-hidden rounded-panel border border-line bg-surface shadow-soft">
         <div className="grid grid-cols-[0.7fr_1.6fr_0.7fr_0.8fr_0.8fr_0.8fr_0.6fr] border-b border-line bg-muted px-4 py-3 text-xs font-bold uppercase text-muted max-xl:hidden">
-          <span>Matricula</span>
+          <span>Matrícula</span>
           <span>Aluno</span>
           <span>Status</span>
           <span>Entrada</span>

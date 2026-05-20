@@ -60,7 +60,7 @@ export default async function SeriesPage() {
           <Panel>
             <div className="flex flex-col items-center justify-center gap-2 py-10 text-ink/40">
               <Layers3 size={28} />
-              <p className="text-sm font-medium">Nenhuma serie cadastrada.</p>
+              <p className="text-sm font-medium">Nenhuma série cadastrada.</p>
             </div>
           </Panel>
         ) : null}

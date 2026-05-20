@@ -75,7 +75,7 @@ export default async function ImportDetailPage({ params }: { params: { id: strin
           <Panel>
             <div className="flex flex-col items-center justify-center gap-2 py-10 text-ink/40">
               <Inbox size={28} />
-              <p className="text-sm font-medium">Nenhuma linha foi extraida deste arquivo.</p>
+              <p className="text-sm font-medium">Nenhuma linha foi extraída deste arquivo.</p>
             </div>
           </Panel>
         ) : null}

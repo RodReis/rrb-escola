@@ -116,7 +116,7 @@ export function StudentGatePanel({ alunoId, settings }: Props) {
         <div>
           <h3 className="mb-2 text-sm font-bold text-ink">Notificacoes simuladas</h3>
           <div className="grid gap-2">
-            {settings.notifications.length === 0 ? <p className="text-sm text-muted">Nenhuma notificacao registrada.</p> : null}
+            {settings.notifications.length === 0 ? <p className="text-sm text-muted">Nenhuma notificação registrada.</p> : null}
             {settings.notifications.map((notification) => (
               <div key={notification.id} className="border-b border-line py-3 text-sm last:border-b-0">
                 <strong>{notification.status}</strong>
