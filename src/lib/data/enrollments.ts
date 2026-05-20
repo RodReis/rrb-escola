@@ -14,7 +14,18 @@ export async function getEnrollments(filters?: { status?: string; nome?: string 
   const { data, error } = await query;
   if (error) throw error;
 
-  let rows = data ?? [];
+  let rows = (data ?? []).map((m) => ({
+    ...m,
+    alunos: m.alunos
+      ? {
+          ...m.alunos,
+          foto_url: m.alunos.foto_url
+            ? (supabase.storage.from("alunos-fotos").getPublicUrl(m.alunos.foto_url).data.publicUrl ?? null)
+            : null,
+        }
+      : m.alunos,
+  }));
+
   if (filters?.nome) {
     const q = filters.nome.toLowerCase();
     rows = rows.filter(

@@ -699,7 +699,9 @@ export async function getRenovacoesPendentes(
       matriculaId: m.id,
       alunoId: m.aluno_id,
       alunoNome: aluno?.nome ?? "—",
-      fotoUrl: aluno?.foto_url ?? null,
+      fotoUrl: aluno?.foto_url
+        ? (supabase.storage.from("alunos-fotos").getPublicUrl(aluno.foto_url).data.publicUrl ?? null)
+        : null,
       anoLetivo: m.ano_letivo,
       diasRestantes,
     };
@@ -1304,7 +1306,9 @@ export async function getAniversariantesSemana(
       dia: dd,
       mes: mm,
       diaSemana: slot.rotulo,
-      fotoUrl: aluno.foto_url ?? null,
+      fotoUrl: aluno.foto_url
+        ? (supabase.storage.from("alunos-fotos").getPublicUrl(aluno.foto_url).data.publicUrl ?? null)
+        : null,
       hoje: dd === hoje.getDate() && mm === hoje.getMonth() + 1,
       idade,
       dataLabel,
@@ -1449,7 +1453,9 @@ export async function getProximasCobrancas(
       cobrancaId: c.id,
       alunoId: matricula?.aluno_id ?? "",
       alunoNome: aluno?.nome ?? "—",
-      fotoUrl: aluno?.foto_url ?? null,
+      fotoUrl: aluno?.foto_url
+        ? (supabase.storage.from("alunos-fotos").getPublicUrl(aluno.foto_url).data.publicUrl ?? null)
+        : null,
       descricao: c.descricao ?? "—",
       valor: Number(c.valor_final ?? 0),
       dataVencimento: c.data_vencimento,
