@@ -84,3 +84,53 @@ export async function getEnrollmentDetail(id: string) {
     }
   };
 }
+
+export type AlunoLoteRow = {
+  id: string;
+  nome: string;
+  matricula_id: string;
+};
+
+export async function listAlunosCandidatosLote(
+  turma_id: string,
+  ano_letivo: number
+): Promise<AlunoLoteRow[]> {
+  const supabase = await createServerClient();
+
+  const { data, error } = await supabase
+    .from("matriculas")
+    .select("id, alunos!inner(id, nome)")
+    .eq("turma_id", turma_id)
+    .eq("ano_letivo", ano_letivo)
+    .eq("status", "ativa")
+    .eq("escola_id", DEFAULT_SCHOOL_ID);
+
+  if (error) throw error;
+
+  const candidatos = data ?? [];
+
+  // Filter out students already enrolled next year
+  const alunoIds = candidatos.map((m) => (m.alunos as { id: string; nome: string }).id);
+  if (alunoIds.length === 0) return [];
+
+  const { data: jaMatriculados, error: err2 } = await supabase
+    .from("matriculas")
+    .select("aluno_id")
+    .in("aluno_id", alunoIds)
+    .eq("ano_letivo", ano_letivo + 1)
+    .eq("status", "ativa")
+    .eq("escola_id", DEFAULT_SCHOOL_ID);
+
+  if (err2) throw err2;
+
+  const jaMatriculadosSet = new Set((jaMatriculados ?? []).map((m) => m.aluno_id));
+
+  return candidatos
+    .filter((m) => !jaMatriculadosSet.has((m.alunos as { id: string; nome: string }).id))
+    .map((m) => ({
+      id: (m.alunos as { id: string; nome: string }).id,
+      nome: (m.alunos as { id: string; nome: string }).nome,
+      matricula_id: m.id,
+    }))
+    .sort((a, b) => a.nome.localeCompare(b.nome, "pt-BR"));
+}
