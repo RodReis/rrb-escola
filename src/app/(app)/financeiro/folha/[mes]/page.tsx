@@ -17,8 +17,10 @@ import {
   listPayrollByMonth,
   getPayrollPeriod,
   getMonthSummary,
-  listEmployeesNeedingPayroll
+  listEmployeesNeedingPayroll,
+  listCompanies
 } from "@/lib/data/payroll";
+import { PayrollFilters } from "@/components/rh/payroll/payroll-filters";
 
 export const dynamic = "force-dynamic";
 
@@ -27,7 +29,7 @@ export default async function FolhaMesPage({
   searchParams
 }: {
   params: Promise<{ mes: string }>;
-  searchParams: Promise<{ ok?: string; erro?: string }>;
+  searchParams: Promise<{ ok?: string; erro?: string; search?: string; companyId?: string }>;
 }) {
   const session = await requirePermission("rh.folha", "read");
   const { mes } = await params;
@@ -38,11 +40,12 @@ export default async function FolhaMesPage({
   const isAdmin = session.profile.perfil === "admin";
   const canUpdate = isAdmin || can(session.permissions, "rh.folha", "update");
 
-  const [rows, period, summary, needing] = await Promise.all([
-    listPayrollByMonth(dbMonth),
+  const [rows, period, summary, needing, companies] = await Promise.all([
+    listPayrollByMonth(dbMonth, { search: sp.search, companyId: sp.companyId }),
     getPayrollPeriod(dbMonth),
     getMonthSummary(dbMonth),
-    listEmployeesNeedingPayroll(dbMonth)
+    listEmployeesNeedingPayroll(dbMonth),
+    listCompanies()
   ]);
 
   const fechado = period.status === "fechado";
@@ -104,6 +107,8 @@ export default async function FolhaMesPage({
         </div>
         <ButtonLink href="/rh/brackets" variant="secondary">Brackets</ButtonLink>
       </Panel>
+
+      <PayrollFilters companies={companies} />
 
       {rows.length === 0 ? (
         <div className="flex flex-col items-center justify-center gap-2 rounded-panel border border-line bg-surface py-14 text-ink/40">

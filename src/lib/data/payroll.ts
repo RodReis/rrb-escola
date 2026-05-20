@@ -116,6 +116,16 @@ export async function listPayrollByMonth(
   return rows;
 }
 
+export async function listCompanies(): Promise<{ id: string; name: string }[]> {
+  const supabase = await createServerClient();
+  const { data, error } = await supabase
+    .from("companies")
+    .select("id, name")
+    .order("name");
+  if (error) throw error;
+  return data ?? [];
+}
+
 export async function getPayrollByEmployeeMonth(
   employeeId: string,
   dbMonth: string
