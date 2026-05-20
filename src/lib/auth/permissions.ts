@@ -40,10 +40,10 @@ export const MODULOS = {
   planos: { grupo: "financeiro", nome: "Planos" },
   "valores-praticados": { grupo: "financeiro", nome: "Valores Praticados" },
   bolsistas: { grupo: "financeiro", nome: "Bolsistas" },
+  "rh.folha": { grupo: "financeiro", nome: "Folha de Pagamento" },
   // rh
   "rh.funcionarios": { grupo: "rh", nome: "Funcionários" },
   "rh.empresas": { grupo: "rh", nome: "Empresas" },
-  "rh.folha": { grupo: "rh", nome: "Folha de Pagamento" },
   "rh.templates": { grupo: "rh", nome: "Templates RH" },
   // academico
   series: { grupo: "academico", nome: "Séries" },
