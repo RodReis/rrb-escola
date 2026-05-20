@@ -53,3 +53,6 @@ END;
 $$;
 
 GRANT EXECUTE ON FUNCTION rematriculate(uuid, uuid) TO authenticated, service_role;
+
+-- Drop old single-arg overload; callers resolve to the 2-arg version (p_serie_dest_id defaults to NULL)
+DROP FUNCTION IF EXISTS rematriculate(uuid);
