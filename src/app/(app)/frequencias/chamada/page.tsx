@@ -18,7 +18,7 @@ export default async function ChamadaPage({ searchParams }: { searchParams: Sear
     ["Turmas", String(data.turmas.length)],
     ["Alunos", String(data.students.length)],
     ["Data", data.date.split("-").reverse().join("/")],
-    ["Selecionada", data.selectedTurmaId ? "Sim" : "Nao"]
+    ["Selecionada", data.selectedTurmaId ? "Sim" : "Não"]
   ];
 
   return (
@@ -32,10 +32,10 @@ export default async function ChamadaPage({ searchParams }: { searchParams: Sear
               <span className="text-brand">Turma</span>
             </p>
             <h1 className="mt-8 text-4xl font-black leading-none text-brand md:text-5xl">
-              Frequencia por turma
+              Frequência por turma
             </h1>
             <p className="mt-4 max-w-2xl text-sm font-medium leading-6 text-ink/68">
-              Marque presencas e faltas em lote para todos os alunos ativos da turma selecionada.
+              Marque presenças e faltas em lote para todos os alunos ativos da turma selecionada.
             </p>
           </div>
 
@@ -97,9 +97,9 @@ export default async function ChamadaPage({ searchParams }: { searchParams: Sear
         <input type="hidden" name="turma_id" value={data.selectedTurmaId} />
         <input type="hidden" name="data_aula" value={data.date} />
         <div className="grid grid-cols-[120px_1fr_150px_1.2fr] bg-muted px-5 py-3 text-xs font-black uppercase tracking-[0.1em] text-ink/62 max-lg:hidden">
-          <span>Matricula</span>
+          <span>Matrícula</span>
           <span>Aluno</span>
-          <span>Presenca</span>
+          <span>Presença</span>
           <span>Justificativa</span>
         </div>
         {data.students.length === 0 ? (

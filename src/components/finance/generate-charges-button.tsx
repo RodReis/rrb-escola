@@ -7,13 +7,13 @@ type Props = {
 
 export function GenerateChargesButton({ matriculaId, preview }: Props) {
   if (!preview.temPlano) {
-    return <p className="text-sm text-muted">Matricula sem plano vinculado. Adicione um plano para gerar cobrancas.</p>;
+    return <p className="text-sm text-muted">Matrícula sem plano vinculado. Adicione um plano para gerar cobranças.</p>;
   }
   return (
     <form action={generateChargesForEnrollmentAction} className="flex items-center gap-3">
       <input type="hidden" name="matricula_id" value={matriculaId} />
       <button className="ds-button ds-button-primary" type="submit">
-        Gerar cobrancas ({preview.aGerar} novas)
+        Gerar cobranças ({preview.aGerar} novas)
       </button>
       <span className="text-xs text-muted">Plano: {preview.totalPlano} parcelas. Existentes: {preview.existentes}.</span>
     </form>

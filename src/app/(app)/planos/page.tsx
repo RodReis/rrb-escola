@@ -66,7 +66,7 @@ export default async function PlanosPage() {
             <input name="dia_vencimento" type="number" defaultValue={10} />
           </label>
           <label className="md:col-span-5">
-            Descricao
+            Descrição
             <input name="descricao" />
           </label>
           <button className="ds-button ds-button-primary self-end">
@@ -89,7 +89,7 @@ export default async function PlanosPage() {
             <div className="flex items-start justify-between gap-3">
               <div>
                 <h2 className="text-lg font-black text-ink">{item.nome}</h2>
-                <p className="mt-1 text-sm text-ink/65">{item.descricao || "Sem descricao"}</p>
+                <p className="mt-1 text-sm text-ink/65">{item.descricao || "Sem descrição"}</p>
               </div>
               <StatusPill tone={item.ativo ? "success" : "danger"}>{item.ativo ? "Ativo" : "Inativo"}</StatusPill>
             </div>
@@ -106,7 +106,7 @@ export default async function PlanosPage() {
                   <input name="dia_vencimento" type="number" defaultValue={item.dia_vencimento} />
                 </label>
                 <label>
-                  Matricula
+                  Matrícula
                   <input name="valor_matricula" inputMode="decimal" defaultValue={Number(item.valor_matricula ?? 0)} />
                 </label>
                 <label>
@@ -123,7 +123,7 @@ export default async function PlanosPage() {
                 </label>
               </div>
               <label>
-                Descricao
+                Descrição
                 <input name="descricao" defaultValue={item.descricao ?? ""} />
               </label>
               <button className="ds-button ds-button-primary justify-self-start">
@@ -137,7 +137,7 @@ export default async function PlanosPage() {
                 <strong className="mt-2 block text-xl text-brand">{money.format(Number(item.valor_mensalidade))}</strong>
               </div>
               <div>
-                <p className="text-xs font-black uppercase tracking-[0.12em] text-ink/50">Matricula</p>
+                <p className="text-xs font-black uppercase tracking-[0.12em] text-ink/50">Matrícula</p>
                 <strong className="mt-2 block text-xl text-brand">{money.format(Number(item.valor_matricula))}</strong>
               </div>
               <div>

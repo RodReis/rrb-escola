@@ -102,11 +102,11 @@ export function GateCameraConsole({ students, devices }: { students: Student[]; 
           </label>
           <input type="hidden" name="origem" value="facial_simulado" />
           <label>
-            Confianca simulada
+            Confiança simulada
             <input name="confianca" defaultValue="98.5" inputMode="decimal" />
           </label>
           <label>
-            Observacao
+            Observação
             <input name="observacao" defaultValue="Registro feito pela tela de camera simulada" />
           </label>
           <div className="grid gap-2 sm:grid-cols-2">

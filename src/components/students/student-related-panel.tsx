@@ -79,12 +79,12 @@ export function StudentRelatedPanel({ student }: { student: StudentSheet }) {
           <label>Telefone<input name="telefone" /></label>
           <label>Celular<input name="celular" /></label>
           <label>Parentesco<input name="parentesco" /></label>
-          <label>Observacao<input name="observacao" /></label>
+          <label>Observação<input name="observacao" /></label>
           <Button className="self-end" variant="accent">Adicionar contato</Button>
         </form>
       </Section>
 
-      <Section title="Responsaveis do Aluno">
+      <Section title="Responsáveis do Aluno">
         <div className="grid gap-2">
           {student.responsaveis_aluno.map((item) => (
             <div key={item.id} className="grid gap-2 border-b border-line py-3 md:grid-cols-[1fr_110px]">
@@ -112,9 +112,9 @@ export function StudentRelatedPanel({ student }: { student: StudentSheet }) {
           </label>
           <label className="flex grid-cols-none items-center gap-2 self-end pb-3">
             <input name="responsavel_pedagogico" type="checkbox" className="h-4 w-4" />
-            Pedagogico
+            Pedagógico
           </label>
-          <Button className="self-end" variant="accent">Adicionar responsavel</Button>
+          <Button className="self-end" variant="accent">Adicionar responsável</Button>
         </form>
       </Section>
 
@@ -125,7 +125,7 @@ export function StudentRelatedPanel({ student }: { student: StudentSheet }) {
               <p className="text-sm">
                 <strong>{item.nome}</strong>
                 <span className="block text-muted">
-                  {item.telefone || "sem telefone"} / {item.observacao || "sem observacao"}
+                  {item.telefone || "sem telefone"} / {item.observacao || "sem observação"}
                 </span>
               </p>
               <RemoveButton alunoId={student.id} table="pessoas_autorizadas" id={item.id} />
@@ -137,7 +137,7 @@ export function StudentRelatedPanel({ student }: { student: StudentSheet }) {
           <label>Nome<input name="nome" required /></label>
           <label>Telefone<input name="telefone" /></label>
           <label>Documento<input name="documento" /></label>
-          <label>Observacao<input name="observacao" /></label>
+          <label>Observação<input name="observacao" /></label>
           <Button className="self-end" variant="accent">Adicionar pessoa</Button>
         </form>
       </Section>

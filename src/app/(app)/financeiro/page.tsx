@@ -109,7 +109,7 @@ export default async function FinanceiroPage({ searchParams }: { searchParams: P
 
       <Panel className="grid gap-5">
         <div>
-          <p className="ds-kicker">Nova cobranca</p>
+          <p className="ds-kicker">Nova cobrança</p>
           <h2 className="mt-2 flex items-center gap-2 text-xl font-black text-ink">
             <Plus size={20} className="text-brand" />
             Gerar lancamento avulso
@@ -124,12 +124,12 @@ export default async function FinanceiroPage({ searchParams }: { searchParams: P
               ))}
             </select>
           </label>
-          <label className="md:col-span-2">Descricao<input name="descricao" required /></label>
-          <label>Competencia<input name="competencia" placeholder="2026-05" /></label>
+          <label className="md:col-span-2">Descrição<input name="descricao" required /></label>
+          <label>Competência<input name="competencia" placeholder="2026-05" /></label>
           <label>Parcela<input name="numero_parcela" type="number" /></label>
           <label>Valor<input name="valor_original" inputMode="decimal" /></label>
           <label>Desconto<input name="valor_desconto" inputMode="decimal" /></label>
-          <label>Acrescimo<input name="valor_acrescimo" inputMode="decimal" /></label>
+          <label>Acréscimo<input name="valor_acrescimo" inputMode="decimal" /></label>
           <label>Vencimento<input name="data_vencimento" type="date" /></label>
           <button className="ds-button ds-button-accent self-end">
             <Plus size={16} /> Gerar
@@ -142,7 +142,7 @@ export default async function FinanceiroPage({ searchParams }: { searchParams: P
           <Panel>
             <div className="flex flex-col items-center justify-center gap-2 py-10 text-ink/40">
               <Receipt size={28} />
-              <p className="text-sm font-medium">Nenhuma cobranca cadastrada.</p>
+              <p className="text-sm font-medium">Nenhuma cobrança cadastrada.</p>
             </div>
           </Panel>
         ) : null}
@@ -204,7 +204,7 @@ export default async function FinanceiroPage({ searchParams }: { searchParams: P
                       </div>
                       <div className="grid grid-cols-[140px_1fr_96px] gap-2">
                         <input name="data_pagamento" type="date" defaultValue={new Date().toISOString().slice(0, 10)} />
-                        <input name="observacao" placeholder="Observacao" />
+                        <input name="observacao" placeholder="Observação" />
                         <button className="ds-button ds-button-primary min-h-0 px-3 py-2 text-xs" type="submit">Pagar</button>
                       </div>
                     </form>
@@ -222,7 +222,7 @@ export default async function FinanceiroPage({ searchParams }: { searchParams: P
                     </details>
                     <form action={cancelChargeAction} className="text-right">
                       <input type="hidden" name="cobranca_id" value={item.id} />
-                      <button className="text-xs font-black text-clay" type="submit">Cancelar cobranca</button>
+                      <button className="text-xs font-black text-clay" type="submit">Cancelar cobrança</button>
                     </form>
                   </div>
                 )}

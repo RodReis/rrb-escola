@@ -30,7 +30,7 @@ export default async function GateNotificationsPage({ searchParams }: { searchPa
       <header className="flex flex-wrap items-end justify-between gap-4 border-b border-line bg-paper px-6 py-7">
         <div>
           <p className="ds-kicker">Portaria</p>
-          <h1 className="mt-7 font-serif text-4xl text-ink">Notificacoes</h1>
+          <h1 className="mt-7 font-serif text-4xl text-ink">Notificações</h1>
           <p className="mt-3 max-w-2xl text-sm text-muted">
             Acompanhe mensagens enviadas, pendentes, simuladas e tentativas com erro.
           </p>
@@ -60,13 +60,13 @@ export default async function GateNotificationsPage({ searchParams }: { searchPa
           {notifications.length === 0 ? (
             <div className="flex flex-col items-center justify-center gap-2 py-12 text-ink/40">
               <Bell size={28} />
-              <p className="text-sm font-medium">Nenhuma notificacao encontrada.</p>
+              <p className="text-sm font-medium">Nenhuma notificação encontrada.</p>
             </div>
           ) : null}
           {notifications.map((notification) => (
             <div key={notification.id} className="grid gap-3 border-b border-line px-4 py-4 last:border-b-0 lg:grid-cols-[1.3fr_0.7fr_0.8fr_0.8fr]">
               <div>
-                <strong>{notification.alunos?.nome ?? "Aluno nao localizado"}</strong>
+                <strong>{notification.alunos?.nome ?? "Aluno não localizado"}</strong>
                 <span className="block text-sm text-muted">{notification.alunos?.matricula_codigo}</span>
                 <p className="mt-2 text-sm">{notification.mensagem}</p>
                 {notification.erro ? <p className="mt-2 text-sm font-bold text-clay">{notification.erro}</p> : null}

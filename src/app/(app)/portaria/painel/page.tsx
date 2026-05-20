@@ -15,7 +15,7 @@ function statusTone(status: string): "green" | "red" | "gray" {
 function statusLabel(status: string) {
   if (status === "dentro") return "Dentro";
   if (status === "saiu") return "Saiu";
-  return "Nao chegou";
+  return "Não chegou";
 }
 
 function formatTime(value: string | null) {
@@ -36,9 +36,9 @@ export default async function GateDailyPanelPage({ searchParams }: { searchParam
       <header className="flex flex-wrap items-end justify-between gap-4 border-b border-line bg-paper px-6 py-7">
         <div>
           <p className="ds-kicker">Portaria</p>
-          <h1 className="mt-7 font-serif text-4xl text-ink">Painel diario</h1>
+          <h1 className="mt-7 font-serif text-4xl text-ink">Painel diário</h1>
           <p className="mt-3 max-w-2xl text-sm text-muted">
-            Visao do dia com alunos dentro da escola, saidas, atrasos de chegada e eventos registrados.
+            Visão do dia com alunos dentro da escola, saídas, atrasos de chegada e eventos registrados.
           </p>
         </div>
         <div className="flex flex-wrap gap-2">
@@ -64,7 +64,7 @@ export default async function GateDailyPanelPage({ searchParams }: { searchParam
           ["Alunos ativos", panel.totals.alunos, "ink"],
           ["Dentro", panel.totals.dentro, "moss"],
           ["Sairam", panel.totals.sairam, "clay"],
-          ["Nao chegaram", panel.totals.naoChegaram, "ink"],
+          ["Não chegaram", panel.totals.naoChegaram, "ink"],
           ["Eventos", panel.totals.eventos, "ink"]
         ].map(([label, value, tone]) => (
           <Card key={label} className="min-h-[112px]">

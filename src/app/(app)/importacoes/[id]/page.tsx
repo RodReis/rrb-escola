@@ -88,7 +88,7 @@ export default async function ImportDetailPage({ params }: { params: { id: strin
                 <div>
                   <p className="ds-kicker">Linha {row.linha}</p>
                   <h2 className="mt-1 font-serif text-2xl text-ink">{data.nome || "Aluno sem nome"}</h2>
-                  <p className="mt-1 text-sm text-muted">Matricula {data.matricula_codigo || "nao informada"}</p>
+                  <p className="mt-1 text-sm text-muted">Matrícula {data.matricula_codigo || "não informada"}</p>
                 </div>
                 <div className="flex flex-wrap items-center gap-2">
                   <Badge tone={tone(row.status)}>{row.status}</Badge>
@@ -112,7 +112,7 @@ export default async function ImportDetailPage({ params }: { params: { id: strin
                 <input type="hidden" name="arquivo_id" value={file.id} />
 
                 <div className="grid gap-4 md:grid-cols-4">
-                  <label>Matricula<input name="matricula_codigo" defaultValue={data.matricula_codigo} required /></label>
+                  <label>Matrícula<input name="matricula_codigo" defaultValue={data.matricula_codigo} required /></label>
                   <label className="md:col-span-2">Nome<input name="nome" defaultValue={data.nome} required /></label>
                   <label>Sexo<input name="sexo" defaultValue={data.sexo ?? ""} /></label>
                   <label>Nascimento<input name="data_nascimento" type="date" defaultValue={data.data_nascimento ?? ""} /></label>

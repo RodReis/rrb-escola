@@ -16,7 +16,7 @@ function dateText(value: string) {
   return new Date(value).toLocaleString("pt-BR");
 }
 
-export default async function ImportacoesPage() {
+export default async function ImportaçõesPage() {
   await requirePermission("importacoes", "read");
   const files = await getImportedFiles();
   const processed = files.filter((file) => file.status === "processado").length;
@@ -38,13 +38,13 @@ export default async function ImportacoesPage() {
             <p className="flex items-center gap-3 text-[0.66rem] font-black uppercase tracking-[0.16em] text-ink/58">
               <span>PDF de alunos</span>
               <span className="text-line">/</span>
-              <span className="text-brand">Importacoes</span>
+              <span className="text-brand">Importações</span>
             </p>
             <h1 className="mt-8 text-4xl font-black leading-none text-brand md:text-5xl">
-              Importacoes <span className="font-serif italic text-ink/42">{files.length}</span>
+              Importações <span className="font-serif italic text-ink/42">{files.length}</span>
             </h1>
             <p className="mt-4 max-w-2xl text-sm font-medium leading-6 text-ink/68">
-              Controle de PDFs e planilhas recebidos para conferencia e cadastro em lote na base local.
+              Controle de PDFs e planilhas recebidos para conferência e cadastro em lote na base local.
             </p>
           </div>
 
@@ -82,7 +82,7 @@ export default async function ImportacoesPage() {
             <input name="arquivo" type="file" accept="application/pdf,.pdf,.xlsx,.xls,.csv,text/csv" required />
           </label>
           <label>
-            Observacao
+            Observação
             <input name="observacao" placeholder="Ex.: fichas ou planilha 2026" />
           </label>
           <button className="ds-button ds-button-accent self-end">

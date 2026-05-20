@@ -15,7 +15,7 @@ export function ChargeEditForm({ charge }: Props) {
     <form action={updateChargeAction} className="grid gap-3 rounded-ui border border-line bg-muted/30 p-3 md:grid-cols-5">
       <input type="hidden" name="cobranca_id" value={charge.id} />
       <label className="md:col-span-2">
-        Descricao
+        Descrição
         <input name="descricao" defaultValue={charge.descricao} required />
       </label>
       <label>
@@ -27,7 +27,7 @@ export function ChargeEditForm({ charge }: Props) {
         <input name="valor_desconto" inputMode="decimal" defaultValue={String(charge.valor_desconto)} />
       </label>
       <label>
-        Acrescimo
+        Acréscimo
         <input name="valor_acrescimo" inputMode="decimal" defaultValue={String(charge.valor_acrescimo)} />
       </label>
       <button className="ds-button ds-button-secondary self-end md:col-span-5 md:justify-self-end" type="submit">

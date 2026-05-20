@@ -36,7 +36,7 @@ export default async function GateDevicesPage() {
             Tipo
             <select name="tipo" defaultValue="portaria">
               <option value="portaria">Portaria</option>
-              <option value="camera">Camera</option>
+              <option value="camera">Câmera</option>
               <option value="totem">Totem</option>
             </select>
           </label>
@@ -69,7 +69,7 @@ export default async function GateDevicesPage() {
                 Tipo
                 <select name="tipo" defaultValue={device.tipo}>
                   <option value="portaria">Portaria</option>
-                  <option value="camera">Camera</option>
+                  <option value="camera">Câmera</option>
                   <option value="totem">Totem</option>
                 </select>
               </label>

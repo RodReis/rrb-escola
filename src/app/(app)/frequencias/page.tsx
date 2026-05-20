@@ -32,15 +32,15 @@ export default async function FrequenciasPage() {
         <div className="mx-auto flex max-w-7xl flex-col gap-8 xl:flex-row xl:items-end xl:justify-between">
           <div>
             <p className="flex items-center gap-3 text-[0.66rem] font-black uppercase tracking-[0.16em] text-ink/58">
-              <span>Diario</span>
+              <span>Diário</span>
               <span className="text-line">/</span>
-              <span className="text-brand">Frequencia</span>
+              <span className="text-brand">Frequência</span>
             </p>
             <h1 className="mt-8 text-4xl font-black leading-none text-brand md:text-5xl">
-              Frequencia <span className="font-serif italic text-ink/42">{frequencias.length}</span>
+              Frequência <span className="font-serif italic text-ink/42">{frequencias.length}</span>
             </h1>
             <p className="mt-4 max-w-2xl text-sm font-medium leading-6 text-ink/68">
-              Registro diario de presencas e faltas por aluno, com suporte a chamada por turma.
+              Registro diário de presenças e faltas por aluno, com suporte a chamada por turma.
             </p>
           </div>
 

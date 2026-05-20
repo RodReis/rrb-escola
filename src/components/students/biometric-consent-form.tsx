@@ -28,7 +28,7 @@ export function BiometricConsentForm({ alunoId, responsaveis, consentimento }: P
         <span>Autorizo coleta, armazenamento e uso da biometria facial do aluno conforme a LGPD para controle de acesso na portaria.</span>
       </label>
       <label className="text-sm">
-        Observacao
+        Observação
         <textarea name="observacao" rows={2} defaultValue={consentimento?.observacao ?? ""} />
       </label>
       <button className="ds-button ds-button-primary w-fit" type="submit">Salvar consentimento</button>

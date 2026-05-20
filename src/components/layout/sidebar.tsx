@@ -24,10 +24,10 @@ const items = [
   { href: "/financeiro", label: "Financeiro", icon: BarChart3 },
   { href: "/portaria", label: "Portaria", icon: DoorOpen },
   { href: "/relatorios/alunos", label: "Rel. Alunos", icon: UsersRound },
-  { href: "/relatorios/inadimplencia", label: "Inadimplencia", icon: ReceiptText },
-  { href: "/relatorios/frequencia", label: "Rel. Frequencia", icon: CalendarCheck },
-  { href: "/frequencias", label: "Frequencia", icon: CalendarCheck },
-  { href: "/importacoes", label: "Importacoes", icon: Inbox }
+  { href: "/relatorios/inadimplencia", label: "Inadimplência", icon: ReceiptText },
+  { href: "/relatorios/frequencia", label: "Rel. Frequência", icon: CalendarCheck },
+  { href: "/frequencias", label: "Frequência", icon: CalendarCheck },
+  { href: "/importacoes", label: "Importações", icon: Inbox }
 ];
 
 export function Sidebar() {
