@@ -100,15 +100,13 @@ export default async function FolhaMesPage({
 
       <PayrollSummaryCard summary={summary} />
 
-      <Panel className="flex items-center justify-between gap-3 p-4">
-        <div className="flex items-center gap-3">
-          <span className="text-sm font-semibold text-ink/70">Status do período:</span>
-          <StatusPill tone={fechado ? "danger" : "success"}>{fechado ? "Fechado" : "Aberto"}</StatusPill>
-        </div>
-        <ButtonLink href="/rh/brackets" variant="secondary">Brackets</ButtonLink>
+      <Panel className="flex items-center gap-3 p-3">
+        <span className="text-sm font-semibold text-ink/70">Status do período:</span>
+        <StatusPill tone={fechado ? "danger" : "success"}>{fechado ? "Fechado" : "Aberto"}</StatusPill>
+        <div className="w-px self-stretch bg-line mx-1" />
+        <PayrollFilters companies={companies} />
+        <ButtonLink href="/rh/brackets" variant="secondary" className="shrink-0">Brackets</ButtonLink>
       </Panel>
-
-      <PayrollFilters companies={companies} />
 
       {rows.length === 0 ? (
         <div className="flex flex-col items-center justify-center gap-2 rounded-panel border border-line bg-surface py-14 text-ink/40">
