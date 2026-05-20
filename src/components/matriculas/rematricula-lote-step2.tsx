@@ -39,7 +39,7 @@ export async function RematricularLoteStep2({ ano, turma_id }: Props) {
 
         <div className="flex gap-3">
           <a
-            href={`/matriculas/rematricula-lote?step=1`}
+            href={`/matriculas/rematricula-lote?step=1&ano=${ano}&turma_id=${turma_id}`}
             className="ds-button ds-button-secondary"
           >
             ← Voltar
