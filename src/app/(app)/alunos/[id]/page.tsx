@@ -1,4 +1,5 @@
 import { ArrowLeft, FileText, Pencil } from "lucide-react";
+import { ReenrollButton } from "@/components/students/reenroll-button";
 import { StudentStatementSection } from "@/components/finance/student-statement-section";
 import { StudentHeaderActions } from "@/components/students/student-header-actions";
 import { StudentSheetView } from "@/components/students/student-sheet";
@@ -47,6 +48,7 @@ export default async function StudentPage({ params, searchParams }: { params: { 
           <ButtonLink href={`/alunos/${student.id}/editar`} variant="primary">
             <Pencil size={14} /> Editar
           </ButtonLink>
+          {matriculaAtivaPayload ? <ReenrollButton matriculaId={matriculaAtivaPayload.id} /> : null}
           <StudentHeaderActions student={student} matriculaAtiva={matriculaAtivaPayload} templates={templatesLite} />
         </div>
       </header>
