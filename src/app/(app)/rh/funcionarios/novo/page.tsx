@@ -1,0 +1,43 @@
+import { AlertCircle } from "lucide-react";
+import { PageHeader } from "@/components/ui/page-header";
+import { Panel } from "@/components/ui/card";
+import { EmployeeForm } from "@/components/rh/employee-form";
+import { createEmployeeAction } from "@/lib/actions/rh";
+import { listCompanies } from "@/lib/data/rh";
+import { requirePermission } from "@/lib/auth/session";
+
+export default async function NovoFuncionarioPage({
+  searchParams
+}: {
+  searchParams: Promise<{ erro?: string; company?: string }>;
+}) {
+  await requirePermission("rh.funcionarios", "create");
+  const params = await searchParams;
+  const companies = await listCompanies({ includeInactive: false });
+
+  return (
+    <div className="grid gap-8">
+      <PageHeader
+        breadcrumb={[{ label: "RH" }, { label: "Funcionários", href: "/rh/funcionarios" }, { label: "Novo" }]}
+        title="Novo funcionário"
+        description="Vincule um funcionário a uma empresa."
+      />
+
+      {params.erro ? (
+        <div className="flex items-center gap-2 rounded-ui bg-danger/10 p-3 text-sm font-semibold text-danger">
+          <AlertCircle size={16} />
+          {params.erro}
+        </div>
+      ) : null}
+
+      <Panel className="p-6">
+        <EmployeeForm
+          action={createEmployeeAction}
+          companies={companies}
+          defaultCompanyId={params.company}
+          submitLabel="Cadastrar funcionário"
+        />
+      </Panel>
+    </div>
+  );
+}

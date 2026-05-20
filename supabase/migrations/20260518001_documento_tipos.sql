@@ -1,0 +1,5 @@
+-- Documenta novos tipos de documento gerado pelo sistema
+-- tipo_documento permanece text (não enum) para compatibilidade
+-- Valores novos: 'contrato', 'declaracao', 'termo'
+-- Valores existentes: 'certidao', 'cpf_rg', 'comprovante_endereco', 'documento_responsavel', 'outro'
+-- Nenhuma alteração de schema necessária — coluna text aceita os novos valores diretamente

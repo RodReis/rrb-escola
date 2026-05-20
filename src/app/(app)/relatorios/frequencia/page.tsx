@@ -1,0 +1,84 @@
+import { Filter, ClipboardList } from "lucide-react";
+import { ExportAttendanceButton } from "@/components/pdf/export-attendance-button";
+import { Panel } from "@/components/ui/card";
+import { PageHeader } from "@/components/ui/page-header";
+import { DataTableShell } from "@/components/ui/data-table";
+import { getAttendanceReport } from "@/lib/data/attendance";
+import { requirePermission } from "@/lib/auth/session";
+
+type SearchParams = { inicio?: string; fim?: string };
+
+function dateText(value: string) {
+  return value.split("-").reverse().join("/");
+}
+
+export default async function RelatorioFrequenciaPage({ searchParams }: { searchParams: SearchParams }) {
+  await requirePermission("relatorios", "read");
+  const report = await getAttendanceReport(searchParams.inicio, searchParams.fim);
+
+  return (
+    <div className="grid gap-8">
+      <PageHeader
+        breadcrumb={[{ label: "Relatórios", href: "/" }, { label: "Frequência" }]}
+        title="Relatório de Frequência"
+        counter={`${dateText(report.start)} – ${dateText(report.end)}`}
+        description="Consolidado de presenças, faltas e percentual por aluno."
+        actions={<ExportAttendanceButton rows={report.summary} start={report.start} end={report.end} />}
+        kpis={[
+          { label: "Registros", value: report.totals.registros.toLocaleString("pt-BR") },
+          { label: "Presenças", value: report.totals.presencas.toLocaleString("pt-BR"), tone: "success" },
+          { label: "Faltas",    value: report.totals.faltas.toLocaleString("pt-BR"), tone: "danger" }
+        ]}
+      />
+
+      <Panel>
+        <div className="mb-3 flex items-center gap-2 text-xs font-bold uppercase tracking-kicker text-ink/55">
+          <Filter size={12} /> Período
+        </div>
+        <form action="/relatorios/frequencia" className="grid gap-4 md:grid-cols-[220px_220px_140px]">
+          <label>Início<input name="inicio" type="date" defaultValue={report.start} /></label>
+          <label>Fim<input name="fim" type="date" defaultValue={report.end} /></label>
+          <button className="ds-button ds-button-primary self-end">Filtrar</button>
+        </form>
+      </Panel>
+
+      <DataTableShell>
+        <table className="ds-dt min-w-[780px]">
+          <thead>
+            <tr>
+              <th>Matrícula</th>
+              <th>Aluno</th>
+              <th>Presenças</th>
+              <th>Faltas</th>
+              <th>Total</th>
+              <th>% Presença</th>
+            </tr>
+          </thead>
+          <tbody>
+            {report.summary.length === 0 ? (
+              <tr>
+                <td colSpan={6} className="py-12">
+                  <div className="flex flex-col items-center justify-center gap-2 text-ink/40">
+                    <ClipboardList size={28} />
+                    <p className="text-sm font-medium">Nenhum registro de frequência no período.</p>
+                  </div>
+                </td>
+              </tr>
+            ) : (
+              report.summary.map((item) => (
+                <tr key={`${item.matricula}-${item.aluno}`}>
+                  <td className="font-semibold text-brand">{item.matricula}</td>
+                  <td className="font-semibold text-ink">{item.aluno}</td>
+                  <td className="text-ink/75">{item.presencas}</td>
+                  <td className="text-ink/75">{item.faltas}</td>
+                  <td className="text-ink/75">{item.total}</td>
+                  <td className="font-semibold text-brand">{item.percentual}%</td>
+                </tr>
+              ))
+            )}
+          </tbody>
+        </table>
+      </DataTableShell>
+    </div>
+  );
+}
