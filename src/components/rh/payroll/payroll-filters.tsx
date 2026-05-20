@@ -34,7 +34,7 @@ export function PayrollFilters({
       <select
         value={companyId}
         onChange={(e) => update("companyId", e.target.value)}
-        className="w-[160px] shrink-0 bg-transparent px-3 py-2 text-sm text-ink focus:outline-none cursor-pointer"
+        className="w-[220px] shrink-0 bg-transparent px-3 py-2 text-sm text-ink focus:outline-none cursor-pointer"
       >
         <option value="">Todas as empresas</option>
         {companies.map((c) => (
