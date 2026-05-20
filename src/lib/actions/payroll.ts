@@ -54,7 +54,7 @@ export async function upsertPayrollAction(formData: FormData) {
   if (!parsed.success) {
     const urlMonth = dbToUrlMonth(String(formData.get("reference_month") ?? ""));
     const empId = String(formData.get("employee_id") ?? "");
-    redirect(`/rh/folha/${urlMonth}/${empId}?erro=${firstError(parsed.error)}`);
+    redirect(`/financeiro/folha/${urlMonth}/${empId}?erro=${firstError(parsed.error)}`);
   }
   const data = parsed.data;
 
@@ -68,7 +68,7 @@ export async function upsertPayrollAction(formData: FormData) {
     .maybeSingle();
   if (period?.status === "fechado") {
     const urlMonth = dbToUrlMonth(data.reference_month);
-    redirect(`/rh/folha/${urlMonth}/${data.employee_id}?erro=${encodeURIComponent("Período fechado")}`);
+    redirect(`/financeiro/folha/${urlMonth}/${data.employee_id}?erro=${encodeURIComponent("Período fechado")}`);
   }
 
   // Recalc server-side
@@ -145,13 +145,13 @@ export async function upsertPayrollAction(formData: FormData) {
 
   if (error) {
     const urlMonth = dbToUrlMonth(data.reference_month);
-    redirect(`/rh/folha/${urlMonth}/${data.employee_id}?erro=${encodeURIComponent(error.message)}`);
+    redirect(`/financeiro/folha/${urlMonth}/${data.employee_id}?erro=${encodeURIComponent(error.message)}`);
   }
 
   const urlMonth = dbToUrlMonth(data.reference_month);
-  revalidatePath(`/rh/folha/${urlMonth}`);
-  revalidatePath(`/rh/folha/${urlMonth}/${data.employee_id}`);
-  redirect(`/rh/folha/${urlMonth}/${data.employee_id}?ok=salvo`);
+  revalidatePath(`/financeiro/folha/${urlMonth}`);
+  revalidatePath(`/financeiro/folha/${urlMonth}/${data.employee_id}`);
+  redirect(`/financeiro/folha/${urlMonth}/${data.employee_id}?ok=salvo`);
 }
 
 export async function closePeriodAction(formData: FormData) {
@@ -171,10 +171,10 @@ export async function closePeriodAction(formData: FormData) {
       { onConflict: "reference_month" }
     );
   if (error) {
-    redirect(`/rh/folha/${dbToUrlMonth(dbMonth)}?erro=${encodeURIComponent(error.message)}`);
+    redirect(`/financeiro/folha/${dbToUrlMonth(dbMonth)}?erro=${encodeURIComponent(error.message)}`);
   }
-  revalidatePath(`/rh/folha/${dbToUrlMonth(dbMonth)}`);
-  redirect(`/rh/folha/${dbToUrlMonth(dbMonth)}?ok=fechado`);
+  revalidatePath(`/financeiro/folha/${dbToUrlMonth(dbMonth)}`);
+  redirect(`/financeiro/folha/${dbToUrlMonth(dbMonth)}?ok=fechado`);
 }
 
 export async function reopenPeriodAction(formData: FormData) {
@@ -187,10 +187,10 @@ export async function reopenPeriodAction(formData: FormData) {
     .update({ status: "aberto", closed_at: null, closed_by: null })
     .eq("reference_month", dbMonth);
   if (error) {
-    redirect(`/rh/folha/${dbToUrlMonth(dbMonth)}?erro=${encodeURIComponent(error.message)}`);
+    redirect(`/financeiro/folha/${dbToUrlMonth(dbMonth)}?erro=${encodeURIComponent(error.message)}`);
   }
-  revalidatePath(`/rh/folha/${dbToUrlMonth(dbMonth)}`);
-  redirect(`/rh/folha/${dbToUrlMonth(dbMonth)}?ok=reaberto`);
+  revalidatePath(`/financeiro/folha/${dbToUrlMonth(dbMonth)}`);
+  redirect(`/financeiro/folha/${dbToUrlMonth(dbMonth)}?ok=reaberto`);
 }
 
 export async function generateMonthAction(formData: FormData) {
@@ -207,7 +207,7 @@ export async function generateMonthAction(formData: FormData) {
     .eq("reference_month", dbMonth)
     .maybeSingle();
   if (period?.status === "fechado") {
-    redirect(`/rh/folha/${urlMonth}?erro=${encodeURIComponent("Mês está fechado")}`);
+    redirect(`/financeiro/folha/${urlMonth}?erro=${encodeURIComponent("Mês está fechado")}`);
   }
   if (!period) {
     await supabase.from("payroll_periods").insert({ reference_month: dbMonth, status: "aberto" });
@@ -217,7 +217,7 @@ export async function generateMonthAction(formData: FormData) {
     .from("employees")
     .select("id, base_salary, salario_sem_dsr, aplica_dobra")
     .eq("ativo", true);
-  if (empErr) redirect(`/rh/folha/${urlMonth}?erro=${encodeURIComponent(empErr.message)}`);
+  if (empErr) redirect(`/financeiro/folha/${urlMonth}?erro=${encodeURIComponent(empErr.message)}`);
 
   // Template canonico: folha de 2026-05 (definida pelo usuario como base).
   // Fallback: se employee nao tem linha no template, usa mes anterior mais recente.
@@ -309,11 +309,11 @@ export async function generateMonthAction(formData: FormData) {
     const { error } = await supabase
       .from("payroll")
       .upsert(rows, { onConflict: "employee_id,reference_month", ignoreDuplicates: true });
-    if (error) redirect(`/rh/folha/${urlMonth}?erro=${encodeURIComponent(error.message)}`);
+    if (error) redirect(`/financeiro/folha/${urlMonth}?erro=${encodeURIComponent(error.message)}`);
   }
 
-  revalidatePath(`/rh/folha/${urlMonth}`);
-  redirect(`/rh/folha/${urlMonth}?ok=gerada`);
+  revalidatePath(`/financeiro/folha/${urlMonth}`);
+  redirect(`/financeiro/folha/${urlMonth}?ok=gerada`);
 }
 
 export async function syncNewEmployeesAction(formData: FormData) {
@@ -329,7 +329,7 @@ export async function syncNewEmployeesAction(formData: FormData) {
     .eq("reference_month", dbMonth)
     .maybeSingle();
   if (period?.status === "fechado") {
-    redirect(`/rh/folha/${urlMonth}?erro=${encodeURIComponent("Mês está fechado")}`);
+    redirect(`/financeiro/folha/${urlMonth}?erro=${encodeURIComponent("Mês está fechado")}`);
   }
 
   const { data: existing } = await supabase
@@ -363,9 +363,9 @@ export async function syncNewEmployeesAction(formData: FormData) {
 
   if (newRows.length > 0) {
     const { error } = await supabase.from("payroll").insert(newRows);
-    if (error) redirect(`/rh/folha/${urlMonth}?erro=${encodeURIComponent(error.message)}`);
+    if (error) redirect(`/financeiro/folha/${urlMonth}?erro=${encodeURIComponent(error.message)}`);
   }
 
-  revalidatePath(`/rh/folha/${urlMonth}`);
-  redirect(`/rh/folha/${urlMonth}?ok=sincronizado`);
+  revalidatePath(`/financeiro/folha/${urlMonth}`);
+  redirect(`/financeiro/folha/${urlMonth}?ok=sincronizado`);
 }

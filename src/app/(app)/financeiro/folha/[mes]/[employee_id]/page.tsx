@@ -40,9 +40,9 @@ export default async function FolhaEmployeeMonthPage({
     <div className="grid gap-6">
       <PageHeader
         breadcrumb={[
-          { label: "RH" },
-          { label: "Folha", href: "/rh/folha" },
-          { label: monthLabel(mes), href: `/rh/folha/${mes}` },
+          { label: "Financeiro" },
+          { label: "Folha", href: "/financeiro/folha" },
+          { label: monthLabel(mes), href: `/financeiro/folha/${mes}` },
           { label: emp?.name ?? "—" }
         ]}
         title={emp?.name ?? "—"}
@@ -51,7 +51,7 @@ export default async function FolhaEmployeeMonthPage({
         actions={
           <div className="flex flex-wrap items-center gap-2">
             <HoleritePdfButton row={row} mes={mes} />
-            <ButtonLink href={`/rh/folha/${mes}`} variant="secondary">
+            <ButtonLink href={`/financeiro/folha/${mes}`} variant="secondary">
               <ArrowLeft size={14} /> Voltar
             </ButtonLink>
           </div>

@@ -43,13 +43,13 @@ const SECRETARIA_ITEMS: DropdownItem[] = [
 const RH_ITEMS: DropdownItem[] = [
   { href: "/rh/empresas", label: "Empresas", iconName: "Building2" },
   { href: "/rh/funcionarios", label: "Funcionários", iconName: "UsersRound" },
-  { href: "/rh/folha", label: "Folha", iconName: "Wallet" },
   { href: "/rh/brackets", label: "Brackets", iconName: "SlidersHorizontal" },
   { href: "/rh/documentos", label: "Documentos", iconName: "FileText" },
 ];
 
 const FINANCEIRO_ITEMS: DropdownItem[] = [
   { href: "/financeiro", label: "Financeiro", iconName: "BarChart3" },
+  { href: "/financeiro/folha", label: "Folha de Pgto.", iconName: "Wallet" },
   { href: "/despesas", label: "Despesas", iconName: "Receipt" },
   { href: "/valores-praticados", label: "Valores praticados", iconName: "ReceiptText" },
   { href: "/planos", label: "Planos", iconName: "CreditCard" },

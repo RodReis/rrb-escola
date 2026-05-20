@@ -49,7 +49,7 @@ export function PayrollMonthTable({
             <tr key={r.id}>
               <td>
                 <Link
-                  href={`/rh/folha/${mes}/${r.employee_id}`}
+                  href={`/financeiro/folha/${mes}/${r.employee_id}`}
                   className="flex items-center gap-3 group"
                 >
                   <Avatar name={r.employees?.name ?? "?"} size={32} />
@@ -73,7 +73,7 @@ export function PayrollMonthTable({
               <td className="text-right font-bold text-brand tabular-nums">{money.format(Number(r.net_amount ?? 0))}</td>
               <td className="text-right">
                 <Link
-                  href={`/rh/folha/${mes}/${r.employee_id}`}
+                  href={`/financeiro/folha/${mes}/${r.employee_id}`}
                   className="inline-flex items-center gap-1 text-xs font-semibold text-brand hover:underline"
                 >
                   <FileText size={12} /> {canEdit ? "Editar" : "Ver"}

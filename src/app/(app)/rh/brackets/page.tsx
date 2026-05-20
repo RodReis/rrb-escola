@@ -99,7 +99,7 @@ export default async function BracketsPage({
       </Panel>
 
       <Panel className="p-4 text-xs text-ink/55">
-        <Link href="/rh/folha" className="inline-flex items-center gap-1 font-semibold text-brand hover:underline">
+        <Link href="/financeiro/folha" className="inline-flex items-center gap-1 font-semibold text-brand hover:underline">
           <ArrowLeft size={12} /> Voltar para folha
         </Link>
       </Panel>

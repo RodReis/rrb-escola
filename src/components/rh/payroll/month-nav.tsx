@@ -11,7 +11,7 @@ export function MonthNav({ mes }: { mes: string }) {
   return (
     <div className="inline-flex items-center gap-2">
       <Link
-        href={`/rh/folha/${prev}`}
+        href={`/financeiro/folha/${prev}`}
         className="ds-button ds-button-secondary px-2"
         aria-label="Mês anterior"
       >
@@ -22,7 +22,7 @@ export function MonthNav({ mes }: { mes: string }) {
         {monthLabel(mes)}
       </div>
       <Link
-        href={`/rh/folha/${next}`}
+        href={`/financeiro/folha/${next}`}
         className="ds-button ds-button-secondary px-2"
         aria-label="Próximo mês"
       >

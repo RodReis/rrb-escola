@@ -4,5 +4,5 @@ import { requirePermission } from "@/lib/auth/session";
 
 export default async function FolhaIndex() {
   await requirePermission("rh.folha", "read");
-  redirect(`/rh/folha/${currentUrlMonth()}`);
+  redirect(`/financeiro/folha/${currentUrlMonth()}`);
 }
