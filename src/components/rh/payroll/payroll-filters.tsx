@@ -31,6 +31,19 @@ export function PayrollFilters({
 
   return (
     <div className="flex items-center gap-0 rounded-ui border border-line bg-surface shadow-soft overflow-hidden">
+      <select
+        value={companyId}
+        onChange={(e) => update("companyId", e.target.value)}
+        className="w-[160px] shrink-0 bg-transparent px-3 py-2 text-sm text-ink focus:outline-none cursor-pointer"
+      >
+        <option value="">Todas as empresas</option>
+        {companies.map((c) => (
+          <option key={c.id} value={c.id}>{c.name}</option>
+        ))}
+      </select>
+
+      <div className="w-px self-stretch bg-line" />
+
       <SearchInline
         defaultValue={search}
         placeholder="Buscar por nome ou CPF..."
@@ -44,19 +57,6 @@ export function PayrollFilters({
           );
         }}
       />
-
-      <div className="w-px self-stretch bg-line" />
-
-      <select
-        value={companyId}
-        onChange={(e) => update("companyId", e.target.value)}
-        className="h-full min-w-[180px] bg-transparent px-3 py-2 text-sm text-ink focus:outline-none cursor-pointer"
-      >
-        <option value="">Todas as empresas</option>
-        {companies.map((c) => (
-          <option key={c.id} value={c.id}>{c.name}</option>
-        ))}
-      </select>
 
       {hasFilters && (
         <>
