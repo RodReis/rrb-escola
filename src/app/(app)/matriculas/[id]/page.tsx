@@ -14,6 +14,7 @@ import { getAcademicData } from "@/lib/data/lookups";
 import { getMatriculaDocumentos } from "@/lib/data/documents";
 import { requirePermission } from "@/lib/auth/session";
 import { getTemplatesAtivos } from "@/lib/data/templates";
+import { ReenrollButton } from "@/components/students/reenroll-button";
 
 const statuses = ["ativa", "cancelada", "transferida", "concluida"];
 
@@ -41,7 +42,7 @@ export default async function EnrollmentDetailPage({
   searchParams: Promise<Record<string, string>>;
 }) {
   const { id } = await params;
-  const { tab = "cadastro" } = await searchParams;
+  const { tab = "cadastro", rematricula } = await searchParams;
 
   const [{ alunos, series, turmas, planos }, detail, chargesPreview] = await Promise.all([
     getAcademicData(),
@@ -76,8 +77,14 @@ export default async function EnrollmentDetailPage({
             <ArrowLeft size={14} /> Voltar
           </ButtonLink>
           {student?.id ? <ButtonLink href={`/alunos/${student.id}`} variant="primary">Ficha do aluno</ButtonLink> : null}
+          {enrollment.status === "ativa" ? <ReenrollButton matriculaId={enrollment.id} /> : null}
         </div>
       </header>
+      {rematricula === "1" && (
+        <div className="mx-6 mt-4 rounded-ui border border-moss/40 bg-moss/10 px-4 py-3 text-sm text-moss">
+          Matrícula {enrollment.ano_letivo} criada com sucesso. Atribua a turma e confirme o plano.
+        </div>
+      )}
 
       {/* KPIs */}
       <section className="grid gap-3 border-b border-line bg-paper px-6 py-5 md:grid-cols-5">
