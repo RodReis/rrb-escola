@@ -7,8 +7,8 @@ import { Avatar } from "@/components/ui/avatar";
 import { StatusPill } from "@/components/ui/status-pill";
 import { ExportStudentsReportButton } from "@/components/pdf/export-students-report-button";
 import { StudentFilters } from "@/components/students/student-filters";
+import { AlunoRowActions } from "@/components/students/aluno-row-actions";
 import { getStudentsReport, listStudents, getStudentSegmentCounts } from "@/lib/data/students";
-import { toggleStudentAction } from "@/lib/actions/students";
 import { getSignedFotoUrls } from "@/lib/storage/photos";
 import { requirePermission } from "@/lib/auth/session";
 
@@ -168,18 +168,11 @@ export default async function StudentsPage({
                     </StatusPill>
                   </td>
                   <td className="pr-4 text-right">
-                    <form action={toggleStudentAction} className="inline">
-                      <input type="hidden" name="aluno_id" value={student.id} />
-                      <input type="hidden" name="ativo" value={student.ativo ? "" : "on"} />
-                      <button
-                        type="submit"
-                        className="text-ink/40 hover:text-ink transition"
-                        aria-label="Mais ações"
-                        title={student.ativo ? "Desativar" : "Ativar"}
-                      >
-                        ⋯
-                      </button>
-                    </form>
+                    <AlunoRowActions
+                      alunoId={student.id}
+                      alunoNome={student.nome}
+                      ativo={student.ativo ?? false}
+                    />
                   </td>
                 </tr>
               );

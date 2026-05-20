@@ -482,6 +482,22 @@ export async function removeStudentRelatedRecordAction(formData: FormData) {
   revalidatePath(`/alunos/${alunoId}/editar`);
 }
 
+export async function deleteStudentAction(formData: FormData) {
+  await requirePermission("alunos", "delete");
+  const alunoId = formText(formData, "aluno_id");
+  if (!alunoId) return;
+
+  const supabase = await createServerClient();
+  await supabase
+    .from("alunos")
+    .delete()
+    .eq("id", alunoId)
+    .eq("escola_id", DEFAULT_SCHOOL_ID);
+
+  revalidatePath("/alunos");
+  redirect("/alunos");
+}
+
 export async function uploadStudentPhotoAction(formData: FormData) {
   await requirePermission("alunos", "update");
   const alunoId = formText(formData, "aluno_id");
