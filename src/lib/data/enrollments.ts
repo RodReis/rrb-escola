@@ -107,11 +107,16 @@ export async function listAlunosCandidatosLote(
 
   if (error) throw error;
 
-  const candidatos = data ?? [];
+  // !inner join — Supabase returns relation as array; extract first element per row
+  type AlunoRel = { id: string; nome: string };
+  const candidatos = (data ?? []).map((m) => {
+    const aluno = (Array.isArray(m.alunos) ? m.alunos[0] : m.alunos) as AlunoRel;
+    return { matricula_id: m.id, alunoId: aluno.id, alunoNome: aluno.nome };
+  });
 
-  // Filter out students already enrolled next year
-  const alunoIds = candidatos.map((m) => (m.alunos as { id: string; nome: string }).id);
-  if (alunoIds.length === 0) return [];
+  if (candidatos.length === 0) return [];
+
+  const alunoIds = candidatos.map((c) => c.alunoId);
 
   const { data: jaMatriculados, error: err2 } = await supabase
     .from("matriculas")
@@ -126,11 +131,7 @@ export async function listAlunosCandidatosLote(
   const jaMatriculadosSet = new Set((jaMatriculados ?? []).map((m) => m.aluno_id));
 
   return candidatos
-    .filter((m) => !jaMatriculadosSet.has((m.alunos as { id: string; nome: string }).id))
-    .map((m) => ({
-      id: (m.alunos as { id: string; nome: string }).id,
-      nome: (m.alunos as { id: string; nome: string }).nome,
-      matricula_id: m.id,
-    }))
+    .filter((c) => !jaMatriculadosSet.has(c.alunoId))
+    .map((c) => ({ id: c.alunoId, nome: c.alunoNome, matricula_id: c.matricula_id }))
     .sort((a, b) => a.nome.localeCompare(b.nome, "pt-BR"));
 }
