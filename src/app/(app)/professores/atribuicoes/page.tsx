@@ -1,4 +1,4 @@
-import { Plus, Trash2, UserCheck } from "lucide-react";
+import { Plus, Trash2, UserCheck, AlertCircle } from "lucide-react";
 import { Panel } from "@/components/ui/card";
 import { PageHeader } from "@/components/ui/page-header";
 import { getAcademicData } from "@/lib/data/lookups";
@@ -37,10 +37,13 @@ export default async function AtribuicoesPage() {
           Nova atribuição
         </h2>
         {professores.length === 0 ? (
-          <p className="rounded-ui bg-warning/10 p-3 text-sm text-warning">
-            Não há perfis com tipo &quot;professor&quot;. Cadastre via{" "}
-            <a href="/usuarios" className="underline font-semibold">Usuários</a> antes.
-          </p>
+          <div className="flex items-start gap-2 rounded-ui bg-warning/10 p-3 text-sm text-warning">
+            <AlertCircle size={16} className="mt-0.5 shrink-0" />
+            <span>
+              Não há perfis com tipo &quot;professor&quot;. Cadastre via{" "}
+              <a href="/usuarios" className="underline font-semibold">Usuários</a> antes.
+            </span>
+          </div>
         ) : (
           <form action={createAtribuicaoAction} className="grid gap-3 md:grid-cols-4">
             <label>
@@ -87,7 +90,10 @@ export default async function AtribuicoesPage() {
         </div>
 
         {atribuicoes.length === 0 ? (
-          <p className="text-sm text-ink/60">Nenhuma atribuição cadastrada.</p>
+          <div className="flex flex-col items-center justify-center gap-2 py-10 text-ink/40">
+            <UserCheck size={28} />
+            <p className="text-sm font-medium">Nenhuma atribuição cadastrada.</p>
+          </div>
         ) : (
           <div className="overflow-x-auto">
             <table className="w-full text-sm">

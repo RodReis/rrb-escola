@@ -1,4 +1,4 @@
-import { Layers3, Plus } from "lucide-react";
+import { Layers3, Plus, Save } from "lucide-react";
 import { createSerieAction, toggleSerieAction, updateSerieAction } from "@/lib/actions/academics";
 import { ButtonLink } from "@/components/ui/button";
 import { Panel } from "@/components/ui/card";
@@ -35,7 +35,10 @@ export default async function SeriesPage() {
       <Panel className="grid gap-5">
         <div>
           <p className="ds-kicker">Nova serie</p>
-          <h2 className="mt-2 text-xl font-black text-ink">Cadastrar etapa escolar</h2>
+          <h2 className="mt-2 flex items-center gap-2 text-xl font-black text-ink">
+            <Plus size={20} className="text-brand" />
+            Cadastrar etapa escolar
+          </h2>
         </div>
         <form action={createSerieAction} className="grid gap-4 md:grid-cols-[1fr_160px_150px]">
           <label>
@@ -55,7 +58,10 @@ export default async function SeriesPage() {
       <section className="grid gap-3">
         {series.length === 0 ? (
           <Panel>
-            <p className="text-sm font-medium text-ink/60">Nenhuma serie cadastrada.</p>
+            <div className="flex flex-col items-center justify-center gap-2 py-10 text-ink/40">
+              <Layers3 size={28} />
+              <p className="text-sm font-medium">Nenhuma serie cadastrada.</p>
+            </div>
           </Panel>
         ) : null}
         {series.map((item) => (
@@ -74,7 +80,9 @@ export default async function SeriesPage() {
                 <input name="ativo" type="checkbox" className="h-4 w-4" defaultChecked={item.ativo} />
                 Ativa
               </label>
-              <button className="ds-button ds-button-primary self-end">Salvar</button>
+              <button className="ds-button ds-button-primary self-end">
+                <Save size={14} /> Salvar
+              </button>
             </form>
             <div className="flex items-center justify-between gap-3 border-t border-line pt-3">
               <StatusPill tone={item.ativo ? "success" : "danger"}>{item.ativo ? "Ativa" : "Inativa"}</StatusPill>

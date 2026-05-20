@@ -1,4 +1,4 @@
-import { CreditCard, Plus } from "lucide-react";
+import { CreditCard, Plus, Save } from "lucide-react";
 import { createPlanAction, togglePlanAction, updatePlanAction } from "@/lib/actions/academics";
 import { ButtonLink } from "@/components/ui/button";
 import { Panel } from "@/components/ui/card";
@@ -39,7 +39,10 @@ export default async function PlanosPage() {
       <Panel className="grid gap-5">
         <div>
           <p className="ds-kicker">Novo plano</p>
-          <h2 className="mt-2 text-xl font-black text-ink">Cadastrar condicao financeira</h2>
+          <h2 className="mt-2 flex items-center gap-2 text-xl font-black text-ink">
+            <Plus size={20} className="text-brand" />
+            Cadastrar condicao financeira
+          </h2>
         </div>
         <form action={createPlanAction} className="grid gap-4 md:grid-cols-6">
           <label className="md:col-span-2">
@@ -74,8 +77,11 @@ export default async function PlanosPage() {
 
       <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
         {planos.length === 0 ? (
-          <Panel>
-            <p className="text-sm font-medium text-ink/60">Nenhum plano cadastrado.</p>
+          <Panel className="md:col-span-2 xl:col-span-3">
+            <div className="flex flex-col items-center justify-center gap-2 py-10 text-ink/40">
+              <CreditCard size={28} />
+              <p className="text-sm font-medium">Nenhum plano cadastrado.</p>
+            </div>
           </Panel>
         ) : null}
         {planos.map((item) => (
@@ -120,7 +126,9 @@ export default async function PlanosPage() {
                 Descricao
                 <input name="descricao" defaultValue={item.descricao ?? ""} />
               </label>
-              <button className="ds-button ds-button-primary justify-self-start">Salvar plano</button>
+              <button className="ds-button ds-button-primary justify-self-start">
+                <Save size={14} /> Salvar plano
+              </button>
             </form>
 
             <div className="grid grid-cols-2 gap-3 border-y border-line py-4">

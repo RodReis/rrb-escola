@@ -1,4 +1,4 @@
-import { GraduationCap, Plus } from "lucide-react";
+import { GraduationCap, Plus, Save } from "lucide-react";
 import { ButtonLink } from "@/components/ui/button";
 import { Panel } from "@/components/ui/card";
 import { PageHeader } from "@/components/ui/page-header";
@@ -37,7 +37,10 @@ export default async function TurmasPage() {
       <Panel className="grid gap-5">
         <div>
           <p className="ds-kicker">Nova turma</p>
-          <h2 className="mt-2 text-xl font-black text-ink">Cadastrar sala e turno</h2>
+          <h2 className="mt-2 flex items-center gap-2 text-xl font-black text-ink">
+            <Plus size={20} className="text-brand" />
+            Cadastrar sala e turno
+          </h2>
         </div>
         <form action={createTurmaAction} className="grid gap-4 md:grid-cols-6">
           <label>
@@ -78,7 +81,10 @@ export default async function TurmasPage() {
       <section className="grid gap-3">
         {turmas.length === 0 ? (
           <Panel>
-            <p className="text-sm font-medium text-ink/60">Nenhuma turma cadastrada.</p>
+            <div className="flex flex-col items-center justify-center gap-2 py-10 text-ink/40">
+              <GraduationCap size={28} />
+              <p className="text-sm font-medium">Nenhuma turma cadastrada.</p>
+            </div>
           </Panel>
         ) : null}
         {turmas.map((item) => (
@@ -118,7 +124,9 @@ export default async function TurmasPage() {
                 <input name="ativo" type="checkbox" className="h-4 w-4" defaultChecked={item.ativo} />
                 Ativa
               </label>
-              <button className="ds-button ds-button-primary self-end">Salvar</button>
+              <button className="ds-button ds-button-primary self-end">
+                <Save size={14} /> Salvar
+              </button>
             </form>
 
             <div className="flex flex-wrap items-center justify-between gap-3 border-t border-line pt-3">

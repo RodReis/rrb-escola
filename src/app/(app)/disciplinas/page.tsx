@@ -76,6 +76,15 @@ export default async function DisciplinasPage() {
         </form>
       </Panel>
 
+      {disciplinas.length === 0 && (
+        <Panel>
+          <div className="flex flex-col items-center justify-center gap-2 py-10 text-ink/40">
+            <BookOpen size={28} />
+            <p className="text-sm font-medium">Nenhuma disciplina cadastrada.</p>
+          </div>
+        </Panel>
+      )}
+
       {series.map((s) => {
         const lista = porSerie.get(s.id) ?? [];
         if (lista.length === 0) return null;
