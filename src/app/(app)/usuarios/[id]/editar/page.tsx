@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import { AlertCircle } from "lucide-react";
 import { requirePermission } from "@/lib/auth/session";
 import { createServerClient } from "@/lib/supabase/server";
 import { updateUserAction } from "@/lib/actions/users";
@@ -38,7 +39,8 @@ export default async function EditarUsuarioPage({
       </header>
 
       {sp.erro && (
-        <div className="mb-4 rounded-ui bg-danger/10 p-3 text-sm font-bold text-danger">
+        <div className="mb-4 flex items-center gap-2 rounded-ui bg-danger/10 p-3 text-sm font-bold text-danger">
+          <AlertCircle size={16} />
           {decodeURIComponent(sp.erro)}
         </div>
       )}

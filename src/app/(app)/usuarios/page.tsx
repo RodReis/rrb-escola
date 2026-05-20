@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Plus, Search, Pencil, KeyRound, UserX, UserCheck } from "lucide-react";
+import { Plus, Search, Pencil, KeyRound, UserX, UserCheck, CheckCircle2, AlertCircle, Users } from "lucide-react";
 import { requirePermission } from "@/lib/auth/session";
 import { createServerClient } from "@/lib/supabase/server";
 import {
@@ -83,20 +83,36 @@ export default async function UsuariosPage({
       />
 
       {flash && (
-        <div className="rounded-ui bg-success/10 p-4 text-sm font-semibold text-success">
-          {sp.senha ? "Nova senha gerada" : "Usuário criado"} para <strong>{flash.email}</strong>. Senha: <code className="font-mono">{flash.password}</code>
-          <p className="mt-1 text-xs font-medium text-ink/55">
-            {sp.email
-              ? "Email enviado com as credenciais. Senha não será exibida novamente."
-              : "Email NÃO enviado (Resend não configurado). Anote agora — não será exibida novamente."}
-          </p>
+        <div className="flex items-start gap-2 rounded-ui bg-success/10 p-4 text-sm font-semibold text-success">
+          <CheckCircle2 size={16} className="mt-0.5 shrink-0" />
+          <div>
+            {sp.senha ? "Nova senha gerada" : "Usuário criado"} para <strong>{flash.email}</strong>. Senha: <code className="font-mono">{flash.password}</code>
+            <p className="mt-1 text-xs font-medium text-ink/55">
+              {sp.email
+                ? "Email enviado com as credenciais. Senha não será exibida novamente."
+                : "Email NÃO enviado (Resend não configurado). Anote agora — não será exibida novamente."}
+            </p>
+          </div>
         </div>
       )}
-      {sp.desativado && <div className="rounded-ui bg-success/10 p-4 text-sm font-semibold text-success">Usuário desativado.</div>}
-      {sp.reativado && <div className="rounded-ui bg-success/10 p-4 text-sm font-semibold text-success">Usuário reativado.</div>}
-      {sp.atualizado && <div className="rounded-ui bg-success/10 p-4 text-sm font-semibold text-success">Usuário atualizado.</div>}
+      {sp.desativado && (
+        <div className="flex items-center gap-2 rounded-ui bg-success/10 p-4 text-sm font-semibold text-success">
+          <CheckCircle2 size={16} /> Usuário desativado.
+        </div>
+      )}
+      {sp.reativado && (
+        <div className="flex items-center gap-2 rounded-ui bg-success/10 p-4 text-sm font-semibold text-success">
+          <CheckCircle2 size={16} /> Usuário reativado.
+        </div>
+      )}
+      {sp.atualizado && (
+        <div className="flex items-center gap-2 rounded-ui bg-success/10 p-4 text-sm font-semibold text-success">
+          <CheckCircle2 size={16} /> Usuário atualizado.
+        </div>
+      )}
       {sp.erro && (
-        <div className="rounded-ui bg-danger/10 p-4 text-sm font-semibold text-danger">
+        <div className="flex items-center gap-2 rounded-ui bg-danger/10 p-4 text-sm font-semibold text-danger">
+          <AlertCircle size={16} />
           {sp.erro === "self" ? "Você não pode desativar a própria conta." : `Falha: ${decodeURIComponent(sp.erro)}`}
         </div>
       )}
@@ -152,7 +168,12 @@ export default async function UsuariosPage({
           <tbody>
             {rows.length === 0 ? (
               <tr>
-                <td colSpan={5} className="py-8 text-center text-ink/55">Nenhum usuário encontrado.</td>
+                <td colSpan={5} className="py-12">
+                  <div className="flex flex-col items-center justify-center gap-2 text-ink/40">
+                    <Users size={28} />
+                    <p className="text-sm font-medium">Nenhum usuário encontrado.</p>
+                  </div>
+                </td>
               </tr>
             ) : (
               rows.map((p) => (

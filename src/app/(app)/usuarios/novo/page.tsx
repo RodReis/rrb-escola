@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { AlertCircle } from "lucide-react";
 import { requirePermission } from "@/lib/auth/session";
 import { createUserAction } from "@/lib/actions/users";
 import { listRoles } from "@/lib/data/permissoes";
@@ -18,7 +19,8 @@ export default async function NovoUsuarioPage({ searchParams }: { searchParams: 
       </header>
 
       {searchParams.erro ? (
-        <div className="mb-4 rounded-ui bg-clay/10 p-3 text-sm font-bold text-clay">
+        <div className="mb-4 flex items-center gap-2 rounded-ui bg-clay/10 p-3 text-sm font-bold text-clay">
+          <AlertCircle size={16} />
           {searchParams.erro === "campos"
             ? "Informe nome e email."
             : searchParams.erro === "auth"
