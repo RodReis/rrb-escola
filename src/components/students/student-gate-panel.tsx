@@ -90,7 +90,7 @@ export function StudentGatePanel({ alunoId, settings }: Props) {
           Avisar saida
         </ToggleLabel>
         <label className="md:col-span-2">
-          Observacao do consentimento
+          Observação do consentimento
           <input name="observacao" defaultValue={settings.consent?.observacao ?? ""} />
         </label>
         <div className="md:col-span-4">

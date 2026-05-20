@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import Image from "next/image";
-import { Eye } from "lucide-react";
+import { Eye, Inbox } from "lucide-react";
 import { updateEnrollmentStatusAction } from "@/lib/actions/academics";
 import { DataTableShell } from "@/components/ui/data-table";
 import { StatusPill } from "@/components/ui/status-pill";
@@ -52,8 +52,11 @@ export function MatriculasTable({ matriculas }: { matriculas: Matricula[] }) {
         <tbody>
           {matriculas.length === 0 ? (
             <tr>
-              <td colSpan={8} className="py-10 text-center text-ink/50">
-                Nenhuma matrícula encontrada.
+              <td colSpan={8} className="py-12">
+                <div className="flex flex-col items-center justify-center gap-2 text-ink/40">
+                  <Inbox size={28} />
+                  <p className="text-sm font-medium">Nenhuma matrícula encontrada.</p>
+                </div>
               </td>
             </tr>
           ) : null}

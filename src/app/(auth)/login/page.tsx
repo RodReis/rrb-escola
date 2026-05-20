@@ -31,13 +31,13 @@ export default async function LoginPage({ searchParams }: { searchParams: { erro
       <section className="mx-auto grid min-h-[calc(100vh-6rem)] max-w-7xl items-center gap-10 lg:grid-cols-[1fr_440px]">
         <div className="max-w-3xl">
           <BrandMark />
-          <p className="mt-8 ds-kicker">Gestao escolar local</p>
+          <p className="mt-8 ds-kicker">Gestão escolar local</p>
           <h1 className="mt-4 font-serif text-5xl leading-none text-brand md:text-7xl">Lectiva</h1>
           <p className="mt-5 max-w-2xl text-xl font-semibold leading-8 text-ink">
-            Secretaria, matriculas e cobrancas em uma base local.
+            Secretaria, matrículas e cobranças em uma base local.
           </p>
           <p className="mt-3 max-w-2xl text-sm leading-7 text-muted">
-            Frequencia, portaria, relatorios em PDF e operacao diaria conectados exclusivamente ao Supabase local via Docker.
+            Frequência, portaria, relatórios em PDF e operação diária conectados exclusivamente ao Supabase local via Docker.
           </p>
 
           <div className="mt-8 grid max-w-2xl gap-3 sm:grid-cols-3">

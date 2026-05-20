@@ -48,7 +48,7 @@ export function FaceCaptureStep({ label, hint, onCaptured }: Props) {
         setStatus("Posicione o rosto");
         tick();
       } catch {
-        setStatus("Camera nao disponivel. Use upload de fotos.");
+        setStatus("Câmera não disponível. Use upload de fotos.");
       }
     }
 

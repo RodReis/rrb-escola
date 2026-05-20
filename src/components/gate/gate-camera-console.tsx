@@ -34,7 +34,7 @@ export function GateCameraConsole({ students, devices }: { students: Student[]; 
       if (videoRef.current) videoRef.current.srcObject = stream;
       setCameraActive(true);
     } catch {
-      setCameraError("Nao foi possivel acessar a camera neste navegador.");
+      setCameraError("Não foi possível acessar a câmera neste navegador.");
       setCameraActive(false);
     }
   }
