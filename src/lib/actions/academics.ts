@@ -248,3 +248,24 @@ export async function togglePlanAction(formData: FormData) {
     .eq("escola_id", DEFAULT_SCHOOL_ID);
   revalidatePath("/planos");
 }
+
+export async function rematricularAlunoAction(matriculaId: string): Promise<{ error?: string; novaMatriculaId?: string }> {
+  await requirePermission("matriculas", "create");
+  const supabase = await createServerClient();
+
+  const { data, error } = await supabase.rpc("rematriculate", { p_matricula_id: matriculaId });
+
+  if (error) {
+    const msg = error.message ?? "";
+    if (msg.includes("not_found")) return { error: "Matrícula não encontrada." };
+    if (msg.includes("not_active")) return { error: "Só é possível re-matricular matrículas ativas." };
+    if (msg.includes("no_next_serie")) return { error: "Não há série seguinte cadastrada. Cadastre a próxima série antes de re-matricular." };
+    if (msg.includes("already_enrolled")) return { error: "Aluno já possui matrícula ativa para o próximo ano letivo." };
+    return { error: "Erro ao processar re-matrícula. Tente novamente." };
+  }
+
+  revalidatePath("/matriculas");
+  revalidatePath("/alunos");
+
+  return { novaMatriculaId: data as string };
+}
