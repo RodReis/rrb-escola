@@ -1,5 +1,6 @@
 import { Plus, Trash2, UserCheck, AlertCircle } from "lucide-react";
 import { Panel } from "@/components/ui/card";
+import { ConfirmButton } from "@/components/ui/confirm-button";
 import { PageHeader } from "@/components/ui/page-header";
 import { getAcademicData } from "@/lib/data/lookups";
 import {
@@ -116,9 +117,12 @@ export default async function AtribuicoesPage() {
                     <td className="px-2 py-2 text-right">
                       <form action={deleteAtribuicaoAction}>
                         <input type="hidden" name="id" value={a.id} />
-                        <button className="inline-flex items-center gap-1 rounded-ui bg-danger/10 px-2 py-1 text-xs text-danger hover:bg-danger/20">
+                        <ConfirmButton
+                          message={`Tem certeza que quer remover a atribuição de ${a.professorNome} em ${a.disciplina}?`}
+                          className="inline-flex items-center gap-1 rounded-ui bg-danger/10 px-2 py-1 text-xs text-danger hover:bg-danger/20"
+                        >
                           <Trash2 size={12} /> Remover
-                        </button>
+                        </ConfirmButton>
                       </form>
                     </td>
                   </tr>

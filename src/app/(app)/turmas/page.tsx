@@ -1,5 +1,6 @@
 import { GraduationCap, Plus, Save } from "lucide-react";
 import { ButtonLink } from "@/components/ui/button";
+import { ConfirmButton } from "@/components/ui/confirm-button";
 import { Panel } from "@/components/ui/card";
 import { PageHeader } from "@/components/ui/page-header";
 import { StatusPill } from "@/components/ui/status-pill";
@@ -135,7 +136,12 @@ export default async function TurmasPage() {
               <form action={toggleTurmaAction}>
                 <input type="hidden" name="id" value={item.id} />
                 <input type="hidden" name="ativo" value={item.ativo ? "" : "on"} />
-                <button className="text-xs font-black text-clay">{item.ativo ? "Desativar" : "Ativar"}</button>
+                <ConfirmButton
+                  message={`Tem certeza que quer ${item.ativo ? "desativar" : "ativar"} a turma "${item.nome}"?`}
+                  className="text-xs font-black text-clay"
+                >
+                  {item.ativo ? "Desativar" : "Ativar"}
+                </ConfirmButton>
               </form>
             </div>
           </Panel>

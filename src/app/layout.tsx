@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Inter, Instrument_Serif } from "next/font/google";
 import "./globals.css";
 import { Toaster } from "@/components/ui/toaster";
+import { ConfirmProvider } from "@/components/ui/confirm-dialog";
 
 const sans = Inter({
   subsets: ["latin"],
@@ -32,8 +33,10 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <script dangerouslySetInnerHTML={{ __html: themeScript }} />
       </head>
       <body className="antialiased font-sans">
-        {children}
-        <Toaster />
+        <ConfirmProvider>
+          {children}
+          <Toaster />
+        </ConfirmProvider>
       </body>
     </html>
   );

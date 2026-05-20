@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import { AlertCircle, FileText, Settings, Pencil } from "lucide-react";
 import { PageHeader } from "@/components/ui/page-header";
 import { Panel } from "@/components/ui/card";
+import { ConfirmButton } from "@/components/ui/confirm-button";
 import { requirePermission } from "@/lib/auth/session";
 import { createServerClient } from "@/lib/supabase/server";
 import { getTemplate } from "@/lib/data/templates";
@@ -103,9 +104,12 @@ export default async function EditTemplatePage({ params }: { params: Promise<{ i
           <form action={toggleTemplateAtivoAction}>
             <input type="hidden" name="template_id" value={tpl.id} />
             <input type="hidden" name="ativo" value={tpl.ativo ? "0" : "1"} />
-            <button className="ds-button ds-button-secondary">
+            <ConfirmButton
+              message={`Tem certeza que quer ${tpl.ativo ? "desativar" : "ativar"} o template "${tpl.nome}"?`}
+              className="ds-button ds-button-secondary"
+            >
               {tpl.ativo ? "Desativar" : "Ativar"}
-            </button>
+            </ConfirmButton>
           </form>
           {tpl.gerado_count === 0 && <DeleteTemplateButton templateId={tpl.id} nome={tpl.nome} />}
           <Link href={`/rh/documentos/${tpl.id}/mapeamento`} className="ds-button ds-button-secondary">

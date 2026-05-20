@@ -35,7 +35,7 @@ import {
 } from "@/lib/data/dashboard-executive";
 import { AlertList } from "@/components/dashboard/alert-list";
 import { AniversariantesCard } from "@/components/dashboard/aniversariantes-card";
-import { AniversariantesSemanaCard } from "@/components/dashboard/aniversariantes-semana-card";
+import { AniversariantesHojeCard, AniversariantesProximosRow } from "@/components/dashboard/aniversariantes-semana-card";
 import { AniversarioMatriculaCard } from "@/components/dashboard/aniversario-matricula-card";
 import { BeneficiosCard } from "@/components/dashboard/beneficios-card";
 import { BolsistasReceitaCard } from "@/components/dashboard/bolsistas-receita-card";
@@ -324,33 +324,38 @@ export default async function DashboardPage({
 
       {tabEfetiva === "alunos" && (
         <>
-          <section className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
-            {showAlunos && ocupacao && (
-              <MetricRing
-                label="Ocupação"
-                percent={ocupacaoPct}
-                centerLabel="Vagas"
-                centerValue={`${ocupacao.ocupadas}/${ocupacao.total}`}
-              />
+          <section className="grid gap-6 lg:grid-cols-[1fr_auto]">
+            <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
+              {showAlunos && ocupacao && (
+                <MetricRing
+                  label="Ocupação"
+                  percent={ocupacaoPct}
+                  centerLabel="Vagas"
+                  centerValue={`${ocupacao.ocupadas}/${ocupacao.total}`}
+                />
+              )}
+              {showFrequencias && frequencia && frequenciaPorTurma && (
+                <FrequenciaCard data={frequencia} porTurma={frequenciaPorTurma} />
+              )}
+              {showBolsistas && beneficios && <BeneficiosCard data={beneficios} />}
+              {showAlunos && ocupacao && <ResumoAlunosCard ocupacao={ocupacao} />}
+            </div>
+            {showAlunos && aniversariantesSemana && (
+              <div className="w-80 shrink-0">
+                <AniversariantesHojeCard items={aniversariantesSemana} />
+              </div>
             )}
-            {showFrequencias && frequencia && frequenciaPorTurma && (
-              <FrequenciaCard data={frequencia} porTurma={frequenciaPorTurma} />
-            )}
-            {showBolsistas && beneficios && <BeneficiosCard data={beneficios} />}
-            {showAlunos && ocupacao && <ResumoAlunosCard ocupacao={ocupacao} />}
           </section>
+
+          {showAlunos && aniversariantesSemana && (
+            <AniversariantesProximosRow items={aniversariantesSemana} />
+          )}
 
           {showMatriculas && stages && (
             <>
               <SectionHeader title="Matrículas e ocupação" subtitle="Distribuição por etapa de ensino" />
               <StageTable rows={stages} />
             </>
-          )}
-
-          <SectionHeader title="Aniversários e fidelidade" subtitle="Datas para celebrar com os alunos" />
-
-          {showAlunos && aniversariantesSemana && (
-            <AniversariantesSemanaCard items={aniversariantesSemana} />
           )}
 
           <section className="grid gap-6 lg:grid-cols-2">

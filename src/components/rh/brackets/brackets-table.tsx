@@ -2,6 +2,7 @@
 
 import { Trash2 } from "lucide-react";
 import { upsertBracketAction, deleteBracketAction } from "@/lib/actions/brackets";
+import { useConfirm } from "@/components/ui/confirm-dialog";
 import type { InssBracketRow, IrBracketRow } from "@/lib/data/brackets";
 
 type Props =
@@ -11,6 +12,7 @@ type Props =
 export function BracketsTable(props: Props) {
   const { table, vigencia, brackets } = props;
   const newFormId = `bracket-new-${table}`;
+  const confirm = useConfirm();
 
   return (
     <div className="overflow-x-auto rounded-panel border border-line bg-surface">
@@ -27,9 +29,6 @@ export function BracketsTable(props: Props) {
           key={`del-${b.id}`}
           id={`bracket-del-${b.id}`}
           action={deleteBracketAction}
-          onSubmit={(e) => {
-            if (!confirm("Excluir esta faixa?")) e.preventDefault();
-          }}
         />
       ))}
       <form id={newFormId} action={upsertBracketAction} />
@@ -105,7 +104,21 @@ export function BracketsTable(props: Props) {
                   <button form={fid} type="submit" className="text-xs font-semibold text-brand hover:underline">Salvar</button>
                 </td>
                 <td className="text-right pl-2">
-                  <button form={did} type="submit" className="text-xs font-semibold text-danger hover:underline inline-flex items-center gap-1">
+                  <button
+                    type="button"
+                    className="text-xs font-semibold text-danger hover:underline inline-flex items-center gap-1"
+                    onClick={async () => {
+                      const ok = await confirm({
+                        title: "Remover faixa",
+                        message: "Tem certeza que quer remover esta faixa?",
+                        confirmLabel: "Remover",
+                        variant: "danger",
+                      });
+                      if (ok) {
+                        (document.getElementById(did) as HTMLFormElement | null)?.requestSubmit();
+                      }
+                    }}
+                  >
                     <Trash2 size={12} /> Remover
                   </button>
                 </td>

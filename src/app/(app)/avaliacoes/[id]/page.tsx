@@ -1,6 +1,7 @@
 import { notFound, redirect } from "next/navigation";
 import { ClipboardList, Save, Trash2, Users, Pencil } from "lucide-react";
 import { Panel } from "@/components/ui/card";
+import { ConfirmButton } from "@/components/ui/confirm-button";
 import { PageHeader } from "@/components/ui/page-header";
 import { getAvaliacaoDetalhe } from "@/lib/data/pedagogico";
 import {
@@ -95,9 +96,12 @@ export default async function AvaliacaoDetailPage({
           <div className="md:col-span-3 flex justify-between">
             <form action={deleteAndRedirect}>
               <input type="hidden" name="id" value={aval.id} />
-              <button className="inline-flex items-center gap-1 rounded-ui bg-danger/10 px-3 py-1.5 text-xs font-semibold text-danger hover:bg-danger/20">
+              <ConfirmButton
+                message={`Tem certeza que quer excluir a avaliação "${aval.titulo}"? Esta operação não pode ser desfeita.`}
+                className="inline-flex items-center gap-1 rounded-ui bg-danger/10 px-3 py-1.5 text-xs font-semibold text-danger hover:bg-danger/20"
+              >
                 <Trash2 size={12} /> Excluir
-              </button>
+              </ConfirmButton>
             </form>
             <button className="ds-button ds-button-primary px-4">Salvar dados</button>
           </div>

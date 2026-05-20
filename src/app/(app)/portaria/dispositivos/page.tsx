@@ -1,6 +1,7 @@
 import { ArrowLeft, Plus, Cpu } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button, ButtonLink } from "@/components/ui/button";
+import { ConfirmButton } from "@/components/ui/confirm-button";
 import { Panel } from "@/components/ui/card";
 import { createGateDeviceAction, toggleGateDeviceAction, updateGateDeviceAction } from "@/lib/actions/gate";
 import { getGateDevices } from "@/lib/data/gate";
@@ -87,7 +88,12 @@ export default async function GateDevicesPage() {
               <form action={toggleGateDeviceAction}>
                 <input type="hidden" name="id" value={device.id} />
                 <input type="hidden" name="ativo" value={device.ativo ? "" : "on"} />
-                <button className="text-xs font-bold text-clay">{device.ativo ? "Desativar" : "Ativar"}</button>
+                <ConfirmButton
+                  message={`Tem certeza que quer ${device.ativo ? "desativar" : "ativar"} o dispositivo "${device.nome}"?`}
+                  className="text-xs font-bold text-clay"
+                >
+                  {device.ativo ? "Desativar" : "Ativar"}
+                </ConfirmButton>
               </form>
             </div>
           </Panel>

@@ -4,6 +4,7 @@ import { requirePermission } from "@/lib/auth/session";
 import { listRoles } from "@/lib/data/permissoes";
 import { deleteRoleAction } from "@/lib/actions/roles";
 import { ButtonLink } from "@/components/ui/button";
+import { ConfirmButton } from "@/components/ui/confirm-button";
 import { PageHeader } from "@/components/ui/page-header";
 import { DataTableShell } from "@/components/ui/data-table";
 import { StatusPill } from "@/components/ui/status-pill";
@@ -96,13 +97,14 @@ export default async function PerfisPage({
                     {!r.sistema && (
                       <form action={deleteRoleAction} className="inline">
                         <input type="hidden" name="codigo" value={r.codigo} />
-                        <button
+                        <ConfirmButton
+                          message={`Tem certeza que quer excluir o perfil "${r.nome}"? Esta operação não pode ser desfeita.`}
                           title="Excluir role"
                           aria-label="Excluir role"
                           className="inline-flex h-7 w-7 items-center justify-center rounded-ui text-danger hover:bg-danger/10"
                         >
                           <Trash2 size={14} />
-                        </button>
+                        </ConfirmButton>
                       </form>
                     )}
                   </div>

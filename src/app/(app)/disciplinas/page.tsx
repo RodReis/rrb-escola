@@ -1,5 +1,6 @@
 import { BookOpen, Plus, Trash2 } from "lucide-react";
 import { Panel } from "@/components/ui/card";
+import { ConfirmButton } from "@/components/ui/confirm-button";
 import { PageHeader } from "@/components/ui/page-header";
 import { getAcademicData } from "@/lib/data/lookups";
 import { listDisciplinas } from "@/lib/data/pedagogico";
@@ -117,9 +118,12 @@ export default async function DisciplinasPage() {
                   </form>
                   <form action={deleteDisciplinaAction} className="mt-2">
                     <input type="hidden" name="id" value={d.id} />
-                    <button className="inline-flex items-center gap-1 text-xs text-danger hover:underline">
+                    <ConfirmButton
+                      message={`Tem certeza que quer remover a disciplina "${d.nome}"?`}
+                      className="inline-flex items-center gap-1 text-xs text-danger hover:underline"
+                    >
                       <Trash2 size={12} /> Remover
-                    </button>
+                    </ConfirmButton>
                   </form>
                 </li>
               ))}

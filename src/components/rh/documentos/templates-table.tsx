@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { Edit3, Power, PowerOff } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
+import { ConfirmButton } from "@/components/ui/confirm-button";
 import { toggleTemplateAtivoAction } from "@/lib/actions/templates";
 import { DeleteTemplateButton } from "@/components/rh/documentos/delete-template-button";
 import type { TemplateRow } from "@/lib/data/templates";
@@ -65,12 +66,12 @@ export function TemplatesTable({ templates }: { templates: TemplateRow[] }) {
                     <form action={toggleTemplateAtivoAction}>
                       <input type="hidden" name="template_id" value={t.id} />
                       <input type="hidden" name="ativo" value={t.ativo ? "0" : "1"} />
-                      <button
-                        type="submit"
+                      <ConfirmButton
+                        message={`Tem certeza que quer ${t.ativo ? "desativar" : "ativar"} o template "${t.nome}"?`}
                         className="inline-flex items-center gap-1 rounded-ui border border-line bg-surface px-2.5 py-1 text-xs font-semibold text-ink hover:bg-muted/60"
                       >
                         {t.ativo ? <><PowerOff size={12} /> Desativar</> : <><Power size={12} /> Ativar</>}
-                      </button>
+                      </ConfirmButton>
                     </form>
                     {t.gerado_count === 0 && (
                       <DeleteTemplateButton templateId={t.id} nome={t.nome} />

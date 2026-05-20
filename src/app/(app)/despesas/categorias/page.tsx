@@ -2,6 +2,7 @@ import { AlertCircle, Plus, Tag, Save, Trash2 } from "lucide-react";
 import { PageHeader } from "@/components/ui/page-header";
 import { Panel } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { ConfirmButton } from "@/components/ui/confirm-button";
 import { CategoriaCreateForm } from "@/components/despesas/categoria-form";
 import {
   deleteCategoriaAction,
@@ -100,15 +101,14 @@ export default async function CategoriasDespesaPage({
                     <td className="py-2.5 px-3 text-right">
                       <form action={deleteCategoriaAction} className="inline">
                         <input type="hidden" name="id" value={c.id} />
-                        <Button
-                          type="submit"
-                          variant="ghost"
+                        <ConfirmButton
+                          message={`Tem certeza que quer excluir a categoria "${c.nome}"?`}
                           title="Excluir categoria"
                           aria-label="Excluir"
-                          className="!h-7 !min-w-0 !px-2 text-danger hover:bg-danger/10"
+                          className="inline-flex h-7 min-w-0 items-center justify-center rounded-ui px-2 text-danger hover:bg-danger/10"
                         >
                           <Trash2 size={14} />
-                        </Button>
+                        </ConfirmButton>
                       </form>
                     </td>
                   </tr>

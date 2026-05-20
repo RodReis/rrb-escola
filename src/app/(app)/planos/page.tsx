@@ -1,6 +1,7 @@
 import { CreditCard, Plus, Save } from "lucide-react";
 import { createPlanAction, togglePlanAction, updatePlanAction } from "@/lib/actions/academics";
 import { ButtonLink } from "@/components/ui/button";
+import { ConfirmButton } from "@/components/ui/confirm-button";
 import { Panel } from "@/components/ui/card";
 import { PageHeader } from "@/components/ui/page-header";
 import { StatusPill } from "@/components/ui/status-pill";
@@ -153,7 +154,12 @@ export default async function PlanosPage() {
             <form action={togglePlanAction}>
               <input type="hidden" name="id" value={item.id} />
               <input type="hidden" name="ativo" value={item.ativo ? "" : "on"} />
-              <button className="text-xs font-black text-clay">{item.ativo ? "Desativar plano" : "Ativar plano"}</button>
+              <ConfirmButton
+                message={`Tem certeza que quer ${item.ativo ? "desativar" : "ativar"} o plano "${item.nome}"?`}
+                className="text-xs font-black text-clay"
+              >
+                {item.ativo ? "Desativar plano" : "Ativar plano"}
+              </ConfirmButton>
             </form>
           </Panel>
         ))}

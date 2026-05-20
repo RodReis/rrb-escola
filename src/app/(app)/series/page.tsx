@@ -1,6 +1,7 @@
 import { Layers3, Plus, Save } from "lucide-react";
 import { createSerieAction, toggleSerieAction, updateSerieAction } from "@/lib/actions/academics";
 import { ButtonLink } from "@/components/ui/button";
+import { ConfirmButton } from "@/components/ui/confirm-button";
 import { Panel } from "@/components/ui/card";
 import { PageHeader } from "@/components/ui/page-header";
 import { StatusPill } from "@/components/ui/status-pill";
@@ -89,7 +90,12 @@ export default async function SeriesPage() {
               <form action={toggleSerieAction}>
                 <input type="hidden" name="id" value={item.id} />
                 <input type="hidden" name="ativo" value={item.ativo ? "" : "on"} />
-                <button className="text-xs font-black text-clay">{item.ativo ? "Desativar" : "Ativar"}</button>
+                <ConfirmButton
+                  message={`Tem certeza que quer ${item.ativo ? "desativar" : "ativar"} a série "${item.nome}"?`}
+                  className="text-xs font-black text-clay"
+                >
+                  {item.ativo ? "Desativar" : "Ativar"}
+                </ConfirmButton>
               </form>
             </div>
           </Panel>
