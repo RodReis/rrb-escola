@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Plus, Upload } from "lucide-react";
+import { Plus, Upload, Users } from "lucide-react";
 import { ButtonLink } from "@/components/ui/button";
 import { PageHeader } from "@/components/ui/page-header";
 import { DataTableShell } from "@/components/ui/data-table";
@@ -102,8 +102,11 @@ export default async function StudentsPage({
           <tbody>
             {students.length === 0 ? (
               <tr>
-                <td colSpan={7} className="px-5 py-10 text-center text-sm font-medium text-ink/55">
-                  Nenhum aluno cadastrado.
+                <td colSpan={7} className="px-5 py-12">
+                  <div className="flex flex-col items-center justify-center gap-2 text-ink/40">
+                    <Users size={28} />
+                    <p className="text-sm font-medium">Nenhum aluno cadastrado.</p>
+                  </div>
                 </td>
               </tr>
             ) : null}

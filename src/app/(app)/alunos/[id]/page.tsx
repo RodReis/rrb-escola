@@ -1,3 +1,4 @@
+import { ArrowLeft, FileText, Pencil } from "lucide-react";
 import { StudentStatementSection } from "@/components/finance/student-statement-section";
 import { StudentHeaderActions } from "@/components/students/student-header-actions";
 import { StudentSheetView } from "@/components/students/student-sheet";
@@ -37,9 +38,15 @@ export default async function StudentPage({ params, searchParams }: { params: { 
           </div>
         </div>
         <div className="flex flex-wrap items-center gap-2">
-          <ButtonLink href="/alunos" variant="secondary">Voltar</ButtonLink>
-          <ButtonLink href={`/alunos/${student.id}/boletim`} variant="secondary">Boletim</ButtonLink>
-          <ButtonLink href={`/alunos/${student.id}/editar`} variant="primary">Editar</ButtonLink>
+          <ButtonLink href="/alunos" variant="secondary">
+            <ArrowLeft size={14} /> Voltar
+          </ButtonLink>
+          <ButtonLink href={`/alunos/${student.id}/boletim`} variant="secondary">
+            <FileText size={14} /> Boletim
+          </ButtonLink>
+          <ButtonLink href={`/alunos/${student.id}/editar`} variant="primary">
+            <Pencil size={14} /> Editar
+          </ButtonLink>
           <StudentHeaderActions student={student} matriculaAtiva={matriculaAtivaPayload} templates={templatesLite} />
         </div>
       </header>

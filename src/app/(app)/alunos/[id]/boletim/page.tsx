@@ -1,5 +1,5 @@
 import { notFound } from "next/navigation";
-import { GraduationCap, CalendarCheck } from "lucide-react";
+import { GraduationCap, CalendarCheck, ArrowLeft, BookOpen, ClipboardList } from "lucide-react";
 import { ButtonLink } from "@/components/ui/button";
 import { Panel } from "@/components/ui/card";
 import { Avatar } from "@/components/ui/avatar";
@@ -53,7 +53,7 @@ export default async function BoletimPage({
           <>
             <ExportBoletimButton boletim={boletim} />
             <ButtonLink href={`/alunos/${boletim.aluno.id}`} variant="secondary">
-              Voltar à ficha
+              <ArrowLeft size={14} /> Voltar à ficha
             </ButtonLink>
           </>
         }
@@ -90,7 +90,10 @@ export default async function BoletimPage({
           <h3 className="font-bold text-ink">Notas por bimestre</h3>
         </div>
         {boletim.disciplinas.length === 0 ? (
-          <p className="text-sm text-ink/60">Nenhuma nota lançada neste ano letivo.</p>
+          <div className="flex flex-col items-center justify-center gap-2 py-10 text-ink/40">
+            <BookOpen size={28} />
+            <p className="text-sm font-medium">Nenhuma nota lançada neste ano letivo.</p>
+          </div>
         ) : (
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
@@ -143,7 +146,10 @@ export default async function BoletimPage({
           <h3 className="font-bold text-ink">Frequência (ano letivo)</h3>
         </div>
         {boletim.frequencia.totalDias === 0 ? (
-          <p className="text-sm text-ink/60">Nenhum registro de frequência.</p>
+          <div className="flex flex-col items-center justify-center gap-2 py-10 text-ink/40">
+            <ClipboardList size={28} />
+            <p className="text-sm font-medium">Nenhum registro de frequência.</p>
+          </div>
         ) : (
           <div className="grid gap-3 md:grid-cols-4">
             <div className="rounded-ui bg-muted/40 p-3">

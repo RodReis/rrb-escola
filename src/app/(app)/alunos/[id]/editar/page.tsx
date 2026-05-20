@@ -1,3 +1,4 @@
+import { ArrowLeft, CheckCircle2, Camera } from "lucide-react";
 import { BiometricEnrollment } from "@/components/students/biometric-enrollment";
 import { StudentEditForm } from "@/components/students/student-edit-form";
 import { StudentEditTabs } from "@/components/students/student-edit-tabs";
@@ -43,7 +44,7 @@ export default async function EditStudentPage({
           </p>
         </div>
         <ButtonLink href={`/alunos/${id}`} variant="secondary">
-          Voltar para ficha
+          <ArrowLeft size={14} /> Voltar para ficha
         </ButtonLink>
       </header>
 
@@ -53,7 +54,7 @@ export default async function EditStudentPage({
 
       {(await searchParams).saved === "1" && (
         <div className="flex items-center gap-2 border-b border-emerald-200 bg-emerald-50 px-6 py-3 text-sm font-medium text-emerald-800">
-          <span>✓</span> Dados salvos com sucesso.
+          <CheckCircle2 size={16} /> Dados salvos com sucesso.
         </div>
       )}
 
@@ -73,7 +74,10 @@ export default async function EditStudentPage({
           <>
             <StudentGatePanel alunoId={student.id} settings={gateSettings} />
             <section className="rounded-panel border border-line bg-surface p-5">
-              <h2 className="mb-3 font-serif text-2xl text-ink">Biometria facial (LGPD)</h2>
+              <h2 className="mb-3 flex items-center gap-2 font-serif text-2xl text-ink">
+                <Camera size={20} className="text-brand" />
+                Biometria facial (LGPD)
+              </h2>
               <BiometricEnrollment
                 alunoId={student.id}
                 responsaveis={biometry.responsaveis}

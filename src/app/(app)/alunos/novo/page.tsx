@@ -1,3 +1,4 @@
+import { ArrowLeft } from "lucide-react";
 import { StudentForm } from "@/components/students/student-form";
 import { ButtonLink } from "@/components/ui/button";
 import { getStudentFormOptions } from "@/lib/data/students";
@@ -18,7 +19,7 @@ export default async function NewStudentPage() {
           </p>
         </div>
         <ButtonLink href="/alunos" variant="secondary">
-          Voltar
+          <ArrowLeft size={14} /> Voltar
         </ButtonLink>
       </header>
       <StudentForm options={options} />
