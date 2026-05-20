@@ -22,7 +22,6 @@ import {
   getOcupacao,
   getProximasCobrancas,
   getRankingTurmas,
-  getSaldoYTD,
   getRealizadoVsProjetado,
   getRenovacoesPendentes,
   getRepasseRecebido,
@@ -56,7 +55,6 @@ import { RankingAlunosCard } from "@/components/dashboard/ranking-alunos-card";
 import { RankingTurmasCard } from "@/components/dashboard/ranking-turmas-card";
 import { RealizadoProjetadoCard } from "@/components/dashboard/realizado-projetado-card";
 import { ResumoAlunosCard } from "@/components/dashboard/resumo-alunos-card";
-import { SaldoYTDCard } from "@/components/dashboard/saldo-ytd-card";
 import { SaudeSistemaCard } from "@/components/dashboard/saude-sistema-card";
 import { TopCategoriasCard } from "@/components/dashboard/top-categorias-card";
 import {
@@ -218,7 +216,6 @@ export default async function DashboardPage({
     aniversariantesMatricula,
     proximasCobrancas,
     saudeSistema,
-    saldoYTD,
     pedagogicoOverview,
     slot2,
     slot5,
@@ -247,7 +244,6 @@ export default async function DashboardPage({
     showAlunos ? getAniversariantesMatricula(escolaId, 10, anoLetivo) : null,
     showFinanceiroCobrancas ? getProximasCobrancas(escolaId, 7) : null,
     getSaudeSistema(escolaId),
-    showFinanceiroCobrancas ? getSaldoYTD(escolaId, anoLetivo) : null,
     showAvaliacoes ? getPedagogicoOverview(escolaId) : null,
     showFinanceiroCobrancas
       ? (isPropria
@@ -309,7 +305,7 @@ export default async function DashboardPage({
             {showRhFolha && folhaRatio && <FolhaRatioCard data={folhaRatio} />}
             {showFinanceiroCobrancas && ticket && <TicketCard data={ticket} />}
             {showBolsistas && beneficios && <BolsistasReceitaCard data={beneficios} />}
-            {showFinanceiroCobrancas && saldoYTD && <SaldoYTDCard data={saldoYTD} />}
+            {showBolsistas && beneficios && <BeneficiosCard data={beneficios} />}
           </section>
 
           {showFinanceiroCobrancas && realizadoVsProjetado && (
@@ -349,7 +345,7 @@ export default async function DashboardPage({
       {tabEfetiva === "alunos" && (
         <>
           <section className="grid gap-6 lg:grid-cols-[1fr_auto]">
-            <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
+            <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
               {showAlunos && ocupacao && (
                 <MetricRing
                   label="Ocupação"
@@ -361,7 +357,6 @@ export default async function DashboardPage({
               {showFrequencias && frequencia && frequenciaPorTurma && (
                 <FrequenciaCard data={frequencia} porTurma={frequenciaPorTurma} />
               )}
-              {showBolsistas && beneficios && <BeneficiosCard data={beneficios} />}
               {showAlunos && ocupacao && <ResumoAlunosCard ocupacao={ocupacao} />}
             </div>
             {showAlunos && aniversariantesSemana && (
