@@ -22,12 +22,12 @@ export function ExportStudentsReportButton({ rows }: { rows: StudentReportRow[] 
     const doc = new jsPDF({ orientation: "landscape", unit: "mm", format: "a4" });
     doc.setFont("helvetica", "bold");
     doc.setFontSize(14);
-    doc.text("Relatorio Geral de Alunos", 148, 12, { align: "center" });
+    doc.text("Relatório Geral de Alunos", 148, 12, { align: "center" });
 
     autoTable(doc, {
       startY: 18,
       theme: "grid",
-      head: [["Matricula", "Aluno", "CPF", "Nascimento", "Celular", "Responsavel", "Serie", "Turma", "Ano", "Status"]],
+      head: [["Matrícula", "Aluno", "CPF", "Nascimento", "Celular", "Responsável", "Série", "Turma", "Ano", "Status"]],
       body: rows.map((row) => [
         row.matricula,
         row.nome,

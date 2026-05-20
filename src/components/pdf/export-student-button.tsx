@@ -32,10 +32,10 @@ export function exportStudentPdf(student: StudentSheet) {
     headStyles: { fillColor: [232, 232, 232], textColor: 0, halign: "center" },
     body: [
       [{ content: "Dados do Aluno", colSpan: 4, styles: { halign: "center", fontStyle: "bold", fillColor: [232, 232, 232] } }],
-      [`Matricula\n${student.matricula_codigo}`, `Nome\n${student.nome}`, `Sexo\n${value(student.sexo)}`, `Dt. Nascimento\n${dval("data_nascimento", student.data_nascimento)}`],
+      [`Matrícula\n${student.matricula_codigo}`, `Nome\n${student.nome}`, `Sexo\n${value(student.sexo)}`, `Dt. Nascimento\n${dval("data_nascimento", student.data_nascimento)}`],
       [`Naturalidade\n${value(student.naturalidade)}`, `Celular\n${value(student.celular)}`, `CPF\n${value(student.cpf)}`, `RG\n${value(student.rg)}`],
-      [{ content: `Endereco\n${value(address?.logradouro)}`, colSpan: 2 }, `Cidade\n${value(address?.cidade)}-${value(address?.uf)}`, `CEP\n${value(address?.cep)}`],
-      [`E-Mail\n${value(student.email)}`, `Cod. INEP\n${value(student.codigo_inep)}`, `Etnia\n${value(student.etnia)}`, `Informacoes adicionais\n${value(student.informacoes_adicionais)}`]
+      [{ content: `Endereço\n${value(address?.logradouro)}`, colSpan: 2 }, `Cidade\n${value(address?.cidade)}-${value(address?.uf)}`, `CEP\n${value(address?.cep)}`],
+      [`E-Mail\n${value(student.email)}`, `Cod. INEP\n${value(student.codigo_inep)}`, `Etnia\n${value(student.etnia)}`, `Informações adicionais\n${value(student.informacoes_adicionais)}`]
     ]
   });
 
@@ -56,7 +56,7 @@ export function exportStudentPdf(student: StudentSheet) {
   autoTable(doc, {
     theme: "grid",
     styles: { fontSize: 7, cellPadding: 1, lineColor: 0, lineWidth: 0.2, textColor: 0 },
-    head: [["Codigo", "Ano", "Serie", "Turma", "Plano", "Status", "Data", "Idade"]],
+    head: [["Código", "Ano", "Série", "Turma", "Plano", "Status", "Data", "Idade"]],
     body: student.matriculas.map((item) => [
       value(item.codigo),
       value(item.ano_letivo),
@@ -73,7 +73,7 @@ export function exportStudentPdf(student: StudentSheet) {
     theme: "grid",
     styles: { fontSize: 7, cellPadding: 1, lineColor: 0, lineWidth: 0.2, textColor: 0 },
     body: [
-      [{ content: "Informacoes Medicas", colSpan: 4, styles: { halign: "center", fontStyle: "bold", fillColor: [232, 232, 232] } }],
+      [{ content: "Informações Médicas", colSpan: 4, styles: { halign: "center", fontStyle: "bold", fillColor: [232, 232, 232] } }],
       [`Alergia: ${medical?.alergia ? "( X )" : "(  )"}`, `Portador Nec. Especiais: ${medical?.necessidade_especial ? "( X )" : "(  )"}`, `Nec. Apoio/Recurso: ${medical?.necessita_apoio ? "( X )" : "(  )"}`, `Possui Doenca Grave: ${medical?.doenca_grave ? "( X )" : "(  )"}`],
       [`Medico\n${value(medical?.medico)}`, `Telefone\n${value(medical?.telefone_medico)}`, `Plano de Saude\n${value(medical?.plano_saude)}`, `Telefone\n${value(medical?.telefone_plano)}`]
     ]

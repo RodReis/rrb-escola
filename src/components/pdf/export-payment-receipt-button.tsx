@@ -57,32 +57,32 @@ export function ExportPaymentReceiptButton({ pagamento, cobranca, aluno, saldoAp
     y += 10;
     doc.setFont("helvetica", "normal");
     doc.setFontSize(9);
-    doc.text(`Aluno: ${aluno.nome} (matricula ${aluno.matricula_codigo})`, 12, y);
+    doc.text(`Aluno: ${aluno.nome} (matrícula ${aluno.matricula_codigo})`, 12, y);
     y += 5;
     doc.text(`Referente a: ${cobranca.descricao}`, 12, y);
     y += 5;
-    doc.text(`Competencia: ${cobranca.competencia}    Parcela: ${cobranca.numero_parcela ?? "-"}`, 12, y);
+    doc.text(`Competência: ${cobranca.competencia}    Parcela: ${cobranca.numero_parcela ?? "-"}`, 12, y);
 
     y += 8;
     doc.text(`Valor original:   ${fmt(cobranca.valor_original)}`, 12, y); y += 5;
     doc.text(`Desconto:        -${fmt(cobranca.valor_desconto)}`, 12, y); y += 5;
-    doc.text(`Acrescimo:       +${fmt(cobranca.valor_acrescimo)}`, 12, y); y += 5;
+    doc.text(`Acréscimo:       +${fmt(cobranca.valor_acrescimo)}`, 12, y); y += 5;
     doc.setFont("helvetica", "bold");
-    doc.text(`Valor cobranca:   ${fmt(cobranca.valor_final)}`, 12, y); y += 7;
+    doc.text(`Valor cobrança:   ${fmt(cobranca.valor_final)}`, 12, y); y += 7;
     doc.line(12, y - 2, 70, y - 2);
     doc.setFont("helvetica", "normal");
     doc.text(`Valor pago:       ${fmt(pagamento.valor_pago)}`, 12, y); y += 5;
     doc.text(`Forma:            ${pagamento.forma_pagamento}`, 12, y); y += 5;
     doc.text(`Data:             ${dateText(pagamento.data_pagamento)}`, 12, y); y += 5;
     if (saldoApos > 0) {
-      doc.text(`Saldo apos pagamento: ${fmt(saldoApos)}`, 12, y);
+      doc.text(`Saldo após pagamento: ${fmt(saldoApos)}`, 12, y);
       y += 5;
     }
 
     y += 5;
     doc.text(`Recebido por: ${pagamento.perfis?.nome ?? "-"}`, 12, y);
     y += 5;
-    doc.text(`Local e data: Goiania, ${new Date().toLocaleDateString("pt-BR")}`, 12, y);
+    doc.text(`Local e data: Goiânia, ${new Date().toLocaleDateString("pt-BR")}`, 12, y);
 
     y += 18;
     doc.line(12, y, 90, y);

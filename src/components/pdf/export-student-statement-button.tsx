@@ -49,8 +49,8 @@ export function ExportStudentStatementButton({ aluno, de, ate, charges }: Props)
     doc.text("RRB Escola — Extrato Financeiro", 105, 14, { align: "center" });
     doc.setFontSize(9);
     doc.setFont("helvetica", "normal");
-    doc.text(`Aluno: ${aluno.nome} (matricula ${aluno.matricula_codigo})`, 12, 22);
-    doc.text(`Periodo: ${dateText(de)} a ${dateText(ate)}`, 12, 27);
+    doc.text(`Aluno: ${aluno.nome} (matrícula ${aluno.matricula_codigo})`, 12, 22);
+    doc.text(`Período: ${dateText(de)} a ${dateText(ate)}`, 12, 27);
 
     const chargeRows = charges.map((c) => {
       const pago = c.pagamentos.filter((p) => !p.cancelado_em).reduce((sum, p) => sum + Number(p.valor_pago), 0);
@@ -68,7 +68,7 @@ export function ExportStudentStatementButton({ aluno, de, ate, charges }: Props)
     autoTable(doc, {
       startY: 33,
       theme: "grid",
-      head: [["Vencimento", "Descricao", "Valor", "Pago", "Saldo", "Status"]],
+      head: [["Vencimento", "Descrição", "Valor", "Pago", "Saldo", "Status"]],
       body: chargeRows,
       styles: { fontSize: 8, cellPadding: 1.6 },
       headStyles: { fillColor: [23, 32, 27] }
@@ -102,8 +102,8 @@ export function ExportStudentStatementButton({ aluno, de, ate, charges }: Props)
     autoTable(doc, {
       startY: finalY + 16,
       theme: "grid",
-      head: [["Data", "Cobranca", "Valor", "Forma", "Recebido por"]],
-      body: paymentsBody.length > 0 ? paymentsBody : [["—", "Sem pagamentos no periodo", "", "", ""]],
+      head: [["Data", "Cobrança", "Valor", "Forma", "Recebido por"]],
+      body: paymentsBody.length > 0 ? paymentsBody : [["—", "Sem pagamentos no período", "", "", ""]],
       styles: { fontSize: 8, cellPadding: 1.6 },
       headStyles: { fillColor: [23, 32, 27] }
     });

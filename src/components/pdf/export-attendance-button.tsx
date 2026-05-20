@@ -26,14 +26,14 @@ export function ExportAttendanceButton({
     const doc = new jsPDF({ orientation: "landscape", unit: "mm", format: "a4" });
     doc.setFont("helvetica", "bold");
     doc.setFontSize(14);
-    doc.text("Relatorio de Frequencia", 148, 12, { align: "center" });
+    doc.text("Relatório de Frequência", 148, 12, { align: "center" });
     doc.setFontSize(9);
-    doc.text(`Periodo: ${start} a ${end}`, 148, 17, { align: "center" });
+    doc.text(`Período: ${start} a ${end}`, 148, 17, { align: "center" });
 
     autoTable(doc, {
       startY: 23,
       theme: "grid",
-      head: [["Matricula", "Aluno", "Presencas", "Faltas", "Total", "% Presenca"]],
+      head: [["Matrícula", "Aluno", "Presenças", "Faltas", "Total", "% Presença"]],
       body: rows.map((row) => [
         row.matricula,
         row.aluno,

@@ -29,7 +29,7 @@ export function ExportDelinquencyButton({ rows, filters }: Props) {
     const doc = new jsPDF({ orientation: "landscape", unit: "mm", format: "a4" });
     doc.setFont("helvetica", "bold");
     doc.setFontSize(14);
-    doc.text("Relatorio de Inadimplencia", 148, 12, { align: "center" });
+    doc.text("Relatório de Inadimplência", 148, 12, { align: "center" });
 
     let startY = 18;
     if (filters) {
@@ -44,7 +44,7 @@ export function ExportDelinquencyButton({ rows, filters }: Props) {
     autoTable(doc, {
       startY,
       theme: "grid",
-      head: [["Matricula", "Aluno", "Descricao", "Competencia", "Vencimento", "Status", "Valor"]],
+      head: [["Matrícula", "Aluno", "Descrição", "Competência", "Vencimento", "Status", "Valor"]],
       body: rows.map((row) => {
         const aluno = Array.isArray(row.alunos) ? row.alunos[0] : row.alunos;
         return [

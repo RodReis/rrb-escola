@@ -22,7 +22,7 @@ function formatDateTime(value: string | null) {
 function labelStatus(status: string) {
   if (status === "dentro") return "Dentro";
   if (status === "saiu") return "Saiu";
-  return "Nao chegou";
+  return "Não chegou";
 }
 
 export function ExportGateDailyStatusButton({ rows, date }: { rows: GateDailyStatusRow[]; date: string }) {
@@ -30,14 +30,14 @@ export function ExportGateDailyStatusButton({ rows, date }: { rows: GateDailySta
     const doc = new jsPDF({ orientation: "landscape", unit: "mm", format: "a4" });
     doc.setFont("helvetica", "bold");
     doc.setFontSize(14);
-    doc.text("Painel Diario da Portaria", 148, 12, { align: "center" });
+    doc.text("Painel Diário da Portaria", 148, 12, { align: "center" });
     doc.setFontSize(9);
     doc.text(`Data: ${date}`, 148, 17, { align: "center" });
 
     autoTable(doc, {
       startY: 23,
       theme: "grid",
-      head: [["Matricula", "Aluno", "Status", "Primeira entrada", "Ultima saida", "Ultimo evento", "Origem", "Eventos"]],
+      head: [["Matrícula", "Aluno", "Status", "Primeira entrada", "Última saída", "Último evento", "Origem", "Eventos"]],
       body: rows.map((row) => [
         row.matricula_codigo,
         row.nome,

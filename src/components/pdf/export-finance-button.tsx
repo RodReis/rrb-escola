@@ -24,12 +24,12 @@ export function ExportFinanceButton({ rows }: { rows: FinanceRow[] }) {
     const doc = new jsPDF({ orientation: "landscape", unit: "mm", format: "a4" });
     doc.setFont("helvetica", "bold");
     doc.setFontSize(14);
-    doc.text("Relatorio Financeiro Escolar", 148, 12, { align: "center" });
+    doc.text("Relatório Financeiro Escolar", 148, 12, { align: "center" });
 
     autoTable(doc, {
       startY: 18,
       theme: "grid",
-      head: [["Aluno", "Descricao", "Competencia", "Vencimento", "Status", "Valor", "Pagamento"]],
+      head: [["Aluno", "Descrição", "Competência", "Vencimento", "Status", "Valor", "Pagamento"]],
       body: rows.map((row) => [
         row.alunos?.nome ?? "",
         row.descricao,
