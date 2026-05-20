@@ -23,9 +23,12 @@ export default async function RematricularLotePage({
     redirect("/matriculas/rematricula-lote?step=1");
   }
 
-  // Guard: step 3 requires ano + turma_id + serie_dest_id
-  if (step === "3" && (!ano || !turma_id || !serie_dest_id)) {
+  // Guard: step 3 requires ano + turma_id + serie_dest_id; if only serie missing, go back to step 2
+  if (step === "3" && (!ano || !turma_id)) {
     redirect("/matriculas/rematricula-lote?step=1");
+  }
+  if (step === "3" && !serie_dest_id) {
+    redirect(`/matriculas/rematricula-lote?step=2&ano=${ano}&turma_id=${turma_id}`);
   }
 
   const stepLabel: Record<string, string> = {

@@ -5,6 +5,8 @@ import { PageHeader } from "@/components/ui/page-header";
 import { Panel } from "@/components/ui/card";
 import { ButtonLink } from "@/components/ui/button";
 import { requirePermission } from "@/lib/auth/session";
+import { createServerClient } from "@/lib/supabase/server";
+import { DEFAULT_SCHOOL_ID } from "@/lib/constants";
 import type { RematricularLoteResultado } from "@/lib/actions/academics";
 
 export default async function RematricularLoteResultadoPage() {
@@ -24,10 +26,48 @@ export default async function RematricularLoteResultadoPage() {
     redirect("/matriculas/rematricula-lote?step=1");
   }
 
-  // Clear cookie
+  // Clear cookie immediately after parsing
   cookieStore.set("rematricula_lote_result", "", { maxAge: 0, httpOnly: true, path: "/" });
 
   const { anoDestino, ok, errors } = resultado;
+
+  // Re-fetch names from DB — cookie stores only IDs to stay under 4KB limit
+  const supabase = await createServerClient();
+
+  const novaIds = ok.map((r) => r.novaMatriculaId);
+  const errorMatriculaIds = errors.map((r) => r.matriculaId);
+  const allIds = [...novaIds, ...errorMatriculaIds];
+
+  type NomeRow = { id: string; aluno_nome: string };
+  let nomeMap: Record<string, string> = {};
+
+  if (allIds.length > 0) {
+    // For ok rows: fetch nova matrícula → aluno nome
+    if (novaIds.length > 0) {
+      const { data: okData } = await supabase
+        .from("matriculas")
+        .select("id, alunos!inner(nome)")
+        .in("id", novaIds)
+        .eq("escola_id", DEFAULT_SCHOOL_ID);
+      for (const row of okData ?? []) {
+        const aluno = (Array.isArray(row.alunos) ? row.alunos[0] : row.alunos) as { nome: string };
+        nomeMap[row.id] = aluno.nome;
+      }
+    }
+
+    // For error rows: fetch original matrícula → aluno nome
+    if (errorMatriculaIds.length > 0) {
+      const { data: errData } = await supabase
+        .from("matriculas")
+        .select("id, alunos!inner(nome)")
+        .in("id", errorMatriculaIds)
+        .eq("escola_id", DEFAULT_SCHOOL_ID);
+      for (const row of errData ?? []) {
+        const aluno = (Array.isArray(row.alunos) ? row.alunos[0] : row.alunos) as { nome: string };
+        nomeMap[row.id] = aluno.nome;
+      }
+    }
+  }
 
   return (
     <div className="grid gap-8">
@@ -58,7 +98,7 @@ export default async function RematricularLoteResultadoPage() {
               <tbody className="divide-y divide-line">
                 {ok.map((row) => (
                   <tr key={row.novaMatriculaId}>
-                    <td className="py-2 text-ink">{row.nome}</td>
+                    <td className="py-2 text-ink">{nomeMap[row.novaMatriculaId] ?? "—"}</td>
                     <td className="py-2 text-right">
                       <a
                         href={`/matriculas/${row.novaMatriculaId}`}
@@ -88,9 +128,9 @@ export default async function RematricularLoteResultadoPage() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-line">
-                {errors.map((row, i) => (
-                  <tr key={i}>
-                    <td className="py-2 text-ink">{row.nome}</td>
+                {errors.map((row) => (
+                  <tr key={row.matriculaId}>
+                    <td className="py-2 text-ink">{nomeMap[row.matriculaId] ?? "—"}</td>
                     <td className="py-2 text-ink/60">{row.motivo}</td>
                   </tr>
                 ))}

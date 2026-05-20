@@ -42,6 +42,7 @@ export async function RematricularLoteStep3({ ano, turma_id, serie_dest_id }: Pr
 
       <form action={rematricularLoteAction} className="grid gap-4">
         <input type="hidden" name="ano_letivo" value={ano} />
+        <input type="hidden" name="turma_id" value={turma_id} />
         <input type="hidden" name="serie_dest_id" value={serie_dest_id} />
 
         <div className="divide-y divide-line rounded-ui border border-line">
