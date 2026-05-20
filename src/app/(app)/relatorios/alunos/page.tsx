@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Eye } from "lucide-react";
+import { Eye, Users } from "lucide-react";
 import { ExportStudentsReportButton } from "@/components/pdf/export-students-report-button";
 import { PageHeader } from "@/components/ui/page-header";
 import { DataTableShell } from "@/components/ui/data-table";
@@ -46,6 +46,16 @@ export default async function RelatorioAlunosPage() {
             </tr>
           </thead>
           <tbody>
+            {rows.length === 0 && (
+              <tr>
+                <td colSpan={9} className="py-12">
+                  <div className="flex flex-col items-center justify-center gap-2 text-ink/40">
+                    <Users size={28} />
+                    <p className="text-sm font-medium">Nenhum aluno encontrado.</p>
+                  </div>
+                </td>
+              </tr>
+            )}
             {rows.map((item) => (
               <tr key={item.id}>
                 <td className="font-semibold text-brand">{item.matricula}</td>

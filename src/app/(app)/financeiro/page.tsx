@@ -1,4 +1,4 @@
-import { ChevronLeft, ChevronRight, CreditCard, Plus } from "lucide-react";
+import { ChevronLeft, ChevronRight, CreditCard, Plus, Receipt } from "lucide-react";
 import { ExportFinanceButton } from "@/components/pdf/export-finance-button";
 import { ChargeEditForm } from "@/components/finance/charge-edit-form";
 import { PaymentRow } from "@/components/finance/payment-row";
@@ -110,7 +110,10 @@ export default async function FinanceiroPage({ searchParams }: { searchParams: P
       <Panel className="grid gap-5">
         <div>
           <p className="ds-kicker">Nova cobranca</p>
-          <h2 className="mt-2 text-xl font-black text-ink">Gerar lancamento avulso</h2>
+          <h2 className="mt-2 flex items-center gap-2 text-xl font-black text-ink">
+            <Plus size={20} className="text-brand" />
+            Gerar lancamento avulso
+          </h2>
         </div>
         <form action={createChargeAction} className="grid gap-4 md:grid-cols-6">
           <label className="md:col-span-2">
@@ -137,7 +140,10 @@ export default async function FinanceiroPage({ searchParams }: { searchParams: P
       <section className="grid gap-3">
         {cobrancas.length === 0 ? (
           <Panel>
-            <p className="text-sm font-medium text-ink/60">Nenhuma cobranca cadastrada.</p>
+            <div className="flex flex-col items-center justify-center gap-2 py-10 text-ink/40">
+              <Receipt size={28} />
+              <p className="text-sm font-medium">Nenhuma cobranca cadastrada.</p>
+            </div>
           </Panel>
         ) : null}
         {cobrancas.map((item) => {

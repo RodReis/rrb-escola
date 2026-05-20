@@ -1,4 +1,4 @@
-import { Trash2 } from "lucide-react";
+import { Trash2, ReceiptText } from "lucide-react";
 import { PageHeader } from "@/components/ui/page-header";
 import { ValorPraticadoInput } from "@/components/valores/valor-praticado-input";
 import { CriarAnoForm } from "@/components/valores/criar-ano-form";
@@ -54,8 +54,11 @@ export default async function ValoresPraticadosPage() {
       />
 
       {anos.length === 0 && (
-        <article className="rounded-panel bg-surface p-8 text-center shadow-soft">
-          <p className="text-ink/60">Nenhum ano cadastrado. Crie um novo ano acima.</p>
+        <article className="rounded-panel bg-surface p-8 shadow-soft">
+          <div className="flex flex-col items-center justify-center gap-2 text-ink/40">
+            <ReceiptText size={28} />
+            <p className="text-sm font-medium">Nenhum ano cadastrado. Crie um novo ano acima.</p>
+          </div>
         </article>
       )}
 

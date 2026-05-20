@@ -1,3 +1,4 @@
+import { Filter, ClipboardList } from "lucide-react";
 import { ExportAttendanceButton } from "@/components/pdf/export-attendance-button";
 import { Panel } from "@/components/ui/card";
 import { PageHeader } from "@/components/ui/page-header";
@@ -31,6 +32,9 @@ export default async function RelatorioFrequenciaPage({ searchParams }: { search
       />
 
       <Panel>
+        <div className="mb-3 flex items-center gap-2 text-xs font-bold uppercase tracking-kicker text-ink/55">
+          <Filter size={12} /> Período
+        </div>
         <form action="/relatorios/frequencia" className="grid gap-4 md:grid-cols-[220px_220px_140px]">
           <label>Início<input name="inicio" type="date" defaultValue={report.start} /></label>
           <label>Fim<input name="fim" type="date" defaultValue={report.end} /></label>
@@ -52,7 +56,14 @@ export default async function RelatorioFrequenciaPage({ searchParams }: { search
           </thead>
           <tbody>
             {report.summary.length === 0 ? (
-              <tr><td colSpan={6} className="text-center text-ink/55 py-10">Nenhum registro de frequência no período.</td></tr>
+              <tr>
+                <td colSpan={6} className="py-12">
+                  <div className="flex flex-col items-center justify-center gap-2 text-ink/40">
+                    <ClipboardList size={28} />
+                    <p className="text-sm font-medium">Nenhum registro de frequência no período.</p>
+                  </div>
+                </td>
+              </tr>
             ) : (
               report.summary.map((item) => (
                 <tr key={`${item.matricula}-${item.aluno}`}>

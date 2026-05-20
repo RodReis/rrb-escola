@@ -1,3 +1,4 @@
+import { Users, Receipt } from "lucide-react";
 import { DelinquencyFilters } from "@/components/finance/delinquency-filters";
 import { ExportDelinquencyButton } from "@/components/pdf/export-delinquency-button";
 import { Panel } from "@/components/ui/card";
@@ -52,10 +53,15 @@ export default async function InadimplenciaPage({ searchParams }: { searchParams
       <DelinquencyFilters defaults={{ de: filters.de, ate: filters.ate, statuses: filters.statuses, aluno: filters.aluno ?? "" }} />
 
       <Panel className="grid gap-4">
-        <h2 className="text-lg font-bold text-ink">Resumo por aluno</h2>
+        <h2 className="flex items-center gap-2 text-lg font-bold text-ink">
+          <Users size={18} className="text-brand" /> Resumo por aluno
+        </h2>
         <div className="grid gap-2">
           {report.byStudent.length === 0 ? (
-            <p className="text-sm text-ink/55">Nenhuma cobrança no filtro selecionado.</p>
+            <div className="flex flex-col items-center justify-center gap-2 py-10 text-ink/40">
+              <Receipt size={28} />
+              <p className="text-sm font-medium">Nenhuma cobrança no filtro selecionado.</p>
+            </div>
           ) : (
             report.byStudent.map((item) => (
               <div key={`${item.matricula}-${item.aluno}`} className="grid gap-2 rounded-ui border border-line p-3 text-sm md:grid-cols-[1fr_150px_100px]">
