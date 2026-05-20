@@ -1,9 +1,10 @@
-import { Plus, UserPlus } from "lucide-react";
+import { Plus, RefreshCcw, UserPlus } from "lucide-react";
 import { createEnrollmentAction } from "@/lib/actions/academics";
 import { getEnrollments } from "@/lib/data/enrollments";
 import { getAcademicData } from "@/lib/data/lookups";
 import { PageHeader } from "@/components/ui/page-header";
 import { Panel } from "@/components/ui/card";
+import { ButtonLink } from "@/components/ui/button";
 import { StudentCombobox } from "@/components/matriculas/student-combobox";
 import { MatriculasTable } from "@/components/matriculas/matriculas-table";
 import { MatriculasFilters } from "@/components/matriculas/matriculas-filters";
@@ -48,6 +49,11 @@ export default async function MatriculasPage({
           { label: "Concluídas",   value: counts.concluida.toLocaleString("pt-BR") },
           { label: "Canceladas",   value: counts.cancelada.toLocaleString("pt-BR"), tone: "danger" },
         ]}
+        actions={
+          <ButtonLink href="/matriculas/rematricula-lote?step=1" variant="secondary">
+            <RefreshCcw size={14} /> Re-matricular em lote
+          </ButtonLink>
+        }
       />
 
       <Panel id="nova-matricula" className="grid gap-5">
