@@ -13,7 +13,17 @@
       "Skill(superpowers:executing-plans)",
       "Skill(superpowers:executing-plans:*)",
       "Read(//c/Users/rodri/.claude/skills/brainstorming/**)",
-      "Read(//c/Users/rodri/.agents/skills/brainstorming/**)"
+      "Read(//c/Users/rodri/.agents/skills/brainstorming/**)",
+      "Skill(brainstorming)",
+      "Skill(brainstorming:*)",
+      "Skill(superpowers:brainstorming)",
+      "Skill(superpowers:brainstorming:*)",
+      "Read(//c/Users/rodri/.claude/plugins/cache/claude-plugins-official/superpowers/5.1.0/skills/subagent-driven-development/**)",
+      "Read(//c/Users/rodri/.claude/plugins/cache/claude-plugins-official/superpowers/5.1.0/skills/requesting-code-review/**)",
+      "mcp__claude_ai_Supabase__list_projects",
+      "mcp__claude_ai_Supabase__apply_migration",
+      "mcp__claude_ai_Supabase__list_migrations",
+      "mcp__claude_ai_Supabase__list_tables"
     ]
   }
 }
