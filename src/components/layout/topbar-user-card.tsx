@@ -45,10 +45,7 @@ export function TopbarUserCard({
         title="Conta"
         className="inline-flex items-center gap-2 h-8 pl-2.5 pr-2 rounded-[8px] border border-white/[0.12] bg-white/10 cursor-pointer hover:bg-white/[0.18] transition-colors"
       >
-        <div className="text-right leading-[1.15]">
-          <div className="text-[11.5px] font-semibold text-white">{perfil.nome.split(" ")[0]}</div>
-          <div className="text-[9.5px] text-white/50 truncate max-w-[120px]">{perfil.email}</div>
-        </div>
+        <div className="text-[11.5px] font-semibold text-white">{perfil.nome.split(" ")[0]}</div>
         {avatarUrl ? (
           // eslint-disable-next-line @next/next/no-img-element
           <img src={avatarUrl} alt={perfil.nome} className="h-6 w-6 shrink-0 rounded-full object-cover" />

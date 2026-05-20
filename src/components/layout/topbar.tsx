@@ -4,6 +4,7 @@ import { SecretariaDropdown, type DropdownItem } from "@/components/layout/secre
 import { RhDropdown } from "@/components/layout/rh-dropdown";
 import { FinanceiroDropdown } from "@/components/layout/financeiro-dropdown";
 import { ConfiguracoesDropdown } from "@/components/layout/configuracoes-dropdown";
+import { RelatoriosDropdown } from "@/components/layout/relatorios-dropdown";
 import { NotificationBell } from "@/components/layout/notification-bell";
 import { TopbarUserCard } from "@/components/layout/topbar-user-card";
 import { logoutAction } from "@/lib/actions/auth";
@@ -19,9 +20,10 @@ const primaryItems: Array<{ href: string; label: string; icon: TopbarIconName }>
   { href: "/", label: "Dashboard", icon: "LayoutDashboard" }
 ];
 
-const secondaryItems: Array<{ href: string; label: string; icon: TopbarIconName }> = [
-  { href: "/relatorios/alunos", label: "Rel. Alunos", icon: "UsersRound" },
-  { href: "/relatorios/frequencia", label: "Rel. Frequência", icon: "CalendarCheck" }
+const RELATORIOS_ITEMS: DropdownItem[] = [
+  { href: "/relatorios/alunos", label: "Rel. Alunos", iconName: "UsersRound" },
+  { href: "/relatorios/frequencia", label: "Rel. Frequência", iconName: "CalendarCheck" },
+  { href: "/relatorios/inadimplencia", label: "Inadimplência", iconName: "AlertCircle" },
 ];
 
 const SECRETARIA_ITEMS: DropdownItem[] = [
@@ -53,7 +55,6 @@ const FINANCEIRO_ITEMS: DropdownItem[] = [
   { href: "/despesas", label: "Despesas", iconName: "Receipt" },
   { href: "/valores-praticados", label: "Valores praticados", iconName: "ReceiptText" },
   { href: "/planos", label: "Planos", iconName: "CreditCard" },
-  { href: "/relatorios/inadimplencia", label: "Inadimplência", iconName: "AlertCircle" },
 ];
 
 const CONFIG_ITEMS: DropdownItem[] = [
@@ -125,7 +126,7 @@ export async function Topbar({
   const rhItems = filterByPermissions(RH_ITEMS, permissions, isAdmin);
   const financeiroItems = filterByPermissions(FINANCEIRO_ITEMS, permissions, isAdmin);
   const configItems = filterByPermissions(CONFIG_ITEMS, permissions, isAdmin);
-  const canRelatorios = isAdmin || can(permissions, "relatorios", "read");
+  const relatoriosItems = filterByPermissions(RELATORIOS_ITEMS, permissions, isAdmin);
 
   return (
     <header
@@ -142,23 +143,16 @@ export async function Topbar({
       </Link>
 
       <nav
-        className="no-scrollbar flex min-w-0 flex-1 items-center gap-0.5 overflow-x-auto overflow-y-hidden h-full py-0"
+        className="no-scrollbar flex shrink-0 items-center gap-0.5 overflow-x-auto overflow-y-hidden h-full py-0"
         style={{ scrollbarWidth: "none" }}
       >
         {primaryItems.map((item) => (
           <TopbarNavLink key={item.href} href={item.href} label={item.label} icon={item.icon} variant="primary" />
         ))}
-        {canRelatorios && (
-          <>
-            <span className="mx-1 h-5 w-px shrink-0 bg-white/20" />
-            {secondaryItems.map((item) => (
-              <TopbarNavLink key={item.href} href={item.href} label={item.label} icon={item.icon} variant="secondary" />
-            ))}
-          </>
-        )}
       </nav>
 
       <div className="flex items-center gap-0.5 shrink-0">
+        <RelatoriosDropdown items={relatoriosItems} />
         <FinanceiroDropdown items={financeiroItems} />
         <SecretariaDropdown items={secretariaItems} />
         <RhDropdown items={rhItems} />

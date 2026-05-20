@@ -1,8 +1,10 @@
 import { Download, Plus, Upload } from "lucide-react";
 import { ButtonLink } from "@/components/ui/button";
 import { PageHeader } from "@/components/ui/page-header";
+import { QuickLinks } from "@/components/dashboard/quick-links";
 import { requireSession } from "@/lib/auth/session";
-import { can, type ModuloCodigo } from "@/lib/auth/permissions";
+import { createServerClient } from "@/lib/supabase/server";
+import { can, ROTA_PARA_MODULO, type ModuloCodigo } from "@/lib/auth/permissions";
 import {
   currentCompetencia,
   getAlertas,
@@ -111,6 +113,26 @@ export default async function DashboardPage({
   const escolaId = session.profile.escola_id;
   const perms = session.permissions;
   const isAdmin = session.profile.perfil === "admin";
+
+  const supabase = await createServerClient();
+  const { data: perfilData } = await supabase
+    .from("perfis")
+    .select("quick_links")
+    .eq("id", session.profile.id)
+    .maybeSingle();
+  const savedLinks: string[] = Array.isArray(perfilData?.quick_links) ? perfilData.quick_links : [];
+
+  // Filter quick links by permission — same logic as topbar filterByPermissions
+  function canAccessRoute(href: string): boolean {
+    if (isAdmin) return true;
+    const modulo = ROTA_PARA_MODULO[href];
+    if (!modulo) return true;
+    return can(perms, modulo, "read");
+  }
+  const quickLinks = savedLinks.filter(canAccessRoute);
+
+  // All hrefs the user can access — passed to modal so it only shows allowed routes
+  const allowedHrefs = Object.keys(ROTA_PARA_MODULO).filter(canAccessRoute);
 
   const has = (modulo: ModuloCodigo): boolean => isAdmin || can(perms, modulo, "read");
 
@@ -274,6 +296,8 @@ export default async function DashboardPage({
           </>
         }
       />
+
+      <QuickLinks initialLinks={quickLinks} allowedHrefs={allowedHrefs} />
 
       <DashboardTabs active={tabEfetiva} competencia={competencia} visible={tabsVisiveis} />
 
