@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Plus } from "lucide-react";
+import { Plus, Pencil, Trash2, CheckCircle2, AlertCircle, Shield } from "lucide-react";
 import { requirePermission } from "@/lib/auth/session";
 import { listRoles } from "@/lib/data/permissoes";
 import { deleteRoleAction } from "@/lib/actions/roles";
@@ -40,12 +40,13 @@ export default async function PerfisPage({
       />
 
       {sp.excluido && (
-        <div className="rounded-ui bg-success/10 p-4 text-sm font-semibold text-success">
-          Role excluída.
+        <div className="flex items-center gap-2 rounded-ui bg-success/10 p-4 text-sm font-semibold text-success">
+          <CheckCircle2 size={16} /> Role excluída.
         </div>
       )}
       {sp.erro && (
-        <div className="rounded-ui bg-danger/10 p-4 text-sm font-semibold text-danger">
+        <div className="flex items-center gap-2 rounded-ui bg-danger/10 p-4 text-sm font-semibold text-danger">
+          <AlertCircle size={16} />
           {ERRO_LABEL[sp.erro] ?? `Falha: ${decodeURIComponent(sp.erro)}`}
         </div>
       )}
@@ -62,6 +63,16 @@ export default async function PerfisPage({
             </tr>
           </thead>
           <tbody>
+            {roles.length === 0 && (
+              <tr>
+                <td colSpan={5} className="py-12">
+                  <div className="flex flex-col items-center justify-center gap-2 text-ink/40">
+                    <Shield size={28} />
+                    <p className="text-sm">Nenhuma role cadastrada.</p>
+                  </div>
+                </td>
+              </tr>
+            )}
             {roles.map((r) => (
               <tr key={r.codigo}>
                 <td className="font-mono text-xs text-ink/70">{r.codigo}</td>
@@ -76,15 +87,21 @@ export default async function PerfisPage({
                   <div className="inline-flex items-center gap-2">
                     <Link
                       href={`/configuracoes/perfis/${r.codigo}`}
-                      className="text-xs font-semibold text-brand hover:underline"
+                      title="Editar permissoes"
+                      aria-label="Editar permissoes"
+                      className="inline-flex h-7 w-7 items-center justify-center rounded-ui text-brand hover:bg-brand/10"
                     >
-                      Editar permissões
+                      <Pencil size={14} />
                     </Link>
                     {!r.sistema && (
                       <form action={deleteRoleAction} className="inline">
                         <input type="hidden" name="codigo" value={r.codigo} />
-                        <button className="text-xs font-semibold text-danger hover:underline">
-                          Excluir
+                        <button
+                          title="Excluir role"
+                          aria-label="Excluir role"
+                          className="inline-flex h-7 w-7 items-center justify-center rounded-ui text-danger hover:bg-danger/10"
+                        >
+                          <Trash2 size={14} />
                         </button>
                       </form>
                     )}

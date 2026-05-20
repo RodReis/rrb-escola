@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { AlertCircle } from "lucide-react";
 import { requirePermission } from "@/lib/auth/session";
 import { createRoleAction } from "@/lib/actions/roles";
 import { PageHeader } from "@/components/ui/page-header";
@@ -32,7 +33,8 @@ export default async function NovaRolePage({
       />
 
       {sp.erro && (
-        <div className="rounded-ui bg-danger/10 p-4 text-sm font-semibold text-danger">
+        <div className="flex items-center gap-2 rounded-ui bg-danger/10 p-4 text-sm font-semibold text-danger">
+          <AlertCircle size={16} />
           {ERRO_LABEL[sp.erro] ?? `Falha: ${decodeURIComponent(sp.erro)}`}
         </div>
       )}

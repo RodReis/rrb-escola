@@ -1,4 +1,4 @@
-import { School, Save, ImageIcon, Trash2 } from "lucide-react";
+import { School, Save, ImageIcon, Trash2, CheckCircle2, AlertCircle } from "lucide-react";
 import { Panel } from "@/components/ui/card";
 import { PageHeader } from "@/components/ui/page-header";
 import { requirePermission } from "@/lib/auth/session";
@@ -53,8 +53,16 @@ export default async function EscolaConfigPage({
         description="Informações cadastrais usadas em boletins, relatórios e PDFs."
       />
 
-      {sucMsg && <div className="rounded-ui bg-success/10 p-3 text-sm font-semibold text-success">{sucMsg}</div>}
-      {errMsg && <div className="rounded-ui bg-danger/10 p-3 text-sm font-semibold text-danger">{errMsg}</div>}
+      {sucMsg && (
+        <div className="flex items-center gap-2 rounded-ui bg-success/10 p-3 text-sm font-semibold text-success">
+          <CheckCircle2 size={16} /> {sucMsg}
+        </div>
+      )}
+      {errMsg && (
+        <div className="flex items-center gap-2 rounded-ui bg-danger/10 p-3 text-sm font-semibold text-danger">
+          <AlertCircle size={16} /> {errMsg}
+        </div>
+      )}
 
       <Panel className="grid gap-4">
         <div className="flex items-center gap-2">

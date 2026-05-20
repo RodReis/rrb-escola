@@ -1,4 +1,4 @@
-import { Webhook, Save, Send } from "lucide-react";
+import { Webhook, Save, Send, Code2, FlaskConical } from "lucide-react";
 import { Panel } from "@/components/ui/card";
 import { PageHeader } from "@/components/ui/page-header";
 import { requirePermission } from "@/lib/auth/session";
@@ -60,7 +60,10 @@ export default async function WebhookConfigPage() {
 
       {url && (
         <Panel className="grid gap-3">
-          <h3 className="font-bold text-ink">Testar webhook</h3>
+          <h3 className="flex items-center gap-2 font-bold text-ink">
+            <FlaskConical size={16} className="text-brand" />
+            Testar webhook
+          </h3>
           <p className="text-sm text-ink/60">
             Dispara um POST de teste com severidade crítica para a URL configurada.
           </p>
@@ -73,7 +76,10 @@ export default async function WebhookConfigPage() {
       )}
 
       <Panel className="grid gap-3">
-        <h3 className="font-bold text-ink">Payload enviado</h3>
+        <h3 className="flex items-center gap-2 font-bold text-ink">
+          <Code2 size={16} className="text-brand" />
+          Payload enviado
+        </h3>
         <pre className="overflow-x-auto rounded-ui bg-muted/40 p-4 text-xs text-ink">
 {`{
   "escola": "Nome da escola",

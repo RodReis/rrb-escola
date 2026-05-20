@@ -1,4 +1,5 @@
 import { notFound } from "next/navigation";
+import { CheckCircle2, AlertCircle, Info } from "lucide-react";
 import { requirePermission } from "@/lib/auth/session";
 import { getRole, getRolePermissoes, permissoesToMap } from "@/lib/data/permissoes";
 import { updateRoleAction, updateRolePermissionsAction } from "@/lib/actions/roles";
@@ -53,17 +54,18 @@ export default async function EditarPerfilPage({
       />
 
       {sp.salvo && (
-        <div className="rounded-ui bg-success/10 p-4 text-sm font-semibold text-success">
-          Permissões salvas.
+        <div className="flex items-center gap-2 rounded-ui bg-success/10 p-4 text-sm font-semibold text-success">
+          <CheckCircle2 size={16} /> Permissões salvas.
         </div>
       )}
       {sp.atualizado && (
-        <div className="rounded-ui bg-success/10 p-4 text-sm font-semibold text-success">
-          Dados atualizados.
+        <div className="flex items-center gap-2 rounded-ui bg-success/10 p-4 text-sm font-semibold text-success">
+          <CheckCircle2 size={16} /> Dados atualizados.
         </div>
       )}
       {sp.erro && (
-        <div className="rounded-ui bg-danger/10 p-4 text-sm font-semibold text-danger">
+        <div className="flex items-center gap-2 rounded-ui bg-danger/10 p-4 text-sm font-semibold text-danger">
+          <AlertCircle size={16} />
           {ERRO_LABEL[sp.erro] ?? `Falha: ${decodeURIComponent(sp.erro)}`}
         </div>
       )}
@@ -90,7 +92,8 @@ export default async function EditarPerfilPage({
       <form action={updateRolePermissionsAction} className="grid gap-4">
         <input type="hidden" name="codigo" value={role.codigo} />
         {isAdmin && (
-          <div className="rounded-ui bg-muted p-4 text-sm font-semibold text-ink/75">
+          <div className="flex items-center gap-2 rounded-ui bg-muted p-4 text-sm font-semibold text-ink/75">
+            <Info size={16} className="text-brand" />
             Admin sempre tem acesso total. Esta matriz é apenas informativa.
           </div>
         )}
