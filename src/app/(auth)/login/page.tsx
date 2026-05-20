@@ -1,6 +1,6 @@
 import { loginAction } from "@/lib/actions/auth";
 import { ThemeToggle } from "@/components/ui/theme-toggle";
-import { ArrowRight, Database, School, ShieldCheck, Sparkles } from "lucide-react";
+import { ArrowRight, Database, School, ShieldCheck, Sparkles, AlertCircle } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 
 export const dynamic = "force-dynamic";
@@ -57,7 +57,8 @@ export default async function LoginPage({ searchParams }: { searchParams: { erro
             <p className="mt-2 text-sm font-medium text-muted">Login validado pelo Supabase Auth local.</p>
           </div>
           {error ? (
-            <p className="mb-4 rounded-ui bg-clay/10 p-3 text-sm font-bold text-clay">
+            <p className="mb-4 flex items-center gap-2 rounded-ui bg-clay/10 p-3 text-sm font-bold text-clay">
+              <AlertCircle size={16} />
               {error === "perfil"
                 ? "Sem perfil ativo. Solicite acesso ao administrador."
                 : error === "credenciais"
