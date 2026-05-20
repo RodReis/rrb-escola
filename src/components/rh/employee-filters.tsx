@@ -52,20 +52,20 @@ export function EmployeeFilters({ companies, counts, canViewInactive }: Props) {
         onChange={(v) => update("segmento", v)}
       />
 
-      <div className="flex flex-1 min-w-[260px] items-center gap-2 rounded-ui border border-line bg-paper px-3 py-1.5 focus-within:border-brand/60 focus-within:bg-surface focus-within:shadow-ring transition">
-        <SearchInline
-          defaultValue={search}
-          placeholder="Buscar por nome, CPF ou e-mail..."
-          onChange={(e) => {
-            const value = (e.target as HTMLInputElement).value;
-            clearTimeout((window as unknown as Record<string, ReturnType<typeof setTimeout>>)._empSearchTimer);
-            (window as unknown as Record<string, ReturnType<typeof setTimeout>>)._empSearchTimer = setTimeout(
-              () => update("search", value),
-              300
-            );
-          }}
-        />
-      </div>
+      <SearchInline
+        defaultValue={search}
+        placeholder="Buscar por nome, CPF ou e-mail..."
+        bordered
+        containerClassName="flex-1 min-w-[260px]"
+        onChange={(e) => {
+          const value = (e.target as HTMLInputElement).value;
+          clearTimeout((window as unknown as Record<string, ReturnType<typeof setTimeout>>)._empSearchTimer);
+          (window as unknown as Record<string, ReturnType<typeof setTimeout>>)._empSearchTimer = setTimeout(
+            () => update("search", value),
+            300
+          );
+        }}
+      />
 
       <FilterDropdown
         label="Empresa"
@@ -106,7 +106,7 @@ export function EmployeeFilters({ companies, counts, canViewInactive }: Props) {
           className="text-xs font-semibold text-ink/55 hover:text-brand"
           onClick={() => router.push(pathname)}
         >
-          Limpar
+          Limpar filtros
         </button>
       )}
     </div>

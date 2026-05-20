@@ -42,20 +42,20 @@ export function StudentFilters({ counts }: { counts?: Counts }) {
         onChange={(v) => update("segmento", v, ["serie", "turma"])}
       />
 
-      <div className="flex flex-1 min-w-[280px] items-center gap-2 rounded-ui border border-line bg-paper px-3 py-1.5 focus-within:border-brand/60 focus-within:bg-surface focus-within:shadow-ring transition">
-        <SearchInline
-          defaultValue={nome}
-          placeholder="Buscar por nome, matrícula ou responsável..."
-          onChange={(e) => {
-            const value = (e.target as HTMLInputElement).value;
-            clearTimeout((window as unknown as Record<string, ReturnType<typeof setTimeout>>)._nomeTimer);
-            (window as unknown as Record<string, ReturnType<typeof setTimeout>>)._nomeTimer = setTimeout(
-              () => update("nome", value),
-              300
-            );
-          }}
-        />
-      </div>
+      <SearchInline
+        defaultValue={nome}
+        placeholder="Buscar por nome, matrícula ou responsável..."
+        bordered
+        containerClassName="flex-1 min-w-[280px]"
+        onChange={(e) => {
+          const value = (e.target as HTMLInputElement).value;
+          clearTimeout((window as unknown as Record<string, ReturnType<typeof setTimeout>>)._nomeTimer);
+          (window as unknown as Record<string, ReturnType<typeof setTimeout>>)._nomeTimer = setTimeout(
+            () => update("nome", value),
+            300
+          );
+        }}
+      />
 
       {(nome || segmento) && (
         <button
@@ -63,7 +63,7 @@ export function StudentFilters({ counts }: { counts?: Counts }) {
           className="text-xs font-semibold text-ink/55 hover:text-brand"
           onClick={() => router.push(pathname)}
         >
-          Limpar
+          Limpar filtros
         </button>
       )}
     </div>

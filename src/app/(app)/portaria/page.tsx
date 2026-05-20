@@ -66,8 +66,8 @@ export default async function PortariaPage() {
               <option value="facial_simulado">Facial simulado</option>
             </select>
           </label>
-          <label>Confianca<input name="confianca" inputMode="decimal" placeholder="98.5" /></label>
-          <label className="md:col-span-3">Observacao<input name="observacao" /></label>
+          <label>Confiança<input name="confianca" inputMode="decimal" placeholder="98.5" /></label>
+          <label className="md:col-span-3">Observação<input name="observacao" /></label>
           <Button name="tipo" value="entrada" variant="primary" className="self-end">Registrar entrada</Button>
           <Button name="tipo" value="saida" className="self-end border-danger bg-danger text-white hover:bg-danger/90">Registrar saída</Button>
         </form>
@@ -109,7 +109,7 @@ export default async function PortariaPage() {
             {data.notifications.length === 0 && (
               <div className="flex flex-col items-center justify-center gap-2 py-8 text-ink/40">
                 <Bell size={24} />
-                <p className="text-sm">Nenhuma notificacao enviada.</p>
+                <p className="text-sm">Nenhuma notificação enviada.</p>
               </div>
             )}
             {data.notifications.map((notification) => (

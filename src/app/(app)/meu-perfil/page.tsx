@@ -1,4 +1,4 @@
-import { User, Key, Save, ImageIcon, Trash2 } from "lucide-react";
+import { User, Key, Save, ImageIcon, Trash2, CheckCircle2, AlertCircle } from "lucide-react";
 import { Panel } from "@/components/ui/card";
 import { PageHeader } from "@/components/ui/page-header";
 import { requireSession } from "@/lib/auth/session";
@@ -73,10 +73,14 @@ export default async function MeuPerfilPage({
       />
 
       {sucMsg && (
-        <div className="rounded-ui bg-success/10 p-3 text-sm font-semibold text-success">{sucMsg}</div>
+        <div className="flex items-center gap-2 rounded-ui bg-success/10 p-3 text-sm font-semibold text-success">
+          <CheckCircle2 size={16} className="shrink-0" /> {sucMsg}
+        </div>
       )}
       {errMsg && (
-        <div className="rounded-ui bg-danger/10 p-3 text-sm font-semibold text-danger">{errMsg}</div>
+        <div className="flex items-center gap-2 rounded-ui bg-danger/10 p-3 text-sm font-semibold text-danger">
+          <AlertCircle size={16} className="shrink-0" /> {errMsg}
+        </div>
       )}
 
       <Panel className="grid gap-4">
