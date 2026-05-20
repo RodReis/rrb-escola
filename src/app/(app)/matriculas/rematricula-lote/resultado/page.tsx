@@ -25,7 +25,7 @@ export default async function RematricularLoteResultadoPage() {
   }
 
   // Clear cookie
-  cookieStore.set("rematricula_lote_result", "", { maxAge: 0, path: "/" });
+  cookieStore.set("rematricula_lote_result", "", { maxAge: 0, httpOnly: true, path: "/" });
 
   const { anoDestino, ok, errors } = resultado;
 
