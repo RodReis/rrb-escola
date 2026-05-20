@@ -1,5 +1,6 @@
 import { createServerClient } from "@/lib/supabase/server";
 import { DEFAULT_SCHOOL_ID } from "@/lib/constants";
+import { getSignedFotoUrls } from "@/lib/storage/photos";
 
 export async function getEnrollments(filters?: { status?: string; nome?: string }) {
   const supabase = await createServerClient();
@@ -14,14 +15,16 @@ export async function getEnrollments(filters?: { status?: string; nome?: string 
   const { data, error } = await query;
   if (error) throw error;
 
-  let rows = (data ?? []).map((m) => ({
+  const rawRows = data ?? [];
+  const fotoPaths = rawRows.map((m) => m.alunos?.foto_url ?? null);
+  const signedMap = await getSignedFotoUrls(fotoPaths);
+
+  let rows = rawRows.map((m) => ({
     ...m,
     alunos: m.alunos
       ? {
           ...m.alunos,
-          foto_url: m.alunos.foto_url
-            ? (supabase.storage.from("alunos-fotos").getPublicUrl(m.alunos.foto_url).data.publicUrl ?? null)
-            : null,
+          foto_url: m.alunos.foto_url ? (signedMap.get(m.alunos.foto_url) ?? null) : null,
         }
       : m.alunos,
   }));

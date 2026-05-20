@@ -1,5 +1,6 @@
 import { createServerClient } from "@/lib/supabase/server";
 import { DEFAULT_SCHOOL_ID } from "@/lib/constants";
+import { getSignedFotoUrls } from "@/lib/storage/photos";
 
 export type GestaoFinanceira = "propria" | "terceirizada";
 
@@ -684,7 +685,7 @@ export async function getRenovacoesPendentes(
     .order("data_matricula", { ascending: true })
     .limit(limit);
 
-  return ((data ?? []) as any[]).map((m) => {
+  const rawRows = ((data ?? []) as any[]).map((m) => {
     let diasRestantes = 0;
     if (m.data_matricula) {
       const [dy, dm, dd] = String(m.data_matricula).split("-").map(Number) as [number, number, number];
@@ -699,13 +700,16 @@ export async function getRenovacoesPendentes(
       matriculaId: m.id,
       alunoId: m.aluno_id,
       alunoNome: aluno?.nome ?? "—",
-      fotoUrl: aluno?.foto_url
-        ? (supabase.storage.from("alunos-fotos").getPublicUrl(aluno.foto_url).data.publicUrl ?? null)
-        : null,
+      fotoUrl: aluno?.foto_url ?? null,
       anoLetivo: m.ano_letivo,
       diasRestantes,
     };
   });
+  const signedMap = await getSignedFotoUrls(rawRows.map((r) => r.fotoUrl));
+  return rawRows.map((r) => ({
+    ...r,
+    fotoUrl: r.fotoUrl ? (signedMap.get(r.fotoUrl) ?? null) : null,
+  }));
 }
 
 export type AlertaSeveridade = "critico" | "atencao" | "info";
@@ -1306,9 +1310,7 @@ export async function getAniversariantesSemana(
       dia: dd,
       mes: mm,
       diaSemana: slot.rotulo,
-      fotoUrl: aluno.foto_url
-        ? (supabase.storage.from("alunos-fotos").getPublicUrl(aluno.foto_url).data.publicUrl ?? null)
-        : null,
+      fotoUrl: aluno.foto_url ?? null,
       hoje: dd === hoje.getDate() && mm === hoje.getMonth() + 1,
       idade,
       dataLabel,
@@ -1322,7 +1324,13 @@ export async function getAniversariantesSemana(
     return ia - ib;
   });
 
-  return rows;
+  // Assinar fotos em batch (bucket privado)
+  const fotoPaths = rows.map((r) => r.fotoUrl);
+  const signedMap = await getSignedFotoUrls(fotoPaths);
+  return rows.map((r) => ({
+    ...r,
+    fotoUrl: r.fotoUrl ? (signedMap.get(r.fotoUrl) ?? null) : null,
+  }));
 }
 
 export type AniversarioMatriculaRow = {
@@ -1443,7 +1451,7 @@ export async function getProximasCobrancas(
     .order("data_vencimento");
 
   const hojeUTC = Date.UTC(hoje.getFullYear(), hoje.getMonth(), hoje.getDate());
-  return ((data ?? []) as any[]).map((c) => {
+  const rawRows = ((data ?? []) as any[]).map((c) => {
     const matricula = Array.isArray(c.matriculas) ? c.matriculas[0] : c.matriculas;
     const aluno = Array.isArray(matricula?.alunos) ? matricula?.alunos?.[0] : matricula?.alunos;
     const [vy, vm, vd] = String(c.data_vencimento).split("-").map(Number) as [number, number, number];
@@ -1453,9 +1461,7 @@ export async function getProximasCobrancas(
       cobrancaId: c.id,
       alunoId: matricula?.aluno_id ?? "",
       alunoNome: aluno?.nome ?? "—",
-      fotoUrl: aluno?.foto_url
-        ? (supabase.storage.from("alunos-fotos").getPublicUrl(aluno.foto_url).data.publicUrl ?? null)
-        : null,
+      fotoUrl: aluno?.foto_url ?? null,
       descricao: c.descricao ?? "—",
       valor: Number(c.valor_final ?? 0),
       dataVencimento: c.data_vencimento,
@@ -1463,6 +1469,11 @@ export async function getProximasCobrancas(
       status: c.status,
     };
   });
+  const signedMap = await getSignedFotoUrls(rawRows.map((r) => r.fotoUrl));
+  return rawRows.map((r) => ({
+    ...r,
+    fotoUrl: r.fotoUrl ? (signedMap.get(r.fotoUrl) ?? null) : null,
+  }));
 }
 
 export type SaudeIndicador = {
