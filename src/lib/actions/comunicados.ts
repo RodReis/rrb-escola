@@ -90,7 +90,7 @@ export async function criarComunicadoAction(formData: FormData) {
 
   // Insere uma mensagem pendente por destinatário.
   if (destinatarios.length > 0) {
-    await supabase.from("mensagens_whatsapp").insert(
+    const { error: msgErr } = await supabase.from("mensagens_whatsapp").insert(
       destinatarios.map((d) => ({
         escola_id: DEFAULT_SCHOOL_ID,
         telefone: d.telefone,
@@ -102,10 +102,23 @@ export async function criarComunicadoAction(formData: FormData) {
         referencia_id: comunicado.id,
       })),
     );
+    if (msgErr) {
+      // Não deixa o comunicado preso em "processando" sem fila: marca como concluído com falha.
+      await supabase
+        .from("comunicados")
+        .update({
+          total_destinatarios: 0,
+          total_falhas: destinatarios.length,
+          status: "concluido",
+          concluido_em: new Date().toISOString(),
+        })
+        .eq("id", comunicado.id);
+      redirect(`/comunicados/${comunicado.id}?erro=${encodeURIComponent(msgErr.message)}`);
+    }
   }
 
   // Atualiza total de destinatários. Se zero, já marca concluído.
-  await supabase
+  const { error: updErr } = await supabase
     .from("comunicados")
     .update({
       total_destinatarios: destinatarios.length,
@@ -113,6 +126,9 @@ export async function criarComunicadoAction(formData: FormData) {
       concluido_em: destinatarios.length === 0 ? new Date().toISOString() : null,
     })
     .eq("id", comunicado.id);
+  if (updErr) {
+    console.error("[comunicados] falha ao atualizar contador do comunicado:", updErr.message);
+  }
 
   revalidatePath("/comunicados");
   redirect(`/comunicados/${comunicado.id}`);

@@ -69,11 +69,13 @@ export async function getComunicado(
 
 export async function getDestinatarios(
   comunicadoId: string,
+  escolaId: string = DEFAULT_SCHOOL_ID,
 ): Promise<DestinatarioMensagem[]> {
   const supabase = await createServerClient();
   const { data } = await supabase
     .from("mensagens_whatsapp")
     .select("id, telefone, status, erro, aluno_id")
+    .eq("escola_id", escolaId)
     .eq("referencia_tipo", "comunicado")
     .eq("referencia_id", comunicadoId)
     .order("created_at", { ascending: true });
