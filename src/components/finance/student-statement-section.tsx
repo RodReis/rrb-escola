@@ -2,6 +2,7 @@ import { ExportStudentStatementButton } from "@/components/pdf/export-student-st
 import { Panel } from "@/components/ui/card";
 import { getStudentStatement } from "@/lib/data/finance";
 import { displayStatus } from "@/lib/finance/charge-status";
+import { GerarBoletoButton } from "@/components/finance/gerar-boleto-button";
 
 export async function StudentStatementSection({ alunoId, searchParams }: {
   alunoId: string;
@@ -32,11 +33,16 @@ export async function StudentStatementSection({ alunoId, searchParams }: {
         {statement.charges.length === 0 ? (
           <p className="text-muted">Nenhuma cobrança no período.</p>
         ) : statement.charges.map((c) => (
-          <div key={c.id} className="grid gap-2 border-b border-line py-2 md:grid-cols-[1fr_120px_120px_120px]">
+          <div key={c.id} className="grid gap-2 border-b border-line py-2 md:grid-cols-[1fr_120px_120px_120px_120px]">
             <strong className="text-ink">{c.descricao}</strong>
             <span>Vence {new Date(`${c.data_vencimento}T00:00:00`).toLocaleDateString("pt-BR")}</span>
             <span className="font-bold">{Number(c.valor_final).toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}</span>
             <span className="text-muted">{displayStatus(c.status, c.data_vencimento)}</span>
+            <span>
+              {c.status !== "paga" && c.status !== "cancelada" ? (
+                <GerarBoletoButton cobrancaId={c.id} invoiceUrl={c.asaas_invoice_url ?? null} />
+              ) : null}
+            </span>
           </div>
         ))}
       </div>
