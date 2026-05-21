@@ -43,7 +43,8 @@ describe("montarComponentsTemplate", () => {
 
   it("preserva a ordem das variáveis", () => {
     const r = montarComponentsTemplate(["um", "dois", "três"], undefined);
-    expect(r[0].parameters.map((p: { text: string }) => p.text)).toEqual([
+    const body = r[0] as { type: "body"; parameters: { type: "text"; text: string }[] };
+    expect(body.parameters.map((p) => p.text)).toEqual([
       "um",
       "dois",
       "três",
