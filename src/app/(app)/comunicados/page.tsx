@@ -47,8 +47,12 @@ export default async function ComunicadosPage() {
                 <div className="min-w-0">
                   <p className="truncate font-semibold text-ink">{c.titulo}</p>
                   <p className="text-xs text-ink/55">
-                    {c.alcance === "geral" ? "Geral" : "Individual"} ·{" "}
-                    {new Date(c.createdAt).toLocaleDateString("pt-BR")}
+                    {c.alcance === "geral"
+                      ? "Geral"
+                      : c.alcance === "segmentado"
+                        ? "Segmentado"
+                        : "Individual"}{" "}
+                    · {new Date(c.createdAt).toLocaleDateString("pt-BR")}
                   </p>
                 </div>
                 <span className="text-xs text-ink/60">
