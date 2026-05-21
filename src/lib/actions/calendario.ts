@@ -5,6 +5,7 @@ import { createServerClient } from "@/lib/supabase/server";
 import { requirePermission } from "@/lib/auth/session";
 import { DEFAULT_SCHOOL_ID } from "@/lib/constants";
 import { formText, formNumber } from "@/lib/utils";
+import { todosFeriados } from "@/lib/calendario/feriados";
 
 function parseDiasSemana(formData: FormData): number[] {
   // Checkboxes name="dia_semana" value="0".."6"
@@ -44,7 +45,36 @@ export async function salvarCalendarioAction(formData: FormData) {
   if (id) {
     await supabase.from("calendario_letivo").update(payload).eq("id", id).eq("escola_id", DEFAULT_SCHOOL_ID);
   } else {
-    await supabase.from("calendario_letivo").insert(payload);
+    const { data: novoCal } = await supabase
+      .from("calendario_letivo")
+      .insert(payload)
+      .select("id")
+      .single();
+
+    if (novoCal) {
+      // Auto-importar feriados nacionais/estaduais/municipais do ano.
+      const { data: escola } = await supabase
+        .from("escolas")
+        .select("uf, cidade")
+        .eq("id", DEFAULT_SCHOOL_ID)
+        .maybeSingle();
+
+      const feriados = todosFeriados(anoLetivo, escola?.uf ?? "", escola?.cidade ?? "")
+        .filter((f) => f.data >= dataInicio && f.data <= dataFim);
+
+      if (feriados.length > 0) {
+        await supabase.from("calendario_excecoes").insert(
+          feriados.map((f) => ({
+            calendario_id: novoCal.id,
+            escola_id: DEFAULT_SCHOOL_ID,
+            data_inicio: f.data,
+            data_fim: f.data,
+            tipo: "feriado" as const,
+            descricao: f.descricao,
+          })),
+        );
+      }
+    }
   }
 
   revalidatePath("/calendario");
