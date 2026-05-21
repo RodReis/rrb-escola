@@ -1,13 +1,12 @@
 "use client";
 
 import { useState } from "react";
-import { FileText, Download, Loader2, Printer } from "lucide-react";
+import { FileText, Download, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Panel } from "@/components/ui/card";
 import { generateFromTemplateAction } from "@/lib/actions/documents-generate-v2";
 import { downloadBase64Docx } from "@/lib/documents/download-client";
-import { printDocxAsPdf } from "@/lib/documents/print-pdf";
 import type { StudentDocument } from "@/lib/data/documents";
 
 type TemplateLite = { id: string; nome: string; categoria: string };
@@ -31,10 +30,7 @@ interface Props {
 export function DocumentGenerator({ matriculaId, templates, documentosIniciais }: Props) {
   const [templateId, setTemplateId] = useState<string>(templates[0]?.id ?? "");
   const [loading, setLoading] = useState(false);
-  const [loadingPdf, setLoadingPdf] = useState(false);
   const [documentos, setDocumentos] = useState<StudentDocument[]>(documentosIniciais);
-  const [lastBase64, setLastBase64] = useState<string | null>(null);
-  const [lastNome, setLastNome] = useState<string | null>(null);
 
   async function handleGerar() {
     if (!templateId) return;
@@ -45,8 +41,6 @@ export function DocumentGenerator({ matriculaId, templates, documentosIniciais }
         toast.error(res.error ?? "Erro ao gerar documento.");
         return;
       }
-      setLastBase64(res.base64);
-      setLastNome(res.nomeArquivo);
       downloadBase64Docx(res.base64, res.nomeArquivo);
       toast.success(`Documento gerado: ${res.nomeArquivo}`);
       if (res.warning) {
@@ -57,32 +51,6 @@ export function DocumentGenerator({ matriculaId, templates, documentosIniciais }
       if (r.ok) setDocumentos(await r.json());
     } finally {
       setLoading(false);
-    }
-  }
-
-  async function handlePdf() {
-    if (!templateId) return;
-    setLoadingPdf(true);
-    try {
-      let b64 = lastBase64;
-      let nome = lastNome;
-      if (!b64 || !nome) {
-        const res = await generateFromTemplateAction(matriculaId, templateId);
-        if (!res.success || !res.base64 || !res.nomeArquivo) {
-          toast.error(res.error ?? "Erro ao gerar documento.");
-          return;
-        }
-        b64 = res.base64;
-        nome = res.nomeArquivo;
-        setLastBase64(b64);
-        setLastNome(nome);
-        if (res.warning) toast.warning(res.warning, { duration: 8000 });
-      }
-      await printDocxAsPdf(b64, nome);
-    } catch {
-      toast.error("Erro ao gerar PDF.");
-    } finally {
-      setLoadingPdf(false);
     }
   }
 
@@ -107,11 +75,8 @@ export function DocumentGenerator({ matriculaId, templates, documentosIniciais }
               ))}
             </select>
           </label>
-          <Button variant="accent" onClick={handleGerar} disabled={loading || loadingPdf || !templateId}>
+          <Button variant="accent" onClick={handleGerar} disabled={loading || !templateId}>
             {loading ? (<><Loader2 size={16} className="animate-spin" /> Gerando...</>) : "Baixar .docx"}
-          </Button>
-          <Button variant="secondary" onClick={handlePdf} disabled={loading || loadingPdf || !templateId}>
-            {loadingPdf ? (<><Loader2 size={16} className="animate-spin" /> Gerando PDF...</>) : (<><Printer size={14} /> Imprimir / PDF</>)}
           </Button>
         </div>
       )}
