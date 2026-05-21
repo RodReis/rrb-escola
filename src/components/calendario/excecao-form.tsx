@@ -3,9 +3,9 @@ import { Panel } from "@/components/ui/card";
 
 export function ExcecaoForm({ calendarioId }: { calendarioId: string }) {
   return (
-    <Panel className="grid gap-4">
+    <Panel className="flex flex-col gap-4 self-start">
       <h2 className="font-bold text-ink">Adicionar feriado ou recesso</h2>
-      <form action={salvarExcecaoAction} className="grid gap-4">
+      <form action={salvarExcecaoAction} className="flex flex-col gap-4">
         <input type="hidden" name="calendario_id" value={calendarioId} />
 
         <div className="grid gap-4 sm:grid-cols-2">
