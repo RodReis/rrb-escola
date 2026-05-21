@@ -15,10 +15,9 @@ function parseDiasSemana(formData: FormData): number[] {
 }
 
 export async function salvarCalendarioAction(formData: FormData) {
-  await requirePermission("calendario", "create");
-  const supabase = await createServerClient();
-
   const id = formText(formData, "id");
+  await requirePermission("calendario", id ? "update" : "create");
+  const supabase = await createServerClient();
   const anoLetivo = formNumber(formData, "ano_letivo");
   const dataInicio = formText(formData, "data_inicio");
   const dataFim = formText(formData, "data_fim");
@@ -71,6 +70,14 @@ export async function salvarExcecaoAction(formData: FormData) {
   if (dataFim < dataInicio) {
     throw new Error("Data fim não pode ser anterior à data início");
   }
+
+  const { data: cal } = await supabase
+    .from("calendario_letivo")
+    .select("id")
+    .eq("id", calendarioId)
+    .eq("escola_id", DEFAULT_SCHOOL_ID)
+    .maybeSingle();
+  if (!cal) throw new Error("Calendário não encontrado");
 
   const payload = {
     calendario_id: calendarioId,
