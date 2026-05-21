@@ -1,6 +1,9 @@
 import "server-only";
 import { createAdminClient } from "@/lib/supabase/admin";
-import { sendWhatsApp, sendWhatsAppMedia } from "@/lib/whatsapp/evolution";
+import { sendTemplate } from "@/lib/whatsapp/meta";
+
+const TEMPLATE_COMUNICADO = process.env.META_TEMPLATE_COMUNICADO ?? "comunicado_escola";
+const IDIOMA = "pt_BR";
 
 const TAMANHO_LOTE = 30;
 
@@ -9,6 +12,49 @@ export type ResultadoLote = {
   enviadas: number;
   falhas: number;
 };
+
+type MsgPendente = {
+  id: string;
+  telefone: string;
+  mensagem: string;
+  imagem_url: string | null;
+  referencia_id: string;
+};
+
+async function sendTemplateComunicado(
+  msg: MsgPendente,
+  supabase: ReturnType<typeof createAdminClient>,
+): Promise<{ ok: boolean }> {
+  const resultado = await sendTemplate({
+    telefone: msg.telefone,
+    templateName: TEMPLATE_COMUNICADO,
+    idioma: IDIOMA,
+    variaveis: [msg.mensagem],
+    imagemUrl: msg.imagem_url ?? undefined,
+  });
+
+  if (resultado.ok) {
+    await supabase
+      .from("mensagens_whatsapp")
+      .update({
+        status: "enviada",
+        provider_message_id: resultado.providerMessageId,
+        enviada_em: new Date().toISOString(),
+      })
+      .eq("id", msg.id);
+    return { ok: true };
+  }
+
+  await supabase
+    .from("mensagens_whatsapp")
+    .update({
+      status: "falha",
+      erro: resultado.reason,
+      enviada_em: new Date().toISOString(),
+    })
+    .eq("id", msg.id);
+  return { ok: false };
+}
 
 export async function processarLote(): Promise<ResultadoLote> {
   const supabase = createAdminClient();
@@ -34,34 +80,12 @@ export async function processarLote(): Promise<ResultadoLote> {
   for (const msg of lote) {
     comunicadosTocados.add(msg.referencia_id);
 
-    const resultado = msg.imagem_url
-      ? await sendWhatsAppMedia({
-          telefone: msg.telefone,
-          mensagem: msg.mensagem,
-          imagemUrl: msg.imagem_url,
-        })
-      : await sendWhatsApp({ telefone: msg.telefone, mensagem: msg.mensagem });
+    const resultado = await sendTemplateComunicado(msg, supabase);
 
     if (resultado.ok) {
       enviadas += 1;
-      await supabase
-        .from("mensagens_whatsapp")
-        .update({
-          status: "enviada",
-          provider_message_id: resultado.providerMessageId,
-          enviada_em: new Date().toISOString(),
-        })
-        .eq("id", msg.id);
     } else {
       falhas += 1;
-      await supabase
-        .from("mensagens_whatsapp")
-        .update({
-          status: "falha",
-          erro: resultado.reason,
-          enviada_em: new Date().toISOString(),
-        })
-        .eq("id", msg.id);
     }
   }
 

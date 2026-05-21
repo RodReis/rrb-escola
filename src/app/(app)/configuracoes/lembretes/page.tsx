@@ -20,7 +20,6 @@ export default async function LembretesConfigPage() {
       />
       <ConfigLembretesForm
         autoAtivo={config.autoAtivo}
-        template={config.template}
         pendentes={pendentes}
       />
     </div>

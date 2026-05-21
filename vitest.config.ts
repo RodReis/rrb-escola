@@ -10,6 +10,8 @@ export default defineConfig({
   resolve: {
     alias: {
       "@": resolve(__dirname, "src"),
+      // "server-only" lança erro em runtime mas não tem lógica — mock vazio no teste.
+      "server-only": resolve(__dirname, "src/__mocks__/server-only.ts"),
     },
   },
 });

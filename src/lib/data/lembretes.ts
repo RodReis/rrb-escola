@@ -4,11 +4,7 @@ import { resolverLembretesPendentes } from "@/lib/lembretes/detectar";
 
 export type ConfigLembretes = {
   autoAtivo: boolean;
-  template: string;
 };
-
-const TEMPLATE_FALLBACK =
-  "Olá {responsavel}, a mensalidade de {aluno} ({descricao}) no valor de {valor}, vencida em {vencimento}, está em aberto há {dias_atraso} dia(s). Por favor, regularize.";
 
 export async function getConfigLembretes(
   escolaId: string = DEFAULT_SCHOOL_ID,
@@ -16,12 +12,11 @@ export async function getConfigLembretes(
   const supabase = await createServerClient();
   const { data } = await supabase
     .from("escolas")
-    .select("lembrete_auto_ativo, lembrete_template")
+    .select("lembrete_auto_ativo")
     .eq("id", escolaId)
     .maybeSingle();
   return {
     autoAtivo: !!data?.lembrete_auto_ativo,
-    template: data?.lembrete_template || TEMPLATE_FALLBACK,
   };
 }
 

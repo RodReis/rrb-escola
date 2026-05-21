@@ -2,11 +2,15 @@ import "server-only";
 import { createServerClient } from "@/lib/supabase/server";
 import { DEFAULT_SCHOOL_ID } from "@/lib/constants";
 import { normalizarTelefone } from "./telefone";
-import { sendWhatsApp, sendWhatsAppMedia } from "./evolution";
+import { sendTemplate } from "./meta";
+
+const IDIOMA_TEMPLATE = "pt_BR";
 
 export type EnviarWhatsAppParams = {
   telefone: string;
-  mensagem: string;
+  templateName: string;
+  variaveis: string[];
+  textoLog: string;
   imagemUrl?: string;
   alunoId?: string;
   referenciaTipo?: string;
@@ -33,7 +37,7 @@ export async function enviarWhatsApp(
     await supabase.from("mensagens_whatsapp").insert({
       escola_id: DEFAULT_SCHOOL_ID,
       telefone: params.telefone,
-      mensagem: params.mensagem,
+      mensagem: params.textoLog,
       status: "falha",
       erro: "Telefone inválido",
       imagem_url: params.imagemUrl ?? null,
@@ -51,7 +55,7 @@ export async function enviarWhatsApp(
     .insert({
       escola_id: DEFAULT_SCHOOL_ID,
       telefone: telefoneNormalizado,
-      mensagem: params.mensagem,
+      mensagem: params.textoLog,
       status: "pendente",
       imagem_url: params.imagemUrl ?? null,
       aluno_id: params.alunoId ?? null,
@@ -65,17 +69,14 @@ export async function enviarWhatsApp(
     return { ok: false, reason: logErr?.message ?? "falha ao registrar mensagem" };
   }
 
-  // Chama o provedor.
-  const resultado = params.imagemUrl
-    ? await sendWhatsAppMedia({
-        telefone: telefoneNormalizado,
-        mensagem: params.mensagem,
-        imagemUrl: params.imagemUrl,
-      })
-    : await sendWhatsApp({
-        telefone: telefoneNormalizado,
-        mensagem: params.mensagem,
-      });
+  // Envia o template via Meta.
+  const resultado = await sendTemplate({
+    telefone: telefoneNormalizado,
+    templateName: params.templateName,
+    idioma: IDIOMA_TEMPLATE,
+    variaveis: params.variaveis,
+    imagemUrl: params.imagemUrl,
+  });
 
   // Atualiza o log com o resultado final.
   if (resultado.ok) {
