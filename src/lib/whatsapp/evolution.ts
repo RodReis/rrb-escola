@@ -56,3 +56,49 @@ export async function sendWhatsApp({
     return { ok: false, reason };
   }
 }
+
+export async function sendWhatsAppMedia({
+  telefone,
+  mensagem,
+  imagemUrl,
+}: {
+  telefone: string;
+  mensagem: string;
+  imagemUrl: string;
+}): Promise<EvolutionResult> {
+  const config = getConfig();
+  if (!config) {
+    return { ok: false, reason: "Evolution API não configurada" };
+  }
+
+  const endpoint = `${config.url.replace(/\/$/, "")}/message/sendMedia/${config.instance}`;
+
+  try {
+    const res = await fetch(endpoint, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        apikey: config.apiKey,
+      },
+      body: JSON.stringify({
+        number: telefone,
+        mediatype: "image",
+        media: imagemUrl,
+        caption: mensagem,
+      }),
+      signal: AbortSignal.timeout(15000),
+    });
+
+    if (!res.ok) {
+      const texto = await res.text().catch(() => "");
+      return { ok: false, reason: `Evolution API HTTP ${res.status}: ${texto.slice(0, 200)}` };
+    }
+
+    const json = (await res.json().catch(() => null)) as { key?: { id?: string } } | null;
+    const providerMessageId = json?.key?.id ?? "";
+    return { ok: true, providerMessageId };
+  } catch (err) {
+    const reason = err instanceof Error ? err.message : "falha ao enviar";
+    return { ok: false, reason };
+  }
+}
