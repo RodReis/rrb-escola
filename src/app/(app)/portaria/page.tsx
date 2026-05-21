@@ -9,7 +9,7 @@ import { requirePermission } from "@/lib/auth/session";
 
 function statusTone(status: string): StatusTone {
   if (status === "enviada") return "success";
-  if (status === "erro") return "danger";
+  if (status === "falha") return "danger";
   if (status === "pendente") return "warning";
   return "neutral";
 }
@@ -114,10 +114,10 @@ export default async function PortariaPage() {
             )}
             {data.notifications.map((notification) => (
               <div key={notification.id} className="border-b border-line py-3 text-sm last:border-b-0">
-                <strong>{notification.alunos?.nome}</strong>
+                <strong>{(Array.isArray(notification.alunos) ? notification.alunos[0] : notification.alunos as { nome: string } | null)?.nome}</strong>
                 <span className="mt-2 flex flex-wrap items-center gap-2 text-muted">
                   <StatusPill tone={statusTone(notification.status)}>{notification.status}</StatusPill>
-                  <span>{notification.telefone_destino}</span>
+                  <span>{notification.telefone}</span>
                 </span>
                 <p className="mt-2">{notification.mensagem}</p>
                 {notification.erro ? <p className="mt-1 font-bold text-clay">{notification.erro}</p> : null}

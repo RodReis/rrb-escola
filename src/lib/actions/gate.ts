@@ -4,7 +4,6 @@ import { revalidatePath } from "next/cache";
 import { requirePermission } from "@/lib/auth/session";
 import { DEFAULT_SCHOOL_ID } from "@/lib/constants";
 import { registerGateEvent } from "@/lib/server/gate-events";
-import { sendGuardianNotification } from "@/lib/server/guardian-notifications";
 import { createServerClient } from "@/lib/supabase/server";
 import { formBoolean, formNumber, formText } from "@/lib/utils";
 
@@ -125,42 +124,3 @@ export async function toggleGateDeviceAction(formData: FormData) {
   revalidatePath("/portaria/camera");
 }
 
-export async function retryGuardianNotificationAction(formData: FormData) {
-  await requirePermission("portaria", "update");
-  const id = formText(formData, "notificacao_id");
-  if (!id) return;
-
-  const supabase = await createServerClient();
-  const { data: notification, error } = await supabase
-    .from("notificacoes_responsavel")
-    .select("id, canal, telefone_destino, mensagem, aluno_id, evento_acesso_id")
-    .eq("id", id)
-    .eq("escola_id", DEFAULT_SCHOOL_ID)
-    .single();
-
-  if (error || !notification) throw error ?? new Error("Notificacao nao encontrada.");
-
-  await supabase.from("notificacoes_responsavel").update({ status: "pendente", erro: null }).eq("id", notification.id);
-
-  const result = await sendGuardianNotification({
-    notificationId: notification.id,
-    canal: notification.canal,
-    telefoneDestino: notification.telefone_destino,
-    mensagem: notification.mensagem,
-    alunoId: notification.aluno_id,
-    eventoAcessoId: notification.evento_acesso_id
-  });
-
-  await supabase
-    .from("notificacoes_responsavel")
-    .update({
-      status: result.status,
-      provider_message_id: result.providerMessageId ?? null,
-      erro: result.erro ?? null
-    })
-    .eq("id", notification.id);
-
-  revalidatePath("/portaria");
-  revalidatePath("/portaria/notificacoes");
-  revalidatePath(`/alunos/${notification.aluno_id}/editar`);
-}
