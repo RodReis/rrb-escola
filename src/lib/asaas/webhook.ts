@@ -79,10 +79,14 @@ export async function processarWebhookAsaas(
     return { ok: false, reason: pagErr.message };
   }
 
-  await supabase
+  const { error: statusErr } = await supabase
     .from("cobrancas")
     .update({ status: "paga" })
     .eq("id", cobranca.id);
+
+  if (statusErr) {
+    return { ok: false, reason: statusErr.message };
+  }
 
   return { ok: true, acao: "pago" };
 }

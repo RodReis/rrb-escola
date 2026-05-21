@@ -12,7 +12,7 @@ export type GerarCobrancaResult =
 export async function gerarCobrancaAsaasAction(
   cobrancaId: string,
 ): Promise<GerarCobrancaResult> {
-  await requirePermission("financeiro.cobrancas", "update");
+  const session = await requirePermission("financeiro.cobrancas", "update");
   const supabase = await createServerClient();
 
   // Carrega a cobrança.
@@ -20,6 +20,7 @@ export async function gerarCobrancaAsaasAction(
     .from("cobrancas")
     .select("id, aluno_id, descricao, valor_final, data_vencimento, status, asaas_payment_id")
     .eq("id", cobrancaId)
+    .eq("escola_id", session.profile.escola_id)
     .maybeSingle();
 
   if (!cobranca) return { ok: false, reason: "Cobrança não encontrada" };

@@ -17,5 +17,9 @@ export async function POST(req: Request) {
   }
 
   const resultado = await processarWebhookAsaas(payload);
+  // Erro de processamento → 500 para o Asaas reenviar o webhook.
+  if (!resultado.ok) {
+    return NextResponse.json(resultado, { status: 500 });
+  }
   return NextResponse.json(resultado);
 }
