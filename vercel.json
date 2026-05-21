@@ -6,6 +6,10 @@
     {
       "path": "/api/comunicados/processar",
       "schedule": "* * * * *"
+    },
+    {
+      "path": "/api/lembretes/processar",
+      "schedule": "0 9 * * *"
     }
   ]
 }

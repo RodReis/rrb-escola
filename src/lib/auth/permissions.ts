@@ -119,5 +119,6 @@ export const ROTA_PARA_MODULO: Record<string, ModuloCodigo> = {
   "/configuracoes/escola": "configuracoes.escola",
   "/configuracoes/webhook": "configuracoes.webhook",
   "/configuracoes/perfis": "configuracoes.perfis",
+  "/configuracoes/lembretes": "financeiro.cobrancas",
   "/despesas/categorias": "despesas",
 };

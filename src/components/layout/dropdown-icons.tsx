@@ -3,6 +3,7 @@
 import {
   AlertCircle,
   BarChart3,
+  BellRing,
   Building2,
   Cake,
   CalendarCheck,
@@ -34,6 +35,7 @@ import {
 export const ICON_MAP: Record<string, LucideIcon> = {
   AlertCircle,
   BarChart3,
+  BellRing,
   Building2,
   Cake,
   CalendarCheck,

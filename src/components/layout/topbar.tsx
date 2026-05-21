@@ -65,6 +65,7 @@ const CONFIG_ITEMS: DropdownItem[] = [
   { href: "/usuarios", label: "Usuários", iconName: "UsersRound" },
   { href: "/configuracoes/perfis", label: "Perfis e Permissões", iconName: "ShieldCheck" },
   { href: "/configuracoes/webhook", label: "Webhook", iconName: "Webhook" },
+  { href: "/configuracoes/lembretes", label: "Lembretes", iconName: "BellRing" },
   { href: "/despesas/categorias", label: "Categorias despesa", iconName: "Tags" },
 ];
 
