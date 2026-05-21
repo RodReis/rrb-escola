@@ -44,9 +44,9 @@ const CELL_CLASS: Record<EstadoDia, string> = {
 };
 
 function MesGrid({
-  ano, mes, calendario, excecoes,
+  ano, mes, calendario, excecoes, mesAtual,
 }: {
-  ano: number; mes: number; calendario: Calendario; excecoes: CalendarioExcecao[];
+  ano: number; mes: number; calendario: Calendario; excecoes: CalendarioExcecao[]; mesAtual: boolean;
 }) {
   const primeiroDiaSemana = new Date(Date.UTC(ano, mes, 1)).getUTCDay();
   const diasNoMes = new Date(Date.UTC(ano, mes + 1, 0)).getUTCDate();
@@ -55,8 +55,21 @@ function MesGrid({
   for (let d = 1; d <= diasNoMes; d++) celulas.push(d);
 
   return (
-    <div className="rounded-ui border border-line p-3">
-      <h3 className="mb-2 text-sm font-bold text-ink">{MESES[mes]}</h3>
+    <div
+      className={`rounded-ui p-3 ${
+        mesAtual
+          ? "border-2 border-brand bg-brand/5 shadow-soft"
+          : "border border-line"
+      }`}
+    >
+      <h3 className={`mb-2 flex items-center gap-1.5 text-sm font-bold ${mesAtual ? "text-brand" : "text-ink"}`}>
+        {MESES[mes]}
+        {mesAtual && (
+          <span className="rounded-pill bg-brand px-1.5 py-0.5 text-[0.55rem] font-bold uppercase text-white">
+            Mês atual
+          </span>
+        )}
+      </h3>
       <div className="grid grid-cols-7 gap-0.5 text-center text-[0.6rem]">
         {DIAS_SEMANA.map((d, i) => (
           <span key={i} className="font-bold text-ink/45">{d}</span>
@@ -97,6 +110,10 @@ export function GradeAnual({
 }: {
   calendario: Calendario; excecoes: CalendarioExcecao[];
 }) {
+  const hoje = new Date();
+  const anoCorrente = hoje.getFullYear();
+  const mesCorrente = hoje.getMonth(); // 0-11
+
   return (
     <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
       {Array.from({ length: 12 }, (_, mes) => (
@@ -106,6 +123,7 @@ export function GradeAnual({
           mes={mes}
           calendario={calendario}
           excecoes={excecoes}
+          mesAtual={calendario.anoLetivo === anoCorrente && mes === mesCorrente}
         />
       ))}
     </div>
