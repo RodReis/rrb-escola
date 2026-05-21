@@ -79,14 +79,7 @@ export async function processarWebhookAsaas(
     return { ok: false, reason: pagErr.message };
   }
 
-  const { error: statusErr } = await supabase
-    .from("cobrancas")
-    .update({ status: "paga" })
-    .eq("id", cobranca.id);
-
-  if (statusErr) {
-    return { ok: false, reason: statusErr.message };
-  }
-
+  // O trigger pagamentos_recalc_status atualiza cobrancas.status automaticamente
+  // após o insert do pagamento — não fazemos update manual de status aqui.
   return { ok: true, acao: "pago" };
 }

@@ -57,10 +57,13 @@ export async function gerarCobrancaAsaasAction(
     });
     if (!cliente.ok) return { ok: false, reason: cliente.reason };
     customerId = cliente.data.id;
-    await supabase
+    const { error: custErr } = await supabase
       .from("responsaveis_aluno")
       .update({ asaas_customer_id: customerId })
       .eq("id", responsavel.id);
+    if (custErr) {
+      return { ok: false, reason: "Erro ao salvar o customer Asaas. Tente novamente." };
+    }
   }
 
   // Cria a cobrança no Asaas.
@@ -73,7 +76,7 @@ export async function gerarCobrancaAsaasAction(
   if (!pagamento.ok) return { ok: false, reason: pagamento.reason };
 
   // Grava os dados do Asaas na cobrança.
-  await supabase
+  const { error: updErr } = await supabase
     .from("cobrancas")
     .update({
       asaas_payment_id: pagamento.data.id,
@@ -81,6 +84,13 @@ export async function gerarCobrancaAsaasAction(
       asaas_status: pagamento.data.status,
     })
     .eq("id", cobranca.id);
+
+  if (updErr) {
+    return {
+      ok: false,
+      reason: "Cobrança gerada no Asaas, mas não foi salva. Contate o suporte.",
+    };
+  }
 
   revalidatePath(`/alunos/${cobranca.aluno_id}`);
   return { ok: true, invoiceUrl: pagamento.data.invoiceUrl };
