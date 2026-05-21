@@ -53,17 +53,21 @@ export async function salvarCalendarioAction(formData: FormData) {
 
     if (novoCal) {
       // Auto-importar feriados nacionais/estaduais/municipais do ano.
-      const { data: escola } = await supabase
+      const { data: escola, error: escolaErr } = await supabase
         .from("escolas")
         .select("uf, cidade")
         .eq("id", DEFAULT_SCHOOL_ID)
         .maybeSingle();
 
+      if (escolaErr) {
+        console.warn("[calendario] falha ao buscar UF/cidade da escola para auto-importar feriados:", escolaErr.message);
+      }
+
       const feriados = todosFeriados(anoLetivo, escola?.uf ?? "", escola?.cidade ?? "")
         .filter((f) => f.data >= dataInicio && f.data <= dataFim);
 
       if (feriados.length > 0) {
-        await supabase.from("calendario_excecoes").insert(
+        const { error: feriadosErr } = await supabase.from("calendario_excecoes").insert(
           feriados.map((f) => ({
             calendario_id: novoCal.id,
             escola_id: DEFAULT_SCHOOL_ID,
@@ -73,6 +77,9 @@ export async function salvarCalendarioAction(formData: FormData) {
             descricao: f.descricao,
           })),
         );
+        if (feriadosErr) {
+          console.error("[calendario] falha ao inserir feriados automáticos:", feriadosErr.message);
+        }
       }
     }
   }
