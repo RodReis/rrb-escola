@@ -1,3 +1,4 @@
+import { AlertCircle } from "lucide-react";
 import { PageHeader } from "@/components/ui/page-header";
 import { requirePermission } from "@/lib/auth/session";
 import { createServerClient } from "@/lib/supabase/server";
@@ -5,8 +6,28 @@ import { NovoComunicadoForm } from "@/components/comunicados/novo-comunicado-for
 
 export const dynamic = "force-dynamic";
 
-export default async function NovoComunicadoPage() {
+const ERRO_LABEL: Record<string, string> = {
+  campos_obrigatorios: "Preencha o título e a mensagem.",
+  alcance_invalido: "Selecione um alcance válido.",
+  aluno_obrigatorio: "Selecione o aluno para o comunicado individual.",
+  imagem_tipo: "A imagem deve ser PNG, JPG ou WEBP.",
+  imagem_grande: "A imagem excede o limite de 5MB.",
+};
+
+function mensagemErro(codigo: string | undefined): string | null {
+  if (!codigo) return null;
+  return ERRO_LABEL[codigo] ?? `Erro ao enviar o comunicado: ${codigo}`;
+}
+
+export default async function NovoComunicadoPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ erro?: string }>;
+}) {
   const session = await requirePermission("comunicados", "create");
+  const { erro } = await searchParams;
+  const erroMsg = mensagemErro(erro);
+
   const supabase = await createServerClient();
 
   const { data: alunosData } = await supabase
@@ -36,6 +57,14 @@ export default async function NovoComunicadoPage() {
         title="Novo comunicado"
         description="Envie um aviso aos responsáveis via WhatsApp."
       />
+
+      {erroMsg && (
+        <div className="flex items-center gap-2 rounded-ui border border-danger/40 bg-danger/10 p-3 text-sm text-danger">
+          <AlertCircle size={16} />
+          {erroMsg}
+        </div>
+      )}
+
       <NovoComunicadoForm alunos={alunos} />
     </div>
   );
