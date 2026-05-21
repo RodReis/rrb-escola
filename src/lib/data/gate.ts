@@ -23,9 +23,10 @@ export async function getGateData() {
       .order("data_evento", { ascending: false })
       .limit(30),
     supabase
-      .from("notificacoes_responsavel")
-      .select("*, alunos(nome)")
+      .from("mensagens_whatsapp")
+      .select("id, telefone, mensagem, status, erro, created_at, alunos(nome)")
       .eq("escola_id", DEFAULT_SCHOOL_ID)
+      .eq("referencia_tipo", "portaria")
       .order("created_at", { ascending: false })
       .limit(20)
   ]);
@@ -149,9 +150,10 @@ export async function getStudentGateSettings(alunoId: string) {
       .eq("aluno_id", alunoId)
       .maybeSingle(),
     supabase
-      .from("notificacoes_responsavel")
-      .select("*")
+      .from("mensagens_whatsapp")
+      .select("id, telefone, mensagem, status, erro, created_at")
       .eq("aluno_id", alunoId)
+      .eq("referencia_tipo", "portaria")
       .order("created_at", { ascending: false })
       .limit(10),
     supabase

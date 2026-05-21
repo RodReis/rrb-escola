@@ -33,7 +33,8 @@ type GateSettings = {
     id: string;
     mensagem: string;
     status: string;
-    telefone_destino: string | null;
+    telefone: string | null;
+    erro: string | null;
     created_at: string;
   }>;
 };
@@ -114,14 +115,15 @@ export function StudentGatePanel({ alunoId, settings }: Props) {
           </div>
         </div>
         <div>
-          <h3 className="mb-2 text-sm font-bold text-ink">Notificacoes simuladas</h3>
+          <h3 className="mb-2 text-sm font-bold text-ink">Mensagens WhatsApp</h3>
           <div className="grid gap-2">
             {settings.notifications.length === 0 ? <p className="text-sm text-muted">Nenhuma notificação registrada.</p> : null}
             {settings.notifications.map((notification) => (
               <div key={notification.id} className="border-b border-line py-3 text-sm last:border-b-0">
                 <strong>{notification.status}</strong>
-                <span className="block text-muted">{notification.telefone_destino}</span>
+                <span className="block text-muted">{notification.telefone}</span>
                 <p className="mt-1">{notification.mensagem}</p>
+                {notification.erro ? <p className="mt-1 text-clay">{notification.erro}</p> : null}
               </div>
             ))}
           </div>
