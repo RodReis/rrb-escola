@@ -57,6 +57,12 @@ describe("isDiaLetivo", () => {
     // 2026-07-15 é uma quarta dentro do recesso
     expect(isDiaLetivo("2026-07-15", calendario, excecoes)).toBe(false);
   });
+
+  it("data malformada não é letiva", () => {
+    expect(isDiaLetivo("", calendario, [])).toBe(false);
+    expect(isDiaLetivo("2026-3-4", calendario, [])).toBe(false);
+    expect(isDiaLetivo("data-invalida", calendario, [])).toBe(false);
+  });
 });
 
 describe("contarDiasLetivos", () => {
