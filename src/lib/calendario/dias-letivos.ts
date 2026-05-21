@@ -29,3 +29,25 @@ export function isDiaLetivo(
   }
   return true;
 }
+
+function addDays(isoDate: string, days: number): string {
+  const [y, m, d] = isoDate.split("-").map(Number);
+  const dt = new Date(Date.UTC(y, m - 1, d + days));
+  const yy = dt.getUTCFullYear();
+  const mm = String(dt.getUTCMonth() + 1).padStart(2, "0");
+  const dd = String(dt.getUTCDate()).padStart(2, "0");
+  return `${yy}-${mm}-${dd}`;
+}
+
+export function contarDiasLetivos(
+  calendario: Calendario,
+  excecoes: CalendarioExcecao[],
+): number {
+  let count = 0;
+  let cursor = calendario.dataInicio;
+  while (cursor <= calendario.dataFim) {
+    if (isDiaLetivo(cursor, calendario, excecoes)) count += 1;
+    cursor = addDays(cursor, 1);
+  }
+  return count;
+}

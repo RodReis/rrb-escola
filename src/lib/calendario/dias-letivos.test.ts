@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { isDiaLetivo } from "./dias-letivos";
+import { isDiaLetivo, contarDiasLetivos } from "./dias-letivos";
 import type { Calendario, CalendarioExcecao } from "./types";
 
 const calendario: Calendario = {
@@ -56,5 +56,36 @@ describe("isDiaLetivo", () => {
     ];
     // 2026-07-15 é uma quarta dentro do recesso
     expect(isDiaLetivo("2026-07-15", calendario, excecoes)).toBe(false);
+  });
+});
+
+describe("contarDiasLetivos", () => {
+  it("conta apenas dias úteis num período de uma semana", () => {
+    const cal: Calendario = {
+      id: "c", escolaId: "e", anoLetivo: 2026,
+      dataInicio: "2026-03-02", // segunda
+      dataFim: "2026-03-08",    // domingo
+      diasSemanaLetivos: [1, 2, 3, 4, 5],
+    };
+    // seg a sex = 5 dias letivos
+    expect(contarDiasLetivos(cal, [])).toBe(5);
+  });
+
+  it("desconta feriado dentro do período", () => {
+    const cal: Calendario = {
+      id: "c", escolaId: "e", anoLetivo: 2026,
+      dataInicio: "2026-03-02",
+      dataFim: "2026-03-08",
+      diasSemanaLetivos: [1, 2, 3, 4, 5],
+    };
+    const excecoes: CalendarioExcecao[] = [
+      {
+        id: "f", calendarioId: "c", escolaId: "e",
+        dataInicio: "2026-03-04", dataFim: "2026-03-04",
+        tipo: "feriado", descricao: "Feriado",
+      },
+    ];
+    // 5 dias úteis - 1 feriado = 4
+    expect(contarDiasLetivos(cal, excecoes)).toBe(4);
   });
 });
