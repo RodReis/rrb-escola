@@ -8,15 +8,45 @@ import {
   enviarLembretesAgoraAction,
 } from "@/lib/actions/lembretes";
 
+type LembretePendente = {
+  cobrancaId: string;
+  alunoNome: string;
+  responsavelNome: string;
+  descricao: string;
+  valor: number;
+  vencimento: string;
+  diasAtraso: number;
+};
+
+function moeda(v: number): string {
+  return v.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
+}
+
+function dataBR(iso: string): string {
+  return iso.split("-").reverse().join("/");
+}
+
 export function ConfigLembretesForm({
   autoAtivo,
   pendentes,
 }: {
   autoAtivo: boolean;
-  pendentes: number;
+  pendentes: LembretePendente[];
 }) {
   const [salvando, setSalvando] = useState(false);
   const [enviando, setEnviando] = useState(false);
+  const [selecionados, setSelecionados] = useState<Set<string>>(new Set());
+
+  function toggle(id: string) {
+    setSelecionados((prev) => {
+      const novo = new Set(prev);
+      if (novo.has(id)) novo.delete(id);
+      else novo.add(id);
+      return novo;
+    });
+  }
+
+  const idsSelecionados = Array.from(selecionados);
 
   return (
     <div className="grid gap-6">
@@ -50,23 +80,83 @@ export function ConfigLembretesForm({
         </form>
       </Panel>
 
-      <Panel className="flex flex-wrap items-center justify-between gap-3">
+      <Panel className="grid gap-3">
         <div>
-          <p className="text-sm font-semibold text-ink">
-            {pendentes} cobrança(s) vencida(s) sem lembrete
-          </p>
+          <h2 className="font-bold text-ink">
+            Cobranças vencidas sem lembrete ({pendentes.length})
+          </h2>
           <p className="text-xs text-ink/55">
-            Envio manual ignora a configuração automática.
+            Marque as cobranças e use "Enviar selecionados", ou envie todas de uma vez.
           </p>
         </div>
-        <form action={enviarLembretesAgoraAction} onSubmit={() => setEnviando(true)}>
-          <button
-            className="ds-button ds-button-accent"
-            disabled={enviando || pendentes === 0}
-          >
-            <Send size={14} /> {enviando ? "Enviando…" : "Enviar lembretes agora"}
-          </button>
-        </form>
+
+        {pendentes.length === 0 ? (
+          <p className="py-6 text-center text-sm text-ink/55">
+            Nenhuma cobrança vencida sem lembrete.
+          </p>
+        ) : (
+          <>
+            <div className="grid gap-1.5">
+              {pendentes.map((p) => (
+                <label
+                  key={p.cobrancaId}
+                  className="flex items-center gap-3 rounded-ui border border-line p-2.5 text-sm"
+                >
+                  <input
+                    type="checkbox"
+                    checked={selecionados.has(p.cobrancaId)}
+                    onChange={() => toggle(p.cobrancaId)}
+                    className="h-4 w-4 shrink-0"
+                  />
+                  <div className="min-w-0 flex-1">
+                    <p className="truncate font-semibold text-ink">{p.alunoNome}</p>
+                    <p className="text-xs text-ink/55">
+                      Resp.: {p.responsavelNome} · {p.descricao}
+                    </p>
+                  </div>
+                  <div className="shrink-0 text-right">
+                    <p className="font-bold text-ink">{moeda(p.valor)}</p>
+                    <p className="text-xs text-danger">
+                      Venceu {dataBR(p.vencimento)} · {p.diasAtraso} dia(s)
+                    </p>
+                  </div>
+                </label>
+              ))}
+            </div>
+
+            <div className="flex flex-wrap justify-end gap-2">
+              <form
+                action={enviarLembretesAgoraAction}
+                onSubmit={() => setEnviando(true)}
+              >
+                <input
+                  type="hidden"
+                  name="cobranca_ids"
+                  value={JSON.stringify(idsSelecionados)}
+                />
+                <button
+                  className="ds-button ds-button-secondary"
+                  disabled={enviando || idsSelecionados.length === 0}
+                >
+                  <Send size={14} /> Enviar selecionados ({idsSelecionados.length})
+                </button>
+              </form>
+
+              <form
+                action={enviarLembretesAgoraAction}
+                onSubmit={() => setEnviando(true)}
+              >
+                <input type="hidden" name="cobranca_ids" value="[]" />
+                <button
+                  className="ds-button ds-button-accent"
+                  disabled={enviando}
+                >
+                  <Send size={14} /> {enviando ? "Enviando…" : "Enviar todos"}
+                </button>
+              </form>
+            </div>
+          </>
+        )}
       </Panel>
     </div>
   );

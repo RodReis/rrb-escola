@@ -20,12 +20,17 @@ function dataBR(iso: string): string {
 export async function processarLembretes(
   opts: { forcarReenvio: boolean },
   escolaId: string = DEFAULT_SCHOOL_ID,
+  cobrancaIds?: string[],
 ): Promise<ResultadoLembretes> {
   const supabase = createAdminClient();
 
   // forcarReenvio → não ignora já enviados.
   const pendentes = await resolverLembretesPendentes(supabase, escolaId, !opts.forcarReenvio);
-  const lote = pendentes.slice(0, LIMITE_LOTE);
+  const selecionados =
+    cobrancaIds && cobrancaIds.length > 0
+      ? pendentes.filter((p) => cobrancaIds.includes(p.cobrancaId))
+      : pendentes;
+  const lote = selecionados.slice(0, LIMITE_LOTE);
 
   let enviados = 0;
   let falhas = 0;
