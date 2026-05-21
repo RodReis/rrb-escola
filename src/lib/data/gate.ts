@@ -56,12 +56,13 @@ export async function getGateDevices() {
 }
 
 export async function getGateNotifications(status?: string) {
-  const allowedStatuses = new Set(["simulada", "pendente", "enviada", "erro"]);
+  const allowedStatuses = new Set(["pendente", "enviada", "falha"]);
   const supabase = await createServerClient();
   let query = supabase
-    .from("notificacoes_responsavel")
-    .select("*, alunos(nome, matricula_codigo), responsaveis_aluno(nome, parentesco)")
+    .from("mensagens_whatsapp")
+    .select("id, telefone, mensagem, status, erro, provider_message_id, created_at, alunos:aluno_id(nome, matricula_codigo)")
     .eq("escola_id", DEFAULT_SCHOOL_ID)
+    .eq("referencia_tipo", "portaria")
     .order("created_at", { ascending: false })
     .limit(100);
 

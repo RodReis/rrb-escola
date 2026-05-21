@@ -1,26 +1,30 @@
-import { RefreshCcw, ArrowLeft, Bell } from "lucide-react";
+import { ArrowLeft, Bell } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
-import { Button, ButtonLink } from "@/components/ui/button";
-import { retryGuardianNotificationAction } from "@/lib/actions/gate";
+import { ButtonLink } from "@/components/ui/button";
 import { getGateNotifications } from "@/lib/data/gate";
 import { requirePermission } from "@/lib/auth/session";
 
 const filters = [
   { href: "/portaria/notificacoes", label: "Todas", value: "" },
-  { href: "/portaria/notificacoes?status=erro", label: "Erros", value: "erro" },
+  { href: "/portaria/notificacoes?status=falha", label: "Falhas", value: "falha" },
   { href: "/portaria/notificacoes?status=pendente", label: "Pendentes", value: "pendente" },
   { href: "/portaria/notificacoes?status=enviada", label: "Enviadas", value: "enviada" },
-  { href: "/portaria/notificacoes?status=simulada", label: "Simuladas", value: "simulada" }
 ];
 
 function statusTone(status: string): "green" | "red" | "gold" | "gray" {
   if (status === "enviada") return "green";
-  if (status === "erro") return "red";
+  if (status === "falha") return "red";
   if (status === "pendente") return "gold";
   return "gray";
 }
 
-export default async function GateNotificationsPage({ searchParams }: { searchParams: { status?: string } }) {
+type AlunoRel = { nome: string | null; matricula_codigo: string | null } | { nome: string | null; matricula_codigo: string | null }[] | null;
+
+export default async function GateNotificationsPage({
+  searchParams,
+}: {
+  searchParams: { status?: string };
+}) {
   await requirePermission("portaria", "read");
   const selectedStatus = searchParams.status ?? "";
   const notifications = await getGateNotifications(selectedStatus);
@@ -32,7 +36,7 @@ export default async function GateNotificationsPage({ searchParams }: { searchPa
           <p className="ds-kicker">Portaria</p>
           <h1 className="mt-7 font-serif text-4xl text-ink">Notificações</h1>
           <p className="mt-3 max-w-2xl text-sm text-muted">
-            Acompanhe mensagens enviadas, pendentes, simuladas e tentativas com erro.
+            Mensagens de entrada e saída enviadas aos responsáveis via WhatsApp.
           </p>
         </div>
         <ButtonLink href="/portaria" variant="secondary">
@@ -42,14 +46,18 @@ export default async function GateNotificationsPage({ searchParams }: { searchPa
 
       <nav className="flex flex-wrap gap-2">
         {filters.map((filter) => (
-          <ButtonLink key={filter.href} href={filter.href} variant={selectedStatus === filter.value ? "primary" : "secondary"}>
+          <ButtonLink
+            key={filter.href}
+            href={filter.href}
+            variant={selectedStatus === filter.value ? "primary" : "secondary"}
+          >
             {filter.label}
           </ButtonLink>
         ))}
       </nav>
 
       <section className="overflow-hidden rounded-panel border border-line bg-surface shadow-soft">
-        <div className="grid grid-cols-[1.3fr_0.7fr_0.8fr_0.8fr] border-b border-line bg-muted px-4 py-3 text-xs font-bold uppercase text-muted max-lg:hidden">
+        <div className="grid grid-cols-[1.4fr_0.8fr_0.8fr_0.8fr] border-b border-line bg-muted px-4 py-3 text-xs font-bold uppercase text-muted max-lg:hidden">
           <span>Aluno e mensagem</span>
           <span>Destino</span>
           <span>Status</span>
@@ -63,36 +71,38 @@ export default async function GateNotificationsPage({ searchParams }: { searchPa
               <p className="text-sm font-medium">Nenhuma notificação encontrada.</p>
             </div>
           ) : null}
-          {notifications.map((notification) => (
-            <div key={notification.id} className="grid gap-3 border-b border-line px-4 py-4 last:border-b-0 lg:grid-cols-[1.3fr_0.7fr_0.8fr_0.8fr]">
-              <div>
-                <strong>{notification.alunos?.nome ?? "Aluno não localizado"}</strong>
-                <span className="block text-sm text-muted">{notification.alunos?.matricula_codigo}</span>
-                <p className="mt-2 text-sm">{notification.mensagem}</p>
-                {notification.erro ? <p className="mt-2 text-sm font-bold text-clay">{notification.erro}</p> : null}
+          {notifications.map((notification) => {
+            const alunoRaw = (notification.alunos as AlunoRel) ?? null;
+            const aluno = Array.isArray(alunoRaw) ? alunoRaw[0] ?? null : alunoRaw;
+            return (
+              <div
+                key={notification.id}
+                className="grid gap-3 border-b border-line px-4 py-4 last:border-b-0 lg:grid-cols-[1.4fr_0.8fr_0.8fr_0.8fr]"
+              >
+                <div>
+                  <strong>{aluno?.nome ?? "Aluno não localizado"}</strong>
+                  <span className="block text-sm text-muted">{aluno?.matricula_codigo}</span>
+                  <p className="mt-2 text-sm">{notification.mensagem}</p>
+                  {notification.erro ? (
+                    <p className="mt-2 text-sm font-bold text-clay">{notification.erro}</p>
+                  ) : null}
+                </div>
+                <div className="text-sm">
+                  <span className="block font-bold">WhatsApp</span>
+                  <span className="text-muted">{notification.telefone || "Sem telefone"}</span>
+                </div>
+                <div>
+                  <Badge tone={statusTone(notification.status)}>{notification.status}</Badge>
+                  {notification.provider_message_id ? (
+                    <p className="mt-2 text-xs text-muted">{notification.provider_message_id}</p>
+                  ) : null}
+                </div>
+                <div className="text-sm text-muted">
+                  {new Date(notification.created_at).toLocaleString("pt-BR")}
+                </div>
               </div>
-              <div className="text-sm">
-                <span className="block font-bold">{notification.canal}</span>
-                <span className="text-muted">{notification.telefone_destino || "Sem telefone"}</span>
-              </div>
-              <div>
-                <Badge tone={statusTone(notification.status)}>{notification.status}</Badge>
-                {notification.provider_message_id ? <p className="mt-2 text-xs text-muted">{notification.provider_message_id}</p> : null}
-              </div>
-              <div className="flex flex-wrap items-start gap-2">
-                <span className="text-sm text-muted">{new Date(notification.created_at).toLocaleString("pt-BR")}</span>
-                {notification.status === "erro" || notification.status === "pendente" ? (
-                  <form action={retryGuardianNotificationAction}>
-                    <input type="hidden" name="notificacao_id" value={notification.id} />
-                    <Button className="px-3 py-2 text-xs" variant="secondary">
-                      <RefreshCcw size={14} />
-                      Reenviar
-                    </Button>
-                  </form>
-                ) : null}
-              </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
       </section>
     </div>
