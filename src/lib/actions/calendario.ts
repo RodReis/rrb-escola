@@ -73,11 +73,14 @@ export async function salvarExcecaoAction(formData: FormData) {
 
   const { data: cal } = await supabase
     .from("calendario_letivo")
-    .select("id")
+    .select("id, data_inicio, data_fim")
     .eq("id", calendarioId)
     .eq("escola_id", DEFAULT_SCHOOL_ID)
     .maybeSingle();
   if (!cal) throw new Error("Calendário não encontrado");
+  if (dataInicio < cal.data_inicio || dataFim > cal.data_fim) {
+    throw new Error("A exceção deve estar contida dentro do período do calendário");
+  }
 
   const payload = {
     calendario_id: calendarioId,

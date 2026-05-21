@@ -10,7 +10,7 @@ import { ExcecaoForm } from "@/components/calendario/excecao-form";
 import { ExcecoesList } from "@/components/calendario/excecoes-list";
 import { GradeAnual } from "@/components/calendario/grade-anual";
 
-const DIA_DEZ_LETIVOS_MIN = 200;
+const DIAS_LETIVOS_MIN = 200;
 
 const DIA_LABEL: Record<number, string> = {
   0: "Dom", 1: "Seg", 2: "Ter", 3: "Qua", 4: "Qui", 5: "Sex", 6: "Sáb",
@@ -46,7 +46,7 @@ export default async function CalendarioPage({
   const totalLetivos = dados
     ? contarDiasLetivos(dados.calendario, dados.excecoes)
     : 0;
-  const atingeMinimo = totalLetivos >= DIA_DEZ_LETIVOS_MIN;
+  const atingeMinimo = totalLetivos >= DIAS_LETIVOS_MIN;
 
   return (
     <div className="grid gap-6">
@@ -104,7 +104,7 @@ export default async function CalendarioPage({
                     : "bg-danger/15 text-danger"
                 }`}
               >
-                {atingeMinimo ? "OK" : `mín. ${DIA_DEZ_LETIVOS_MIN}`}
+                {atingeMinimo ? "OK" : `mín. ${DIAS_LETIVOS_MIN}`}
               </span>
             </p>
           </div>
