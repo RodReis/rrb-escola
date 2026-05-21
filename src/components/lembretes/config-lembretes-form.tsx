@@ -8,22 +8,11 @@ import {
   enviarLembretesAgoraAction,
 } from "@/lib/actions/lembretes";
 
-const PLACEHOLDERS = [
-  "{responsavel}",
-  "{aluno}",
-  "{descricao}",
-  "{valor}",
-  "{vencimento}",
-  "{dias_atraso}",
-];
-
 export function ConfigLembretesForm({
   autoAtivo,
-  template,
   pendentes,
 }: {
   autoAtivo: boolean;
-  template: string;
   pendentes: number;
 }) {
   const [salvando, setSalvando] = useState(false);
@@ -48,21 +37,10 @@ export function ConfigLembretesForm({
             Enviar lembretes automaticamente (uma vez por dia)
           </label>
 
-          <label className="grid gap-1 text-sm">
-            Mensagem do lembrete
-            <textarea
-              name="template"
-              required
-              rows={5}
-              defaultValue={template}
-              maxLength={2000}
-            />
-          </label>
-
-          <div className="rounded-ui bg-muted/40 p-3 text-xs text-ink/60">
-            <span className="font-semibold text-ink/75">Placeholders disponíveis:</span>{" "}
-            {PLACEHOLDERS.join("  ")}
-          </div>
+          <p className="rounded-ui bg-muted/40 p-3 text-xs text-ink/60">
+            O texto do lembrete é um modelo aprovado pelo WhatsApp e não é editável aqui.
+            Para alterá-lo, é necessário aprovar um novo modelo na conta WhatsApp Business.
+          </p>
 
           <div className="flex justify-end">
             <button className="ds-button ds-button-primary" disabled={salvando}>
