@@ -47,3 +47,61 @@ export function feriadosNacionais(ano: number): Feriado[] {
     { data: `${ano}-12-25`, descricao: "Natal" },
   ];
 }
+
+function normalizar(texto: string): string {
+  return texto
+    .normalize("NFD")
+    .replace(/[̀-ͯ]/g, "")
+    .toLowerCase()
+    .trim();
+}
+
+// Feriados estaduais civis por UF. Apenas datas fixas.
+// UFs sem feriado estadual civil exclusivo são omitidas (retornam []).
+const ESTADUAIS: Record<string, Array<{ mesDia: string; descricao: string }>> = {
+  SP: [{ mesDia: "07-09", descricao: "Revolução Constitucionalista" }],
+  RJ: [{ mesDia: "04-23", descricao: "Dia de São Jorge" }],
+  BA: [{ mesDia: "07-02", descricao: "Independência da Bahia" }],
+  // GO: sem feriado estadual civil exclusivo
+};
+
+// Feriados municipais por UF + cidade (cidade normalizada: minúscula, sem acento).
+const MUNICIPAIS: Record<string, Record<string, Array<{ mesDia: string; descricao: string }>>> = {
+  GO: {
+    trindade: [{ mesDia: "08-31", descricao: "Aniversário de Trindade" }],
+  },
+};
+
+export function feriadosEstaduais(uf: string, ano: number): Feriado[] {
+  const lista = ESTADUAIS[uf.toUpperCase()] ?? [];
+  return lista.map((f) => ({
+    data: `${ano}-${f.mesDia}`,
+    descricao: f.descricao,
+  }));
+}
+
+export function feriadosMunicipais(uf: string, cidade: string, ano: number): Feriado[] {
+  const porCidade = MUNICIPAIS[uf.toUpperCase()] ?? {};
+  const lista = porCidade[normalizar(cidade)] ?? [];
+  return lista.map((f) => ({
+    data: `${ano}-${f.mesDia}`,
+    descricao: f.descricao,
+  }));
+}
+
+export function todosFeriados(ano: number, uf: string, cidade: string): Feriado[] {
+  const todos = [
+    ...feriadosNacionais(ano),
+    ...feriadosEstaduais(uf, ano),
+    ...feriadosMunicipais(uf, cidade, ano),
+  ];
+  // Dedup por data — nacional tem precedência (vem primeiro).
+  const vistos = new Set<string>();
+  const resultado: Feriado[] = [];
+  for (const f of todos) {
+    if (vistos.has(f.data)) continue;
+    vistos.add(f.data);
+    resultado.push(f);
+  }
+  return resultado;
+}
