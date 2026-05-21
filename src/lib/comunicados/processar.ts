@@ -59,6 +59,7 @@ export async function processarLote(): Promise<ResultadoLote> {
         .update({
           status: "falha",
           erro: resultado.reason,
+          enviada_em: new Date().toISOString(),
         })
         .eq("id", msg.id);
     }

@@ -4,7 +4,6 @@ import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import { createServerClient } from "@/lib/supabase/server";
 import { requirePermission } from "@/lib/auth/session";
-import { DEFAULT_SCHOOL_ID } from "@/lib/constants";
 import { formText } from "@/lib/utils";
 import { resolverDestinatarios } from "@/lib/comunicados/destinatarios";
 
@@ -41,7 +40,7 @@ export async function criarComunicadoAction(formData: FormData) {
       redirect("/comunicados/novo?erro=imagem_grande");
     }
     const safeName = file.name.replace(/[^a-zA-Z0-9._-]/g, "_");
-    const path = `${Date.now()}-${safeName}`;
+    const path = `${Date.now()}-${Math.random().toString(36).slice(2, 10)}-${safeName}`;
     const buffer = Buffer.from(await file.arrayBuffer());
     const { error: upErr } = await supabase.storage
       .from("comunicados")
@@ -56,7 +55,7 @@ export async function criarComunicadoAction(formData: FormData) {
   const { data: comunicado, error: comErr } = await supabase
     .from("comunicados")
     .insert({
-      escola_id: DEFAULT_SCHOOL_ID,
+      escola_id: session.profile.escola_id,
       titulo,
       mensagem,
       imagem_path: imagemPath,
@@ -77,6 +76,7 @@ export async function criarComunicadoAction(formData: FormData) {
     supabase,
     alcance,
     alcance === "individual" ? alunoId : null,
+    session.profile.escola_id,
   );
 
   // URL assinada da imagem (válida por bastante tempo, pois o cron envia depois).
@@ -92,7 +92,7 @@ export async function criarComunicadoAction(formData: FormData) {
   if (destinatarios.length > 0) {
     const { error: msgErr } = await supabase.from("mensagens_whatsapp").insert(
       destinatarios.map((d) => ({
-        escola_id: DEFAULT_SCHOOL_ID,
+        escola_id: session.profile.escola_id,
         telefone: d.telefone,
         mensagem,
         status: "pendente" as const,
