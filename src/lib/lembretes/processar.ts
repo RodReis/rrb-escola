@@ -50,13 +50,16 @@ export async function processarLembretes(
       diasAtraso: p.diasAtraso,
     });
 
-    const resultado = await enviarWhatsApp({
-      telefone: p.telefone,
-      mensagem,
-      alunoId: p.alunoId,
-      referenciaTipo: "lembrete_cobranca",
-      referenciaId: p.cobrancaId,
-    });
+    const resultado = await enviarWhatsApp(
+      {
+        telefone: p.telefone,
+        mensagem,
+        alunoId: p.alunoId,
+        referenciaTipo: "lembrete_cobranca",
+        referenciaId: p.cobrancaId,
+      },
+      supabase,
+    );
 
     if (resultado.ok) enviados += 1;
     else falhas += 1;

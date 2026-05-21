@@ -17,8 +17,15 @@ export type EnvioResult =
   | { ok: true; mensagemId: string }
   | { ok: false; reason: string };
 
-export async function enviarWhatsApp(params: EnviarWhatsAppParams): Promise<EnvioResult> {
-  const supabase = await createServerClient();
+type SupabaseClientLike = {
+  from: (table: string) => any;
+};
+
+export async function enviarWhatsApp(
+  params: EnviarWhatsAppParams,
+  supabaseClient?: SupabaseClientLike,
+): Promise<EnvioResult> {
+  const supabase = supabaseClient ?? (await createServerClient());
   const telefoneNormalizado = normalizarTelefone(params.telefone);
 
   // Telefone inválido: grava log de falha direto, sem chamar a API.
