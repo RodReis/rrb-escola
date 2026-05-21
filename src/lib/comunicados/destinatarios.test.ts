@@ -77,3 +77,59 @@ describe("filtrarDestinatarios", () => {
     ]);
   });
 });
+
+import { coletarTurmaIds } from "./destinatarios";
+
+describe("coletarTurmaIds", () => {
+  const turmasPorSerie: Record<string, string[]> = {
+    "serie-1": ["turma-a", "turma-b"],
+    "serie-2": ["turma-c"],
+  };
+
+  it("só turmas diretas", () => {
+    const r = coletarTurmaIds(
+      [
+        { tipo: "turma", id: "turma-x" },
+        { tipo: "turma", id: "turma-y" },
+      ],
+      turmasPorSerie,
+    );
+    expect(r.sort()).toEqual(["turma-x", "turma-y"]);
+  });
+
+  it("série expande para suas turmas", () => {
+    const r = coletarTurmaIds([{ tipo: "serie", id: "serie-1" }], turmasPorSerie);
+    expect(r.sort()).toEqual(["turma-a", "turma-b"]);
+  });
+
+  it("mistura turmas diretas e séries", () => {
+    const r = coletarTurmaIds(
+      [
+        { tipo: "turma", id: "turma-x" },
+        { tipo: "serie", id: "serie-2" },
+      ],
+      turmasPorSerie,
+    );
+    expect(r.sort()).toEqual(["turma-c", "turma-x"]);
+  });
+
+  it("deduplica turma que aparece direta e via série", () => {
+    const r = coletarTurmaIds(
+      [
+        { tipo: "turma", id: "turma-a" },
+        { tipo: "serie", id: "serie-1" },
+      ],
+      turmasPorSerie,
+    );
+    expect(r.sort()).toEqual(["turma-a", "turma-b"]);
+  });
+
+  it("série sem turmas conhecidas é ignorada", () => {
+    const r = coletarTurmaIds([{ tipo: "serie", id: "serie-inexistente" }], turmasPorSerie);
+    expect(r).toEqual([]);
+  });
+
+  it("alvos vazios retornam lista vazia", () => {
+    expect(coletarTurmaIds([], turmasPorSerie)).toEqual([]);
+  });
+});

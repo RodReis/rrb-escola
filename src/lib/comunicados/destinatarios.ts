@@ -1,5 +1,7 @@
 import { DEFAULT_SCHOOL_ID } from "@/lib/constants";
 
+export type Alvo = { tipo: "turma" | "serie"; id: string };
+
 export type Destinatario = {
   alunoId: string;
   telefone: string;
@@ -27,6 +29,25 @@ export function filtrarDestinatarios(linhas: AlunoRow[]): Destinatario[] {
     }
   }
   return resultado;
+}
+
+// Parte pura: junta as turmas diretas com as turmas expandidas das séries.
+// turmasPorSerie mapeia serieId → lista de turmaIds. Resultado deduplicado.
+export function coletarTurmaIds(
+  alvos: Alvo[],
+  turmasPorSerie: Record<string, string[]>,
+): string[] {
+  const ids = new Set<string>();
+  for (const alvo of alvos) {
+    if (alvo.tipo === "turma") {
+      ids.add(alvo.id);
+    } else {
+      for (const turmaId of turmasPorSerie[alvo.id] ?? []) {
+        ids.add(turmaId);
+      }
+    }
+  }
+  return Array.from(ids);
 }
 
 type SupabaseLike = {
