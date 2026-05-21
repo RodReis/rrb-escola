@@ -6,9 +6,30 @@ import { createServerClient } from "@/lib/supabase/server";
 import { requirePermission } from "@/lib/auth/session";
 import { formText } from "@/lib/utils";
 import { resolverDestinatarios } from "@/lib/comunicados/destinatarios";
+import type { Alvo } from "@/lib/comunicados/destinatarios";
 
 const MAX_IMAGEM_BYTES = 5 * 1024 * 1024;
 const TIPOS_IMAGEM = ["image/png", "image/jpeg", "image/webp"];
+
+// Lê e valida o campo "alvos" (JSON) do formulário do comunicado segmentado.
+function parseAlvos(formData: FormData): Alvo[] {
+  const raw = formData.get("alvos");
+  if (typeof raw !== "string" || raw.trim() === "") return [];
+  try {
+    const parsed = JSON.parse(raw);
+    if (!Array.isArray(parsed)) return [];
+    return parsed.filter(
+      (a): a is Alvo =>
+        a &&
+        typeof a === "object" &&
+        (a.tipo === "turma" || a.tipo === "serie") &&
+        typeof a.id === "string" &&
+        a.id.length > 0,
+    );
+  } catch {
+    return [];
+  }
+}
 
 export async function criarComunicadoAction(formData: FormData) {
   const session = await requirePermission("comunicados", "create");
@@ -22,11 +43,16 @@ export async function criarComunicadoAction(formData: FormData) {
   if (!titulo || !mensagem) {
     redirect("/comunicados/novo?erro=campos_obrigatorios");
   }
-  if (alcance !== "geral" && alcance !== "individual") {
+  if (alcance !== "geral" && alcance !== "individual" && alcance !== "segmentado") {
     redirect("/comunicados/novo?erro=alcance_invalido");
   }
   if (alcance === "individual" && !alunoId) {
     redirect("/comunicados/novo?erro=aluno_obrigatorio");
+  }
+
+  const alvos = alcance === "segmentado" ? parseAlvos(formData) : [];
+  if (alcance === "segmentado" && alvos.length === 0) {
+    redirect("/comunicados/novo?erro=alvos_obrigatorios");
   }
 
   // Upload opcional da imagem.
@@ -61,6 +87,7 @@ export async function criarComunicadoAction(formData: FormData) {
       imagem_path: imagemPath,
       alcance,
       aluno_id: alcance === "individual" ? alunoId : null,
+      alvos,
       status: "processando",
       criado_por: session.profile.id,
     })
@@ -76,6 +103,7 @@ export async function criarComunicadoAction(formData: FormData) {
     supabase,
     alcance,
     alcance === "individual" ? alunoId : null,
+    alvos,
     session.profile.escola_id,
   );
 
