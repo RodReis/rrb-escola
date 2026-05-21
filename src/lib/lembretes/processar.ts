@@ -2,11 +2,9 @@ import "server-only";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { DEFAULT_SCHOOL_ID, money } from "@/lib/constants";
 import { enviarWhatsApp } from "@/lib/whatsapp/send";
-import { montarMensagem } from "./montar-mensagem";
 import { resolverLembretesPendentes } from "./detectar";
 
-const TEMPLATE_FALLBACK =
-  "Olá {responsavel}, a mensalidade de {aluno} ({descricao}) no valor de {valor}, vencida em {vencimento}, está em aberto há {dias_atraso} dia(s). Por favor, regularize.";
+const TEMPLATE_LEMBRETE = process.env.META_TEMPLATE_LEMBRETE ?? "lembrete_cobranca";
 const LIMITE_LOTE = 50;
 
 export type ResultadoLembretes = {
@@ -25,14 +23,6 @@ export async function processarLembretes(
 ): Promise<ResultadoLembretes> {
   const supabase = createAdminClient();
 
-  // Template da escola (com fallback se nulo).
-  const { data: escola } = await supabase
-    .from("escolas")
-    .select("lembrete_template")
-    .eq("id", escolaId)
-    .maybeSingle();
-  const template = escola?.lembrete_template || TEMPLATE_FALLBACK;
-
   // forcarReenvio → não ignora já enviados.
   const pendentes = await resolverLembretesPendentes(supabase, escolaId, !opts.forcarReenvio);
   const lote = pendentes.slice(0, LIMITE_LOTE);
@@ -41,19 +31,22 @@ export async function processarLembretes(
   let falhas = 0;
 
   for (const p of lote) {
-    const mensagem = montarMensagem(template, {
-      responsavel: p.responsavelNome,
-      aluno: p.alunoNome,
-      descricao: p.descricao,
-      valor: money.format(p.valor),
-      vencimento: dataBR(p.vencimento),
-      diasAtraso: p.diasAtraso,
-    });
+    const valorFmt = money.format(p.valor);
+    const vencimentoFmt = dataBR(p.vencimento);
+
+    // Variáveis do template lembrete_cobranca, na ordem {{1}}..{{4}}:
+    // responsável, aluno, valor, vencimento.
+    const variaveis = [p.responsavelNome, p.alunoNome, valorFmt, vencimentoFmt];
+
+    // Texto legível para o log (a Meta renderiza o template; guardamos uma versão local).
+    const textoLog = `Lembrete: mensalidade de ${p.alunoNome} (${p.descricao}) ${valorFmt}, vencida em ${vencimentoFmt}.`;
 
     const resultado = await enviarWhatsApp(
       {
         telefone: p.telefone,
-        mensagem,
+        templateName: TEMPLATE_LEMBRETE,
+        variaveis,
+        textoLog,
         alunoId: p.alunoId,
         referenciaTipo: "lembrete_cobranca",
         referenciaId: p.cobrancaId,
