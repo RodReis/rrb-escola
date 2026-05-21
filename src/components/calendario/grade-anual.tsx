@@ -13,22 +13,33 @@ function iso(year: number, month: number, day: number): string {
   return `${year}-${String(month + 1).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
 }
 
-function estadoDoDia(
+const ESTADO_LABEL: Record<EstadoDia, string> = {
+  letivo: "Dia letivo",
+  feriado: "Feriado",
+  recesso: "Recesso",
+  "nao-letivo": "Não letivo",
+};
+
+function infoDoDia(
   date: string,
   calendario: Calendario,
   excecoes: CalendarioExcecao[],
-): EstadoDia {
-  if (isDiaLetivo(date, calendario, excecoes)) return "letivo";
-  for (const ex of excecoes) {
-    if (date >= ex.dataInicio && date <= ex.dataFim) return ex.tipo;
+): { estado: EstadoDia; descricao: string | null } {
+  if (isDiaLetivo(date, calendario, excecoes)) {
+    return { estado: "letivo", descricao: null };
   }
-  return "nao-letivo";
+  for (const ex of excecoes) {
+    if (date >= ex.dataInicio && date <= ex.dataFim) {
+      return { estado: ex.tipo, descricao: ex.descricao };
+    }
+  }
+  return { estado: "nao-letivo", descricao: null };
 }
 
 const CELL_CLASS: Record<EstadoDia, string> = {
   letivo: "bg-surface text-ink",
-  feriado: "bg-danger/15 text-danger font-semibold",
-  recesso: "bg-warning/15 text-warning font-semibold",
+  feriado: "bg-danger/20 text-danger font-bold ring-1 ring-inset ring-danger/50",
+  recesso: "bg-warning/20 text-warning font-bold ring-1 ring-inset ring-warning/50",
   "nao-letivo": "bg-muted/50 text-ink/35",
 };
 
@@ -53,14 +64,26 @@ function MesGrid({
         {celulas.map((dia, i) => {
           if (dia === null) return <span key={i} />;
           const date = iso(ano, mes, dia);
-          const estado = estadoDoDia(date, calendario, excecoes);
+          const { estado, descricao } = infoDoDia(date, calendario, excecoes);
+          const dataBR = date.split("-").reverse().join("/");
+          const hint = descricao
+            ? `${dataBR} — ${ESTADO_LABEL[estado]}: ${descricao}`
+            : `${dataBR} — ${ESTADO_LABEL[estado]}`;
+          const destaque = estado === "feriado" || estado === "recesso";
           return (
             <span
               key={i}
-              className={`rounded-sm py-1 ${CELL_CLASS[estado]}`}
-              title={`${date} — ${estado}`}
+              className={`relative rounded-sm py-1 ${destaque ? "cursor-help" : ""} ${CELL_CLASS[estado]}`}
+              title={hint}
             >
               {dia}
+              {destaque && (
+                <span
+                  className={`absolute right-0.5 top-0.5 h-1 w-1 rounded-full ${
+                    estado === "feriado" ? "bg-danger" : "bg-warning"
+                  }`}
+                />
+              )}
             </span>
           );
         })}
