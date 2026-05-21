@@ -36,12 +36,14 @@ export default async function ComunicadoDetalhePage({
   function alcanceLabel(): string {
     if (comunicado.alcance === "geral") return "Geral";
     if (comunicado.alcance === "individual") return "Individual";
-    const nTurmas = comunicado.alvos.filter((a) => a.tipo === "turma").length;
-    const nSeries = comunicado.alvos.filter((a) => a.tipo === "serie").length;
+    const turmas = comunicado.alvos.criterio.filter((c) => c.tipo === "turma");
+    const series = comunicado.alvos.criterio.filter((c) => c.tipo === "serie");
     const partes: string[] = [];
-    if (nTurmas > 0) partes.push(`${nTurmas} turma(s)`);
-    if (nSeries > 0) partes.push(`${nSeries} série(s)`);
-    return `Segmentado · ${partes.join(", ")}`;
+    if (turmas.length > 0) partes.push(`Turmas: ${turmas.map((t) => t.nome).join(", ")}`);
+    if (series.length > 0) partes.push(`Séries: ${series.map((s) => s.nome).join(", ")}`);
+    const qtdAlunos = comunicado.alvos.alunos.length;
+    const sufixo = qtdAlunos > 0 ? ` · ${qtdAlunos} aluno(s)` : "";
+    return `Segmentado${partes.length ? " · " + partes.join(" · ") : ""}${sufixo}`;
   }
 
   return (
