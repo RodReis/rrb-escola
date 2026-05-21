@@ -22,15 +22,20 @@ async function uploadFotoEvento(
   fotoBase64: string,
 ): Promise<string | null> {
   try {
+    // Detecta o tipo a partir do data-URI; default JPEG.
+    const mimeMatch = fotoBase64.match(/^data:(image\/(?:jpeg|png));base64,/);
+    const contentType = mimeMatch ? mimeMatch[1] : "image/jpeg";
+    const extensao = contentType === "image/png" ? "png" : "jpg";
+
     const base64 = fotoBase64.includes(",") ? fotoBase64.split(",")[1] : fotoBase64;
     const buffer = Buffer.from(base64, "base64");
     if (buffer.length === 0 || buffer.length > MAX_FOTO_BYTES) return null;
 
     const supabase = createAdminClient();
-    const path = `${alunoId}/${Date.now()}-${Math.random().toString(36).slice(2, 8)}.jpg`;
+    const path = `${alunoId}/${Date.now()}-${Math.random().toString(36).slice(2, 8)}.${extensao}`;
     const { error: upErr } = await supabase.storage
       .from("portaria-eventos")
-      .upload(path, buffer, { contentType: "image/jpeg", upsert: false });
+      .upload(path, buffer, { contentType, upsert: false });
     if (upErr) return null;
 
     const { data: signed } = await supabase.storage
