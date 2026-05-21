@@ -50,6 +50,7 @@ const RH_ITEMS: DropdownItem[] = [
   { href: "/rh/documentos", label: "Documentos", iconName: "FileText" },
   { href: "/calendario", label: "Calendário Letivo", iconName: "CalendarDays" },
   { href: "/comunicados", label: "Comunicados", iconName: "Megaphone" },
+  { href: "/configuracoes/lembretes", label: "Lembretes", iconName: "BellRing" },
 ];
 
 const FINANCEIRO_ITEMS: DropdownItem[] = [
@@ -65,7 +66,6 @@ const CONFIG_ITEMS: DropdownItem[] = [
   { href: "/usuarios", label: "Usuários", iconName: "UsersRound" },
   { href: "/configuracoes/perfis", label: "Perfis e Permissões", iconName: "ShieldCheck" },
   { href: "/configuracoes/webhook", label: "Webhook", iconName: "Webhook" },
-  { href: "/configuracoes/lembretes", label: "Lembretes", iconName: "BellRing" },
   { href: "/despesas/categorias", label: "Categorias despesa", iconName: "Tags" },
 ];
 
