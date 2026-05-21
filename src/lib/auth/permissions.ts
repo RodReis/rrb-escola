@@ -45,6 +45,7 @@ export const MODULOS = {
   "rh.funcionarios": { grupo: "rh", nome: "Funcionários" },
   "rh.empresas": { grupo: "rh", nome: "Empresas" },
   "rh.templates": { grupo: "rh", nome: "Templates RH" },
+  comunicados: { grupo: "rh", nome: "Comunicados" },
   // academico
   series: { grupo: "academico", nome: "Séries" },
   turmas: { grupo: "academico", nome: "Turmas" },
@@ -99,6 +100,7 @@ export const ROTA_PARA_MODULO: Record<string, ModuloCodigo> = {
   "/rh/funcionarios": "rh.funcionarios",
   "/rh/empresas": "rh.empresas",
   "/rh/documentos": "rh.templates",
+  "/comunicados": "comunicados",
   "/rh/brackets": "rh.folha",
   "/avaliacoes": "avaliacoes",
   "/frequencias": "frequencias",

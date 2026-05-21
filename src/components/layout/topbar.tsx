@@ -49,6 +49,7 @@ const RH_ITEMS: DropdownItem[] = [
   { href: "/rh/brackets", label: "Brackets", iconName: "SlidersHorizontal" },
   { href: "/rh/documentos", label: "Documentos", iconName: "FileText" },
   { href: "/calendario", label: "Calendário Letivo", iconName: "CalendarDays" },
+  { href: "/comunicados", label: "Comunicados", iconName: "Megaphone" },
 ];
 
 const FINANCEIRO_ITEMS: DropdownItem[] = [

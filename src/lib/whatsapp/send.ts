@@ -2,11 +2,12 @@ import "server-only";
 import { createServerClient } from "@/lib/supabase/server";
 import { DEFAULT_SCHOOL_ID } from "@/lib/constants";
 import { normalizarTelefone } from "./telefone";
-import { sendWhatsApp } from "./evolution";
+import { sendWhatsApp, sendWhatsAppMedia } from "./evolution";
 
 export type EnviarWhatsAppParams = {
   telefone: string;
   mensagem: string;
+  imagemUrl?: string;
   alunoId?: string;
   referenciaTipo?: string;
   referenciaId?: string;
@@ -28,6 +29,7 @@ export async function enviarWhatsApp(params: EnviarWhatsAppParams): Promise<Envi
       mensagem: params.mensagem,
       status: "falha",
       erro: "Telefone inválido",
+      imagem_url: params.imagemUrl ?? null,
       aluno_id: params.alunoId ?? null,
       referencia_tipo: params.referenciaTipo ?? null,
       referencia_id: params.referenciaId ?? null,
@@ -44,6 +46,7 @@ export async function enviarWhatsApp(params: EnviarWhatsAppParams): Promise<Envi
       telefone: telefoneNormalizado,
       mensagem: params.mensagem,
       status: "pendente",
+      imagem_url: params.imagemUrl ?? null,
       aluno_id: params.alunoId ?? null,
       referencia_tipo: params.referenciaTipo ?? null,
       referencia_id: params.referenciaId ?? null,
@@ -56,10 +59,16 @@ export async function enviarWhatsApp(params: EnviarWhatsAppParams): Promise<Envi
   }
 
   // Chama o provedor.
-  const resultado = await sendWhatsApp({
-    telefone: telefoneNormalizado,
-    mensagem: params.mensagem,
-  });
+  const resultado = params.imagemUrl
+    ? await sendWhatsAppMedia({
+        telefone: telefoneNormalizado,
+        mensagem: params.mensagem,
+        imagemUrl: params.imagemUrl,
+      })
+    : await sendWhatsApp({
+        telefone: telefoneNormalizado,
+        mensagem: params.mensagem,
+      });
 
   // Atualiza o log com o resultado final.
   if (resultado.ok) {
