@@ -40,6 +40,11 @@ export async function resolverDestinatarios(
   alunoId: string | null,
   escolaId: string = DEFAULT_SCHOOL_ID,
 ): Promise<Destinatario[]> {
+  // Guard: individual sem aluno definido não deve virar envio geral.
+  if (alcance === "individual" && !alunoId) {
+    return [];
+  }
+
   let query = supabase
     .from("alunos")
     .select("id, responsaveis_aluno(celular, responsavel_financeiro), matriculas!inner(status)")
