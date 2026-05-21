@@ -148,3 +148,16 @@ export async function excluirExcecaoAction(formData: FormData) {
 
   revalidatePath("/calendario");
 }
+
+export async function excluirCalendarioAction(formData: FormData) {
+  await requirePermission("calendario", "delete");
+  const supabase = await createServerClient();
+
+  const id = formText(formData, "id");
+  if (!id) throw new Error("ID obrigatório");
+
+  // FK calendario_excecoes.calendario_id tem ON DELETE CASCADE — exceções somem junto.
+  await supabase.from("calendario_letivo").delete().eq("id", id).eq("escola_id", DEFAULT_SCHOOL_ID);
+
+  revalidatePath("/calendario");
+}

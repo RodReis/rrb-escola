@@ -2,7 +2,9 @@ import Link from "next/link";
 import { CalendarDays } from "lucide-react";
 import { PageHeader } from "@/components/ui/page-header";
 import { Panel } from "@/components/ui/card";
+import { ConfirmButton } from "@/components/ui/confirm-button";
 import { requirePermission } from "@/lib/auth/session";
+import { excluirCalendarioAction } from "@/lib/actions/calendario";
 import { getCalendario, listAnosLetivos } from "@/lib/data/calendario";
 import { contarDiasLetivos } from "@/lib/calendario/dias-letivos";
 import { CalendarioConfigForm } from "@/components/calendario/calendario-config-form";
@@ -73,7 +75,7 @@ export default async function CalendarioPage({
       </nav>
 
       {dados && (
-        <Panel className="grid gap-3 sm:grid-cols-3 sm:items-center">
+        <Panel className="grid gap-3 sm:grid-cols-4 sm:items-center">
           <div>
             <p className="text-xs uppercase tracking-kicker text-ink/45">Período</p>
             <p className="text-sm font-semibold text-ink">
@@ -107,6 +109,17 @@ export default async function CalendarioPage({
                 {atingeMinimo ? "OK" : `mín. ${DIAS_LETIVOS_MIN}`}
               </span>
             </p>
+          </div>
+          <div className="flex sm:justify-end">
+            <form action={excluirCalendarioAction}>
+              <input type="hidden" name="id" value={dados.calendario.id} />
+              <ConfirmButton
+                message={`Excluir o calendário de ${anoSelecionado}? Todos os feriados e recessos cadastrados serão removidos. Você poderá criar um novo em seguida.`}
+                className="ds-button ds-button-ghost text-xs text-danger"
+              >
+                Excluir calendário
+              </ConfirmButton>
+            </form>
           </div>
         </Panel>
       )}
