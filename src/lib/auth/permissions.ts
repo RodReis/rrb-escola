@@ -50,6 +50,7 @@ export const MODULOS = {
   turmas: { grupo: "academico", nome: "Turmas" },
   professores: { grupo: "academico", nome: "Professores" },
   organograma: { grupo: "academico", nome: "Organograma" },
+  calendario: { grupo: "academico", nome: "Calendário Letivo" },
   // operacional
   portaria: { grupo: "operacional", nome: "Portaria" },
   relatorios: { grupo: "operacional", nome: "Relatórios" },
@@ -107,6 +108,7 @@ export const ROTA_PARA_MODULO: Record<string, ModuloCodigo> = {
   "/turmas": "turmas",
   "/professores/atribuicoes": "professores",
   "/organograma": "organograma",
+  "/calendario": "calendario",
   "/portaria": "portaria",
   "/relatorios/alunos": "relatorios",
   "/relatorios/frequencia": "relatorios",

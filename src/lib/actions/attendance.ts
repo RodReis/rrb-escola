@@ -5,6 +5,8 @@ import { requirePermission } from "@/lib/auth/session";
 import { DEFAULT_SCHOOL_ID } from "@/lib/constants";
 import { createServerClient } from "@/lib/supabase/server";
 import { formBoolean, formText } from "@/lib/utils";
+import { getCalendario } from "@/lib/data/calendario";
+import { isDiaLetivo } from "@/lib/calendario/dias-letivos";
 
 export async function createAttendanceAction(formData: FormData) {
   await requirePermission("frequencias", "create");
@@ -33,6 +35,12 @@ export async function saveClassAttendanceAction(formData: FormData) {
   const alunoIds = formData.getAll("aluno_id").filter((value): value is string => typeof value === "string");
 
   if (!turmaId || alunoIds.length === 0) return;
+
+  const anoLetivo = Number(date.slice(0, 4));
+  const cal = await getCalendario(anoLetivo);
+  if (cal && !isDiaLetivo(date, cal.calendario, cal.excecoes)) {
+    throw new Error("Data não é um dia letivo no calendário. Verifique o calendário letivo.");
+  }
 
   const rows = alunoIds.map((alunoId) => ({
     escola_id: DEFAULT_SCHOOL_ID,

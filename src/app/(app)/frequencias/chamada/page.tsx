@@ -93,6 +93,16 @@ export default async function ChamadaPage({ searchParams }: { searchParams: Sear
         </form>
       </Panel>
 
+        {data.temCalendario && !data.diaLetivo && (
+          <div className="rounded-ui border border-danger/40 bg-danger/10 p-4 text-sm text-danger">
+            <p className="font-semibold">Data não letiva</p>
+            <p className="mt-1 text-xs">
+              {data.date.split("-").reverse().join("/")} não é um dia letivo no calendário
+              (feriado, recesso ou fim de semana). Não é possível lançar frequência.
+            </p>
+          </div>
+        )}
+
       <form action={saveClassAttendanceAction} className="overflow-hidden rounded-panel border border-line bg-surface shadow-soft">
         <input type="hidden" name="turma_id" value={data.selectedTurmaId} />
         <input type="hidden" name="data_aula" value={data.date} />
@@ -128,7 +138,7 @@ export default async function ChamadaPage({ searchParams }: { searchParams: Sear
           ))
         )}
         <div className="flex justify-end border-t border-line p-4">
-          <button className="ds-button ds-button-accent" disabled={data.students.length === 0}>
+          <button className="ds-button ds-button-accent" disabled={data.students.length === 0 || (data.temCalendario && !data.diaLetivo)}>
             <CalendarCheck size={16} /> Salvar chamada
           </button>
         </div>

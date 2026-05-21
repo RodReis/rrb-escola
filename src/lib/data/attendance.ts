@@ -1,5 +1,7 @@
 import { createServerClient } from "@/lib/supabase/server";
 import { DEFAULT_SCHOOL_ID } from "@/lib/constants";
+import { getCalendario } from "@/lib/data/calendario";
+import { isDiaLetivo } from "@/lib/calendario/dias-letivos";
 
 export async function getAttendanceData() {
   const supabase = await createServerClient();
@@ -33,8 +35,14 @@ export async function getClassAttendanceData(turmaId?: string, date?: string) {
     series: Array.isArray(turma.series) ? turma.series[0] : turma.series
   }));
   const selectedTurmaId = turmaId ?? normalizedTurmas[0]?.id ?? "";
+
+  const anoLetivoChamada = Number(today.slice(0, 4));
+  const calChamada = await getCalendario(anoLetivoChamada);
+  const diaLetivo = calChamada ? isDiaLetivo(today, calChamada.calendario, calChamada.excecoes) : true;
+  const temCalendario = calChamada !== null;
+
   if (!selectedTurmaId) {
-    return { turmas: normalizedTurmas, selectedTurmaId, date: today, students: [] };
+    return { turmas: normalizedTurmas, selectedTurmaId, date: today, students: [], diaLetivo, temCalendario };
   }
 
   const { data: enrollments, error: enrollmentsError } = await supabase
@@ -70,7 +78,9 @@ export async function getClassAttendanceData(turmaId?: string, date?: string) {
       alunoId: enrollment.aluno_id,
       aluno: Array.isArray(enrollment.alunos) ? enrollment.alunos[0] : enrollment.alunos,
       attendance: attendanceMap.get(enrollment.aluno_id) ?? null
-    }))
+    })),
+    diaLetivo,
+    temCalendario,
   };
 }
 

@@ -39,6 +39,7 @@ const SECRETARIA_ITEMS: DropdownItem[] = [
   { href: "/portaria", label: "Portaria", iconName: "DoorOpen" },
   { href: "/mural/aniversariantes", label: "Mural aniversários", iconName: "Cake" },
   { href: "/organograma", label: "Organograma", iconName: "Network" },
+  { href: "/calendario", label: "Calendário Letivo", iconName: "CalendarDays" },
   { href: "/importacoes", label: "Importações", iconName: "Inbox" },
 ];
 
@@ -47,6 +48,7 @@ const RH_ITEMS: DropdownItem[] = [
   { href: "/rh/funcionarios", label: "Funcionários", iconName: "UsersRound" },
   { href: "/rh/brackets", label: "Brackets", iconName: "SlidersHorizontal" },
   { href: "/rh/documentos", label: "Documentos", iconName: "FileText" },
+  { href: "/calendario", label: "Calendário Letivo", iconName: "CalendarDays" },
 ];
 
 const FINANCEIRO_ITEMS: DropdownItem[] = [
