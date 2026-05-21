@@ -3,6 +3,7 @@ import { PageHeader } from "@/components/ui/page-header";
 import { requirePermission } from "@/lib/auth/session";
 import { createServerClient } from "@/lib/supabase/server";
 import { NovoComunicadoForm } from "@/components/comunicados/novo-comunicado-form";
+import { listTurmasESeries } from "@/lib/data/comunicados";
 
 export const dynamic = "force-dynamic";
 
@@ -10,6 +11,7 @@ const ERRO_LABEL: Record<string, string> = {
   campos_obrigatorios: "Preencha o título e a mensagem.",
   alcance_invalido: "Selecione um alcance válido.",
   aluno_obrigatorio: "Selecione o aluno para o comunicado individual.",
+  alvos_obrigatorios: "Selecione ao menos uma turma ou série.",
   imagem_tipo: "A imagem deve ser PNG, JPG ou WEBP.",
   imagem_grande: "A imagem excede o limite de 5MB.",
 };
@@ -46,6 +48,8 @@ export default async function NovoComunicadoPage({
     alunos.push({ id: a.id, nome: a.nome });
   }
 
+  const { turmas, series } = await listTurmasESeries(session.profile.escola_id);
+
   return (
     <div className="grid gap-6">
       <PageHeader
@@ -65,7 +69,7 @@ export default async function NovoComunicadoPage({
         </div>
       )}
 
-      <NovoComunicadoForm alunos={alunos} />
+      <NovoComunicadoForm alunos={alunos} turmas={turmas} series={series} />
     </div>
   );
 }

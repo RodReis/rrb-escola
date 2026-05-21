@@ -6,10 +6,36 @@ import { Panel } from "@/components/ui/card";
 import { criarComunicadoAction } from "@/lib/actions/comunicados";
 
 type AlunoLite = { id: string; nome: string };
+type TurmaLite = { id: string; nome: string; anoLetivo: number; serieNome: string };
+type SerieLite = { id: string; nome: string };
 
-export function NovoComunicadoForm({ alunos }: { alunos: AlunoLite[] }) {
-  const [alcance, setAlcance] = useState<"geral" | "individual">("geral");
+type Alvo = { tipo: "turma" | "serie"; id: string };
+
+export function NovoComunicadoForm({
+  alunos,
+  turmas,
+  series,
+}: {
+  alunos: AlunoLite[];
+  turmas: TurmaLite[];
+  series: SerieLite[];
+}) {
+  const [alcance, setAlcance] = useState<"geral" | "segmentado" | "individual">("geral");
+  const [turmasSel, setTurmasSel] = useState<Set<string>>(new Set());
+  const [seriesSel, setSeriesSel] = useState<Set<string>>(new Set());
   const [enviando, setEnviando] = useState(false);
+
+  function toggle(set: Set<string>, id: string): Set<string> {
+    const novo = new Set(set);
+    if (novo.has(id)) novo.delete(id);
+    else novo.add(id);
+    return novo;
+  }
+
+  const alvos: Alvo[] = [
+    ...Array.from(turmasSel).map((id) => ({ tipo: "turma" as const, id })),
+    ...Array.from(seriesSel).map((id) => ({ tipo: "serie" as const, id })),
+  ];
 
   return (
     <Panel className="grid gap-4">
@@ -52,6 +78,16 @@ export function NovoComunicadoForm({ alunos }: { alunos: AlunoLite[] }) {
             <input
               type="radio"
               name="alcance"
+              value="segmentado"
+              checked={alcance === "segmentado"}
+              onChange={() => setAlcance("segmentado")}
+            />
+            Turmas e séries específicas
+          </label>
+          <label className="flex items-center gap-2 text-sm">
+            <input
+              type="radio"
+              name="alcance"
               value="individual"
               checked={alcance === "individual"}
               onChange={() => setAlcance("individual")}
@@ -59,6 +95,56 @@ export function NovoComunicadoForm({ alunos }: { alunos: AlunoLite[] }) {
             Aluno específico
           </label>
         </fieldset>
+
+        {alcance === "segmentado" && (
+          <div className="grid gap-4 rounded-ui border border-line p-3">
+            <input type="hidden" name="alvos" value={JSON.stringify(alvos)} />
+
+            <div className="grid gap-1.5">
+              <p className="text-sm font-semibold text-ink">Turmas</p>
+              <div className="grid gap-1 sm:grid-cols-2">
+                {turmas.map((t) => (
+                  <label key={t.id} className="flex items-center gap-2 text-sm">
+                    <input
+                      type="checkbox"
+                      checked={turmasSel.has(t.id)}
+                      onChange={() => setTurmasSel((s) => toggle(s, t.id))}
+                      className="h-4 w-4"
+                    />
+                    {t.serieNome} {t.nome} ({t.anoLetivo})
+                  </label>
+                ))}
+                {turmas.length === 0 && (
+                  <span className="text-xs text-ink/55">Nenhuma turma ativa.</span>
+                )}
+              </div>
+            </div>
+
+            <div className="grid gap-1.5">
+              <p className="text-sm font-semibold text-ink">Séries</p>
+              <div className="grid gap-1 sm:grid-cols-2">
+                {series.map((s) => (
+                  <label key={s.id} className="flex items-center gap-2 text-sm">
+                    <input
+                      type="checkbox"
+                      checked={seriesSel.has(s.id)}
+                      onChange={() => setSeriesSel((set) => toggle(set, s.id))}
+                      className="h-4 w-4"
+                    />
+                    {s.nome}
+                  </label>
+                ))}
+                {series.length === 0 && (
+                  <span className="text-xs text-ink/55">Nenhuma série cadastrada.</span>
+                )}
+              </div>
+            </div>
+
+            {alvos.length === 0 && (
+              <p className="text-xs text-danger">Selecione ao menos uma turma ou série.</p>
+            )}
+          </div>
+        )}
 
         {alcance === "individual" && (
           <label className="grid gap-1 text-sm">
@@ -73,7 +159,10 @@ export function NovoComunicadoForm({ alunos }: { alunos: AlunoLite[] }) {
         )}
 
         <div className="flex justify-end">
-          <button className="ds-button ds-button-primary" disabled={enviando}>
+          <button
+            className="ds-button ds-button-primary"
+            disabled={enviando || (alcance === "segmentado" && alvos.length === 0)}
+          >
             <Send size={14} /> {enviando ? "Enviando…" : "Enviar comunicado"}
           </button>
         </div>

@@ -27,10 +27,22 @@ export default async function ComunicadoDetalhePage({
   const session = await requirePermission("comunicados", "read");
   const { id } = await params;
 
-  const comunicado = await getComunicado(id, session.profile.escola_id);
-  if (!comunicado) notFound();
+  const comunicadoOrNull = await getComunicado(id, session.profile.escola_id);
+  if (!comunicadoOrNull) notFound();
+  const comunicado = comunicadoOrNull;
 
   const destinatarios = await getDestinatarios(id, session.profile.escola_id);
+
+  function alcanceLabel(): string {
+    if (comunicado.alcance === "geral") return "Geral";
+    if (comunicado.alcance === "individual") return "Individual";
+    const nTurmas = comunicado.alvos.filter((a) => a.tipo === "turma").length;
+    const nSeries = comunicado.alvos.filter((a) => a.tipo === "serie").length;
+    const partes: string[] = [];
+    if (nTurmas > 0) partes.push(`${nTurmas} turma(s)`);
+    if (nSeries > 0) partes.push(`${nSeries} série(s)`);
+    return `Segmentado · ${partes.join(", ")}`;
+  }
 
   return (
     <div className="grid gap-6">
@@ -41,7 +53,7 @@ export default async function ComunicadoDetalhePage({
           { label: comunicado.titulo },
         ]}
         title={comunicado.titulo}
-        description={`${comunicado.alcance === "geral" ? "Geral" : "Individual"} · ${new Date(comunicado.createdAt).toLocaleDateString("pt-BR")}`}
+        description={`${alcanceLabel()} · ${new Date(comunicado.createdAt).toLocaleDateString("pt-BR")}`}
         kpis={[
           { label: "Destinatários", value: comunicado.totalDestinatarios.toString() },
           { label: "Enviados", value: comunicado.totalEnviados.toString() },
