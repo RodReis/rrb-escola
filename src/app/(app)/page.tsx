@@ -416,7 +416,7 @@ export default async function DashboardPage({
           {showFrequencias && feriadosProximos && (
             <>
               <SectionHeader title="Calendário letivo" subtitle="Feriados e recessos deste mês e do próximo" />
-              <section className="grid gap-6 lg:grid-cols-2">
+              <section className="max-w-md">
                 <FeriadosCard items={feriadosProximos} />
               </section>
             </>
