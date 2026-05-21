@@ -1,13 +1,15 @@
 import { createServerClient } from "@/lib/supabase/server";
 import { DEFAULT_SCHOOL_ID } from "@/lib/constants";
+import type { Alvo } from "@/lib/comunicados/destinatarios";
 
 export type ComunicadoRow = {
   id: string;
   titulo: string;
   mensagem: string;
   imagemPath: string | null;
-  alcance: "geral" | "individual";
+  alcance: "geral" | "individual" | "segmentado";
   alunoId: string | null;
+  alvos: Alvo[];
   status: "processando" | "concluido";
   totalDestinatarios: number;
   totalEnviados: number;
@@ -32,6 +34,7 @@ function mapComunicado(row: any): ComunicadoRow {
     imagemPath: row.imagem_path,
     alcance: row.alcance,
     alunoId: row.aluno_id,
+    alvos: Array.isArray(row.alvos) ? row.alvos : [],
     status: row.status,
     totalDestinatarios: row.total_destinatarios ?? 0,
     totalEnviados: row.total_enviados ?? 0,
@@ -86,4 +89,41 @@ export async function getDestinatarios(
     erro: r.erro,
     alunoId: r.aluno_id,
   }));
+}
+
+export type TurmaLite = { id: string; nome: string; anoLetivo: number; serieNome: string };
+export type SerieLite = { id: string; nome: string };
+
+export async function listTurmasESeries(
+  escolaId: string = DEFAULT_SCHOOL_ID,
+): Promise<{ turmas: TurmaLite[]; series: SerieLite[] }> {
+  const supabase = await createServerClient();
+
+  const [turmasRes, seriesRes] = await Promise.all([
+    supabase
+      .from("turmas")
+      .select("id, nome, ano_letivo, series(nome)")
+      .eq("escola_id", escolaId)
+      .eq("ativo", true)
+      .order("ano_letivo", { ascending: false }),
+    supabase
+      .from("series")
+      .select("id, nome")
+      .eq("escola_id", escolaId)
+      .order("ordem"),
+  ]);
+
+  const turmas: TurmaLite[] = ((turmasRes.data ?? []) as any[]).map((t) => ({
+    id: t.id,
+    nome: t.nome,
+    anoLetivo: t.ano_letivo,
+    serieNome: Array.isArray(t.series) ? (t.series[0]?.nome ?? "") : (t.series?.nome ?? ""),
+  }));
+
+  const series: SerieLite[] = ((seriesRes.data ?? []) as any[]).map((s) => ({
+    id: s.id,
+    nome: s.nome,
+  }));
+
+  return { turmas, series };
 }
