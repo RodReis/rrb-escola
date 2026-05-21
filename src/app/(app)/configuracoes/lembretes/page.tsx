@@ -1,6 +1,6 @@
 import { PageHeader } from "@/components/ui/page-header";
 import { requirePermission } from "@/lib/auth/session";
-import { getConfigLembretes, contarLembretesPendentes } from "@/lib/data/lembretes";
+import { getConfigLembretes, listarLembretesPendentes } from "@/lib/data/lembretes";
 import { ConfigLembretesForm } from "@/components/lembretes/config-lembretes-form";
 
 export const dynamic = "force-dynamic";
@@ -9,7 +9,7 @@ export default async function LembretesConfigPage() {
   const session = await requirePermission("financeiro.cobrancas", "read");
 
   const config = await getConfigLembretes(session.profile.escola_id);
-  const pendentes = await contarLembretesPendentes(session.profile.escola_id);
+  const pendentes = await listarLembretesPendentes(session.profile.escola_id);
 
   return (
     <div className="grid gap-6">

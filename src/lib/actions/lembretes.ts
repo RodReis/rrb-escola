@@ -21,11 +21,23 @@ export async function salvarConfigLembretesAction(formData: FormData) {
   revalidatePath("/configuracoes/lembretes");
 }
 
-export async function enviarLembretesAgoraAction() {
+export async function enviarLembretesAgoraAction(formData: FormData) {
   const session = await requirePermission("financeiro.cobrancas", "update");
 
-  // Envio manual: respeita "uma vez por cobrança" (não força reenvio).
-  await processarLembretes({ forcarReenvio: false }, session.profile.escola_id);
+  // Campo "cobranca_ids" = JSON array de ids selecionados. Vazio/ausente = enviar todos.
+  let cobrancaIds: string[] | undefined;
+  const raw = formData.get("cobranca_ids");
+  if (typeof raw === "string" && raw.trim() !== "") {
+    try {
+      const parsed = JSON.parse(raw);
+      if (Array.isArray(parsed)) {
+        cobrancaIds = parsed.filter((x): x is string => typeof x === "string" && x.length > 0);
+      }
+    } catch {
+      cobrancaIds = undefined;
+    }
+  }
 
+  await processarLembretes({ forcarReenvio: false }, session.profile.escola_id, cobrancaIds);
   revalidatePath("/configuracoes/lembretes");
 }

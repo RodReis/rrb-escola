@@ -1,6 +1,7 @@
 import { createServerClient } from "@/lib/supabase/server";
 import { DEFAULT_SCHOOL_ID } from "@/lib/constants";
 import { resolverLembretesPendentes } from "@/lib/lembretes/detectar";
+import type { LembretePendente } from "@/lib/lembretes/detectar";
 
 export type ConfigLembretes = {
   autoAtivo: boolean;
@@ -26,4 +27,11 @@ export async function contarLembretesPendentes(
   const supabase = await createServerClient();
   const pendentes = await resolverLembretesPendentes(supabase, escolaId, true);
   return pendentes.length;
+}
+
+export async function listarLembretesPendentes(
+  escolaId: string = DEFAULT_SCHOOL_ID,
+): Promise<LembretePendente[]> {
+  const supabase = await createServerClient();
+  return resolverLembretesPendentes(supabase, escolaId, true);
 }
