@@ -5,6 +5,7 @@ import { DataTableShell } from "@/components/ui/data-table";
 import { StatusPill } from "@/components/ui/status-pill";
 import { AlunosSemValorFilters } from "@/components/finance/alunos-sem-valor-filters";
 import { ExportAlunosSemValorButton } from "@/components/finance/export-alunos-sem-valor-button";
+import { MatriculaEditDialog } from "@/components/finance/matricula-edit-dialog";
 import {
   getAlunosSemValor,
   MOTIVO_LABEL,
@@ -14,6 +15,7 @@ import {
 } from "@/lib/data/alunos-sem-valor";
 import { getAcademicData } from "@/lib/data/lookups";
 import { requirePermission } from "@/lib/auth/session";
+import { can } from "@/lib/auth/permissions";
 
 export const dynamic = "force-dynamic";
 
@@ -42,7 +44,9 @@ export default async function AlunosSemValorPage({
 }: {
   searchParams: Promise<{ nome?: string; motivo?: string; serie?: string; turma?: string }>;
 }) {
-  await requirePermission("relatorios", "read");
+  const session = await requirePermission("relatorios", "read");
+  const canEdit =
+    session.profile.perfil === "admin" || can(session.permissions, "matriculas", "update");
 
   const sp = await searchParams;
   const filters = parseFilters(sp);
@@ -51,6 +55,7 @@ export default async function AlunosSemValorPage({
     getAcademicData(),
   ]);
 
+  const semMatricula = rows.filter((r) => r.motivo === "sem_matricula").length;
   const semValor = rows.filter((r) => r.motivo === "sem_valor").length;
   const bolsistas = rows.filter(
     (r) => r.motivo === "bolsa_integral" || r.motivo === "bolsa_parcial"
@@ -59,15 +64,24 @@ export default async function AlunosSemValorPage({
     (r) => r.motivo === "permuta" || r.motivo === "gratuita"
   ).length;
 
+  const series = academic.series.map((s) => ({ id: s.id, nome: s.nome }));
+  const turmas = academic.turmas.map((t) => ({
+    id: t.id,
+    nome: t.nome,
+    serieId: (t as { serie_id: string }).serie_id,
+  }));
+  const planos = academic.planos.map((p) => ({ id: p.id, nome: p.nome }));
+
   return (
     <div className="grid gap-8">
       <PageHeader
         breadcrumb={[{ label: "Financeiro", href: "/financeiro" }, { label: "Alunos sem valor" }]}
         title="Alunos sem valor de matrícula"
-        description="Matrículas ativas de 2026 sem valor de matrícula definido ou com vaga não-pagante."
+        description="Alunos ativos sem matrícula 2026, sem valor de matrícula definido ou com vaga não-pagante."
         actions={<ExportAlunosSemValorButton rows={rows} />}
         kpis={[
           { label: "Total", value: rows.length.toLocaleString("pt-BR") },
+          { label: "Sem matrícula", value: semMatricula.toLocaleString("pt-BR"), tone: "danger" },
           { label: "Sem valor", value: semValor.toLocaleString("pt-BR"), tone: "danger" },
           { label: "Bolsistas", value: bolsistas.toLocaleString("pt-BR"), tone: "warning" },
           { label: "Permuta/Gratuita", value: permutaGratuita.toLocaleString("pt-BR") },
@@ -81,8 +95,8 @@ export default async function AlunosSemValorPage({
           serieId: filters.serieId ?? "",
           turmaId: filters.turmaId ?? "",
         }}
-        series={academic.series.map((s) => ({ id: s.id, nome: s.nome }))}
-        turmas={academic.turmas.map((t) => ({ id: t.id, nome: t.nome }))}
+        series={series}
+        turmas={turmas.map((t) => ({ id: t.id, nome: t.nome }))}
       />
 
       {rows.length === 0 ? (
@@ -94,7 +108,7 @@ export default async function AlunosSemValorPage({
         </Panel>
       ) : (
         <DataTableShell>
-          <table className="ds-dt min-w-[880px]">
+          <table className="ds-dt min-w-[940px]">
             <thead>
               <tr>
                 <th>Aluno</th>
@@ -102,14 +116,15 @@ export default async function AlunosSemValorPage({
                 <th>Turma</th>
                 <th>Motivo</th>
                 <th>Responsáveis</th>
+                {canEdit ? <th>Ações</th> : null}
               </tr>
             </thead>
             <tbody>
               {rows.map((r) => (
-                <tr key={r.matriculaId}>
+                <tr key={r.alunoId}>
                   <td className="font-semibold text-ink">{r.nome}</td>
-                  <td>{r.serie}</td>
-                  <td>{r.turma}</td>
+                  <td>{r.serie || "—"}</td>
+                  <td>{r.turma || "—"}</td>
                   <td>
                     <StatusPill tone={motivoTone(r.motivo)}>
                       {MOTIVO_LABEL[r.motivo]}
@@ -134,6 +149,16 @@ export default async function AlunosSemValorPage({
                       </div>
                     )}
                   </td>
+                  {canEdit ? (
+                    <td>
+                      <MatriculaEditDialog
+                        row={r}
+                        series={series}
+                        turmas={turmas}
+                        planos={planos}
+                      />
+                    </td>
+                  ) : null}
                 </tr>
               ))}
             </tbody>
