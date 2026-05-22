@@ -7,6 +7,7 @@
 export type TipoVaga = "paga" | "bolsa_integral" | "bolsa_parcial" | "permuta" | "gratuita";
 
 export type MotivoSemValor =
+  | "sem_matricula"
   | "sem_valor"
   | "bolsa_integral"
   | "bolsa_parcial"
@@ -21,17 +22,26 @@ export type RawResponsavel = {
   responsavel_financeiro: boolean;
 };
 
-export type RawMatricula = {
+export type StatusMatricula = "ativa" | "cancelada" | "transferida" | "concluida";
+
+export type RawMatriculaEmbed = {
   id: string;
   tipo_vaga: TipoVaga;
   plano_id: string | null;
-  alunos: { id: string; nome: string } | null;
+  status: StatusMatricula;
   planos: { valor_matricula: number | null } | null;
   turmas: {
     id: string;
     nome: string;
+    serie_id: string;
     series: { id: string; nome: string; ordem: number } | null;
   } | null;
+};
+
+export type RawAluno = {
+  id: string;
+  nome: string;
+  matriculas: RawMatriculaEmbed[];
   responsaveis_aluno: RawResponsavel[];
 };
 
@@ -42,11 +52,14 @@ export type ResponsavelRow = {
 };
 
 export type AlunoSemValorRow = {
-  matriculaId: string;
+  alunoId: string;
+  matriculaId: string | null;
   nome: string;
   serie: string;
+  serieId: string | null;
   serieOrdem: number;
   turma: string;
+  turmaId: string | null;
   motivo: MotivoSemValor;
   valorMatricula: number;
   responsaveis: ResponsavelRow[];
@@ -60,6 +73,7 @@ export type AlunosSemValorFilters = {
 };
 
 export const MOTIVO_LABEL: Record<MotivoSemValor, string> = {
+  sem_matricula: "Sem matrícula",
   sem_valor: "Sem valor",
   bolsa_integral: "Bolsa integral",
   bolsa_parcial: "Bolsa parcial",
@@ -68,7 +82,7 @@ export const MOTIVO_LABEL: Record<MotivoSemValor, string> = {
 };
 
 export function motivoTone(motivo: MotivoSemValor): "danger" | "warning" | "neutral" {
-  if (motivo === "sem_valor") return "danger";
+  if (motivo === "sem_matricula" || motivo === "sem_valor") return "danger";
   if (motivo === "bolsa_integral" || motivo === "bolsa_parcial") return "warning";
   return "neutral";
 }
@@ -80,24 +94,35 @@ export function isSemValor(planoId: string | null, valorMatricula: number | null
 }
 
 /**
- * Returns the Motivo for a matrícula, or null if it should NOT appear in the grid.
- * Precedence: tipo_vaga (non-paga) wins over sem_valor — a scholarship without a
- * plan is expected, not a registration error.
+ * Returns the Motivo for an aluno, or null if the aluno should NOT appear in the grid.
+ * - No 2026 matrícula -> "sem_matricula".
+ * - Has matrícula, tipo_vaga non-paga -> the tipo_vaga (precedence over sem_valor).
+ * - Has matrícula, paga, no value -> "sem_valor".
+ * - Has matrícula, paga, valid value -> null (not shown).
  */
 export function deriveMotivo(
   tipoVaga: TipoVaga,
   planoId: string | null,
-  valorMatricula: number | null
+  valorMatricula: number | null,
+  hasMatricula: boolean
 ): MotivoSemValor | null {
+  if (!hasMatricula) return "sem_matricula";
   if (tipoVaga !== "paga") return tipoVaga;
   if (isSemValor(planoId, valorMatricula)) return "sem_valor";
   return null;
 }
 
-/** Builds an AlunoSemValorRow from a raw joined matrícula, or null if it should not appear. */
-export function buildRow(raw: RawMatricula): AlunoSemValorRow | null {
-  const valor = raw.planos?.valor_matricula ?? null;
-  const motivo = deriveMotivo(raw.tipo_vaga, raw.plano_id, valor);
+/** Builds an AlunoSemValorRow from a raw aluno (with optional 2026 matrícula), or null if it should not appear. */
+export function buildRow(raw: RawAluno): AlunoSemValorRow | null {
+  const matricula = raw.matriculas[0] ?? null;
+  const hasMatricula = matricula !== null;
+  const valor = matricula?.planos?.valor_matricula ?? null;
+  const motivo = deriveMotivo(
+    matricula?.tipo_vaga ?? "paga",
+    matricula?.plano_id ?? null,
+    valor,
+    hasMatricula
+  );
   if (!motivo) return null;
 
   const responsaveis: ResponsavelRow[] = [...raw.responsaveis_aluno]
@@ -109,11 +134,14 @@ export function buildRow(raw: RawMatricula): AlunoSemValorRow | null {
     }));
 
   return {
-    matriculaId: raw.id,
-    nome: raw.alunos?.nome ?? "—",
-    serie: raw.turmas?.series?.nome ?? "—",
-    serieOrdem: raw.turmas?.series?.ordem ?? 9999,
-    turma: raw.turmas?.nome ?? "—",
+    alunoId: raw.id,
+    matriculaId: matricula?.id ?? null,
+    nome: raw.nome,
+    serie: matricula?.turmas?.series?.nome ?? "",
+    serieId: matricula?.turmas?.series?.id ?? null,
+    serieOrdem: matricula?.turmas?.series?.ordem ?? 9999,
+    turma: matricula?.turmas?.nome ?? "",
+    turmaId: matricula?.turmas?.id ?? null,
     motivo,
     valorMatricula: valor ?? 0,
     responsaveis,
