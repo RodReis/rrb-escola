@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { deriveMotivo, isSemValor, buildRow, type RawMatricula } from "./alunos-sem-valor";
+import { deriveMotivo, isSemValor, buildRow, motivoTone, type RawMatricula } from "./alunos-sem-valor";
 
 describe("isSemValor", () => {
   it("true when plano_id is null", () => {
@@ -34,6 +34,9 @@ describe("deriveMotivo", () => {
   });
   it("gratuita -> gratuita", () => {
     expect(deriveMotivo("gratuita", "plan-1", 250)).toBe("gratuita");
+  });
+  it("bolsa_parcial -> bolsa_parcial", () => {
+    expect(deriveMotivo("bolsa_parcial", "plan-1", 100)).toBe("bolsa_parcial");
   });
   it("paga + valid plano -> null (not included)", () => {
     expect(deriveMotivo("paga", "plan-1", 250)).toBeNull();
@@ -80,5 +83,23 @@ describe("buildRow", () => {
   it("handles a student with no responsaveis", () => {
     const noResp: RawMatricula = { ...raw, responsaveis_aluno: [] };
     expect(buildRow(noResp)!.responsaveis).toEqual([]);
+  });
+});
+
+describe("motivoTone", () => {
+  it("sem_valor -> danger", () => {
+    expect(motivoTone("sem_valor")).toBe("danger");
+  });
+  it("bolsa_integral -> warning", () => {
+    expect(motivoTone("bolsa_integral")).toBe("warning");
+  });
+  it("bolsa_parcial -> warning", () => {
+    expect(motivoTone("bolsa_parcial")).toBe("warning");
+  });
+  it("permuta -> neutral", () => {
+    expect(motivoTone("permuta")).toBe("neutral");
+  });
+  it("gratuita -> neutral", () => {
+    expect(motivoTone("gratuita")).toBe("neutral");
   });
 });

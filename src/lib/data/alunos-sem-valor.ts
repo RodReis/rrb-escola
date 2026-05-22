@@ -70,7 +70,7 @@ export function motivoTone(motivo: MotivoSemValor): "danger" | "warning" | "neut
 /** True when the matrícula has no defined value: no plan, or plan value is 0/null. */
 export function isSemValor(planoId: string | null, valorMatricula: number | null): boolean {
   if (!planoId) return true;
-  return !valorMatricula || valorMatricula <= 0;
+  return valorMatricula == null || valorMatricula <= 0;
 }
 
 /**
