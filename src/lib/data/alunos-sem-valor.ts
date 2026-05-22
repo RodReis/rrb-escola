@@ -6,8 +6,7 @@ import {
   buildRow,
   deriveMotivo,
   isSemValor,
-  type RawMatricula,
-  type TipoVaga,
+  type RawAluno,
   type RawResponsavel,
   type AlunoSemValorRow,
   type AlunosSemValorFilters,
@@ -17,8 +16,10 @@ import {
 export type {
   TipoVaga,
   MotivoSemValor,
+  StatusMatricula,
   RawResponsavel,
-  RawMatricula,
+  RawMatriculaEmbed,
+  RawAluno,
   ResponsavelRow,
   AlunoSemValorRow,
   AlunosSemValorFilters,
@@ -32,8 +33,9 @@ export {
 } from "./alunos-sem-valor-constants";
 
 /**
- * Fetches active 2026 matrículas that have no normal matrícula value
- * (incomplete registration) or are non-paying (scholarship/permuta/gratuita).
+ * Fetches active students and their 2026 active matrícula (if any), keeping only
+ * those who have no normal matrícula value: no 2026 matrícula at all, an
+ * incomplete registration (no plan / value 0), or a non-paying vaga.
  * Sorted by série order, then student name.
  */
 export async function getAlunosSemValor(
@@ -42,22 +44,19 @@ export async function getAlunosSemValor(
   const supabase = await createServerClient();
 
   let query = supabase
-    .from("matriculas")
+    .from("alunos")
     .select(`
-      id, tipo_vaga, plano_id,
-      alunos!inner(id, nome, responsaveis_aluno(nome, parentesco, telefone, celular, responsavel_financeiro)),
-      planos(valor_matricula),
-      turmas!inner(id, nome, serie_id, series!inner(id, nome, ordem))
+      id, nome,
+      matriculas(id, tipo_vaga, plano_id, status, ano_letivo,
+        planos(valor_matricula),
+        turmas(id, nome, series(id, nome, ordem))),
+      responsaveis_aluno(nome, parentesco, telefone, celular, responsavel_financeiro)
     `)
     .eq("escola_id", DEFAULT_SCHOOL_ID)
-    .eq("ano_letivo", 2026)
-    .eq("status", "ativa");
+    .eq("ativo", true);
 
   if (filters.nome) {
-    query = query.or(`nome.ilike.%${filters.nome}%`, { foreignTable: "alunos" });
-  }
-  if (filters.turmaId) {
-    query = query.eq("turma_id", filters.turmaId);
+    query = query.ilike("nome", `%${filters.nome}%`);
   }
 
   const { data, error } = await query;
@@ -65,22 +64,44 @@ export async function getAlunosSemValor(
 
   const rows: AlunoSemValorRow[] = [];
   for (const item of data ?? []) {
-    const alunoNode = (item as Record<string, unknown>).alunos as
-      | { id: string; nome: string; responsaveis_aluno?: RawResponsavel[] }
-      | null;
-    const raw: RawMatricula = {
-      id: (item as { id: string }).id,
-      tipo_vaga: (item as { tipo_vaga: TipoVaga }).tipo_vaga,
-      plano_id: (item as { plano_id: string | null }).plano_id,
-      alunos: alunoNode ? { id: alunoNode.id, nome: alunoNode.nome } : null,
-      planos: (item as unknown as { planos: { valor_matricula: number | null } | null }).planos,
-      turmas: (item as unknown as { turmas: RawMatricula["turmas"] }).turmas,
-      responsaveis_aluno: alunoNode?.responsaveis_aluno ?? [],
+    const rec = item as Record<string, unknown>;
+    // matriculas comes back as an array; keep only the active 2026 one.
+    const allMatriculas = (rec.matriculas as unknown as Array<{
+      id: string;
+      tipo_vaga: string;
+      plano_id: string | null;
+      status: string;
+      ano_letivo: number;
+      planos: { valor_matricula: number | null } | null;
+      turmas: {
+        id: string;
+        nome: string;
+        series: { id: string; nome: string; ordem: number } | null;
+      } | null;
+    }>) ?? [];
+    const matricula2026 = allMatriculas.filter(
+      (m) => m.ano_letivo === 2026 && m.status === "ativa"
+    );
+
+    const raw: RawAluno = {
+      id: rec.id as string,
+      nome: rec.nome as string,
+      matriculas: matricula2026.map((m) => ({
+        id: m.id,
+        tipo_vaga: m.tipo_vaga as RawAluno["matriculas"][number]["tipo_vaga"],
+        plano_id: m.plano_id,
+        status: m.status as RawAluno["matriculas"][number]["status"],
+        planos: m.planos,
+        turmas: m.turmas,
+      })),
+      responsaveis_aluno: (rec.responsaveis_aluno as RawResponsavel[]) ?? [],
     };
-    if (filters.serieId && raw.turmas?.series?.id !== filters.serieId) continue;
+
     const row = buildRow(raw);
     if (!row) continue;
     if (filters.motivo && row.motivo !== filters.motivo) continue;
+    if (filters.serieId && row.serieId !== filters.serieId) continue;
+    if (filters.turmaId && row.turmaId !== filters.turmaId) continue;
     rows.push(row);
   }
 
