@@ -2,7 +2,7 @@
 
 import { FileSpreadsheet } from "lucide-react";
 import ExcelJS from "exceljs";
-import { MOTIVO_LABEL, type AlunoSemValorRow } from "@/lib/data/alunos-sem-valor";
+import { MOTIVO_LABEL, type AlunoSemValorRow } from "@/lib/data/alunos-sem-valor-constants";
 
 export function ExportAlunosSemValorButton({ rows }: { rows: AlunoSemValorRow[] }) {
   const handleXlsx = async () => {

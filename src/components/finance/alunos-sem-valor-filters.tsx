@@ -1,5 +1,5 @@
 import { Search } from "lucide-react";
-import { MOTIVO_LABEL, type MotivoSemValor } from "@/lib/data/alunos-sem-valor";
+import { MOTIVO_LABEL, type MotivoSemValor } from "@/lib/data/alunos-sem-valor-constants";
 
 type Option = { id: string; nome: string };
 
