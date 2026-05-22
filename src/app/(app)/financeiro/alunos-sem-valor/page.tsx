@@ -45,8 +45,11 @@ export default async function AlunosSemValorPage({
   searchParams: Promise<{ nome?: string; motivo?: string; serie?: string; turma?: string }>;
 }) {
   const session = await requirePermission("relatorios", "read");
-  const canEdit =
-    session.profile.perfil === "admin" || can(session.permissions, "matriculas", "update");
+  const isAdmin = session.profile.perfil === "admin";
+  const canUpdate = isAdmin || can(session.permissions, "matriculas", "update");
+  const canCreate = isAdmin || can(session.permissions, "matriculas", "create");
+  // The "Ações" column shows if the user can do at least one of the two.
+  const canEditAny = canUpdate || canCreate;
 
   const sp = await searchParams;
   const filters = parseFilters(sp);
@@ -68,7 +71,7 @@ export default async function AlunosSemValorPage({
   const turmas = academic.turmas.map((t) => ({
     id: t.id,
     nome: t.nome,
-    serieId: (t as { serie_id: string }).serie_id,
+    serieId: (t as { serie_id: string | null }).serie_id ?? "",
   }));
   const planos = academic.planos.map((p) => ({ id: p.id, nome: p.nome }));
 
@@ -116,7 +119,7 @@ export default async function AlunosSemValorPage({
                 <th>Turma</th>
                 <th>Motivo</th>
                 <th>Responsáveis</th>
-                {canEdit ? <th>Ações</th> : null}
+                {canEditAny ? <th>Ações</th> : null}
               </tr>
             </thead>
             <tbody>
@@ -149,14 +152,16 @@ export default async function AlunosSemValorPage({
                       </div>
                     )}
                   </td>
-                  {canEdit ? (
+                  {canEditAny ? (
                     <td>
-                      <MatriculaEditDialog
-                        row={r}
-                        series={series}
-                        turmas={turmas}
-                        planos={planos}
-                      />
+                      {(r.matriculaId ? canUpdate : canCreate) ? (
+                        <MatriculaEditDialog
+                          row={r}
+                          series={series}
+                          turmas={turmas}
+                          planos={planos}
+                        />
+                      ) : null}
                     </td>
                   ) : null}
                 </tr>
