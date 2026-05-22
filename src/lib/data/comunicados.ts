@@ -115,26 +115,34 @@ export async function listTurmasESeries(
 
   const { data: turmasData } = await supabase
     .from("turmas")
-    .select("id, nome, ano_letivo, serie_id, series(nome)")
+    .select("id, nome, ano_letivo, serie_id, series(nome, ordem)")
     .eq("escola_id", escolaId)
     .eq("ativo", true)
     .eq("ano_letivo", anoCorrente)
     .order("nome");
+
+  function serieDe(t: any): { nome: string; ordem: number } {
+    const s = Array.isArray(t.series) ? t.series[0] : t.series;
+    return { nome: s?.nome ?? "", ordem: typeof s?.ordem === "number" ? s.ordem : 9999 };
+  }
 
   const turmas: TurmaLite[] = ((turmasData ?? []) as any[]).map((t) => ({
     id: t.id,
     nome: t.nome,
     anoLetivo: t.ano_letivo,
     serieId: t.serie_id,
-    serieNome: Array.isArray(t.series) ? (t.series[0]?.nome ?? "") : (t.series?.nome ?? ""),
+    serieNome: serieDe(t).nome,
   }));
 
-  // Séries do ano corrente = as que têm ao menos uma turma no ano.
-  const serieMap = new Map<string, string>();
-  for (const t of turmas) {
-    if (t.serieId && !serieMap.has(t.serieId)) serieMap.set(t.serieId, t.serieNome);
+  // Séries do ano corrente = as que têm ao menos uma turma no ano, ordenadas por series.ordem.
+  const serieMap = new Map<string, { nome: string; ordem: number }>();
+  for (const t of (turmasData ?? []) as any[]) {
+    if (t.serie_id && !serieMap.has(t.serie_id)) serieMap.set(t.serie_id, serieDe(t));
   }
-  const series: SerieLite[] = Array.from(serieMap.entries()).map(([id, nome]) => ({ id, nome }));
+  const series: SerieLite[] = Array.from(serieMap.entries())
+    .map(([id, s]) => ({ id, nome: s.nome, ordem: s.ordem }))
+    .sort((a, b) => a.ordem - b.ordem)
+    .map(({ id, nome }) => ({ id, nome }));
 
   return { turmas, series };
 }
