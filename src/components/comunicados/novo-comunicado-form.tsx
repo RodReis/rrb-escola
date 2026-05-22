@@ -27,9 +27,16 @@ export function NovoComunicadoForm({
   const [busca, setBusca] = useState("");
   const [carregando, setCarregando] = useState(false);
 
+  // Série escolhida no combo — filtra as turmas disponíveis (não adiciona alunos sozinha).
+  const [serieFiltro, setSerieFiltro] = useState("");
+
   // alcance é decidido pelo botão clicado — guardado num hidden controlado.
   const [alcance, setAlcance] = useState<"geral" | "segmentado">("segmentado");
   const formRef = useRef<HTMLFormElement>(null);
+
+  const turmasDaSerie = serieFiltro
+    ? turmas.filter((t) => t.serieId === serieFiltro)
+    : turmas;
 
   const alvos = {
     alunos: Array.from(selecionados.keys()),
@@ -173,48 +180,57 @@ export function NovoComunicadoForm({
             </p>
           </div>
 
-          {/* seletores de série e turma */}
-          <div className="grid gap-3 sm:grid-cols-2">
-            <label className="grid gap-1 text-sm">
-              <span className="flex items-center gap-1.5 font-semibold text-ink">
-                <Layers size={13} className="text-brand" /> Adicionar série inteira
-              </span>
+          {/* seletor de série (filtra as turmas) */}
+          <div className="grid gap-2">
+            <span className="flex items-center gap-1.5 text-sm font-semibold text-ink">
+              <Layers size={13} className="text-brand" /> Série
+            </span>
+            <div className="flex flex-wrap gap-2">
               <select
-                value=""
+                value={serieFiltro}
                 disabled={carregando}
-                onChange={(e) => {
-                  if (e.target.value) adicionarSerie(e.target.value);
-                  e.target.value = "";
-                }}
+                onChange={(e) => setSerieFiltro(e.target.value)}
+                className="min-w-[200px] flex-1"
               >
-                <option value="">Selecione uma série…</option>
+                <option value="">Todas as séries</option>
                 {series.map((s) => (
                   <option key={s.id} value={s.id}>{s.nome}</option>
                 ))}
               </select>
-            </label>
-
-            <label className="grid gap-1 text-sm">
-              <span className="flex items-center gap-1.5 font-semibold text-ink">
-                <GraduationCap size={13} className="text-brand" /> Adicionar turma
-              </span>
-              <select
-                value=""
-                disabled={carregando}
-                onChange={(e) => {
-                  if (e.target.value) adicionarTurma(e.target.value);
-                  e.target.value = "";
-                }}
+              <button
+                type="button"
+                disabled={carregando || !serieFiltro}
+                onClick={() => serieFiltro && adicionarSerie(serieFiltro)}
+                className="ds-button ds-button-secondary text-xs"
               >
-                <option value="">Selecione uma turma…</option>
-                {turmas.map((t) => (
-                  <option key={t.id} value={t.id}>
-                    {t.serieNome} {t.nome}
-                  </option>
-                ))}
-              </select>
-            </label>
+                + Adicionar série inteira
+              </button>
+            </div>
           </div>
+
+          {/* seletor de turma (filtrado pela série) */}
+          <label className="grid gap-1 text-sm">
+            <span className="flex items-center gap-1.5 font-semibold text-ink">
+              <GraduationCap size={13} className="text-brand" /> Adicionar turma
+            </span>
+            <select
+              value=""
+              disabled={carregando}
+              onChange={(e) => {
+                if (e.target.value) adicionarTurma(e.target.value);
+                e.target.value = "";
+              }}
+            >
+              <option value="">
+                {serieFiltro ? "Selecione uma turma da série…" : "Selecione uma turma…"}
+              </option>
+              {turmasDaSerie.map((t) => (
+                <option key={t.id} value={t.id}>
+                  {t.serieNome} {t.nome}
+                </option>
+              ))}
+            </select>
+          </label>
 
           {/* critério adicionado */}
           {criterio.length > 0 && (
