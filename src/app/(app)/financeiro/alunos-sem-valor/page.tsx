@@ -40,11 +40,12 @@ function parseFilters(sp: {
 export default async function AlunosSemValorPage({
   searchParams,
 }: {
-  searchParams: { nome?: string; motivo?: string; serie?: string; turma?: string };
+  searchParams: Promise<{ nome?: string; motivo?: string; serie?: string; turma?: string }>;
 }) {
   await requirePermission("relatorios", "read");
 
-  const filters = parseFilters(searchParams);
+  const sp = await searchParams;
+  const filters = parseFilters(sp);
   const [rows, academic] = await Promise.all([
     getAlunosSemValor(filters),
     getAcademicData(),
@@ -119,8 +120,8 @@ export default async function AlunosSemValorPage({
                       <span className="text-ink/40">—</span>
                     ) : (
                       <div className="grid gap-1">
-                        {r.responsaveis.map((resp, idx) => (
-                          <div key={idx} className="text-sm">
+                        {r.responsaveis.map((resp) => (
+                          <div key={`${resp.nome}-${resp.parentesco ?? ""}`} className="text-sm">
                             <span className="font-medium text-ink">{resp.nome}</span>
                             {resp.parentesco ? (
                               <span className="text-ink/50"> ({resp.parentesco})</span>
