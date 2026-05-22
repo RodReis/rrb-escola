@@ -1,6 +1,15 @@
 import { createServerClient } from "@/lib/supabase/server";
 import { DEFAULT_SCHOOL_ID } from "@/lib/constants";
-import { buildRow, deriveMotivo, isSemValor, type RawMatricula, type TipoVaga } from "./alunos-sem-valor-constants";
+import {
+  buildRow,
+  deriveMotivo,
+  isSemValor,
+  type RawMatricula,
+  type TipoVaga,
+  type RawResponsavel,
+  type AlunoSemValorRow,
+  type AlunosSemValorFilters,
+} from "./alunos-sem-valor-constants";
 
 // Re-export everything so existing imports from this file continue to work.
 export type {
@@ -26,8 +35,8 @@ export {
  * Sorted by série order, then student name.
  */
 export async function getAlunosSemValor(
-  filters: import("./alunos-sem-valor-constants").AlunosSemValorFilters
-): Promise<import("./alunos-sem-valor-constants").AlunoSemValorRow[]> {
+  filters: AlunosSemValorFilters
+): Promise<AlunoSemValorRow[]> {
   const supabase = await createServerClient();
 
   let query = supabase
@@ -52,10 +61,10 @@ export async function getAlunosSemValor(
   const { data, error } = await query;
   if (error) throw error;
 
-  const rows: import("./alunos-sem-valor-constants").AlunoSemValorRow[] = [];
+  const rows: AlunoSemValorRow[] = [];
   for (const item of data ?? []) {
     const alunoNode = (item as Record<string, unknown>).alunos as
-      | { id: string; nome: string; responsaveis_aluno?: import("./alunos-sem-valor-constants").RawResponsavel[] }
+      | { id: string; nome: string; responsaveis_aluno?: RawResponsavel[] }
       | null;
     const raw: RawMatricula = {
       id: (item as { id: string }).id,
