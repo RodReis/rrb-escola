@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { createServerClient } from "@/lib/supabase/server";
 import { DEFAULT_SCHOOL_ID } from "@/lib/constants";
 import { requirePermission } from "@/lib/auth/session";
+import { formText } from "@/lib/utils";
 
 type TipoVagaInput = "paga" | "bolsa_integral" | "bolsa_parcial" | "permuta" | "gratuita";
 type StatusInput = "ativa" | "cancelada" | "transferida" | "concluida";
@@ -11,20 +12,13 @@ type StatusInput = "ativa" | "cancelada" | "transferida" | "concluida";
 const TIPOS_VAGA: TipoVagaInput[] = ["paga", "bolsa_integral", "bolsa_parcial", "permuta", "gratuita"];
 const STATUSES: StatusInput[] = ["ativa", "cancelada", "transferida", "concluida"];
 
-function readField(formData: FormData, key: string): string | null {
-  const raw = formData.get(key);
-  if (typeof raw !== "string") return null;
-  const trimmed = raw.trim();
-  return trimmed === "" ? null : trimmed;
-}
-
 function readTipoVaga(formData: FormData): TipoVagaInput {
-  const raw = readField(formData, "tipo_vaga");
+  const raw = formText(formData, "tipo_vaga");
   return raw && (TIPOS_VAGA as string[]).includes(raw) ? (raw as TipoVagaInput) : "paga";
 }
 
 function readStatus(formData: FormData): StatusInput {
-  const raw = readField(formData, "status");
+  const raw = formText(formData, "status");
   return raw && (STATUSES as string[]).includes(raw) ? (raw as StatusInput) : "ativa";
 }
 
@@ -53,11 +47,13 @@ function readPercentualBolsa(formData: FormData, tipo: TipoVagaInput): number | 
 export async function upsertMatriculaSemValorAction(
   formData: FormData
 ): Promise<{ error?: string }> {
-  const matriculaId = readField(formData, "matricula_id");
-  const alunoId = readField(formData, "aluno_id");
-  const serieId = readField(formData, "serie_id");
-  const turmaId = readField(formData, "turma_id");
-  const planoId = readField(formData, "plano_id");
+  const matriculaId = formText(formData, "matricula_id");
+  await requirePermission("matriculas", matriculaId ? "update" : "create");
+
+  const alunoId = formText(formData, "aluno_id");
+  const serieId = formText(formData, "serie_id");
+  const turmaId = formText(formData, "turma_id");
+  const planoId = formText(formData, "plano_id");
   const tipoVaga = readTipoVaga(formData);
   const status = readStatus(formData);
 
@@ -69,7 +65,6 @@ export async function upsertMatriculaSemValorAction(
   const supabase = await createServerClient();
 
   if (matriculaId) {
-    await requirePermission("matriculas", "update");
     if (!serieId || !turmaId) return { error: "Série e turma são obrigatórias." };
 
     const { error } = await supabase
@@ -86,18 +81,18 @@ export async function upsertMatriculaSemValorAction(
       .eq("escola_id", DEFAULT_SCHOOL_ID);
     if (error) return { error: "Erro ao atualizar a matrícula. Tente novamente." };
   } else {
-    await requirePermission("matriculas", "create");
     if (!serieId || !turmaId) {
       return { error: "Série e turma são obrigatórias para criar a matrícula." };
     }
 
-    const { data: aluno } = await supabase
+    const { data: aluno, error: alunoError } = await supabase
       .from("alunos")
       .select("matricula_codigo")
       .eq("id", alunoId)
       .eq("escola_id", DEFAULT_SCHOOL_ID)
       .single();
-    const codigo = `${aluno?.matricula_codigo ?? alunoId}-2026`;
+    if (alunoError || !aluno) return { error: "Aluno não encontrado." };
+    const codigo = `${aluno.matricula_codigo ?? alunoId}-2026`;
 
     const { error } = await supabase.from("matriculas").insert({
       escola_id: DEFAULT_SCHOOL_ID,
@@ -108,7 +103,7 @@ export async function upsertMatriculaSemValorAction(
       codigo,
       data_matricula: new Date().toISOString().slice(0, 10),
       ano_letivo: 2026,
-      status: "ativa",
+      status,
       tipo_vaga: tipoVaga,
       percentual_bolsa: percentual,
     });
