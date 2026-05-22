@@ -1,5 +1,3 @@
-import "server-only";
-
 export type TipoVaga = "paga" | "bolsa_integral" | "bolsa_parcial" | "permuta" | "gratuita";
 
 export type MotivoSemValor =
