@@ -12,6 +12,7 @@ export type Destinatario = {
 
 type ResponsavelRow = {
   celular: string | null;
+  telefone?: string | null;
   responsavel_financeiro: boolean | null;
 };
 
@@ -20,15 +21,17 @@ type AlunoRow = {
   responsaveis_aluno: ResponsavelRow[];
 };
 
-// Parte pura: filtra alunos que têm responsável financeiro com celular.
+// Parte pura: filtra alunos que têm responsável financeiro com telefone.
+// Usa celular; se ausente, cai para o telefone fixo.
 export function filtrarDestinatarios(linhas: AlunoRow[]): Destinatario[] {
   const resultado: Destinatario[] = [];
   for (const aluno of linhas) {
     const financeiro = (aluno.responsaveis_aluno ?? []).find(
-      (r) => r.responsavel_financeiro === true && !!r.celular,
+      (r) => r.responsavel_financeiro === true && !!(r.celular || r.telefone),
     );
-    if (financeiro?.celular) {
-      resultado.push({ alunoId: aluno.id, telefone: financeiro.celular });
+    const fone = financeiro?.celular || financeiro?.telefone;
+    if (fone) {
+      resultado.push({ alunoId: aluno.id, telefone: fone });
     }
   }
   return resultado;
@@ -52,7 +55,7 @@ export async function resolverDestinatarios(
 
   let query = supabase
     .from("alunos")
-    .select("id, responsaveis_aluno(celular, responsavel_financeiro), matriculas!inner(status)")
+    .select("id, responsaveis_aluno(celular, telefone, responsavel_financeiro), matriculas!inner(status)")
     .eq("escola_id", escolaId)
     .eq("matriculas.status", "ativa");
 
