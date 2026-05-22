@@ -24,6 +24,8 @@ export type DestinatarioMensagem = {
   status: "pendente" | "enviada" | "falha";
   erro: string | null;
   alunoId: string | null;
+  alunoNome: string | null;
+  enviadaEm: string | null;
 };
 
 function normalizarAlvos(raw: unknown): AlvosSegmentado {
@@ -90,7 +92,7 @@ export async function getDestinatarios(
   const supabase = await createServerClient();
   const { data } = await supabase
     .from("mensagens_whatsapp")
-    .select("id, telefone, status, erro, aluno_id")
+    .select("id, telefone, status, erro, aluno_id, enviada_em, alunos(nome)")
     .eq("escola_id", escolaId)
     .eq("referencia_tipo", "comunicado")
     .eq("referencia_id", comunicadoId)
@@ -101,6 +103,8 @@ export async function getDestinatarios(
     status: r.status,
     erro: r.erro,
     alunoId: r.aluno_id,
+    alunoNome: Array.isArray(r.alunos) ? (r.alunos[0]?.nome ?? null) : (r.alunos?.nome ?? null),
+    enviadaEm: r.enviada_em,
   }));
 }
 
