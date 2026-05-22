@@ -1,3 +1,5 @@
+import "server-only";
+
 import { createServerClient } from "@/lib/supabase/server";
 import { DEFAULT_SCHOOL_ID } from "@/lib/constants";
 import {
