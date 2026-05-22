@@ -1,3 +1,6 @@
+import { createServerClient } from "@/lib/supabase/server";
+import { DEFAULT_SCHOOL_ID } from "@/lib/constants";
+
 export type TipoVaga = "paga" | "bolsa_integral" | "bolsa_parcial" | "permuta" | "gratuita";
 
 export type MotivoSemValor =
@@ -112,4 +115,65 @@ export function buildRow(raw: RawMatricula): AlunoSemValorRow | null {
     valorMatricula: valor ?? 0,
     responsaveis,
   };
+}
+
+/**
+ * Fetches active 2026 matrículas that have no normal matrícula value
+ * (incomplete registration) or are non-paying (scholarship/permuta/gratuita).
+ * Sorted by série order, then student name.
+ */
+export async function getAlunosSemValor(
+  filters: AlunosSemValorFilters
+): Promise<AlunoSemValorRow[]> {
+  const supabase = await createServerClient();
+
+  let query = supabase
+    .from("matriculas")
+    .select(`
+      id, tipo_vaga, plano_id,
+      alunos!inner(id, nome, responsaveis_aluno(nome, parentesco, telefone, celular, responsavel_financeiro)),
+      planos(valor_matricula),
+      turmas!inner(id, nome, serie_id, series!inner(id, nome, ordem))
+    `)
+    .eq("escola_id", DEFAULT_SCHOOL_ID)
+    .eq("ano_letivo", 2026)
+    .eq("status", "ativa");
+
+  if (filters.nome) {
+    query = query.ilike("alunos.nome", `%${filters.nome}%`);
+  }
+  if (filters.serieId) {
+    query = query.eq("turmas.serie_id", filters.serieId);
+  }
+  if (filters.turmaId) {
+    query = query.eq("turma_id", filters.turmaId);
+  }
+
+  const { data, error } = await query;
+  if (error) throw error;
+
+  const rows: AlunoSemValorRow[] = [];
+  for (const item of data ?? []) {
+    const alunoNode = (item as Record<string, unknown>).alunos as
+      | { id: string; nome: string; responsaveis_aluno?: RawResponsavel[] }
+      | null;
+    const raw: RawMatricula = {
+      id: (item as { id: string }).id,
+      tipo_vaga: (item as { tipo_vaga: TipoVaga }).tipo_vaga,
+      plano_id: (item as { plano_id: string | null }).plano_id,
+      alunos: alunoNode ? { id: alunoNode.id, nome: alunoNode.nome } : null,
+      planos: (item as unknown as { planos: { valor_matricula: number | null } | null }).planos,
+      turmas: (item as unknown as { turmas: RawMatricula["turmas"] }).turmas,
+      responsaveis_aluno: alunoNode?.responsaveis_aluno ?? [],
+    };
+    const row = buildRow(raw);
+    if (!row) continue;
+    if (filters.motivo && row.motivo !== filters.motivo) continue;
+    rows.push(row);
+  }
+
+  rows.sort(
+    (a, b) => a.serieOrdem - b.serieOrdem || a.nome.localeCompare(b.nome, "pt-BR")
+  );
+  return rows;
 }
