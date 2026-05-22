@@ -47,7 +47,7 @@ export async function getAlunosSemValor(
     .from("alunos")
     .select(`
       id, nome,
-      matriculas(id, tipo_vaga, plano_id, status, ano_letivo,
+      matriculas!left(id, tipo_vaga, plano_id, status, ano_letivo,
         planos(valor_matricula),
         turmas(id, nome, series(id, nome, ordem))),
       responsaveis_aluno(nome, parentesco, telefone, celular, responsavel_financeiro)
