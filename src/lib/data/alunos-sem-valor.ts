@@ -140,10 +140,7 @@ export async function getAlunosSemValor(
     .eq("status", "ativa");
 
   if (filters.nome) {
-    query = query.ilike("alunos.nome", `%${filters.nome}%`);
-  }
-  if (filters.serieId) {
-    query = query.eq("turmas.serie_id", filters.serieId);
+    query = query.or(`nome.ilike.%${filters.nome}%`, { foreignTable: "alunos" });
   }
   if (filters.turmaId) {
     query = query.eq("turma_id", filters.turmaId);
@@ -166,6 +163,7 @@ export async function getAlunosSemValor(
       turmas: (item as unknown as { turmas: RawMatricula["turmas"] }).turmas,
       responsaveis_aluno: alunoNode?.responsaveis_aluno ?? [],
     };
+    if (filters.serieId && raw.turmas?.series?.id !== filters.serieId) continue;
     const row = buildRow(raw);
     if (!row) continue;
     if (filters.motivo && row.motivo !== filters.motivo) continue;
