@@ -11,7 +11,7 @@ const ERRO_LABEL: Record<string, string> = {
   campos_obrigatorios: "Preencha o título e a mensagem.",
   alcance_invalido: "Selecione um alcance válido.",
   aluno_obrigatorio: "Selecione o aluno para o comunicado individual.",
-  alvos_obrigatorios: "Selecione ao menos uma turma ou série.",
+  alvos_obrigatorios: "Selecione ao menos um aluno.",
   imagem_tipo: "A imagem deve ser PNG, JPG ou WEBP.",
   imagem_grande: "A imagem excede o limite de 5MB.",
 };
