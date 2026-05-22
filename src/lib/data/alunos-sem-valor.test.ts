@@ -49,18 +49,13 @@ describe("deriveMotivo", () => {
   });
 });
 
+// sem_matricula path — the other deriveMotivo cases are covered in the main block above.
 describe("deriveMotivo sem_matricula", () => {
-  it("no matrícula -> sem_matricula", () => {
+  it("no matrícula -> sem_matricula (hasMatricula false)", () => {
     expect(deriveMotivo("paga", null, null, false)).toBe("sem_matricula");
   });
-  it("has matrícula, paga, valid plano -> null", () => {
-    expect(deriveMotivo("paga", "plan-1", 250, true)).toBeNull();
-  });
-  it("has matrícula, paga, no plano -> sem_valor", () => {
-    expect(deriveMotivo("paga", null, null, true)).toBe("sem_valor");
-  });
-  it("has matrícula, bolsa_integral -> bolsa_integral", () => {
-    expect(deriveMotivo("bolsa_integral", "plan-1", 250, true)).toBe("bolsa_integral");
+  it("non-paga + no matrícula still resolves sem_matricula (precedence)", () => {
+    expect(deriveMotivo("bolsa_integral", null, null, false)).toBe("sem_matricula");
   });
 });
 
@@ -90,7 +85,7 @@ describe("buildRow", () => {
         plano_id: null,
         status: "ativa",
         planos: null,
-        turmas: { id: "t1", nome: "A", serie_id: "s1", series: { id: "s1", nome: "1º Ano", ordem: 1 } },
+        turmas: { id: "t1", nome: "A", series: { id: "s1", nome: "1º Ano", ordem: 1 } },
       },
     ],
     responsaveis_aluno: [respOther, respFin],
@@ -146,7 +141,7 @@ describe("buildRow", () => {
           plano_id: "p1",
           status: "ativa",
           planos: { valor_matricula: 250 },
-          turmas: { id: "t1", nome: "A", serie_id: "s1", series: { id: "s1", nome: "1º Ano", ordem: 1 } },
+          turmas: { id: "t1", nome: "A", series: { id: "s1", nome: "1º Ano", ordem: 1 } },
         },
       ],
     };

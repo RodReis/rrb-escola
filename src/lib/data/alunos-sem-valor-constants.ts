@@ -33,7 +33,6 @@ export type RawMatriculaEmbed = {
   turmas: {
     id: string;
     nome: string;
-    serie_id: string;
     series: { id: string; nome: string; ordem: number } | null;
   } | null;
 };
