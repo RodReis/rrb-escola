@@ -119,7 +119,7 @@ export function NovoComunicadoForm({
 
         <fieldset className="grid gap-2">
           <legend className="text-sm font-semibold text-ink">Alcance</legend>
-          <label className="flex items-center gap-2 text-sm">
+          <label className="!flex items-center gap-2 text-sm">
             <input
               type="radio"
               name="alcance"
@@ -129,7 +129,7 @@ export function NovoComunicadoForm({
             />
             Todos os responsáveis financeiros (alunos ativos)
           </label>
-          <label className="flex items-center gap-2 text-sm">
+          <label className="!flex items-center gap-2 text-sm">
             <input
               type="radio"
               name="alcance"
@@ -139,7 +139,7 @@ export function NovoComunicadoForm({
             />
             Selecionar por turma
           </label>
-          <label className="flex items-center gap-2 text-sm">
+          <label className="!flex items-center gap-2 text-sm">
             <input
               type="radio"
               name="alcance"
@@ -200,7 +200,7 @@ export function NovoComunicadoForm({
                   <span className="text-sm font-semibold text-ink">
                     3. Alunos da turma
                   </span>
-                  <label className="flex items-center gap-1.5 text-xs text-ink/70">
+                  <label className="!flex items-center gap-1.5 text-xs text-ink/70">
                     <input
                       type="checkbox"
                       checked={todosDaTurmaMarcados}
@@ -212,7 +212,7 @@ export function NovoComunicadoForm({
                 </div>
                 <div className="grid max-h-64 gap-1 overflow-y-auto sm:grid-cols-2">
                   {alunosTurma.map((a) => (
-                    <label key={a.id} className="flex items-center gap-2 text-sm">
+                    <label key={a.id} className="!flex items-center gap-2 text-sm">
                       <input
                         type="checkbox"
                         checked={selecionados.has(a.id)}
