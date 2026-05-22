@@ -38,11 +38,11 @@ export function Dialog({ open, title, onClose, children }: DialogProps) {
       <div
         role="dialog"
         aria-modal="true"
-        aria-label={title}
+        aria-labelledby="dialog-title"
         className="relative w-full max-w-md rounded-[10px] border border-line bg-surface p-6 shadow-lift"
       >
         <div className="flex items-start justify-between gap-4">
-          <p className="text-sm font-semibold text-ink">{title}</p>
+          <p id="dialog-title" className="text-sm font-semibold text-ink">{title}</p>
           <button
             type="button"
             onClick={onClose}

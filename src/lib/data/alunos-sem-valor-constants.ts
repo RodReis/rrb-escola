@@ -53,6 +53,7 @@ export type ResponsavelRow = {
 export type AlunoSemValorRow = {
   alunoId: string;
   matriculaId: string | null;
+  status: StatusMatricula | null;
   nome: string;
   serie: string;
   serieId: string | null;
@@ -135,6 +136,7 @@ export function buildRow(raw: RawAluno): AlunoSemValorRow | null {
   return {
     alunoId: raw.id,
     matriculaId: matricula?.id ?? null,
+    status: matricula?.status ?? null,
     nome: raw.nome,
     serie: matricula?.turmas?.series?.nome ?? "",
     serieId: matricula?.turmas?.series?.id ?? null,

@@ -35,6 +35,7 @@ export function MatriculaEditDialog({ row, series, turmas, planos }: Props) {
   const [open, setOpen] = useState(false);
   const [tipoVaga, setTipoVaga] = useState("paga");
   const [serieId, setSerieId] = useState(row.serieId ?? "");
+  const [turmaId, setTurmaId] = useState(row.turmaId ?? "");
   const [error, setError] = useState<string | null>(null);
   const [pending, setPending] = useState(false);
 
@@ -58,6 +59,7 @@ export function MatriculaEditDialog({ row, series, turmas, planos }: Props) {
     // Reset local state to the row's current values each time the modal opens.
     setTipoVaga("paga");
     setSerieId(row.serieId ?? "");
+    setTurmaId(row.turmaId ?? "");
     setError(null);
     setOpen(true);
   }
@@ -99,7 +101,7 @@ export function MatriculaEditDialog({ row, series, turmas, planos }: Props) {
           {tipoVaga === "bolsa_parcial" ? (
             <label className="text-xs font-medium text-ink/70">
               Percentual da bolsa (1-99)
-              <input name="percentual_bolsa" type="number" min={1} max={99} inputMode="numeric" />
+              <input name="percentual_bolsa" type="number" min={1} max={99} inputMode="numeric" required />
             </label>
           ) : null}
 
@@ -118,7 +120,10 @@ export function MatriculaEditDialog({ row, series, turmas, planos }: Props) {
             <select
               name="serie_id"
               value={serieId}
-              onChange={(e) => setSerieId(e.target.value)}
+              onChange={(e) => {
+                setSerieId(e.target.value);
+                setTurmaId("");
+              }}
               required
             >
               <option value="">Selecione…</option>
@@ -130,7 +135,12 @@ export function MatriculaEditDialog({ row, series, turmas, planos }: Props) {
 
           <label className="text-xs font-medium text-ink/70">
             Turma
-            <select name="turma_id" defaultValue={row.turmaId ?? ""} required>
+            <select
+              name="turma_id"
+              value={turmaId}
+              onChange={(e) => setTurmaId(e.target.value)}
+              required
+            >
               <option value="">Selecione…</option>
               {turmasDaSerie.map((t) => (
                 <option key={t.id} value={t.id}>{t.nome}</option>
@@ -140,7 +150,7 @@ export function MatriculaEditDialog({ row, series, turmas, planos }: Props) {
 
           <label className="text-xs font-medium text-ink/70">
             Status
-            <select name="status" defaultValue="ativa">
+            <select name="status" defaultValue={row.status ?? "ativa"}>
               {STATUSES.map((s) => (
                 <option key={s.value} value={s.value}>{s.label}</option>
               ))}

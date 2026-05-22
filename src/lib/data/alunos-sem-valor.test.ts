@@ -109,6 +109,7 @@ describe("buildRow", () => {
     expect(row!.turma).toBe("A");
     expect(row!.turmaId).toBe("t1");
     expect(row!.motivo).toBe("sem_valor");
+    expect(row!.status).toBe("ativa");
   });
 
   it("orders responsavel_financeiro first and uses celular||telefone", () => {
@@ -129,6 +130,7 @@ describe("buildRow", () => {
     expect(row!.turma).toBe("");
     expect(row!.turmaId).toBeNull();
     expect(row!.serieOrdem).toBe(9999);
+    expect(row!.status).toBeNull();
   });
 
   it("returns null for an aluno with a paga matrícula and valid plano", () => {
