@@ -17,6 +17,7 @@ const STATUS_EM_ABERTO = new Set(["aberta", "parcial", "vencida"]);
 type ResponsavelRow = {
   nome: string | null;
   celular: string | null;
+  telefone?: string | null;
   responsavel_financeiro: boolean | null;
 };
 
@@ -56,16 +57,17 @@ export function filtrarElegiveis(
     if (jaEnviados.has(c.id)) continue; // já avisada
 
     const responsavel = (c.alunos?.responsaveis_aluno ?? []).find(
-      (r) => r.responsavel_financeiro === true && !!r.celular,
+      (r) => r.responsavel_financeiro === true && !!(r.celular || r.telefone),
     );
-    if (!responsavel?.celular) continue;
+    const fone = responsavel?.celular || responsavel?.telefone;
+    if (!fone) continue;
 
     resultado.push({
       cobrancaId: c.id,
       alunoId: c.aluno_id,
       alunoNome: c.alunos?.nome ?? "Aluno",
       responsavelNome: responsavel.nome ?? "Responsável",
-      telefone: responsavel.celular,
+      telefone: fone,
       descricao: c.descricao,
       valor: Number(c.valor_final ?? 0),
       vencimento: c.data_vencimento,
@@ -96,7 +98,7 @@ export async function resolverLembretesPendentes(
   const { data: cobrancas } = await supabase
     .from("cobrancas")
     .select(
-      "id, descricao, valor_final, data_vencimento, status, aluno_id, alunos(nome, responsaveis_aluno(nome, celular, responsavel_financeiro))",
+      "id, descricao, valor_final, data_vencimento, status, aluno_id, alunos(nome, responsaveis_aluno(nome, celular, telefone, responsavel_financeiro))",
     )
     .eq("escola_id", escolaId)
     .lt("data_vencimento", hoje)
