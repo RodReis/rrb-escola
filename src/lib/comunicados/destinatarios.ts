@@ -2,6 +2,9 @@ import { DEFAULT_SCHOOL_ID } from "@/lib/constants";
 
 export type Alvo = { tipo: "turma" | "serie"; id: string };
 
+export type CriterioAlvo = { tipo: "turma" | "serie"; id: string; nome: string };
+export type AlvosSegmentado = { alunos: string[]; criterio: CriterioAlvo[] };
+
 export type Destinatario = {
   alunoId: string;
   telefone: string;
@@ -9,6 +12,7 @@ export type Destinatario = {
 
 type ResponsavelRow = {
   celular: string | null;
+  telefone?: string | null;
   responsavel_financeiro: boolean | null;
 };
 
@@ -17,37 +21,20 @@ type AlunoRow = {
   responsaveis_aluno: ResponsavelRow[];
 };
 
-// Parte pura: filtra alunos que têm responsável financeiro com celular.
+// Parte pura: filtra alunos que têm responsável financeiro com telefone.
+// Usa celular; se ausente, cai para o telefone fixo.
 export function filtrarDestinatarios(linhas: AlunoRow[]): Destinatario[] {
   const resultado: Destinatario[] = [];
   for (const aluno of linhas) {
     const financeiro = (aluno.responsaveis_aluno ?? []).find(
-      (r) => r.responsavel_financeiro === true && !!r.celular,
+      (r) => r.responsavel_financeiro === true && !!(r.celular || r.telefone),
     );
-    if (financeiro?.celular) {
-      resultado.push({ alunoId: aluno.id, telefone: financeiro.celular });
+    const fone = financeiro?.celular || financeiro?.telefone;
+    if (fone) {
+      resultado.push({ alunoId: aluno.id, telefone: fone });
     }
   }
   return resultado;
-}
-
-// Parte pura: junta as turmas diretas com as turmas expandidas das séries.
-// turmasPorSerie mapeia serieId → lista de turmaIds. Resultado deduplicado.
-export function coletarTurmaIds(
-  alvos: Alvo[],
-  turmasPorSerie: Record<string, string[]>,
-): string[] {
-  const ids = new Set<string>();
-  for (const alvo of alvos) {
-    if (alvo.tipo === "turma") {
-      ids.add(alvo.id);
-    } else {
-      for (const turmaId of turmasPorSerie[alvo.id] ?? []) {
-        ids.add(turmaId);
-      }
-    }
-  }
-  return Array.from(ids);
 }
 
 type SupabaseLike = {
@@ -55,25 +42,20 @@ type SupabaseLike = {
 };
 
 // Parte com I/O: resolve os destinatários conforme o alcance do comunicado.
+// Para "segmentado", recebe a lista de alunoIds já resolvida pela UI.
 export async function resolverDestinatarios(
   supabase: SupabaseLike,
   alcance: "geral" | "individual" | "segmentado",
   alunoId: string | null,
-  alvos: Alvo[],
+  alunoIdsSegmentado: string[],
   escolaId: string = DEFAULT_SCHOOL_ID,
 ): Promise<Destinatario[]> {
-  // Guard: individual sem aluno definido não vira envio geral.
-  if (alcance === "individual" && !alunoId) {
-    return [];
-  }
-  // Guard: segmentado sem alvos não vira envio geral.
-  if (alcance === "segmentado" && alvos.length === 0) {
-    return [];
-  }
+  if (alcance === "individual" && !alunoId) return [];
+  if (alcance === "segmentado" && alunoIdsSegmentado.length === 0) return [];
 
   let query = supabase
     .from("alunos")
-    .select("id, responsaveis_aluno(celular, responsavel_financeiro), matriculas!inner(status, turma_id)")
+    .select("id, responsaveis_aluno(celular, telefone, responsavel_financeiro), matriculas!inner(status)")
     .eq("escola_id", escolaId)
     .eq("matriculas.status", "ativa");
 
@@ -82,27 +64,11 @@ export async function resolverDestinatarios(
   }
 
   if (alcance === "segmentado") {
-    // Expande as séries dos alvos em turmas.
-    const serieIds = alvos.filter((a) => a.tipo === "serie").map((a) => a.id);
-    const turmasPorSerie: Record<string, string[]> = {};
-    if (serieIds.length > 0) {
-      const { data: turmasData } = await supabase
-        .from("turmas")
-        .select("id, serie_id")
-        .eq("escola_id", escolaId)
-        .in("serie_id", serieIds);
-      for (const t of (turmasData ?? []) as Array<{ id: string; serie_id: string }>) {
-        (turmasPorSerie[t.serie_id] ??= []).push(t.id);
-      }
-    }
-    const turmaIds = coletarTurmaIds(alvos, turmasPorSerie);
-    if (turmaIds.length === 0) return [];
-    query = query.in("matriculas.turma_id", turmaIds);
+    query = query.in("id", alunoIdsSegmentado);
   }
 
   const { data } = await query;
 
-  // Dedup de alunos (o join com matriculas pode repetir a linha do aluno).
   const vistos = new Set<string>();
   const unicos: AlunoRow[] = [];
   for (const row of (data ?? []) as AlunoRow[]) {

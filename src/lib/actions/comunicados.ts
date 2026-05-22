@@ -6,28 +6,33 @@ import { createServerClient } from "@/lib/supabase/server";
 import { requirePermission } from "@/lib/auth/session";
 import { formText } from "@/lib/utils";
 import { resolverDestinatarios } from "@/lib/comunicados/destinatarios";
-import type { Alvo } from "@/lib/comunicados/destinatarios";
+import type { AlvosSegmentado } from "@/lib/comunicados/destinatarios";
 
 const MAX_IMAGEM_BYTES = 5 * 1024 * 1024;
 const TIPOS_IMAGEM = ["image/png", "image/jpeg", "image/webp"];
 
-// Lê e valida o campo "alvos" (JSON) do formulário do comunicado segmentado.
-function parseAlvos(formData: FormData): Alvo[] {
+// Lê e valida o campo "alvos" (JSON) — formato { alunos: string[], criterio: [...] }.
+function parseAlvosSegmentado(formData: FormData): AlvosSegmentado {
   const raw = formData.get("alvos");
-  if (typeof raw !== "string" || raw.trim() === "") return [];
+  const vazio: AlvosSegmentado = { alunos: [], criterio: [] };
+  if (typeof raw !== "string" || raw.trim() === "") return vazio;
   try {
     const parsed = JSON.parse(raw);
-    if (!Array.isArray(parsed)) return [];
-    return parsed.filter(
-      (a): a is Alvo =>
-        a &&
-        typeof a === "object" &&
-        (a.tipo === "turma" || a.tipo === "serie") &&
-        typeof a.id === "string" &&
-        a.id.length > 0,
-    );
+    if (!parsed || typeof parsed !== "object") return vazio;
+    const alunos = Array.isArray(parsed.alunos)
+      ? parsed.alunos.filter((x: unknown): x is string => typeof x === "string" && x.length > 0)
+      : [];
+    const criterio = Array.isArray(parsed.criterio)
+      ? parsed.criterio.filter(
+          (c: any) =>
+            c && typeof c === "object" &&
+            (c.tipo === "turma" || c.tipo === "serie") &&
+            typeof c.id === "string" && typeof c.nome === "string",
+        )
+      : [];
+    return { alunos, criterio };
   } catch {
-    return [];
+    return vazio;
   }
 }
 
@@ -50,8 +55,9 @@ export async function criarComunicadoAction(formData: FormData) {
     redirect("/comunicados/novo?erro=aluno_obrigatorio");
   }
 
-  const alvos = alcance === "segmentado" ? parseAlvos(formData) : [];
-  if (alcance === "segmentado" && alvos.length === 0) {
+  const alvos: AlvosSegmentado =
+    alcance === "segmentado" ? parseAlvosSegmentado(formData) : { alunos: [], criterio: [] };
+  if (alcance === "segmentado" && alvos.alunos.length === 0) {
     redirect("/comunicados/novo?erro=alvos_obrigatorios");
   }
 
@@ -103,7 +109,7 @@ export async function criarComunicadoAction(formData: FormData) {
     supabase,
     alcance,
     alcance === "individual" ? alunoId : null,
-    alvos,
+    alvos.alunos,
     session.profile.escola_id,
   );
 
