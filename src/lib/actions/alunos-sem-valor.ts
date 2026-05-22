@@ -103,7 +103,7 @@ export async function upsertMatriculaSemValorAction(
       codigo,
       data_matricula: new Date().toISOString().slice(0, 10),
       ano_letivo: 2026,
-      status,
+      status: "ativa",
       tipo_vaga: tipoVaga,
       percentual_bolsa: percentual,
     });

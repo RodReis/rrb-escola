@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useId } from "react";
 import { createPortal } from "react-dom";
 import { X } from "lucide-react";
 
@@ -16,6 +16,7 @@ type DialogProps = {
  * close, X button. Contains no form logic — callers render their own content.
  */
 export function Dialog({ open, title, onClose, children }: DialogProps) {
+  const titleId = useId();
   useEffect(() => {
     if (!open) return;
     function onKey(e: KeyboardEvent) {
@@ -38,11 +39,11 @@ export function Dialog({ open, title, onClose, children }: DialogProps) {
       <div
         role="dialog"
         aria-modal="true"
-        aria-labelledby="dialog-title"
+        aria-labelledby={titleId}
         className="relative w-full max-w-md rounded-[10px] border border-line bg-surface p-6 shadow-lift"
       >
         <div className="flex items-start justify-between gap-4">
-          <p id="dialog-title" className="text-sm font-semibold text-ink">{title}</p>
+          <p id={titleId} className="text-sm font-semibold text-ink">{title}</p>
           <button
             type="button"
             onClick={onClose}

@@ -54,6 +54,8 @@ export type AlunoSemValorRow = {
   alunoId: string;
   matriculaId: string | null;
   status: StatusMatricula | null;
+  tipoVaga: TipoVaga | null;
+  planoId: string | null;
   nome: string;
   serie: string;
   serieId: string | null;
@@ -137,6 +139,8 @@ export function buildRow(raw: RawAluno): AlunoSemValorRow | null {
     alunoId: raw.id,
     matriculaId: matricula?.id ?? null,
     status: matricula?.status ?? null,
+    tipoVaga: matricula?.tipo_vaga ?? null,
+    planoId: matricula?.plano_id ?? null,
     nome: raw.nome,
     serie: matricula?.turmas?.series?.nome ?? "",
     serieId: matricula?.turmas?.series?.id ?? null,

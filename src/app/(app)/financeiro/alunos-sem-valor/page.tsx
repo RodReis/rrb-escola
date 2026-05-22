@@ -68,11 +68,13 @@ export default async function AlunosSemValorPage({
   ).length;
 
   const series = academic.series.map((s) => ({ id: s.id, nome: s.nome }));
-  const turmas = academic.turmas.map((t) => ({
-    id: t.id,
-    nome: t.nome,
-    serieId: (t as { serie_id: string | null }).serie_id ?? "",
-  }));
+  const turmas = academic.turmas
+    .filter((t) => (t as { ano_letivo: number }).ano_letivo === 2026)
+    .map((t) => ({
+      id: t.id,
+      nome: t.nome,
+      serieId: (t as { serie_id: string | null }).serie_id ?? "",
+    }));
   const planos = academic.planos.map((p) => ({ id: p.id, nome: p.nome }));
 
   return (

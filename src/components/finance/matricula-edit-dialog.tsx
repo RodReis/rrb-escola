@@ -33,7 +33,9 @@ const STATUSES = [
 
 export function MatriculaEditDialog({ row, series, turmas, planos }: Props) {
   const [open, setOpen] = useState(false);
-  const [tipoVaga, setTipoVaga] = useState("paga");
+  const [tipoVaga, setTipoVaga] = useState<string>(row.tipoVaga ?? "paga");
+  const [planoId, setPlanoId] = useState<string>(row.planoId ?? "");
+  const [status, setStatus] = useState<string>(row.status ?? "ativa");
   const [serieId, setSerieId] = useState(row.serieId ?? "");
   const [turmaId, setTurmaId] = useState(row.turmaId ?? "");
   const [error, setError] = useState<string | null>(null);
@@ -57,7 +59,9 @@ export function MatriculaEditDialog({ row, series, turmas, planos }: Props) {
 
   function openDialog() {
     // Reset local state to the row's current values each time the modal opens.
-    setTipoVaga("paga");
+    setTipoVaga(row.tipoVaga ?? "paga");
+    setPlanoId(row.planoId ?? "");
+    setStatus(row.status ?? "ativa");
     setSerieId(row.serieId ?? "");
     setTurmaId(row.turmaId ?? "");
     setError(null);
@@ -107,7 +111,7 @@ export function MatriculaEditDialog({ row, series, turmas, planos }: Props) {
 
           <label className="text-xs font-medium text-ink/70">
             Plano
-            <select name="plano_id" defaultValue="">
+            <select name="plano_id" value={planoId} onChange={(e) => setPlanoId(e.target.value)}>
               <option value="">Sem plano</option>
               {planos.map((p) => (
                 <option key={p.id} value={p.id}>{p.nome}</option>
@@ -148,14 +152,16 @@ export function MatriculaEditDialog({ row, series, turmas, planos }: Props) {
             </select>
           </label>
 
-          <label className="text-xs font-medium text-ink/70">
-            Status
-            <select name="status" defaultValue={row.status ?? "ativa"}>
-              {STATUSES.map((s) => (
-                <option key={s.value} value={s.value}>{s.label}</option>
-              ))}
-            </select>
-          </label>
+          {!isCreate ? (
+            <label className="text-xs font-medium text-ink/70">
+              Status
+              <select name="status" value={status} onChange={(e) => setStatus(e.target.value)}>
+                {STATUSES.map((s) => (
+                  <option key={s.value} value={s.value}>{s.label}</option>
+                ))}
+              </select>
+            </label>
+          ) : null}
 
           <div className="mt-2 flex justify-end gap-2">
             <button
