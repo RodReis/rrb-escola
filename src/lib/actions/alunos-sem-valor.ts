@@ -1,0 +1,123 @@
+"use server";
+
+import { revalidatePath } from "next/cache";
+import { createServerClient } from "@/lib/supabase/server";
+import { DEFAULT_SCHOOL_ID } from "@/lib/constants";
+import { requirePermission } from "@/lib/auth/session";
+
+type TipoVagaInput = "paga" | "bolsa_integral" | "bolsa_parcial" | "permuta" | "gratuita";
+type StatusInput = "ativa" | "cancelada" | "transferida" | "concluida";
+
+const TIPOS_VAGA: TipoVagaInput[] = ["paga", "bolsa_integral", "bolsa_parcial", "permuta", "gratuita"];
+const STATUSES: StatusInput[] = ["ativa", "cancelada", "transferida", "concluida"];
+
+function readField(formData: FormData, key: string): string | null {
+  const raw = formData.get(key);
+  if (typeof raw !== "string") return null;
+  const trimmed = raw.trim();
+  return trimmed === "" ? null : trimmed;
+}
+
+function readTipoVaga(formData: FormData): TipoVagaInput {
+  const raw = readField(formData, "tipo_vaga");
+  return raw && (TIPOS_VAGA as string[]).includes(raw) ? (raw as TipoVagaInput) : "paga";
+}
+
+function readStatus(formData: FormData): StatusInput {
+  const raw = readField(formData, "status");
+  return raw && (STATUSES as string[]).includes(raw) ? (raw as StatusInput) : "ativa";
+}
+
+/**
+ * Reads percentual_bolsa, validating it is 1-99 when tipo_vaga is bolsa_parcial,
+ * and 0 otherwise. Returns a number or an error string.
+ */
+function readPercentualBolsa(formData: FormData, tipo: TipoVagaInput): number | { error: string } {
+  if (tipo !== "bolsa_parcial") return 0;
+  const raw = formData.get("percentual_bolsa");
+  const value = typeof raw === "string" && raw.trim() !== "" ? Number(raw) : NaN;
+  if (!Number.isFinite(value) || value <= 0 || value >= 100) {
+    return { error: "Bolsa parcial exige percentual entre 1 e 99." };
+  }
+  return value;
+}
+
+/**
+ * Creates or updates a 2026 matrícula from the "Alunos sem valor" edit modal.
+ * - matricula_id present  -> update tipo_vaga, percentual_bolsa, plano_id,
+ *   serie_id, turma_id, status. Requires "matriculas" update permission.
+ * - matricula_id absent   -> insert a new 2026 matrícula. Requires "matriculas"
+ *   create permission. serie_id and turma_id are mandatory.
+ * Never generates or recalculates cobranças.
+ */
+export async function upsertMatriculaSemValorAction(
+  formData: FormData
+): Promise<{ error?: string }> {
+  const matriculaId = readField(formData, "matricula_id");
+  const alunoId = readField(formData, "aluno_id");
+  const serieId = readField(formData, "serie_id");
+  const turmaId = readField(formData, "turma_id");
+  const planoId = readField(formData, "plano_id");
+  const tipoVaga = readTipoVaga(formData);
+  const status = readStatus(formData);
+
+  const percentual = readPercentualBolsa(formData, tipoVaga);
+  if (typeof percentual !== "number") return percentual;
+
+  if (!alunoId) return { error: "Aluno não informado." };
+
+  const supabase = await createServerClient();
+
+  if (matriculaId) {
+    await requirePermission("matriculas", "update");
+    if (!serieId || !turmaId) return { error: "Série e turma são obrigatórias." };
+
+    const { error } = await supabase
+      .from("matriculas")
+      .update({
+        tipo_vaga: tipoVaga,
+        percentual_bolsa: percentual,
+        plano_id: planoId,
+        serie_id: serieId,
+        turma_id: turmaId,
+        status,
+      })
+      .eq("id", matriculaId)
+      .eq("escola_id", DEFAULT_SCHOOL_ID);
+    if (error) return { error: "Erro ao atualizar a matrícula. Tente novamente." };
+  } else {
+    await requirePermission("matriculas", "create");
+    if (!serieId || !turmaId) {
+      return { error: "Série e turma são obrigatórias para criar a matrícula." };
+    }
+
+    const { data: aluno } = await supabase
+      .from("alunos")
+      .select("matricula_codigo")
+      .eq("id", alunoId)
+      .eq("escola_id", DEFAULT_SCHOOL_ID)
+      .single();
+    const codigo = `${aluno?.matricula_codigo ?? alunoId}-2026`;
+
+    const { error } = await supabase.from("matriculas").insert({
+      escola_id: DEFAULT_SCHOOL_ID,
+      aluno_id: alunoId,
+      serie_id: serieId,
+      turma_id: turmaId,
+      plano_id: planoId,
+      codigo,
+      data_matricula: new Date().toISOString().slice(0, 10),
+      ano_letivo: 2026,
+      status: "ativa",
+      tipo_vaga: tipoVaga,
+      percentual_bolsa: percentual,
+    });
+    if (error) return { error: "Erro ao criar a matrícula. Tente novamente." };
+  }
+
+  revalidatePath("/financeiro/alunos-sem-valor");
+  revalidatePath("/financeiro");
+  revalidatePath("/matriculas");
+  revalidatePath(`/alunos/${alunoId}`);
+  return {};
+}
