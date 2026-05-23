@@ -153,3 +153,36 @@ describe("buildDescontoRow — derivations", () => {
     expect(row!.responsavelTelefone).toBeNull();
   });
 });
+
+describe("buildDescontoRow — edge cases", () => {
+  it("handles alunos: null defensively (no throw; returns row with fallbacks)", () => {
+    const raw = baseRaw({
+      planos: { valor_mensalidade: 600 },
+      alunos: null,
+    });
+    const row = buildDescontoRow(raw, FUND1);
+    expect(row).not.toBeNull();
+    expect(row!.alunoId).toBe("");
+    expect(row!.nome).toBe("—");
+    expect(row!.responsavelNome).toBeNull();
+  });
+
+  it("bolsa_parcial with percentual_bolsa === 100 is excluded (data anomaly)", () => {
+    const raw = baseRaw({
+      tipo_vaga: "bolsa_parcial",
+      percentual_bolsa: 100,
+      planos: { valor_mensalidade: 745 }, // matches valor cheio
+    });
+    // Plan matches an official sibling value AND isBolsaParcial=false (guard rejects 100).
+    expect(buildDescontoRow(raw, FUND1)).toBeNull();
+  });
+
+  it("bolsa_parcial with percentual_bolsa === 0 is excluded (data anomaly)", () => {
+    const raw = baseRaw({
+      tipo_vaga: "bolsa_parcial",
+      percentual_bolsa: 0,
+      planos: { valor_mensalidade: 690 }, // matches sibling 2 value
+    });
+    expect(buildDescontoRow(raw, FUND1)).toBeNull();
+  });
+});

@@ -94,13 +94,19 @@ export function buildDescontoRow(
   if (valoresSeg.length === 0) return null;
 
   const valorPlanoNum = Number(valorPlano);
-  const minSeg = Math.min(...valoresSeg);
+  // Defensive: idempotent for numbers; converts any leaked Postgres numeric strings.
+  const valoresSegNum = valoresSeg.map(Number);
+  const minSeg = Math.min(...valoresSegNum);
+  // 0% and 100% on a bolsa_parcial vaga are data-quality anomalies (missing or
+  // invalid percentage); we treat them as "not a valid partial scholarship" so
+  // they fall through to the plano-discount check instead of dividing by zero
+  // or producing degenerate efetivo math.
   const isBolsaParcial =
     raw.tipo_vaga === "bolsa_parcial" &&
     raw.percentual_bolsa > 0 &&
     raw.percentual_bolsa < 100;
 
-  const bateValorOficial = valoresSeg.some((v) => v === valorPlanoNum);
+  const bateValorOficial = valoresSegNum.some((v) => v === valorPlanoNum);
   if (bateValorOficial && !isBolsaParcial) return null;
 
   const temDescontoPlano = valorPlanoNum < minSeg;
@@ -117,7 +123,7 @@ export function buildDescontoRow(
     ? valorPlanoNum * (1 - raw.percentual_bolsa / 100)
     : valorPlanoNum;
 
-  const valorPraticadoCheio = valoresSeg[0];
+  const valorPraticadoCheio = valoresSegNum[0];
   const percentualDescontoEfetivo = Math.max(
     0,
     1 - valorEfetivo / valorPraticadoCheio
