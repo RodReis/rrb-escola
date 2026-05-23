@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { buildDescontoRow, type RawMatricula } from "./alunos-com-desconto";
+import { buildDescontoRow, type RawMatricula } from "./alunos-com-desconto-constants";
 
 const respFin = {
   nome: "Maria",
