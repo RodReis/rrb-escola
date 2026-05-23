@@ -36,6 +36,14 @@ function readPercentualBolsa(formData: FormData, tipo: TipoVagaInput): number | 
   return value;
 }
 
+function readValorPraticado(formData: FormData): number | null {
+  const raw = formData.get("valor_mensalidade_praticado");
+  if (typeof raw !== "string" || raw.trim() === "") return null;
+  const v = Number(raw);
+  if (!Number.isFinite(v) || v < 0) return null;
+  return v;
+}
+
 /**
  * Creates or updates a 2026 matrícula from the "Alunos sem valor" edit modal.
  * - matricula_id present  -> update tipo_vaga, percentual_bolsa, plano_id,
@@ -60,6 +68,8 @@ export async function upsertMatriculaSemValorAction(
   const percentual = readPercentualBolsa(formData, tipoVaga);
   if (typeof percentual !== "number") return percentual;
 
+  const valorPraticado = readValorPraticado(formData);
+
   if (!alunoId) return { error: "Aluno não informado." };
 
   const supabase = await createServerClient();
@@ -76,6 +86,7 @@ export async function upsertMatriculaSemValorAction(
         serie_id: serieId,
         turma_id: turmaId,
         status,
+        valor_mensalidade_praticado: valorPraticado,
       })
       .eq("id", matriculaId)
       .eq("escola_id", DEFAULT_SCHOOL_ID);
@@ -106,6 +117,7 @@ export async function upsertMatriculaSemValorAction(
       status: "ativa",
       tipo_vaga: tipoVaga,
       percentual_bolsa: percentual,
+      valor_mensalidade_praticado: valorPraticado,
     });
     if (error) return { error: "Erro ao criar a matrícula. Tente novamente." };
   }

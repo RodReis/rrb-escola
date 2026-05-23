@@ -38,6 +38,9 @@ export function MatriculaEditDialog({ row, series, turmas, planos }: Props) {
   const [status, setStatus] = useState<string>(row.status ?? "ativa");
   const [serieId, setSerieId] = useState(row.serieId ?? "");
   const [turmaId, setTurmaId] = useState(row.turmaId ?? "");
+  const [valorMensalidade, setValorMensalidade] = useState<string>(
+    row.valorMensalidadePraticado != null ? String(row.valorMensalidadePraticado) : ""
+  );
   const [error, setError] = useState<string | null>(null);
   const [pending, setPending] = useState(false);
 
@@ -64,6 +67,9 @@ export function MatriculaEditDialog({ row, series, turmas, planos }: Props) {
     setStatus(row.status ?? "ativa");
     setSerieId(row.serieId ?? "");
     setTurmaId(row.turmaId ?? "");
+    setValorMensalidade(
+      row.valorMensalidadePraticado != null ? String(row.valorMensalidadePraticado) : ""
+    );
     setError(null);
     setOpen(true);
   }
@@ -117,6 +123,19 @@ export function MatriculaEditDialog({ row, series, turmas, planos }: Props) {
                 <option key={p.id} value={p.id}>{p.nome}</option>
               ))}
             </select>
+          </label>
+
+          <label className="text-xs font-medium text-ink/70">
+            Valor mensalidade praticado (R$)
+            <input
+              name="valor_mensalidade_praticado"
+              type="number"
+              step="0.01"
+              min="0"
+              value={valorMensalidade}
+              onChange={(e) => setValorMensalidade(e.target.value)}
+              placeholder="Em branco usa valor do plano"
+            />
           </label>
 
           <label className="text-xs font-medium text-ink/70">

@@ -29,6 +29,7 @@ export type RawMatriculaEmbed = {
   tipo_vaga: TipoVaga;
   plano_id: string | null;
   status: StatusMatricula;
+  valor_mensalidade_praticado: number | null;
   planos: { valor_matricula: number | null } | null;
   turmas: {
     id: string;
@@ -64,6 +65,7 @@ export type AlunoSemValorRow = {
   turmaId: string | null;
   motivo: MotivoSemValor;
   valorMatricula: number;
+  valorMensalidadePraticado: number | null;
   responsaveis: ResponsavelRow[];
 };
 
@@ -149,6 +151,7 @@ export function buildRow(raw: RawAluno): AlunoSemValorRow | null {
     turmaId: matricula?.turmas?.id ?? null,
     motivo,
     valorMatricula: valor ?? 0,
+    valorMensalidadePraticado: matricula?.valor_mensalidade_praticado ?? null,
     responsaveis,
   };
 }
