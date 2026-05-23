@@ -6,7 +6,12 @@ import { requirePermission } from "@/lib/auth/session";
 import { DEFAULT_SCHOOL_ID } from "@/lib/constants";
 import { formText } from "@/lib/utils";
 
-export async function salvarEventoAction(formData: FormData) {
+export type SalvarEventoResult = { ok: true; created: boolean } | { ok: false; error: string };
+
+export async function salvarEventoAction(
+  _prevState: SalvarEventoResult | null,
+  formData: FormData,
+): Promise<SalvarEventoResult> {
   const id = formText(formData, "id");
   await requirePermission("eventos", id ? "update" : "create");
 
@@ -16,9 +21,9 @@ export async function salvarEventoAction(formData: FormData) {
   const descricao = formText(formData, "descricao") || null;
   const local = formText(formData, "local") || null;
 
-  if (!titulo) throw new Error("Título é obrigatório");
-  if (!dataInicio || !dataFim) throw new Error("Datas de início e fim são obrigatórias");
-  if (dataFim < dataInicio) throw new Error("Data fim deve ser maior ou igual à data início");
+  if (!titulo) return { ok: false, error: "Título é obrigatório" };
+  if (!dataInicio || !dataFim) return { ok: false, error: "Datas de início e fim são obrigatórias" };
+  if (dataFim < dataInicio) return { ok: false, error: "Data fim deve ser maior ou igual à data início" };
 
   const supabase = await createServerClient();
   const payload = {
@@ -30,20 +35,34 @@ export async function salvarEventoAction(formData: FormData) {
     local,
   };
 
+  // Anti-duplicata: mesmo titulo + data_inicio + data_fim na mesma escola
+  const { data: existente } = await supabase
+    .from("eventos_escola")
+    .select("id")
+    .eq("escola_id", DEFAULT_SCHOOL_ID)
+    .eq("titulo", titulo)
+    .eq("data_inicio", dataInicio)
+    .eq("data_fim", dataFim)
+    .maybeSingle();
+  if (existente && existente.id !== id) {
+    return { ok: false, error: "Já existe um evento com mesmo título e datas." };
+  }
+
   if (id) {
     const { error } = await supabase
       .from("eventos_escola")
       .update(payload)
       .eq("id", id)
       .eq("escola_id", DEFAULT_SCHOOL_ID);
-    if (error) throw error;
+    if (error) return { ok: false, error: error.message };
   } else {
     const { error } = await supabase.from("eventos_escola").insert(payload);
-    if (error) throw error;
+    if (error) return { ok: false, error: error.message };
   }
 
   revalidatePath("/eventos");
   revalidatePath("/");
+  return { ok: true, created: !id };
 }
 
 export async function excluirEventoAction(formData: FormData) {
