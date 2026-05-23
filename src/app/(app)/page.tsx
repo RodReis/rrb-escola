@@ -335,14 +335,28 @@ export default async function DashboardPage({
           </section>
 
           {((showFinanceiroCobrancas && isPropria && proximasCobrancas) ||
+            (showFinanceiroCobrancas && slot5) ||
+            (showMatriculas && slot5) ||
             (showDespesas && topCategorias) ||
             (showRhFolha && folhaEmpresas)) && (
             <SectionHeader title="Operação" subtitle="Cobranças, despesas e folha do mês" />
           )}
 
-          {showFinanceiroCobrancas && isPropria && proximasCobrancas && (
-            <ProximasCobrancasCard items={proximasCobrancas} />
-          )}
+          {(showFinanceiroCobrancas && isPropria && proximasCobrancas) ||
+            (isPropria && showFinanceiroCobrancas && slot5) ||
+            (!isPropria && showMatriculas && slot5) ? (
+            <section className="grid gap-6 lg:grid-cols-2">
+              {showFinanceiroCobrancas && isPropria && proximasCobrancas && (
+                <ProximasCobrancasCard items={proximasCobrancas} />
+              )}
+              {isPropria && showFinanceiroCobrancas && slot5 && (
+                <TopDevedores items={slot5 as DevedorRow[]} />
+              )}
+              {!isPropria && showMatriculas && slot5 && (
+                <RenovacoesPendentes items={slot5 as RenovacaoRow[]} />
+              )}
+            </section>
+          ) : null}
 
           <section className="grid gap-6 lg:grid-cols-2">
             {showDespesas && topCategorias && <TopCategoriasCard items={topCategorias} />}
@@ -353,20 +367,14 @@ export default async function DashboardPage({
 
       {tabEfetiva === "secretaria" && (
         <>
+          {/* HOJE — aniversariantes do dia + frequência atual */}
+          <SectionHeader title="Hoje" subtitle="O que acontece agora" />
           <section className="grid gap-6 lg:grid-cols-[1fr_auto]">
             <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
-              {showAlunos && ocupacao && (
-                <MetricRing
-                  label="Ocupação"
-                  percent={ocupacaoPct}
-                  centerLabel="Vagas"
-                  centerValue={`${ocupacao.ocupadas}/${ocupacao.total}`}
-                />
-              )}
               {showFrequencias && frequencia && frequenciaPorTurma && (
                 <FrequenciaCard data={frequencia} porTurma={frequenciaPorTurma} />
               )}
-              {showAlunos && ocupacao && <ResumoAlunosCard ocupacao={ocupacao} />}
+              <SaudeSistemaCard data={saudeSistema} />
             </div>
             {showAlunos && aniversariantesSemana && (
               <div className="w-80 shrink-0">
@@ -375,50 +383,42 @@ export default async function DashboardPage({
             )}
           </section>
 
+          {/* ESTA SEMANA — próximos aniversariantes, eventos, feriados, aniv. matrícula */}
+          <SectionHeader title="Esta semana" subtitle="Próximos dias da agenda" />
           {showAlunos && aniversariantesSemana && (
             <AniversariantesProximosRow items={aniversariantesSemana} />
           )}
-
-          {showMatriculas && stages && (
-            <>
-              <SectionHeader title="Matrículas e ocupação" subtitle="Distribuição por etapa de ensino" />
-              <StageTable rows={stages} />
-            </>
+          {((showFrequencias && feriadosProximos) || (showEventos && eventosProximos)) && (
+            <section className="grid gap-6 lg:grid-cols-2">
+              {showFrequencias && feriadosProximos && <FeriadosCard items={feriadosProximos} />}
+              {showEventos && eventosProximos && <EventosCard items={eventosProximos} />}
+            </section>
           )}
+          {showAlunos && aniversariantesMatricula && (
+            <AniversarioMatriculaCard items={aniversariantesMatricula} />
+          )}
+
+          {/* VISÃO GERAL — indicadores estruturais */}
+          <SectionHeader title="Visão geral" subtitle="Indicadores estruturais" />
+          <section className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+            {showAlunos && ocupacao && (
+              <MetricRing
+                label="Ocupação"
+                percent={ocupacaoPct}
+                centerLabel="Vagas"
+                centerValue={`${ocupacao.ocupadas}/${ocupacao.total}`}
+              />
+            )}
+            {showAlunos && ocupacao && <ResumoAlunosCard ocupacao={ocupacao} />}
+          </section>
+
+          {showMatriculas && stages && <StageTable rows={stages} />}
 
           <section className="grid gap-6 lg:grid-cols-2">
             {showTurmas && rankingTurmas && <RankingTurmasCard items={rankingTurmas} />}
             {showAlunos && aniversariantes && <AniversariantesCard items={aniversariantes} />}
           </section>
 
-          <section className="grid gap-6 lg:grid-cols-2">
-            {showAlunos && aniversariantesMatricula && (
-              <AniversarioMatriculaCard items={aniversariantesMatricula} />
-            )}
-            <SaudeSistemaCard data={saudeSistema} />
-          </section>
-
-          {((!isPropria && showMatriculas && slot5) ||
-            (isPropria && showFinanceiroCobrancas && slot5)) && (
-            <SectionHeader title="Operação" subtitle="Renovações e inadimplência" />
-          )}
-
-          {!isPropria && showMatriculas && slot5 && (
-            <RenovacoesPendentes items={slot5 as RenovacaoRow[]} />
-          )}
-          {isPropria && showFinanceiroCobrancas && slot5 && (
-            <TopDevedores items={slot5 as DevedorRow[]} />
-          )}
-
-          {((showFrequencias && feriadosProximos) || (showEventos && eventosProximos)) && (
-            <>
-              <SectionHeader title="Agenda" subtitle="Próximos feriados e eventos" />
-              <section className="grid gap-6 lg:grid-cols-2">
-                {showFrequencias && feriadosProximos && <FeriadosCard items={feriadosProximos} />}
-                {showEventos && eventosProximos && <EventosCard items={eventosProximos} />}
-              </section>
-            </>
-          )}
         </>
       )}
 
