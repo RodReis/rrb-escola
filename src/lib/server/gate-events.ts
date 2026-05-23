@@ -1,6 +1,10 @@
 import { DEFAULT_SCHOOL_ID } from "@/lib/constants";
-import { sendGuardianNotification } from "@/lib/server/guardian-notifications";
+import { enviarWhatsApp } from "@/lib/whatsapp/send";
+import { montarNotificacaoPortaria } from "@/lib/portaria/notificacao";
 import { createAdminClient } from "@/lib/supabase/admin";
+
+const TEMPLATE_PORTARIA_FOTO = process.env.META_TEMPLATE_PORTARIA_FOTO ?? "portaria_acesso_foto";
+const TEMPLATE_PORTARIA_TEXTO = process.env.META_TEMPLATE_PORTARIA_TEXTO ?? "portaria_acesso_texto";
 
 type RegisterGateEventInput = {
   alunoId: string;
@@ -9,18 +13,8 @@ type RegisterGateEventInput = {
   origem?: "manual" | "facial_simulado" | "facial";
   confianca?: number | null;
   observacao?: string | null;
+  fotoUrl?: string | null;
 };
-
-function eventMessage(studentName: string, type: string, eventDate: Date) {
-  const time = new Intl.DateTimeFormat("pt-BR", {
-    timeZone: "America/Sao_Paulo",
-    hour: "2-digit",
-    minute: "2-digit"
-  }).format(eventDate);
-
-  if (type === "entrada") return `Oi, seu filho ${studentName} entrou na escola as ${time}.`;
-  return `Oi, seu filho ${studentName} saiu da escola as ${time}.`;
-}
 
 function gateCooldownSeconds() {
   const value = Number(process.env.GATE_EVENT_COOLDOWN_SECONDS ?? 120);
@@ -115,7 +109,8 @@ export async function registerGateEvent(input: RegisterGateEventInput) {
 
   const shouldNotify =
     preference &&
-    ((input.tipo === "entrada" && preference.notificar_entrada) || (input.tipo === "saida" && preference.notificar_saida));
+    ((input.tipo === "entrada" && preference.notificar_entrada) ||
+      (input.tipo === "saida" && preference.notificar_saida));
 
   let notificationId: string | null = null;
 
@@ -124,44 +119,33 @@ export async function registerGateEvent(input: RegisterGateEventInput) {
       ? preference.responsaveis_aluno[0]
       : preference.responsaveis_aluno;
     const phone = preference.telefone_destino || guardian?.celular || guardian?.telefone;
-    const message = eventMessage(student.nome, input.tipo, now);
 
-    const { data: notification, error: notificationError } = await supabase
-      .from("notificacoes_responsavel")
-      .insert({
-        escola_id: DEFAULT_SCHOOL_ID,
-        aluno_id: input.alunoId,
-        responsavel_id: preference.responsavel_id,
-        evento_acesso_id: event.id,
-        canal: preference.canal,
-        telefone_destino: phone,
-        mensagem: message,
-        status: process.env.WHATSAPP_WEBHOOK_URL ? "pendente" : "simulada"
-      })
-      .select("id, canal, telefone_destino, mensagem")
-      .single();
+    if (phone) {
+      const notif = montarNotificacaoPortaria(
+        {
+          nomeAluno: student.nome,
+          tipo: input.tipo,
+          dataEvento: now,
+          fotoUrl: input.fotoUrl ?? null,
+        },
+        { comFoto: TEMPLATE_PORTARIA_FOTO, semFoto: TEMPLATE_PORTARIA_TEXTO },
+      );
 
-    if (notificationError) throw notificationError;
-    notificationId = notification?.id ?? null;
+      const envio = await enviarWhatsApp(
+        {
+          telefone: phone,
+          templateName: notif.templateName,
+          variaveis: notif.variaveis,
+          textoLog: notif.textoLog,
+          imagemUrl: notif.imagemUrl,
+          alunoId: input.alunoId,
+          referenciaTipo: "portaria",
+          referenciaId: event.id,
+        },
+        supabase,
+      );
 
-    if (notification) {
-      const result = await sendGuardianNotification({
-        notificationId: notification.id,
-        canal: notification.canal,
-        telefoneDestino: notification.telefone_destino,
-        mensagem: notification.mensagem,
-        alunoId: input.alunoId,
-        eventoAcessoId: event.id
-      });
-
-      await supabase
-        .from("notificacoes_responsavel")
-        .update({
-          status: result.status,
-          provider_message_id: result.providerMessageId ?? null,
-          erro: result.erro ?? null
-        })
-        .eq("id", notification.id);
+      notificationId = envio.ok ? envio.mensagemId : null;
     }
   }
 

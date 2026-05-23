@@ -47,6 +47,8 @@ import { HeroFinancial } from "@/components/dashboard/hero-financial";
 import { FolhaRatioCard } from "@/components/dashboard/folha-ratio-card";
 import { FrequenciaCard } from "@/components/dashboard/frequencia-card";
 import { EvasaoCard } from "@/components/dashboard/evasao-card";
+import { FeriadosCard } from "@/components/dashboard/feriados-card";
+import { getFeriadosProximos } from "@/lib/data/calendario";
 import { FrequenciaHeatmap } from "@/components/dashboard/frequencia-heatmap";
 import { MediasDisciplinasCard } from "@/components/dashboard/medias-disciplinas-card";
 import { PedagogicoOverviewSection } from "@/components/dashboard/pedagogico-overview-section";
@@ -220,6 +222,7 @@ export default async function DashboardPage({
     slot2,
     slot5,
     aniversariantesSemana,
+    feriadosProximos,
   ] = await Promise.all([
     showFinanceiroCobrancas ? getHero(competencia, escolaId) : null,
     showFinanceiroCobrancas ? getRevenueTrend(6, escolaId) : null,
@@ -256,6 +259,7 @@ export default async function DashboardPage({
           : getRenovacoesPendentes(5, escolaId))
       : null,
     showAlunos ? getAniversariantesSemana(escolaId) : null,
+    showFrequencias ? getFeriadosProximos(escolaId) : null,
   ]);
 
   // slot2 currently is computed but not rendered in the original page (was unused).
@@ -407,6 +411,15 @@ export default async function DashboardPage({
         <>
           {showAvaliacoes && pedagogicoOverview && (
             <PedagogicoOverviewSection data={pedagogicoOverview} />
+          )}
+
+          {showFrequencias && feriadosProximos && (
+            <>
+              <SectionHeader title="Calendário letivo" subtitle="Feriados e recessos deste mês e do próximo" />
+              <section className="max-w-md">
+                <FeriadosCard items={feriadosProximos} />
+              </section>
+            </>
           )}
 
           {(showAlunos || showFrequencias) && (evasao || freqDetalhada) && (

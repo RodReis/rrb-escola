@@ -39,6 +39,7 @@ const SECRETARIA_ITEMS: DropdownItem[] = [
   { href: "/portaria", label: "Portaria", iconName: "DoorOpen" },
   { href: "/mural/aniversariantes", label: "Mural aniversários", iconName: "Cake" },
   { href: "/organograma", label: "Organograma", iconName: "Network" },
+  { href: "/calendario", label: "Calendário Letivo", iconName: "CalendarDays" },
   { href: "/importacoes", label: "Importações", iconName: "Inbox" },
 ];
 
@@ -47,10 +48,14 @@ const RH_ITEMS: DropdownItem[] = [
   { href: "/rh/funcionarios", label: "Funcionários", iconName: "UsersRound" },
   { href: "/rh/brackets", label: "Brackets", iconName: "SlidersHorizontal" },
   { href: "/rh/documentos", label: "Documentos", iconName: "FileText" },
+  { href: "/calendario", label: "Calendário Letivo", iconName: "CalendarDays" },
+  { href: "/comunicados", label: "Comunicados", iconName: "Megaphone" },
+  { href: "/configuracoes/lembretes", label: "Lembretes", iconName: "BellRing" },
 ];
 
 const FINANCEIRO_ITEMS: DropdownItem[] = [
   { href: "/financeiro", label: "Financeiro", iconName: "BarChart3" },
+  { href: "/financeiro/alunos-sem-valor", label: "Alunos sem valor", iconName: "AlertTriangle" },
   { href: "/financeiro/folha", label: "Folha de Pgto.", iconName: "Wallet" },
   { href: "/despesas", label: "Despesas", iconName: "Receipt" },
   { href: "/valores-praticados", label: "Valores praticados", iconName: "ReceiptText" },

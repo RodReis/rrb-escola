@@ -41,6 +41,7 @@ export async function getStudentStatement(alunoId: string, de: string, ate: stri
     .from("cobrancas")
     .select(`
       id, descricao, competencia, numero_parcela, valor_final, data_vencimento, status,
+      asaas_payment_id, asaas_invoice_url,
       pagamentos(id, valor_pago, data_pagamento, forma_pagamento, cancelado_em, registrado_por, perfis:registrado_por(nome))
     `)
     .eq("aluno_id", alunoId)

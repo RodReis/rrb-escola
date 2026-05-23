@@ -2,10 +2,13 @@
 
 import {
   AlertCircle,
+  AlertTriangle,
   BarChart3,
+  BellRing,
   Building2,
   Cake,
   CalendarCheck,
+  CalendarDays,
   ClipboardCheck,
   ClipboardList,
   CreditCard,
@@ -15,6 +18,7 @@ import {
   HandHeart,
   Inbox,
   Layers3,
+  Megaphone,
   Network,
   Receipt,
   ReceiptText,
@@ -31,10 +35,13 @@ import {
 
 export const ICON_MAP: Record<string, LucideIcon> = {
   AlertCircle,
+  AlertTriangle,
   BarChart3,
+  BellRing,
   Building2,
   Cake,
   CalendarCheck,
+  CalendarDays,
   ClipboardCheck,
   ClipboardList,
   CreditCard,
@@ -44,6 +51,7 @@ export const ICON_MAP: Record<string, LucideIcon> = {
   HandHeart,
   Inbox,
   Layers3,
+  Megaphone,
   Network,
   Receipt,
   ReceiptText,

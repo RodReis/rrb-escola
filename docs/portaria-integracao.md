@@ -43,9 +43,12 @@ Dentro desse intervalo, uma nova `entrada` repetida do mesmo aluno e uma nova `s
   "dispositivo_id": "50000000-0000-0000-0000-000000000001",
   "origem": "facial",
   "confianca": 98.7,
-  "observacao": "Reconhecido pela camera principal"
+  "observacao": "Reconhecido pela camera principal",
+  "foto_base64": "<imagem capturada em base64, opcional>"
 }
 ```
+
+`foto_base64`: foto capturada na portaria, em base64 (JPEG ou PNG). Quando presente, a imagem e subida no Storage e enviada junto da notificacao WhatsApp; se ausente ou se o upload falhar, a notificacao e enviada sem foto.
 
 `tipo` aceita `entrada` ou `saida`.
 
@@ -86,32 +89,8 @@ Resposta:
 
 - Cria registro em `eventos_acesso`.
 - Se for `entrada`, registra/atualiza frequencia do dia como presente.
-- Se houver preferencia ativa no aluno, cria uma notificacao em `notificacoes_responsavel`.
-- Sem `WHATSAPP_WEBHOOK_URL`, a notificacao fica com status `simulada`.
-- Com `WHATSAPP_WEBHOOK_URL`, o sistema envia `POST` para o webhook e atualiza o status para `enviada` ou `erro`.
+- Se houver preferencia ativa no aluno, registra a notificacao em `mensagens_whatsapp` e realiza o envio via Meta Cloud API usando template aprovado.
 - Se o evento for duplicado dentro do cooldown, retorna `duplicated: true` e nao cria nova mensagem.
-
-## Webhook de WhatsApp
-
-Configure no `.env.local`:
-
-```env
-WHATSAPP_WEBHOOK_URL=https://seu-provedor.example/messages
-WHATSAPP_WEBHOOK_TOKEN=token-opcional
-```
-
-Payload enviado:
-
-```json
-{
-  "id": "id-da-notificacao",
-  "canal": "whatsapp",
-  "telefone_destino": "62999999999",
-  "mensagem": "Oi, seu filho entrou na escola.",
-  "aluno_id": "id-do-aluno",
-  "evento_acesso_id": "id-do-evento"
-}
-```
 
 ## Exemplo curl
 
