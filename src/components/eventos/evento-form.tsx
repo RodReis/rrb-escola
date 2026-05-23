@@ -1,17 +1,27 @@
 "use client";
 
-import { useActionState, useEffect, useRef } from "react";
+import { useEffect, useRef } from "react";
+import { useFormState, useFormStatus } from "react-dom";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { salvarEventoAction, type SalvarEventoResult } from "@/lib/actions/eventos";
 import { Panel } from "@/components/ui/card";
 import type { EventoEscola } from "@/lib/data/eventos";
 
+function SubmitButton({ editing }: { editing: boolean }) {
+  const { pending } = useFormStatus();
+  return (
+    <button disabled={pending} className="ds-button ds-button-primary">
+      {pending ? "Salvando…" : editing ? "Salvar alterações" : "Cadastrar evento"}
+    </button>
+  );
+}
+
 export function EventoForm({ evento }: { evento?: EventoEscola | null }) {
   const editing = !!evento;
   const formRef = useRef<HTMLFormElement>(null);
   const router = useRouter();
-  const [state, formAction, pending] = useActionState<SalvarEventoResult | null, FormData>(
+  const [state, formAction] = useFormState<SalvarEventoResult | null, FormData>(
     salvarEventoAction,
     null,
   );
@@ -94,9 +104,7 @@ export function EventoForm({ evento }: { evento?: EventoEscola | null }) {
         </label>
 
         <div className="flex justify-end gap-2">
-          <button disabled={pending} className="ds-button ds-button-primary">
-            {pending ? "Salvando…" : editing ? "Salvar alterações" : "Cadastrar evento"}
-          </button>
+          <SubmitButton editing={editing} />
         </div>
       </form>
     </Panel>
