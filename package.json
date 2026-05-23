@@ -12,7 +12,9 @@
     "seed:auth": "node scripts/seed-admin.mjs",
     "test:scripts": "node --test scripts/tests/*.test.mjs",
     "reconcile:matriculas:2026": "node scripts/reconcile_matriculas_2026.mjs",
-    "reconcile:matriculas:2026:apply": "node scripts/reconcile_matriculas_2026.mjs --apply"
+    "reconcile:matriculas:2026:apply": "node scripts/reconcile_matriculas_2026.mjs --apply",
+    "reset:matriculas:2026": "node scripts/reset_matriculas_2026.mjs",
+    "reset:matriculas:2026:apply": "node scripts/reset_matriculas_2026.mjs --apply --i-have-backup"
   },
   "dependencies": {
     "@supabase/ssr": "^0.10.3",
