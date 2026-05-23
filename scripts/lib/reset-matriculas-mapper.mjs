@@ -26,7 +26,8 @@ export function mapHeaderToTarget(raw) {
     };
   }
 
-  m = s.match(/^(\d+)A?\s*SERIE\s*-\s*EM\s*-\s*([AB])$/);
+  // MEDIO: 1ª SÉRIE - EM - A (only 1-3)
+  m = s.match(/^([1-3])A?\s*SERIE\s*-\s*EM\s*-\s*([AB])$/);
   if (m) {
     return {
       serie_nome: `${m[1]}ª SÉRIE`,
@@ -35,13 +36,17 @@ export function mapHeaderToTarget(raw) {
     };
   }
 
-  m = s.match(/^(\d+)O?\s*ANO\s*-\s*([AB])$/);
+  // FUND1 (1-5) e FUND2 (6-9): only 1-9
+  m = s.match(/^([1-9])O?\s*ANO\s*-\s*([AB])$/);
   if (m) {
     const n = Number(m[1]);
     const letra = m[2];
+    // FUND2 (6-9): só matutino, letra B inválida
     if (n >= 6) {
+      if (letra !== "A") return null;
       return { serie_nome: `${n}º ANO`, turma_nome: "MATUTINO", turno: "matutino" };
     }
+    // FUND1 (1-5): A=matutino, B=vespertino
     return {
       serie_nome: `${n}º ANO`,
       turma_nome: letra === "A" ? "MATUTINO" : "VESPERTINO",

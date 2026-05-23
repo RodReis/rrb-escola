@@ -53,3 +53,23 @@ test("1ª SÉRIE - EM - A (MÉDIO)", () => {
 test("header inválido retorna null", () => {
   assert.equal(mapHeaderToTarget("BLA"), null);
 });
+
+test("6º ANO - B (FUND2 letra B inválida)", () => {
+  assert.equal(mapHeaderToTarget("6º ANO - B"), null);
+});
+
+test("INFANTIL 3 - MATUTINO", () => {
+  assert.deepEqual(mapHeaderToTarget("INFANTIL 3 - MATUTINO"), {
+    serie_nome: "INFANTIL3",
+    turma_nome: "MATUTINO",
+    turno: "matutino"
+  });
+});
+
+test("99º ANO - A inválido (fora do range)", () => {
+  assert.equal(mapHeaderToTarget("99º ANO - A"), null);
+});
+
+test("4ª SÉRIE - EM - A inválido (só 1-3)", () => {
+  assert.equal(mapHeaderToTarget("4ª SÉRIE - EM - A"), null);
+});
