@@ -47,7 +47,7 @@ export async function getAlunosSemValor(
     .from("alunos")
     .select(`
       id, nome,
-      matriculas!left(id, tipo_vaga, plano_id, status, ano_letivo, valor_mensalidade_praticado,
+      matriculas!left(id, tipo_vaga, plano_id, status, ano_letivo, valor_mensalidade_praticado, percentual_bolsa,
         planos(valor_matricula),
         turmas(id, nome, series(id, nome, ordem))),
       responsaveis_aluno(nome, parentesco, telefone, celular, responsavel_financeiro)
@@ -73,6 +73,7 @@ export async function getAlunosSemValor(
       status: string;
       ano_letivo: number;
       valor_mensalidade_praticado: number | null;
+      percentual_bolsa: number | null;
       planos: { valor_matricula: number | null } | null;
       turmas: {
         id: string;
@@ -93,6 +94,7 @@ export async function getAlunosSemValor(
         plano_id: m.plano_id,
         status: m.status as RawAluno["matriculas"][number]["status"],
         valor_mensalidade_praticado: m.valor_mensalidade_praticado,
+        percentual_bolsa: m.percentual_bolsa,
         planos: m.planos,
         turmas: m.turmas,
       })),

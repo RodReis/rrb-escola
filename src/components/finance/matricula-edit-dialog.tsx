@@ -38,6 +38,9 @@ export function MatriculaEditDialog({ row, series, turmas, planos }: Props) {
   const [status, setStatus] = useState<string>(row.status ?? "ativa");
   const [serieId, setSerieId] = useState(row.serieId ?? "");
   const [turmaId, setTurmaId] = useState(row.turmaId ?? "");
+  const [percentualBolsa, setPercentualBolsa] = useState<string>(
+    row.percentualBolsa != null && row.percentualBolsa > 0 ? String(row.percentualBolsa) : ""
+  );
   const [valorMensalidade, setValorMensalidade] = useState<string>(
     row.valorMensalidadePraticado != null ? String(row.valorMensalidadePraticado) : ""
   );
@@ -69,6 +72,9 @@ export function MatriculaEditDialog({ row, series, turmas, planos }: Props) {
     setTurmaId(row.turmaId ?? "");
     setValorMensalidade(
       row.valorMensalidadePraticado != null ? String(row.valorMensalidadePraticado) : ""
+    );
+    setPercentualBolsa(
+      row.percentualBolsa != null && row.percentualBolsa > 0 ? String(row.percentualBolsa) : ""
     );
     setError(null);
     setOpen(true);
@@ -111,7 +117,16 @@ export function MatriculaEditDialog({ row, series, turmas, planos }: Props) {
           {tipoVaga === "bolsa_parcial" ? (
             <label className="text-xs font-medium text-ink/70">
               Percentual da bolsa (1-99)
-              <input name="percentual_bolsa" type="number" min={1} max={99} inputMode="numeric" required />
+              <input
+                name="percentual_bolsa"
+                type="number"
+                min={1}
+                max={99}
+                inputMode="numeric"
+                required
+                value={percentualBolsa}
+                onChange={(e) => setPercentualBolsa(e.target.value)}
+              />
             </label>
           ) : null}
 
