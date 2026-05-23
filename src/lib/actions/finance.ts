@@ -128,7 +128,7 @@ export async function generateChargesForEnrollmentAction(formData: FormData) {
   const supabase = await createServerClient();
   const { data: matricula } = await supabase
     .from("matriculas")
-    .select("id, escola_id, aluno_id, plano_id, data_matricula, ano_letivo")
+    .select("id, escola_id, aluno_id, plano_id, data_matricula, ano_letivo, tipo_vaga, percentual_bolsa, valor_mensalidade_praticado")
     .eq("id", matriculaId)
     .single();
 
@@ -141,7 +141,10 @@ export async function generateChargesForEnrollmentAction(formData: FormData) {
     matriculaId: matricula.id,
     planoId: matricula.plano_id,
     dataMatricula: matricula.data_matricula,
-    anoLetivo: matricula.ano_letivo
+    anoLetivo: matricula.ano_letivo,
+    tipoVaga: matricula.tipo_vaga ?? undefined,
+    percentualBolsa: matricula.percentual_bolsa ?? undefined,
+    valorMensalidadePraticado: matricula.valor_mensalidade_praticado ?? null
   });
 
   revalidatePath(`/matriculas/${matriculaId}`);

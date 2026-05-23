@@ -34,6 +34,7 @@ type GenerateChargesInput = {
   anoLetivo: number;
   tipoVaga?: TipoVagaCobranca;
   percentualBolsa?: number;
+  valorMensalidadePraticado?: number | null;
 };
 
 // generateChargesForEnrollment: geração sob demanda. Filtra duplicatas (matricula_id + competencia + numero_parcela) para ser idempotente.
@@ -67,7 +68,10 @@ export async function generateChargesForEnrollment(input: GenerateChargesInput) 
 
   const rows = [];
   const registrationFee = Number(plan.valor_matricula ?? 0);
-  const monthlyFee = Number(plan.valor_mensalidade ?? 0);
+  const planMonthly = Number(plan.valor_mensalidade ?? 0);
+  const praticado = input.valorMensalidadePraticado;
+  const usaPraticado = typeof praticado === "number" && praticado > 0;
+  const monthlyFee = usaPraticado ? praticado : planMonthly;
   const installments = Math.max(Number(plan.quantidade_parcelas ?? 0), 0);
   const dueDay = Number(plan.dia_vencimento ?? 10);
 
@@ -88,7 +92,7 @@ export async function generateChargesForEnrollment(input: GenerateChargesInput) 
     });
   }
 
-  const descontoMensal = tipoVaga === "bolsa_parcial"
+  const descontoMensal = (!usaPraticado && tipoVaga === "bolsa_parcial")
     ? Math.round(monthlyFee * (percentualBolsa / 100) * 100) / 100
     : 0;
 
