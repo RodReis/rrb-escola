@@ -53,16 +53,16 @@ export async function getAlunosComDesconto(
     query = query.or(`nome.ilike.%${filters.nome}%`, { foreignTable: "alunos" });
   }
 
-  const { data, error } = await query;
+  const [{ data, error }, { data: valoresData, error: valErr }] = await Promise.all([
+    query,
+    supabase
+      .from("valores_praticados")
+      .select("segmento, ordem_filho, valor_mensalidade")
+      .eq("escola_id", DEFAULT_SCHOOL_ID)
+      .eq("ano_letivo", 2026)
+      .order("ordem_filho", { ascending: true }),
+  ]);
   if (error) throw error;
-
-  // Load all practiced values for 2026 and index by segmento (ordered by ordem_filho ASC).
-  const { data: valoresData, error: valErr } = await supabase
-    .from("valores_praticados")
-    .select("segmento, ordem_filho, valor_mensalidade")
-    .eq("escola_id", DEFAULT_SCHOOL_ID)
-    .eq("ano_letivo", 2026)
-    .order("ordem_filho", { ascending: true });
   if (valErr) throw valErr;
 
   const valoresPorSegmento = new Map<string, number[]>();

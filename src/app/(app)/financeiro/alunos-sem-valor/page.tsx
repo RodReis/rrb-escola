@@ -157,7 +157,7 @@ export default async function AlunosSemValorPage({
               </thead>
               <tbody>
                 {rows.map((r) => (
-                  <tr key={r.alunoId}>
+                  <tr key={r.matriculaId}>
                     <td className="font-semibold text-ink">{r.nome}</td>
                     <td>{r.serie}</td>
                     <td>{r.turma}</td>
@@ -166,7 +166,11 @@ export default async function AlunosSemValorPage({
                         {ORIGEM_LABEL[r.origem]}
                       </StatusPill>
                     </td>
-                    <td>{`-${pctFmt(r.percentualDescontoEfetivo)}`}</td>
+                    <td>
+                      {r.percentualDescontoEfetivo === 0
+                        ? <span className="text-ink/40">—</span>
+                        : `-${pctFmt(r.percentualDescontoEfetivo)}`}
+                    </td>
                     <td>
                       {r.responsavelNome ? (
                         <div className="text-sm">
