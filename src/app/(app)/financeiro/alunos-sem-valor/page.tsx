@@ -25,6 +25,7 @@ import {
 import { getAcademicData } from "@/lib/data/lookups";
 import { requirePermission } from "@/lib/auth/session";
 import { can } from "@/lib/auth/permissions";
+import { money } from "@/lib/constants";
 
 export const dynamic = "force-dynamic";
 
@@ -152,6 +153,7 @@ export default async function AlunosSemValorPage({
                   <th>Turma</th>
                   <th>Origem</th>
                   <th>% Desconto</th>
+                  <th>Mensalidade</th>
                   <th>Responsável</th>
                 </tr>
               </thead>
@@ -170,6 +172,14 @@ export default async function AlunosSemValorPage({
                       {r.percentualDescontoEfetivo === 0
                         ? <span className="text-ink/40">—</span>
                         : `-${pctFmt(r.percentualDescontoEfetivo)}`}
+                    </td>
+                    <td>
+                      <div className="font-semibold text-ink">
+                        {money.format(r.valorMensalidadePlano)}
+                      </div>
+                      <div className="text-xs text-ink/50">
+                        de {money.format(r.valorPraticadoCheio)}
+                      </div>
                     </td>
                     <td>
                       {r.responsavelNome ? (
