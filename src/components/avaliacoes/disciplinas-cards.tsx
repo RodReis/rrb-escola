@@ -197,7 +197,7 @@ const FALLBACK_THEME: Theme = {
 function pickTheme(nome: string): Theme {
   const key = nome
     .normalize("NFKD")
-    .replace(/\p{Diacritic}/gu, "")
+    .replace(/[̀-ͯ]/g, "")
     .toLowerCase()
     .replace(/\s+/g, "");
   return THEMES[key] ?? FALLBACK_THEME;
