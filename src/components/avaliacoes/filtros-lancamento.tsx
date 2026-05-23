@@ -1,28 +1,23 @@
 "use client";
 
 import { useRouter, useSearchParams, usePathname } from "next/navigation";
-import type { TurmaComSerie, DisciplinaOption } from "@/lib/data/lancamento-notas";
+import type { TurmaComSerie } from "@/lib/data/lancamento-notas";
 
 export function FiltrosLancamento({
   turmasComSerie,
-  disciplinas,
   serieSel,
   turmaSel,
-  disciplinaSel,
   ano,
 }: {
   turmasComSerie: TurmaComSerie[];
-  disciplinas: DisciplinaOption[];
   serieSel: string | null;
   turmaSel: string | null;
-  disciplinaSel: string | null;
   ano: number;
 }) {
   const router = useRouter();
   const pathname = usePathname();
   const sp = useSearchParams();
 
-  // Séries únicas
   const seen = new Set<string>();
   const series = turmasComSerie
     .filter((t) => {
@@ -33,7 +28,6 @@ export function FiltrosLancamento({
     .map((t) => ({ id: t.serieId, nome: t.serieNome, ordem: t.serieOrdem }))
     .sort((a, b) => a.ordem - b.ordem);
 
-  // Turmas da série selecionada
   const turmasDaSerie = serieSel
     ? turmasComSerie
         .filter((t) => t.serieId === serieSel)
@@ -51,7 +45,7 @@ export function FiltrosLancamento({
   }
 
   return (
-    <section className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+    <section className="grid gap-4 sm:grid-cols-3">
       <label className="text-sm">
         Série
         <select
@@ -80,25 +74,6 @@ export function FiltrosLancamento({
           {turmasDaSerie.map((t) => (
             <option key={t.turmaId} value={t.turmaId}>
               {t.turmaNome}
-            </option>
-          ))}
-        </select>
-      </label>
-
-      <label className="text-sm">
-        Disciplina
-        <select
-          value={disciplinaSel ?? ""}
-          disabled={!turmaSel || disciplinas.length === 0}
-          onChange={(e) => push({ disciplina: e.target.value || null })}
-          className="mt-1 w-full"
-        >
-          <option value="">
-            {disciplinas.length === 0 && turmaSel ? "Sem disciplinas" : "Selecione…"}
-          </option>
-          {disciplinas.map((d) => (
-            <option key={d.id} value={d.id}>
-              {d.nome}
             </option>
           ))}
         </select>
