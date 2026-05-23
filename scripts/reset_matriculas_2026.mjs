@@ -80,6 +80,241 @@ async function loadPlanoId(escolaId) {
   return data.id;
 }
 
+async function executeReset(escolaId, itens, planoId) {
+  // 1. Apagar pagamentos vinculados a matriculas 2026
+  const { data: matriculasAntigas, error: errM } = await supabase
+    .from("matriculas")
+    .select("id")
+    .eq("escola_id", escolaId)
+    .eq("ano_letivo", ANO_LETIVO);
+  if (errM) throw errM;
+  const matriculaIds = matriculasAntigas.map(m => m.id);
+  console.log(`\ndelete: ${matriculaIds.length} matriculas 2026 alvo`);
+
+  if (matriculaIds.length > 0) {
+    const { error, count } = await supabase
+      .from("pagamentos")
+      .delete({ count: "exact" })
+      .in("matricula_id", matriculaIds);
+    if (error) throw error;
+    console.log(`  pagamentos deletados: ${count}`);
+
+    const { error: errC, count: countC } = await supabase
+      .from("cobrancas")
+      .delete({ count: "exact" })
+      .in("matricula_id", matriculaIds);
+    if (errC) throw errC;
+    console.log(`  cobrancas deletadas: ${countC}`);
+
+    const { error: errMD, count: countMD } = await supabase
+      .from("matriculas")
+      .delete({ count: "exact" })
+      .in("id", matriculaIds);
+    if (errMD) throw errMD;
+    console.log(`  matriculas deletadas: ${countMD}`);
+  }
+
+  // 2. Apagar turmas 2026
+  const { error: errT, count: countT } = await supabase
+    .from("turmas")
+    .delete({ count: "exact" })
+    .eq("escola_id", escolaId)
+    .eq("ano_letivo", ANO_LETIVO);
+  if (errT) throw errT;
+  console.log(`  turmas 2026 deletadas: ${countT}`);
+
+  // 3. Apagar séries fora da lista alvo (sem dependências)
+  const nomesAlvo = SERIES_ALVO.map(s => s.nome);
+  const { data: seriesForaAlvo, error: errSF } = await supabase
+    .from("series")
+    .select("id, nome")
+    .eq("escola_id", escolaId)
+    .not("nome", "in", `(${nomesAlvo.map(n => `"${n}"`).join(",")})`);
+  if (errSF) throw errSF;
+  for (const s of seriesForaAlvo) {
+    const { error } = await supabase.from("series").delete().eq("id", s.id);
+    if (error) {
+      console.log(`  série '${s.nome}' não pôde ser deletada (deps): ${error.message}`);
+    } else {
+      console.log(`  série '${s.nome}' deletada`);
+    }
+  }
+}
+
+async function recreateSeriesTurmas(escolaId) {
+  const { data: existentes, error: errE } = await supabase
+    .from("series")
+    .select("id, nome")
+    .eq("escola_id", escolaId);
+  if (errE) throw errE;
+
+  const byNome = new Map(existentes.map(s => [s.nome, s.id]));
+  const serieIdByNome = new Map();
+
+  for (const s of SERIES_ALVO) {
+    if (byNome.has(s.nome)) {
+      const id = byNome.get(s.nome);
+      const { error } = await supabase
+        .from("series")
+        .update({ ordem: s.ordem, ativo: true })
+        .eq("id", id);
+      if (error) throw error;
+      serieIdByNome.set(s.nome, id);
+    } else {
+      const { data, error } = await supabase
+        .from("series")
+        .insert({ escola_id: escolaId, nome: s.nome, ordem: s.ordem, ativo: true })
+        .select("id")
+        .single();
+      if (error) throw error;
+      serieIdByNome.set(s.nome, data.id);
+      console.log(`  série criada: ${s.nome}`);
+    }
+  }
+
+  const turmaIdByKey = new Map();
+  for (const t of TURMAS_ALVO) {
+    const serieId = serieIdByNome.get(t.serie);
+    if (!serieId) throw new Error(`série '${t.serie}' não encontrada`);
+    const { data, error } = await supabase
+      .from("turmas")
+      .insert({
+        escola_id: escolaId,
+        serie_id: serieId,
+        nome: t.turma,
+        ano_letivo: ANO_LETIVO,
+        turno: t.turno,
+        capacidade: 30,
+        ativo: true
+      })
+      .select("id")
+      .single();
+    if (error) throw error;
+    turmaIdByKey.set(`${t.serie}|${t.turma}`, data.id);
+  }
+  console.log(`  séries: ${SERIES_ALVO.length} alvo | turmas criadas: ${TURMAS_ALVO.length}`);
+
+  return { serieIdByNome, turmaIdByKey };
+}
+
+async function insertMatriculas(escolaId, planoId, itens, serieIdByNome, turmaIdByKey) {
+  const alunoIds = [...new Set(itens.map(i => i.aluno_id))];
+  const { data: alunos, error } = await supabase
+    .from("alunos")
+    .select("id, matricula_codigo")
+    .in("id", alunoIds);
+  if (error) throw error;
+  const codigoById = new Map(alunos.map(a => [a.id, a.matricula_codigo]));
+
+  const rows = [];
+  for (const it of itens) {
+    const serieId = serieIdByNome.get(it.serie_nome);
+    const turmaId = turmaIdByKey.get(`${it.serie_nome}|${it.turma_nome}`);
+    if (!serieId || !turmaId) {
+      throw new Error(`mapeamento ausente: ${it.serie_nome}/${it.turma_nome}`);
+    }
+    rows.push({
+      escola_id: escolaId,
+      aluno_id: it.aluno_id,
+      serie_id: serieId,
+      turma_id: turmaId,
+      plano_id: planoId,
+      codigo: `${codigoById.get(it.aluno_id) ?? it.aluno_id}-${ANO_LETIVO}`,
+      data_matricula: `${ANO_LETIVO}-01-01`,
+      ano_letivo: ANO_LETIVO,
+      status: "ativa",
+      tipo_vaga: "paga",
+      percentual_bolsa: 0,
+      valor_mensalidade_praticado: it.mensalidade
+    });
+  }
+
+  const BATCH = 100;
+  const inseridas = [];
+  for (let i = 0; i < rows.length; i += BATCH) {
+    const slice = rows.slice(i, i + BATCH);
+    const { data, error: errIns } = await supabase
+      .from("matriculas")
+      .insert(slice)
+      .select("id, aluno_id, valor_mensalidade_praticado, data_matricula");
+    if (errIns) throw errIns;
+    inseridas.push(...data);
+  }
+  console.log(`  matriculas inseridas: ${inseridas.length}`);
+  return inseridas;
+}
+
+function lastDayOfMonth(year, monthIndex) {
+  return new Date(Date.UTC(year, monthIndex + 1, 0)).getUTCDate();
+}
+
+function dueDate(year, monthIndex, day) {
+  const safe = Math.min(Math.max(day, 1), lastDayOfMonth(year, monthIndex));
+  return `${year}-${String(monthIndex + 1).padStart(2, "0")}-${String(safe).padStart(2, "0")}`;
+}
+
+async function generateCobrancas(escolaId, planoId, matriculasNovas) {
+  const { data: plano, error: errP } = await supabase
+    .from("planos")
+    .select("nome, valor_matricula, quantidade_parcelas, dia_vencimento")
+    .eq("id", planoId)
+    .single();
+  if (errP) throw errP;
+
+  const valorMatricula = Number(plano.valor_matricula ?? 0);
+  const installments = Number(plano.quantidade_parcelas ?? 12);
+  const dueDay = Number(plano.dia_vencimento ?? 10);
+
+  const rows = [];
+  for (const m of matriculasNovas) {
+    const valorMensal = Number(m.valor_mensalidade_praticado ?? 0);
+    if (valorMatricula > 0) {
+      rows.push({
+        escola_id: escolaId,
+        aluno_id: m.aluno_id,
+        matricula_id: m.id,
+        plano_id: planoId,
+        descricao: `Matricula ${ANO_LETIVO}`,
+        competencia: `${ANO_LETIVO}-00`,
+        numero_parcela: 0,
+        valor_original: valorMatricula,
+        valor_desconto: 0,
+        valor_acrescimo: 0,
+        data_vencimento: m.data_matricula,
+        status: "aberta"
+      });
+    }
+    for (let idx = 0; idx < installments; idx += 1) {
+      const monthIndex = idx % 12;
+      const year = ANO_LETIVO + Math.floor(idx / 12);
+      rows.push({
+        escola_id: escolaId,
+        aluno_id: m.aluno_id,
+        matricula_id: m.id,
+        plano_id: planoId,
+        descricao: `Mensalidade ${String(monthIndex + 1).padStart(2, "0")}/${year} - ${plano.nome}`,
+        competencia: `${year}-${String(monthIndex + 1).padStart(2, "0")}`,
+        numero_parcela: idx + 1,
+        valor_original: valorMensal,
+        valor_desconto: 0,
+        valor_acrescimo: 0,
+        data_vencimento: dueDate(year, monthIndex, dueDay),
+        status: "aberta"
+      });
+    }
+  }
+
+  const BATCH = 500;
+  let total = 0;
+  for (let i = 0; i < rows.length; i += BATCH) {
+    const slice = rows.slice(i, i + BATCH);
+    const { error } = await supabase.from("cobrancas").insert(slice);
+    if (error) throw error;
+    total += slice.length;
+  }
+  console.log(`  cobranças inseridas: ${total}`);
+}
+
 async function main() {
   console.log(`\n=== RESET MATRÍCULAS 2026 — modo ${mode} ===\n`);
 
@@ -159,7 +394,22 @@ async function main() {
   }
 
   console.log(`\nmatch: ${comValor.length} alunos casados com sucesso`);
-  console.log(`\nPróximas etapas (delete/insert) serão implementadas nas Tasks 4-7.`);
+
+  if (!apply) {
+    console.log(`\n[DRY-RUN] Para aplicar: node scripts/reset_matriculas_2026.mjs --apply --i-have-backup`);
+    return;
+  }
+
+  console.log(`\n--- INICIANDO RESET ---`);
+  await executeReset(escolaId, itens, planoId);
+  const { serieIdByNome, turmaIdByKey } = await recreateSeriesTurmas(escolaId);
+  const matriculasNovas = await insertMatriculas(escolaId, planoId, comValor, serieIdByNome, turmaIdByKey);
+  await generateCobrancas(escolaId, planoId, matriculasNovas);
+
+  console.log(`\n=== RESET CONCLUÍDO ===`);
+  console.log(`séries: ${SERIES_ALVO.length}`);
+  console.log(`turmas: ${TURMAS_ALVO.length}`);
+  console.log(`matrículas: ${matriculasNovas.length}`);
 }
 
 main().catch(err => {
