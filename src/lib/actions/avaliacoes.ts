@@ -136,3 +136,60 @@ export async function lancarNotasAction(formData: FormData) {
   revalidatePath(`/avaliacoes/${avaliacaoId}`);
   revalidatePath("/avaliacoes");
 }
+
+export type SalvarNotaInlineResult = { ok: true } | { ok: false; error: string };
+
+// Autosave de uma única nota (chamada da UI inline).
+export async function salvarNotaInlineAction(input: {
+  avaliacaoId: string;
+  matriculaId: string;
+  alunoId: string;
+  valor: number | null;
+}): Promise<SalvarNotaInlineResult> {
+  const session = await requirePermission("avaliacoes", "update");
+  const supabase = await createServerClient();
+
+  const { avaliacaoId, matriculaId, alunoId, valor } = input;
+  if (!avaliacaoId || !matriculaId || !alunoId) {
+    return { ok: false, error: "Dados incompletos" };
+  }
+
+  // Carrega valor_maximo para validar range.
+  const { data: aval } = await supabase
+    .from("avaliacoes")
+    .select("valor_maximo, escola_id")
+    .eq("id", avaliacaoId)
+    .eq("escola_id", DEFAULT_SCHOOL_ID)
+    .maybeSingle();
+  if (!aval) return { ok: false, error: "Avaliação não encontrada" };
+
+  if (valor === null) {
+    const { error } = await supabase
+      .from("notas")
+      .delete()
+      .eq("avaliacao_id", avaliacaoId)
+      .eq("aluno_id", alunoId);
+    if (error) return { ok: false, error: error.message };
+  } else {
+    if (!Number.isFinite(valor)) return { ok: false, error: "Valor inválido" };
+    if (valor < 0 || valor > Number(aval.valor_maximo)) {
+      return { ok: false, error: `Nota deve estar entre 0 e ${aval.valor_maximo}` };
+    }
+    const { error } = await supabase.from("notas").upsert(
+      {
+        escola_id: DEFAULT_SCHOOL_ID,
+        avaliacao_id: avaliacaoId,
+        aluno_id: alunoId,
+        matricula_id: matriculaId,
+        valor,
+        lancada_por: session.profile.id,
+      },
+      { onConflict: "avaliacao_id,aluno_id" },
+    );
+    if (error) return { ok: false, error: error.message };
+  }
+
+  revalidatePath(`/avaliacoes/${avaliacaoId}`);
+  revalidatePath(`/alunos/${alunoId}/boletim`);
+  return { ok: true };
+}

@@ -1,15 +1,15 @@
 import { notFound, redirect } from "next/navigation";
-import { ClipboardList, Save, Trash2, Users, Pencil } from "lucide-react";
+import { ClipboardList, Trash2, Users, Pencil } from "lucide-react";
 import { Panel } from "@/components/ui/card";
 import { ConfirmButton } from "@/components/ui/confirm-button";
 import { PageHeader } from "@/components/ui/page-header";
 import { getAvaliacaoDetalhe } from "@/lib/data/pedagogico";
 import {
   deleteAvaliacaoAction,
-  lancarNotasAction,
   updateAvaliacaoAction,
 } from "@/lib/actions/avaliacoes";
 import { requirePermission } from "@/lib/auth/session";
+import { NotasInlineGrid } from "@/components/avaliacoes/notas-inline-grid";
 
 const TIPO_LABEL: Record<string, string> = {
   prova: "Prova",
@@ -131,54 +131,21 @@ export default async function AvaliacaoDetailPage({
             <p className="text-sm font-medium">Nenhum aluno matriculado na turma.</p>
           </div>
         ) : (
-          <form action={lancarNotasAction}>
-            <input type="hidden" name="avaliacao_id" value={aval.id} />
-            <div className="overflow-x-auto">
-              <table className="w-full text-sm">
-                <thead>
-                  <tr className="text-[0.66rem] uppercase tracking-kicker text-ink/55">
-                    <th className="px-2 py-2 text-left">Aluno</th>
-                    <th className="px-2 py-2 text-right w-32">Nota (0 a {aval.valorMaximo})</th>
-                    <th className="px-2 py-2 text-right">Status</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {aval.alunos.map((a) => (
-                    <tr key={a.matriculaId} className="border-t border-line">
-                      <td className="px-2 py-2 font-medium text-ink">{a.nome}</td>
-                      <td className="px-2 py-2 text-right">
-                        <input type="hidden" name={`aluno_${a.matriculaId}`} value={a.alunoId} />
-                        <input
-                          name={`nota_${a.matriculaId}`}
-                          type="number"
-                          step="0.1"
-                          min={0}
-                          max={aval.valorMaximo}
-                          defaultValue={a.valorAtual ?? ""}
-                          placeholder="—"
-                          className="w-24 rounded-ui border border-line bg-surface px-2 py-1 text-right text-sm font-semibold"
-                        />
-                      </td>
-                      <td className="px-2 py-2 text-right text-xs">
-                        {a.valorAtual === null ? (
-                          <span className="text-ink/40">pendente</span>
-                        ) : a.valorAtual >= aval.valorMaximo * 0.6 ? (
-                          <span className="font-semibold text-success">{a.valorAtual.toFixed(1)} ✓</span>
-                        ) : (
-                          <span className="font-semibold text-danger">{a.valorAtual.toFixed(1)} ✗</span>
-                        )}
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-            <div className="mt-4 flex justify-end">
-              <button className="ds-button ds-button-primary px-6">
-                <Save size={14} /> Salvar notas
-              </button>
-            </div>
-          </form>
+          <>
+            <p className="text-xs text-ink/55">
+              Salva automaticamente ao sair do campo ou pressionar Enter.
+            </p>
+            <NotasInlineGrid
+              avaliacaoId={aval.id}
+              valorMaximo={aval.valorMaximo}
+              alunos={aval.alunos.map((a) => ({
+                matriculaId: a.matriculaId,
+                alunoId: a.alunoId,
+                nome: a.nome,
+                valorAtual: a.valorAtual,
+              }))}
+            />
+          </>
         )}
       </Panel>
     </div>
