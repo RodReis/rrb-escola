@@ -1,11 +1,12 @@
 "use client";
 
 import { FileSpreadsheet } from "lucide-react";
-import ExcelJS from "exceljs";
 import { MOTIVO_LABEL, type AlunoSemValorRow } from "@/lib/data/alunos-sem-valor-constants";
 
 export function ExportAlunosSemValorButton({ rows }: { rows: AlunoSemValorRow[] }) {
   const handleXlsx = async () => {
+    // Lazy-load exceljs (~200 kB) only when the user clicks export.
+    const ExcelJS = (await import("exceljs")).default;
     const wb = new ExcelJS.Workbook();
     const ws = wb.addWorksheet("Alunos sem valor");
     ws.columns = [

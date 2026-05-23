@@ -1,15 +1,14 @@
 "use client";
 
 import { FileSpreadsheet, FileText } from "lucide-react";
-import ExcelJS from "exceljs";
-import jsPDF from "jspdf";
-import autoTable from "jspdf-autotable";
 import { monthLabel } from "@/lib/payroll/date-utils";
 import { money } from "@/lib/constants";
 import type { PayrollRowJoined } from "@/lib/data/payroll";
 
 export function ExportMonthButtons({ rows, mes }: { rows: PayrollRowJoined[]; mes: string }) {
   const handleXlsx = async () => {
+    // Lazy-load exceljs (~200 kB) only when the user clicks export.
+    const ExcelJS = (await import("exceljs")).default;
     const wb = new ExcelJS.Workbook();
     const ws = wb.addWorksheet(`Folha ${mes}`);
     ws.columns = [
@@ -51,7 +50,12 @@ export function ExportMonthButtons({ rows, mes }: { rows: PayrollRowJoined[]; me
     URL.revokeObjectURL(url);
   };
 
-  const handlePdf = () => {
+  const handlePdf = async () => {
+    // Lazy-load jspdf + autotable only when the user clicks export.
+    const [{ default: jsPDF }, { default: autoTable }] = await Promise.all([
+      import("jspdf"),
+      import("jspdf-autotable"),
+    ]);
     const doc = new jsPDF({ orientation: "landscape", unit: "mm", format: "a4" });
     doc.setFontSize(13);
     doc.setFont("helvetica", "bold");
