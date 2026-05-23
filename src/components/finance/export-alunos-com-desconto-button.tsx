@@ -6,7 +6,8 @@ import { ORIGEM_LABEL, type AlunoComDescontoRow } from "@/lib/data/alunos-com-de
 export function ExportAlunosComDescontoButton({ rows }: { rows: AlunoComDescontoRow[] }) {
   const handleXlsx = async () => {
     // Lazy-load exceljs (~200 kB) only when the user clicks export.
-    const ExcelJS = (await import("exceljs")).default;
+    // exceljs is a CJS module without a default export — use the namespace directly.
+    const ExcelJS = await import("exceljs");
     const wb = new ExcelJS.Workbook();
     const ws = wb.addWorksheet("Alunos com desconto");
     ws.columns = [

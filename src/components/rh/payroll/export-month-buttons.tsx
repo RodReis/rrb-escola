@@ -8,7 +8,8 @@ import type { PayrollRowJoined } from "@/lib/data/payroll";
 export function ExportMonthButtons({ rows, mes }: { rows: PayrollRowJoined[]; mes: string }) {
   const handleXlsx = async () => {
     // Lazy-load exceljs (~200 kB) only when the user clicks export.
-    const ExcelJS = (await import("exceljs")).default;
+    // exceljs is a CJS module without a default export — use the namespace directly.
+    const ExcelJS = await import("exceljs");
     const wb = new ExcelJS.Workbook();
     const ws = wb.addWorksheet(`Folha ${mes}`);
     ws.columns = [
