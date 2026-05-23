@@ -8,54 +8,66 @@ import {
 } from "./alunos-sem-valor-constants";
 
 describe("isSemValor", () => {
-  it("true when plano_id is null", () => {
-    expect(isSemValor(null, null)).toBe(true);
+  it("true when plano_id is null and no praticado", () => {
+    expect(isSemValor(null, null, null)).toBe(true);
   });
-  it("true when valor_matricula is 0", () => {
-    expect(isSemValor("plan-1", 0)).toBe(true);
+  it("true when valor_matricula is 0 and no praticado", () => {
+    expect(isSemValor("plan-1", 0, null)).toBe(true);
   });
-  it("true when valor_matricula is null", () => {
-    expect(isSemValor("plan-1", null)).toBe(true);
+  it("true when valor_matricula is null and no praticado", () => {
+    expect(isSemValor("plan-1", null, null)).toBe(true);
   });
   it("false when plano with valor_matricula > 0", () => {
-    expect(isSemValor("plan-1", 250)).toBe(false);
+    expect(isSemValor("plan-1", 250, null)).toBe(false);
+  });
+  it("false when valor_mensalidade_praticado > 0 even without plano", () => {
+    expect(isSemValor(null, null, 700)).toBe(false);
+  });
+  it("false when valor_mensalidade_praticado > 0 and plano valor 0", () => {
+    expect(isSemValor("plan-1", 0, 700)).toBe(false);
+  });
+  it("true when praticado is 0 (fallback to plano check)", () => {
+    expect(isSemValor(null, null, 0)).toBe(true);
   });
 });
 
 describe("deriveMotivo", () => {
-  it("paga + no plano -> sem_valor", () => {
-    expect(deriveMotivo("paga", null, null, true)).toBe("sem_valor");
+  it("paga + no plano + no praticado -> sem_valor", () => {
+    expect(deriveMotivo("paga", null, null, null, true)).toBe("sem_valor");
   });
-  it("paga + plano valor 0 -> sem_valor", () => {
-    expect(deriveMotivo("paga", "plan-1", 0, true)).toBe("sem_valor");
+  it("paga + plano valor 0 + no praticado -> sem_valor", () => {
+    expect(deriveMotivo("paga", "plan-1", 0, null, true)).toBe("sem_valor");
+  });
+  it("paga + no plano + praticado > 0 -> null (not shown)", () => {
+    expect(deriveMotivo("paga", null, null, 700, true)).toBeNull();
   });
   it("bolsa_integral + valid plano -> bolsa_integral (tipo_vaga wins)", () => {
-    expect(deriveMotivo("bolsa_integral", "plan-1", 250, true)).toBe("bolsa_integral");
+    expect(deriveMotivo("bolsa_integral", "plan-1", 250, null, true)).toBe("bolsa_integral");
   });
   it("bolsa_integral + no plano -> bolsa_integral (tipo_vaga wins over sem_valor)", () => {
-    expect(deriveMotivo("bolsa_integral", null, null, true)).toBe("bolsa_integral");
+    expect(deriveMotivo("bolsa_integral", null, null, null, true)).toBe("bolsa_integral");
   });
   it("permuta -> permuta", () => {
-    expect(deriveMotivo("permuta", "plan-1", 250, true)).toBe("permuta");
+    expect(deriveMotivo("permuta", "plan-1", 250, null, true)).toBe("permuta");
   });
   it("gratuita -> gratuita", () => {
-    expect(deriveMotivo("gratuita", "plan-1", 250, true)).toBe("gratuita");
+    expect(deriveMotivo("gratuita", "plan-1", 250, null, true)).toBe("gratuita");
   });
   it("bolsa_parcial -> bolsa_parcial", () => {
-    expect(deriveMotivo("bolsa_parcial", "plan-1", 100, true)).toBe("bolsa_parcial");
+    expect(deriveMotivo("bolsa_parcial", "plan-1", 100, null, true)).toBe("bolsa_parcial");
   });
   it("paga + valid plano -> null (not included)", () => {
-    expect(deriveMotivo("paga", "plan-1", 250, true)).toBeNull();
+    expect(deriveMotivo("paga", "plan-1", 250, null, true)).toBeNull();
   });
 });
 
 // sem_matricula path — the other deriveMotivo cases are covered in the main block above.
 describe("deriveMotivo sem_matricula", () => {
   it("no matrícula -> sem_matricula (hasMatricula false)", () => {
-    expect(deriveMotivo("paga", null, null, false)).toBe("sem_matricula");
+    expect(deriveMotivo("paga", null, null, null, false)).toBe("sem_matricula");
   });
   it("non-paga + no matrícula still resolves sem_matricula (precedence)", () => {
-    expect(deriveMotivo("bolsa_integral", null, null, false)).toBe("sem_matricula");
+    expect(deriveMotivo("bolsa_integral", null, null, null, false)).toBe("sem_matricula");
   });
 });
 

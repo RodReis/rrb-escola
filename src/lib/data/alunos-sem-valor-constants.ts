@@ -91,8 +91,13 @@ export function motivoTone(motivo: MotivoSemValor): "danger" | "warning" | "neut
   return "neutral";
 }
 
-/** True when the matrícula has no defined value: no plan, or plan value is 0/null. */
-export function isSemValor(planoId: string | null, valorMatricula: number | null): boolean {
+/** True when the matrícula has no defined value: no praticado set AND (no plan or plan value 0/null). */
+export function isSemValor(
+  planoId: string | null,
+  valorMatricula: number | null,
+  valorMensalidadePraticado: number | null
+): boolean {
+  if (valorMensalidadePraticado != null && valorMensalidadePraticado > 0) return false;
   if (!planoId) return true;
   return valorMatricula == null || valorMatricula <= 0;
 }
@@ -102,17 +107,18 @@ export function isSemValor(planoId: string | null, valorMatricula: number | null
  * - No 2026 matrícula -> "sem_matricula".
  * - Has matrícula, tipo_vaga non-paga -> the tipo_vaga (precedence over sem_valor).
  * - Has matrícula, paga, no value -> "sem_valor".
- * - Has matrícula, paga, valid value -> null (not shown).
+ * - Has matrícula, paga, valid value (plan or praticado) -> null (not shown).
  */
 export function deriveMotivo(
   tipoVaga: TipoVaga,
   planoId: string | null,
   valorMatricula: number | null,
+  valorMensalidadePraticado: number | null,
   hasMatricula: boolean
 ): MotivoSemValor | null {
   if (!hasMatricula) return "sem_matricula";
   if (tipoVaga !== "paga") return tipoVaga;
-  if (isSemValor(planoId, valorMatricula)) return "sem_valor";
+  if (isSemValor(planoId, valorMatricula, valorMensalidadePraticado)) return "sem_valor";
   return null;
 }
 
@@ -121,10 +127,12 @@ export function buildRow(raw: RawAluno): AlunoSemValorRow | null {
   const matricula = raw.matriculas[0] ?? null;
   const hasMatricula = matricula !== null;
   const valor = matricula?.planos?.valor_matricula ?? null;
+  const valorPraticado = matricula?.valor_mensalidade_praticado ?? null;
   const motivo = deriveMotivo(
     matricula?.tipo_vaga ?? "paga",
     matricula?.plano_id ?? null,
     valor,
+    valorPraticado,
     hasMatricula
   );
   if (!motivo) return null;
