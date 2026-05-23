@@ -40,6 +40,7 @@ const SECRETARIA_ITEMS: DropdownItem[] = [
   { href: "/mural/aniversariantes", label: "Mural aniversários", iconName: "Cake" },
   { href: "/organograma", label: "Organograma", iconName: "Network" },
   { href: "/calendario", label: "Calendário Letivo", iconName: "CalendarDays" },
+  { href: "/eventos", label: "Eventos", iconName: "CalendarHeart" },
   { href: "/importacoes", label: "Importações", iconName: "Inbox" },
 ];
 

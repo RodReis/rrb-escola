@@ -2,6 +2,7 @@ import Link from "next/link";
 import {
   BarChart3,
   CalendarCheck,
+  CalendarHeart,
   CreditCard,
   DoorOpen,
   FileText,
@@ -19,6 +20,7 @@ const items = [
   { href: "/", label: "Dashboard", icon: LayoutDashboard },
   { href: "/alunos", label: "Alunos", icon: UsersRound },
   { href: "/matriculas", label: "Matriculas", icon: FileText },
+  { href: "/eventos", label: "Eventos", icon: CalendarHeart },
   { href: "/series", label: "Series", icon: Layers3 },
   { href: "/turmas", label: "Turmas", icon: GraduationCap },
   { href: "/planos", label: "Planos", icon: CreditCard },

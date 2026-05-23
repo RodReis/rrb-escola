@@ -48,7 +48,9 @@ import { FolhaRatioCard } from "@/components/dashboard/folha-ratio-card";
 import { FrequenciaCard } from "@/components/dashboard/frequencia-card";
 import { EvasaoCard } from "@/components/dashboard/evasao-card";
 import { FeriadosCard } from "@/components/dashboard/feriados-card";
+import { EventosCard } from "@/components/dashboard/eventos-card";
 import { getFeriadosProximos } from "@/lib/data/calendario";
+import { getEventosProximos } from "@/lib/data/eventos";
 import { FrequenciaHeatmap } from "@/components/dashboard/frequencia-heatmap";
 import { MediasDisciplinasCard } from "@/components/dashboard/medias-disciplinas-card";
 import { PedagogicoOverviewSection } from "@/components/dashboard/pedagogico-overview-section";
@@ -91,7 +93,7 @@ function isValidAno(val: string | undefined): boolean {
   return Number.isInteger(n) && n >= 2000 && n <= 2100;
 }
 
-type DashTab = "financeiro" | "alunos" | "pedagogico";
+type DashTab = "financeiro" | "secretaria" | "pedagogico";
 
 function SectionHeader({ title, subtitle }: { title: string; subtitle?: string }) {
   return (
@@ -150,13 +152,14 @@ export default async function DashboardPage({
   // Tab visibility
   const tabFinanceiroVisible =
     showFinanceiroCobrancas || showDespesas || showBolsistas || showRhFolha;
-  const tabAlunosVisible =
-    showAlunos || showMatriculas || showFrequencias || showTurmas;
+  const showEventos = has("eventos");
+  const tabSecretariaVisible =
+    showAlunos || showMatriculas || showFrequencias || showTurmas || showEventos;
   const tabPedagogicoVisible = showAvaliacoes || showFrequencias;
 
   const tabsVisiveis: DashTab[] = [];
   if (tabFinanceiroVisible) tabsVisiveis.push("financeiro");
-  if (tabAlunosVisible) tabsVisiveis.push("alunos");
+  if (tabSecretariaVisible) tabsVisiveis.push("secretaria");
   if (tabPedagogicoVisible) tabsVisiveis.push("pedagogico");
 
   const competencia = isValidCompetencia(params.competencia) ? params.competencia : currentCompetencia();
@@ -223,6 +226,7 @@ export default async function DashboardPage({
     slot5,
     aniversariantesSemana,
     feriadosProximos,
+    eventosProximos,
   ] = await Promise.all([
     showFinanceiroCobrancas ? getHero(competencia, escolaId) : null,
     showFinanceiroCobrancas ? getRevenueTrend(6, escolaId) : null,
@@ -260,6 +264,7 @@ export default async function DashboardPage({
       : null,
     showAlunos ? getAniversariantesSemana(escolaId) : null,
     showFrequencias ? getFeriadosProximos(escolaId) : null,
+    showEventos ? getEventosProximos(escolaId, 5) : null,
   ]);
 
   // slot2 currently is computed but not rendered in the original page (was unused).
@@ -346,7 +351,7 @@ export default async function DashboardPage({
         </>
       )}
 
-      {tabEfetiva === "alunos" && (
+      {tabEfetiva === "secretaria" && (
         <>
           <section className="grid gap-6 lg:grid-cols-[1fr_auto]">
             <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
@@ -404,6 +409,16 @@ export default async function DashboardPage({
           {isPropria && showFinanceiroCobrancas && slot5 && (
             <TopDevedores items={slot5 as DevedorRow[]} />
           )}
+
+          {((showFrequencias && feriadosProximos) || (showEventos && eventosProximos)) && (
+            <>
+              <SectionHeader title="Agenda" subtitle="Próximos feriados e eventos" />
+              <section className="grid gap-6 lg:grid-cols-2">
+                {showFrequencias && feriadosProximos && <FeriadosCard items={feriadosProximos} />}
+                {showEventos && eventosProximos && <EventosCard items={eventosProximos} />}
+              </section>
+            </>
+          )}
         </>
       )}
 
@@ -411,15 +426,6 @@ export default async function DashboardPage({
         <>
           {showAvaliacoes && pedagogicoOverview && (
             <PedagogicoOverviewSection data={pedagogicoOverview} />
-          )}
-
-          {showFrequencias && feriadosProximos && (
-            <>
-              <SectionHeader title="Calendário letivo" subtitle="Feriados e recessos deste mês e do próximo" />
-              <section className="max-w-md">
-                <FeriadosCard items={feriadosProximos} />
-              </section>
-            </>
           )}
 
           {(showAlunos || showFrequencias) && (evasao || freqDetalhada) && (

@@ -34,6 +34,7 @@ export const MODULOS = {
   matriculas: { grupo: "secretaria", nome: "Matrículas" },
   importacoes: { grupo: "secretaria", nome: "Importações" },
   "documentos.templates": { grupo: "secretaria", nome: "Templates Documentos" },
+  eventos: { grupo: "secretaria", nome: "Eventos" },
   // financeiro
   "financeiro.cobrancas": { grupo: "financeiro", nome: "Cobranças & Pagamentos" },
   despesas: { grupo: "financeiro", nome: "Despesas" },
@@ -89,6 +90,7 @@ export function modulosDoGrupo(grupo: Grupo): ModuloCodigo[] {
 // Sub-routes (e.g. /alunos/[id]/editar) inherit from their parent entry.
 export const ROTA_PARA_MODULO: Record<string, ModuloCodigo> = {
   "/alunos": "alunos",
+  "/eventos": "eventos",
   "/matriculas": "matriculas",
   "/importacoes": "importacoes",
   "/financeiro/folha": "rh.folha",
