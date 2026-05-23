@@ -14,6 +14,7 @@ function baseRaw(overrides: Partial<RawMatricula> = {}): RawMatricula {
     id: "m1",
     tipo_vaga: "paga",
     percentual_bolsa: 0,
+    valor_mensalidade_praticado: null,
     alunos: { id: "a1", nome: "JOÃO SILVA", responsaveis_aluno: [respFin] },
     series: { id: "s1", nome: "5º Ano", ordem: 5, segmento: "FUNDAMENTAL1" },
     turmas: { id: "t1", nome: "A" },

@@ -18,6 +18,7 @@ export type RawMatricula = {
   id: string;
   tipo_vaga: "paga" | "bolsa_parcial";
   percentual_bolsa: number;
+  valor_mensalidade_praticado: number | null;
   alunos: {
     id: string;
     nome: string;
@@ -88,12 +89,17 @@ export function buildDescontoRow(
   raw: RawMatricula,
   valoresSeg: number[]
 ): AlunoComDescontoRow | null {
+  // Valor cobrado: prioriza valor_mensalidade_praticado da matrícula, fallback ao plano.
+  const valorPraticadoMatricula = raw.valor_mensalidade_praticado;
   const valorPlano = raw.planos?.valor_mensalidade;
-  if (valorPlano == null) return null;
+  const valorCobrado = valorPraticadoMatricula != null && Number(valorPraticadoMatricula) > 0
+    ? Number(valorPraticadoMatricula)
+    : valorPlano != null ? Number(valorPlano) : null;
+  if (valorCobrado == null) return null;
   if (!raw.series?.segmento) return null;
   if (valoresSeg.length === 0) return null;
 
-  const valorPlanoNum = Number(valorPlano);
+  const valorCobradoNum = valorCobrado;
   // Defensive: idempotent for numbers; converts any leaked Postgres numeric strings.
   const valoresSegNum = valoresSeg.map(Number);
   const minSeg = Math.min(...valoresSegNum);
@@ -106,10 +112,10 @@ export function buildDescontoRow(
     raw.percentual_bolsa > 0 &&
     raw.percentual_bolsa < 100;
 
-  const bateValorOficial = valoresSegNum.some((v) => v === valorPlanoNum);
+  const bateValorOficial = valoresSegNum.some((v) => v === valorCobradoNum);
   if (bateValorOficial && !isBolsaParcial) return null;
 
-  const temDescontoPlano = valorPlanoNum < minSeg;
+  const temDescontoPlano = valorCobradoNum < minSeg;
   if (!temDescontoPlano && !isBolsaParcial) return null;
 
   const origem: OrigemDesconto =
@@ -119,9 +125,11 @@ export function buildDescontoRow(
       ? "plano"
       : "bolsa_parcial";
 
-  const valorEfetivo = isBolsaParcial
-    ? valorPlanoNum * (1 - raw.percentual_bolsa / 100)
-    : valorPlanoNum;
+  // Quando valor_mensalidade_praticado está setado, ele já é o valor final cobrado
+  // (sem aplicar bolsa%). Bolsa só se aplica quando caímos no fallback do plano.
+  const valorEfetivo = isBolsaParcial && valorPraticadoMatricula == null
+    ? valorCobradoNum * (1 - raw.percentual_bolsa / 100)
+    : valorCobradoNum;
 
   const valorPraticadoCheio = valoresSegNum[0];
   const percentualDescontoEfetivo = Math.max(
@@ -147,7 +155,7 @@ export function buildDescontoRow(
     segmento: raw.series.segmento,
     origem,
     valorPraticadoCheio,
-    valorMensalidadePlano: valorPlanoNum,
+    valorMensalidadePlano: valorCobradoNum,
     percentualBolsaParcial: isBolsaParcial ? raw.percentual_bolsa : 0,
     percentualDescontoEfetivo,
     responsavelNome: resp?.nome ?? null,

@@ -156,14 +156,14 @@ async function recreateSeriesTurmas(escolaId) {
       const id = byNome.get(s.nome);
       const { error } = await supabase
         .from("series")
-        .update({ ordem: s.ordem, ativo: true })
+        .update({ ordem: s.ordem, ativo: true, segmento: s.segmento })
         .eq("id", id);
       if (error) throw error;
       serieIdByNome.set(s.nome, id);
     } else {
       const { data, error } = await supabase
         .from("series")
-        .insert({ escola_id: escolaId, nome: s.nome, ordem: s.ordem, ativo: true })
+        .insert({ escola_id: escolaId, nome: s.nome, ordem: s.ordem, ativo: true, segmento: s.segmento })
         .select("id")
         .single();
       if (error) throw error;

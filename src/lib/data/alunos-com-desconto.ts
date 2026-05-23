@@ -38,7 +38,7 @@ export async function getAlunosComDesconto(
   let query = supabase
     .from("matriculas")
     .select(`
-      id, tipo_vaga, percentual_bolsa,
+      id, tipo_vaga, percentual_bolsa, valor_mensalidade_praticado,
       alunos!inner(id, nome, responsaveis_aluno(nome, parentesco, telefone, celular, responsavel_financeiro)),
       series!inner(id, nome, ordem, segmento),
       turmas!inner(id, nome),
