@@ -367,6 +367,21 @@ export default async function DashboardPage({
 
       {tabEfetiva === "secretaria" && (
         <>
+          {/* ESTA SEMANA — agenda primeiro: próximos aniversariantes, eventos, feriados, aniv. matrícula */}
+          <SectionHeader title="Esta semana" subtitle="Próximos dias da agenda" />
+          {showAlunos && aniversariantesSemana && (
+            <AniversariantesProximosRow items={aniversariantesSemana} />
+          )}
+          {((showFrequencias && feriadosProximos) || (showEventos && eventosProximos)) && (
+            <section className="grid gap-6 lg:grid-cols-2">
+              {showFrequencias && feriadosProximos && <FeriadosCard items={feriadosProximos} />}
+              {showEventos && eventosProximos && <EventosCard items={eventosProximos} />}
+            </section>
+          )}
+          {showAlunos && aniversariantesMatricula && (
+            <AniversarioMatriculaCard items={aniversariantesMatricula} />
+          )}
+
           {/* HOJE — aniversariantes do dia + frequência atual */}
           <SectionHeader title="Hoje" subtitle="O que acontece agora" />
           <section className="grid gap-6 lg:grid-cols-[1fr_auto]">
@@ -382,21 +397,6 @@ export default async function DashboardPage({
               </div>
             )}
           </section>
-
-          {/* ESTA SEMANA — próximos aniversariantes, eventos, feriados, aniv. matrícula */}
-          <SectionHeader title="Esta semana" subtitle="Próximos dias da agenda" />
-          {showAlunos && aniversariantesSemana && (
-            <AniversariantesProximosRow items={aniversariantesSemana} />
-          )}
-          {((showFrequencias && feriadosProximos) || (showEventos && eventosProximos)) && (
-            <section className="grid gap-6 lg:grid-cols-2">
-              {showFrequencias && feriadosProximos && <FeriadosCard items={feriadosProximos} />}
-              {showEventos && eventosProximos && <EventosCard items={eventosProximos} />}
-            </section>
-          )}
-          {showAlunos && aniversariantesMatricula && (
-            <AniversarioMatriculaCard items={aniversariantesMatricula} />
-          )}
 
           {/* VISÃO GERAL — indicadores estruturais */}
           <SectionHeader title="Visão geral" subtitle="Indicadores estruturais" />
