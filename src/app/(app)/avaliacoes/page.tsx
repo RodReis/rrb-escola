@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { ArrowRight, ClipboardList, Plus } from "lucide-react";
+import { ArrowRight, ClipboardEdit, ClipboardList, Plus } from "lucide-react";
 import { ButtonLink } from "@/components/ui/button";
 import { Panel } from "@/components/ui/card";
 import { PageHeader } from "@/components/ui/page-header";
@@ -43,9 +43,14 @@ export default async function AvaliacoesPage() {
         counter={avaliacoes.length.toString()}
         description="Provas, trabalhos e atividades por bimestre."
         actions={
-          <ButtonLink href="/avaliacoes/nova" variant="primary">
-            <Plus size={14} /> Nova avaliação
-          </ButtonLink>
+          <>
+            <ButtonLink href="/avaliacoes/lancamento" variant="primary">
+              <ClipboardEdit size={14} /> Lançar notas
+            </ButtonLink>
+            <ButtonLink href="/avaliacoes/nova" variant="secondary">
+              <Plus size={14} /> Nova avaliação
+            </ButtonLink>
+          </>
         }
       />
 
