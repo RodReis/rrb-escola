@@ -1,4 +1,4 @@
-import { Plus, Trash2, UserCheck, AlertCircle } from "lucide-react";
+import { Layers, Trash2, UserCheck, AlertCircle } from "lucide-react";
 import { Panel } from "@/components/ui/card";
 import { ConfirmButton } from "@/components/ui/confirm-button";
 import { PageHeader } from "@/components/ui/page-header";
@@ -8,11 +8,9 @@ import {
   listDisciplinas,
   listProfessores,
 } from "@/lib/data/pedagogico";
-import {
-  createAtribuicaoAction,
-  deleteAtribuicaoAction,
-} from "@/lib/actions/disciplinas";
+import { deleteAtribuicaoAction } from "@/lib/actions/disciplinas";
 import { requirePermission } from "@/lib/auth/session";
+import { AtribuicaoLoteForm } from "@/components/professores/atribuicao-lote-form";
 
 export default async function AtribuicoesPage() {
   await requirePermission("professores", "read");
@@ -34,8 +32,8 @@ export default async function AtribuicoesPage() {
 
       <Panel className="grid gap-4">
         <h2 className="text-lg font-bold text-ink flex items-center gap-2">
-          <Plus size={16} className="text-brand" />
-          Nova atribuição
+          <Layers size={16} className="text-brand" />
+          Vincular em lote
         </h2>
         {professores.length === 0 ? (
           <div className="flex items-start gap-2 rounded-ui bg-warning/10 p-3 text-sm text-warning">
@@ -46,40 +44,11 @@ export default async function AtribuicoesPage() {
             </span>
           </div>
         ) : (
-          <form action={createAtribuicaoAction} className="grid gap-3 md:grid-cols-4">
-            <label>
-              Professor
-              <select name="perfil_id" required>
-                <option value="">Selecione...</option>
-                {professores.map((p) => (
-                  <option key={p.id} value={p.id}>{p.nome}</option>
-                ))}
-              </select>
-            </label>
-            <label>
-              Disciplina
-              <select name="disciplina_id" required>
-                <option value="">Selecione...</option>
-                {disciplinas.map((d) => (
-                  <option key={d.id} value={d.id}>{d.serie} · {d.nome}</option>
-                ))}
-              </select>
-            </label>
-            <label>
-              Turma
-              <select name="turma_id" required>
-                <option value="">Selecione...</option>
-                {turmas.map((t) => (
-                  <option key={t.id} value={t.id}>
-                    {(t.series as { nome?: string } | undefined)?.nome ?? "—"} {t.nome} ({t.ano_letivo})
-                  </option>
-                ))}
-              </select>
-            </label>
-            <div className="flex items-end">
-              <button className="ds-button ds-button-primary w-full">Vincular</button>
-            </div>
-          </form>
+          <AtribuicaoLoteForm
+            professores={professores}
+            disciplinas={disciplinas}
+            turmas={turmas}
+          />
         )}
       </Panel>
 

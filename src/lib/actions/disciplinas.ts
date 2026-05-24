@@ -97,3 +97,51 @@ export async function deleteAtribuicaoAction(formData: FormData) {
 
   revalidatePath("/professores/atribuicoes");
 }
+
+export type CriarLoteResult =
+  | { ok: true; inseridos: number; ignorados: number }
+  | { ok: false; error: string };
+
+// Vincula um professor a UMA disciplina em VÁRIAS turmas de uma vez.
+// Idempotente: duplicatas (unique escola/perfil/disciplina/turma) são ignoradas.
+export async function createAtribuicoesLoteAction(input: {
+  perfilId: string;
+  disciplinaId: string;
+  turmaIds: string[];
+}): Promise<CriarLoteResult> {
+  await requirePermission("professores", "create");
+  const supabase = await createServerClient();
+
+  const { perfilId, disciplinaId, turmaIds } = input;
+  if (!perfilId || !disciplinaId) return { ok: false, error: "Professor e disciplina obrigatórios" };
+  if (turmaIds.length === 0) return { ok: false, error: "Selecione ao menos uma turma" };
+
+  // Filtra duplicatas já existentes pra reportar quantas foram ignoradas
+  const { data: existentes } = await supabase
+    .from("professor_disciplina_turma")
+    .select("turma_id")
+    .eq("escola_id", DEFAULT_SCHOOL_ID)
+    .eq("perfil_id", perfilId)
+    .eq("disciplina_id", disciplinaId)
+    .in("turma_id", turmaIds);
+
+  const jaVinculadas = new Set((existentes ?? []).map((r) => r.turma_id));
+  const novas = turmaIds.filter((id) => !jaVinculadas.has(id));
+
+  if (novas.length === 0) {
+    return { ok: true, inseridos: 0, ignorados: turmaIds.length };
+  }
+
+  const rows = novas.map((turma_id) => ({
+    escola_id: DEFAULT_SCHOOL_ID,
+    perfil_id: perfilId,
+    disciplina_id: disciplinaId,
+    turma_id,
+  }));
+
+  const { error } = await supabase.from("professor_disciplina_turma").insert(rows);
+  if (error) return { ok: false, error: error.message };
+
+  revalidatePath("/professores/atribuicoes");
+  return { ok: true, inseridos: novas.length, ignorados: turmaIds.length - novas.length };
+}
