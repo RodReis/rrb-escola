@@ -100,6 +100,7 @@ export default async function LancamentoNotasPage({
             </p>
           </div>
           <NotasBimestraisGrid
+            key={`${turmaSel}-${disciplinaSel}-${ano}`}
             alunos={grid.alunos}
             turmaId={turmaSel!}
             disciplinaId={disciplinaSel!}
