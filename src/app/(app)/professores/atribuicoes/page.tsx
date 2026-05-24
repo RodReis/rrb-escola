@@ -14,12 +14,14 @@ import { AtribuicaoLoteForm } from "@/components/professores/atribuicao-lote-for
 
 export default async function AtribuicoesPage() {
   await requirePermission("professores", "read");
-  const [atribuicoes, disciplinas, professores, { turmas }] = await Promise.all([
+  const [atribuicoes, disciplinas, professores, { turmas: turmasAll }] = await Promise.all([
     listAtribuicoes(),
     listDisciplinas(),
     listProfessores(),
     getAacademicDataSafe(),
   ]);
+  const anoAtual = new Date().getFullYear();
+  const turmas = turmasAll.filter((t: { ano_letivo: number }) => t.ano_letivo === anoAtual);
 
   return (
     <div className="grid gap-6">
