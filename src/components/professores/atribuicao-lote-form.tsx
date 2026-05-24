@@ -9,7 +9,7 @@ import {
 } from "@/lib/actions/disciplinas";
 import type { DisciplinaRow } from "@/lib/data/pedagogico";
 
-type ProfessorOpt = { id: string; nome: string };
+type ProfessorOpt = { id: string; nome: string; schoolCategory: "fund1" | "fund2" | "medio" };
 type TurmaOpt = {
   id: string;
   nome: string;
@@ -31,6 +31,14 @@ export function AtribuicaoLoteForm({
 }) {
   const [modo, setModo] = useState<Modo>("disciplina");
   const [employeeId, setEmployeeId] = useState("");
+
+  // Filtra professores conforme o modo:
+  // - disciplina: fund2 + medio (1 prof por disciplina, várias turmas)
+  // - regente: fund1 (1 prof por turma, todas disciplinas)
+  const professoresFiltrados =
+    modo === "disciplina"
+      ? professores.filter((p) => p.schoolCategory === "fund2" || p.schoolCategory === "medio")
+      : professores.filter((p) => p.schoolCategory === "fund1");
   const [disciplinaId, setDisciplinaId] = useState("");
   const [turmasSel, setTurmasSel] = useState<Set<string>>(new Set());
   const [turmaRegente, setTurmaRegente] = useState("");
@@ -178,7 +186,7 @@ export function AtribuicaoLoteForm({
           className="mt-1 w-full"
         >
           <option value="">Selecione…</option>
-          {professores.map((p) => (
+          {professoresFiltrados.map((p) => (
             <option key={p.id} value={p.id}>
               {p.nome}
             </option>

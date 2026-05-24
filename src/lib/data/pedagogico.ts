@@ -316,30 +316,37 @@ export async function listAtribuicoes(
   }).sort((x, y) => x.professorNome.localeCompare(y.professorNome, "pt-BR"));
 }
 
+export type SchoolCategory = "fund1" | "fund2" | "medio";
+
 export type ProfessorOption = {
   id: string;
   nome: string;
   email: string;
+  schoolCategory: SchoolCategory;
 };
 
 export async function listProfessores(
   _escolaId: string = DEFAULT_SCHOOL_ID
 ): Promise<ProfessorOption[]> {
   // Professores vêm de employees com school_category in (fund1, fund2, medio).
-  // employees não é multi-tenant por escola (sem escola_id) — todos os funcionários
-  // são da única escola por enquanto.
   const supabase = await createServerClient();
   const { data } = await supabase
     .from("employees")
-    .select("id, name, email")
+    .select("id, name, email, school_category")
     .in("school_category", ["fund1", "fund2", "medio"])
     .eq("ativo", true)
     .order("name");
 
-  return ((data ?? []) as Array<{ id: string; name: string; email: string | null }>).map((e) => ({
+  return ((data ?? []) as Array<{
+    id: string;
+    name: string;
+    email: string | null;
+    school_category: SchoolCategory;
+  }>).map((e) => ({
     id: e.id,
     nome: e.name,
     email: e.email ?? "",
+    schoolCategory: e.school_category,
   }));
 }
 
