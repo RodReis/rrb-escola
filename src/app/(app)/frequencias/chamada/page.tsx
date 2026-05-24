@@ -1,18 +1,68 @@
 import { ArrowLeft, CalendarCheck, Filter, Users } from "lucide-react";
 import { saveClassAttendanceAction } from "@/lib/actions/attendance";
 import { getClassAttendanceData } from "@/lib/data/attendance";
+import {
+  getDisciplinasPorSerie,
+} from "@/lib/data/lancamento-notas";
+import { getNotasDoBimestre } from "@/lib/data/notas-aula";
+import { createServerClient } from "@/lib/supabase/server";
+import { DEFAULT_SCHOOL_ID } from "@/lib/constants";
 import { ButtonLink } from "@/components/ui/button";
 import { Card, Panel } from "@/components/ui/card";
 import { requirePermission } from "@/lib/auth/session";
+import { bimestreFromData } from "@/lib/datas/bimestre";
+import { ChamadaTabs } from "@/components/frequencias/chamada-tabs";
+import { DisciplinasCards } from "@/components/avaliacoes/disciplinas-cards";
+import { NotasUnicoBimestreGrid } from "@/components/avaliacoes/notas-unico-bimestre-grid";
+import { BimestreSelect } from "@/components/frequencias/bimestre-select";
 
 type SearchParams = {
   turma_id?: string;
   data_aula?: string;
+  tab?: string;
+  disciplina?: string;
+  bim?: string;
 };
+
+function isValidBim(v: string | undefined): v is "1" | "2" | "3" | "4" {
+  return v === "1" || v === "2" || v === "3" || v === "4";
+}
+
+async function getSerieIdFromTurma(turmaId: string): Promise<string | null> {
+  if (!turmaId) return null;
+  const supabase = await createServerClient();
+  const { data } = await supabase
+    .from("turmas")
+    .select("serie_id")
+    .eq("id", turmaId)
+    .eq("escola_id", DEFAULT_SCHOOL_ID)
+    .maybeSingle();
+  return data?.serie_id ?? null;
+}
 
 export default async function ChamadaPage({ searchParams }: { searchParams: SearchParams }) {
   await requirePermission("frequencias", "update");
   const data = await getClassAttendanceData(searchParams.turma_id, searchParams.data_aula);
+
+  const tab: "chamada" | "notas" = searchParams.tab === "notas" ? "notas" : "chamada";
+  const bim = isValidBim(searchParams.bim)
+    ? Number(searchParams.bim)
+    : bimestreFromData(data.date);
+  const disciplinaSel = searchParams.disciplina || null;
+  const anoLetivo = Number(data.date.slice(0, 4));
+
+  const serieId = data.selectedTurmaId
+    ? await getSerieIdFromTurma(data.selectedTurmaId)
+    : null;
+
+  const disciplinas = serieId ? await getDisciplinasPorSerie(serieId) : [];
+  const disciplinaValida =
+    !!disciplinaSel && disciplinas.some((d) => d.id === disciplinaSel);
+
+  const notasGrid =
+    tab === "notas" && data.selectedTurmaId && disciplinaValida
+      ? await getNotasDoBimestre(data.selectedTurmaId, disciplinaSel!, bim, anoLetivo)
+      : null;
 
   const summary = [
     ["Turmas", String(data.turmas.length)],
@@ -103,6 +153,9 @@ export default async function ChamadaPage({ searchParams }: { searchParams: Sear
           </div>
         )}
 
+      {data.selectedTurmaId && <ChamadaTabs tab={tab} />}
+
+      {tab === "chamada" && (
       <form action={saveClassAttendanceAction} className="overflow-hidden rounded-panel border border-line bg-surface shadow-soft">
         <input type="hidden" name="turma_id" value={data.selectedTurmaId} />
         <input type="hidden" name="data_aula" value={data.date} />
@@ -143,6 +196,46 @@ export default async function ChamadaPage({ searchParams }: { searchParams: Sear
           </button>
         </div>
       </form>
+      )}
+
+      {tab === "notas" && data.selectedTurmaId && (
+        <div className="grid gap-4">
+          <Panel className="grid gap-4">
+            <div className="flex items-center justify-between gap-3">
+              <h2 className="font-bold text-ink">Disciplinas</h2>
+              <BimestreSelect value={bim} />
+            </div>
+            <DisciplinasCards disciplinas={disciplinas} disciplinaSel={disciplinaSel} />
+          </Panel>
+
+          {notasGrid && (
+            <Panel className="grid gap-3">
+              <div className="flex items-center justify-between">
+                <h3 className="font-bold text-ink">Notas dos alunos</h3>
+                <p className="text-xs text-ink/55">
+                  {notasGrid.alunos.length} aluno{notasGrid.alunos.length === 1 ? "" : "s"} ·
+                  salva automaticamente
+                </p>
+              </div>
+              <NotasUnicoBimestreGrid
+                key={`${data.selectedTurmaId}-${disciplinaSel}-${bim}-${anoLetivo}`}
+                alunos={notasGrid.alunos}
+                turmaId={data.selectedTurmaId}
+                disciplinaId={disciplinaSel!}
+                bimestre={bim}
+                anoLetivo={anoLetivo}
+                valorMaximo={notasGrid.valorMaximo}
+              />
+            </Panel>
+          )}
+
+          {!disciplinaValida && (
+            <div className="rounded-ui bg-muted/30 p-6 text-center text-sm text-ink/40">
+              Selecione uma disciplina para lançar as notas.
+            </div>
+          )}
+        </div>
+      )}
     </div>
   );
 }
