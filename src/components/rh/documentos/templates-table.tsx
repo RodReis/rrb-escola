@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Edit3, Power, PowerOff } from "lucide-react";
+import { Download, Edit3, Power, PowerOff } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { ConfirmButton } from "@/components/ui/confirm-button";
 import { toggleTemplateAtivoAction } from "@/lib/actions/templates";
@@ -57,6 +57,13 @@ export function TemplatesTable({ templates }: { templates: TemplateRow[] }) {
                 </td>
                 <td className="px-4 py-3 text-right">
                   <div className="flex justify-end gap-2">
+                    <a
+                      href={`/api/rh/documentos/${t.id}/download`}
+                      className="inline-flex items-center gap-1 rounded-ui border border-line bg-surface px-2.5 py-1 text-xs font-semibold text-ink hover:bg-muted/60"
+                      title="Baixar .docx original"
+                    >
+                      <Download size={12} /> .docx
+                    </a>
                     <Link
                       href={`/rh/documentos/${t.id}`}
                       className="inline-flex items-center gap-1 rounded-ui border border-line bg-surface px-2.5 py-1 text-xs font-semibold text-ink hover:bg-muted/60"
