@@ -275,7 +275,7 @@ export async function listDisciplinas(
 
 export type AtribuicaoRow = {
   id: string;
-  perfilId: string;
+  employeeId: string;
   professorNome: string;
   disciplinaId: string;
   disciplina: string;
@@ -291,22 +291,22 @@ export async function listAtribuicoes(
   const { data } = await supabase
     .from("professor_disciplina_turma")
     .select(`
-      id, perfil_id, disciplina_id, turma_id,
-      perfis(nome),
+      id, employee_id, disciplina_id, turma_id,
+      employees(name),
       disciplinas(nome),
       turmas(nome, series(nome))
     `)
     .eq("escola_id", escolaId);
 
   return ((data ?? []) as any[]).map((a) => {
-    const perfil = pickOne(a.perfis);
+    const employee = pickOne(a.employees);
     const disciplina = pickOne(a.disciplinas);
     const turma = pickOne(a.turmas);
     const serie = pickOne(turma?.series);
     return {
       id: a.id,
-      perfilId: a.perfil_id,
-      professorNome: perfil?.nome ?? "—",
+      employeeId: a.employee_id,
+      professorNome: employee?.name ?? "—",
       disciplinaId: a.disciplina_id,
       disciplina: disciplina?.nome ?? "—",
       turmaId: a.turma_id,
@@ -323,18 +323,24 @@ export type ProfessorOption = {
 };
 
 export async function listProfessores(
-  escolaId: string = DEFAULT_SCHOOL_ID
+  _escolaId: string = DEFAULT_SCHOOL_ID
 ): Promise<ProfessorOption[]> {
+  // Professores vêm de employees com school_category in (fund1, fund2, medio).
+  // employees não é multi-tenant por escola (sem escola_id) — todos os funcionários
+  // são da única escola por enquanto.
   const supabase = await createServerClient();
   const { data } = await supabase
-    .from("perfis")
-    .select("id, nome, email")
-    .eq("escola_id", escolaId)
-    .eq("perfil", "professor")
+    .from("employees")
+    .select("id, name, email")
+    .in("school_category", ["fund1", "fund2", "medio"])
     .eq("ativo", true)
-    .order("nome");
+    .order("name");
 
-  return ((data ?? []) as Array<{ id: string; nome: string; email: string }>);
+  return ((data ?? []) as Array<{ id: string; name: string; email: string | null }>).map((e) => ({
+    id: e.id,
+    nome: e.name,
+    email: e.email ?? "",
+  }));
 }
 
 export type AvaliacaoRow = {

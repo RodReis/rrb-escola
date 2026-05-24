@@ -24,7 +24,7 @@ export function AtribuicaoLoteForm({
   disciplinas: DisciplinaRow[];
   turmas: TurmaOpt[];
 }) {
-  const [perfilId, setPerfilId] = useState("");
+  const [employeeId, setPerfilId] = useState("");
   const [disciplinaId, setDisciplinaId] = useState("");
   const [turmasSel, setTurmasSel] = useState<Set<string>>(new Set());
   const [pending, startTransition] = useTransition();
@@ -68,13 +68,13 @@ export function AtribuicaoLoteForm({
   }
 
   async function onSubmit() {
-    if (!perfilId || !disciplinaId || turmasSel.size === 0) {
+    if (!employeeId || !disciplinaId || turmasSel.size === 0) {
       toast.error("Selecione professor, disciplina e ao menos uma turma.");
       return;
     }
     startTransition(async () => {
       const res = await createAtribuicoesLoteAction({
-        perfilId,
+        employeeId,
         disciplinaId,
         turmaIds: Array.from(turmasSel),
       });
@@ -101,7 +101,7 @@ export function AtribuicaoLoteForm({
         <label className="text-sm">
           Professor
           <select
-            value={perfilId}
+            value={employeeId}
             onChange={(e) => setPerfilId(e.target.value)}
             className="mt-1 w-full"
           >
@@ -122,7 +122,7 @@ export function AtribuicaoLoteForm({
               setDisciplinaId(e.target.value);
               setTurmasSel(new Set());
             }}
-            disabled={!perfilId}
+            disabled={!employeeId}
             className="mt-1 w-full"
           >
             <option value="">Selecione…</option>
@@ -193,7 +193,7 @@ export function AtribuicaoLoteForm({
         <button
           type="button"
           onClick={onSubmit}
-          disabled={pending || !perfilId || !disciplinaId || turmasSel.size === 0}
+          disabled={pending || !employeeId || !disciplinaId || turmasSel.size === 0}
           className="ds-button ds-button-primary"
         >
           {pending ? (

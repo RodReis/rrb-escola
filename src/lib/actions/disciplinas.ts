@@ -67,14 +67,14 @@ export async function createAtribuicaoAction(formData: FormData) {
   await requirePermission("professores", "create");
   const supabase = await createServerClient();
 
-  const perfilId = formText(formData, "perfil_id");
+  const employeeId = formText(formData, "employee_id");
   const disciplinaId = formText(formData, "disciplina_id");
   const turmaId = formText(formData, "turma_id");
-  if (!perfilId || !disciplinaId || !turmaId) throw new Error("Todos campos obrigatórios");
+  if (!employeeId || !disciplinaId || !turmaId) throw new Error("Todos campos obrigatórios");
 
   await supabase.from("professor_disciplina_turma").insert({
     escola_id: DEFAULT_SCHOOL_ID,
-    perfil_id: perfilId,
+    employee_id: employeeId,
     disciplina_id: disciplinaId,
     turma_id: turmaId,
   });
@@ -102,26 +102,25 @@ export type CriarLoteResult =
   | { ok: true; inseridos: number; ignorados: number }
   | { ok: false; error: string };
 
-// Vincula um professor a UMA disciplina em VÁRIAS turmas de uma vez.
-// Idempotente: duplicatas (unique escola/perfil/disciplina/turma) são ignoradas.
+// Vincula um professor (employee) a UMA disciplina em VÁRIAS turmas de uma vez.
+// Idempotente: duplicatas (unique escola/employee/disciplina/turma) são ignoradas.
 export async function createAtribuicoesLoteAction(input: {
-  perfilId: string;
+  employeeId: string;
   disciplinaId: string;
   turmaIds: string[];
 }): Promise<CriarLoteResult> {
   await requirePermission("professores", "create");
   const supabase = await createServerClient();
 
-  const { perfilId, disciplinaId, turmaIds } = input;
-  if (!perfilId || !disciplinaId) return { ok: false, error: "Professor e disciplina obrigatórios" };
+  const { employeeId, disciplinaId, turmaIds } = input;
+  if (!employeeId || !disciplinaId) return { ok: false, error: "Professor e disciplina obrigatórios" };
   if (turmaIds.length === 0) return { ok: false, error: "Selecione ao menos uma turma" };
 
-  // Filtra duplicatas já existentes pra reportar quantas foram ignoradas
   const { data: existentes } = await supabase
     .from("professor_disciplina_turma")
     .select("turma_id")
     .eq("escola_id", DEFAULT_SCHOOL_ID)
-    .eq("perfil_id", perfilId)
+    .eq("employee_id", employeeId)
     .eq("disciplina_id", disciplinaId)
     .in("turma_id", turmaIds);
 
@@ -134,7 +133,7 @@ export async function createAtribuicoesLoteAction(input: {
 
   const rows = novas.map((turma_id) => ({
     escola_id: DEFAULT_SCHOOL_ID,
-    perfil_id: perfilId,
+    employee_id: employeeId,
     disciplina_id: disciplinaId,
     turma_id,
   }));
