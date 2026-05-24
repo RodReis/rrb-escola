@@ -1,4 +1,4 @@
-import { Download, Plus, Upload } from "lucide-react";
+import { Plus } from "lucide-react";
 import { ButtonLink } from "@/components/ui/button";
 import { PageHeader } from "@/components/ui/page-header";
 import { QuickLinks } from "@/components/dashboard/quick-links";
@@ -166,8 +166,6 @@ export default async function DashboardPage({
   const anoLetivo = isValidAno(params.ano) ? Number(params.ano) : new Date().getFullYear();
 
   // Header action button flags
-  const showExportar = isAdmin || can(perms, "relatorios", "read");
-  const showImportar = isAdmin || can(perms, "importacoes", "create");
   const showNovoAluno = isAdmin || can(perms, "alunos", "create");
 
   // Empty state when zero tabs available
@@ -283,16 +281,6 @@ export default async function DashboardPage({
         actions={
           <>
             <CompetenciaPicker current={competencia} />
-            {showExportar && (
-              <ButtonLink href="/relatorios/alunos" variant="secondary">
-                <Download size={14} /> Exportar
-              </ButtonLink>
-            )}
-            {showImportar && (
-              <ButtonLink href="/importacoes" variant="secondary">
-                <Upload size={14} /> Importar
-              </ButtonLink>
-            )}
             {showNovoAluno && (
               <ButtonLink href="/alunos/novo" variant="primary">
                 <Plus size={14} /> Novo aluno
