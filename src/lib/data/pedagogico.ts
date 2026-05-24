@@ -663,7 +663,20 @@ export type BoletimFrequencia = {
   taxa: number;
 };
 
+export type BoletimEscola = {
+  nome: string;
+  cnpj: string | null;
+  email: string | null;
+  telefone: string | null;
+  endereco: string | null;
+  cidade: string | null;
+  uf: string | null;
+  cep: string | null;
+  logoUrl: string | null;
+};
+
 export type BoletimData = {
+  escola: BoletimEscola;
   aluno: {
     id: string;
     nome: string;
@@ -706,6 +719,13 @@ export async function getBoletim(
   const aluno = pickOne(m.alunos);
   const turma = pickOne(m.turmas);
   const serieRel = pickOne(turma?.series);
+
+  // Dados da escola para o cabeçalho do boletim
+  const { data: escolaRow } = await supabase
+    .from("escolas")
+    .select("nome, cnpj, email, telefone, endereco, cidade, uf, cep, logo_url")
+    .eq("id", escolaId)
+    .maybeSingle();
 
   // Notas consolidadas do aluno no ano
   const { data: consol } = await supabase
@@ -784,6 +804,17 @@ export async function getBoletim(
   const totalDias = presencas + faltas;
 
   return {
+    escola: {
+      nome: escolaRow?.nome ?? "—",
+      cnpj: escolaRow?.cnpj ?? null,
+      email: escolaRow?.email ?? null,
+      telefone: escolaRow?.telefone ?? null,
+      endereco: escolaRow?.endereco ?? null,
+      cidade: escolaRow?.cidade ?? null,
+      uf: escolaRow?.uf ?? null,
+      cep: escolaRow?.cep ?? null,
+      logoUrl: escolaRow?.logo_url ?? null,
+    },
     aluno: {
       id: aluno?.id ?? alunoId,
       nome: aluno?.nome ?? "—",

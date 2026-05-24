@@ -6,6 +6,7 @@ import { Avatar } from "@/components/ui/avatar";
 import { PageHeader } from "@/components/ui/page-header";
 import { getBoletim } from "@/lib/data/pedagogico";
 import { getSignedFotoUrls } from "@/lib/storage/photos";
+import { getPublicUrl } from "@/lib/storage/public-urls";
 import { ExportBoletimButton } from "@/components/pdf/export-boletim-button";
 import { requirePermission } from "@/lib/auth/session";
 
@@ -32,7 +33,10 @@ export default async function BoletimPage({
   const boletim = await getBoletim(id, ano);
   if (!boletim) notFound();
 
-  const signed = await getSignedFotoUrls([boletim.aluno.fotoUrl]);
+  const [signed, logoUrl] = await Promise.all([
+    getSignedFotoUrls([boletim.aluno.fotoUrl]),
+    getPublicUrl("escola-logos", boletim.escola.logoUrl),
+  ]);
   const foto = boletim.aluno.fotoUrl ? signed.get(boletim.aluno.fotoUrl) ?? null : null;
 
   const totalDisciplinas = boletim.disciplinas.length;
@@ -51,7 +55,7 @@ export default async function BoletimPage({
         description={`${boletim.matricula.serie} ${boletim.matricula.turma}`}
         actions={
           <>
-            <ExportBoletimButton boletim={boletim} />
+            <ExportBoletimButton boletim={boletim} fotoUrl={foto} logoUrl={logoUrl} />
             <ButtonLink href={`/alunos/${boletim.aluno.id}`} variant="secondary">
               <ArrowLeft size={14} /> Voltar à ficha
             </ButtonLink>
