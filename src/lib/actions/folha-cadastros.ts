@@ -12,6 +12,7 @@ import {
   configSchema,
   verbaContratualSchema,
 } from "@/lib/validation/folha";
+import { criarPeriodoInicial } from "@/lib/folha/aquisitivos";
 
 const PERM = "rh.folha-v2" as const;
 const REVALIDATE = "/rh/folha-v2";
@@ -253,6 +254,7 @@ export async function createContratoAction(formData: FormData) {
       `/rh/folha-v2/contratos/novo?erro=${encodeURIComponent(error.message)}`
     );
   }
+  await criarPeriodoInicial(contrato.id);
   revalidatePath(`${REVALIDATE}/contratos`);
   redirect(`/rh/folha-v2/contratos/${contrato.id}/editar`);
 }
