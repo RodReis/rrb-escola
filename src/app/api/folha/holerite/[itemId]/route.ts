@@ -19,6 +19,10 @@ export async function GET(
       `id, base_inss, base_irrf, base_fgts, total_proventos, total_descontos, liquido,
        folha_runs:run_id(competencia, companies:company_id(name, cnpj)),
        folha_contratos:contrato_id(
+         id,
+         cargo,
+         cbo,
+         data_admissao,
          folha_perfis_calculo:perfil_calculo_id(nome),
          employees:employee_id(name, cpf)
        )`
@@ -37,47 +41,107 @@ export async function GET(
     companies: { name: string; cnpj: string } | null;
   };
   type ContratoShape = {
+    id: string;
+    cargo: string | null;
+    cbo: string | null;
+    data_admissao: string | null;
     folha_perfis_calculo: { nome: string } | null;
     employees: { name: string; cpf: string | null } | null;
   };
 
   const run = item.folha_runs as unknown as RunShape | null;
   const contrato = item.folha_contratos as unknown as ContratoShape | null;
+  const itemData = item as unknown as Record<string, unknown>;
 
   const empresaNome = run?.companies?.name ?? "—";
   const empresaCnpj = run?.companies?.cnpj ?? "";
   const competencia = run?.competencia ?? "";
   const funcionarioNome = contrato?.employees?.name ?? "—";
   const funcionarioCpf = contrato?.employees?.cpf ?? "";
-  const perfil = contrato?.folha_perfis_calculo?.nome ?? "—";
+  const funcionarioCodigo = (contrato?.id ?? "").slice(0, 8).toUpperCase();
+  const funcionarioCargo = contrato?.cargo ?? "";
+  const funcionarioCbo = contrato?.cbo ?? "";
+  const funcionarioAdmissao = (() => {
+    const raw = contrato?.data_admissao ?? null;
+    if (!raw) return "";
+    const [y, m, d] = raw.split("-");
+    if (!y || !m || !d) return raw;
+    return `${d}/${m}/${y}`;
+  })();
+
+  const baseInss = Number(itemData.base_inss ?? 0);
+  const baseIrrf = Number(itemData.base_irrf ?? 0);
+  const baseFgts = Number(itemData.base_fgts ?? 0);
+  const totalVencimentos = Number(itemData.total_proventos ?? 0);
+  const totalDescontos = Number(itemData.total_descontos ?? 0);
+  const liquido = Number(itemData.liquido ?? 0);
+  const fgtsMes = baseFgts * 0.08;
 
   type LancRow = {
     valor: number;
     referencia: string | null;
-    folha_rubricas: { nome: string; tipo: string } | null;
+    folha_rubricas: { codigo: string; nome: string; tipo: string } | null;
   };
 
-  const rows = (lancamentos as unknown as LancRow[]).map((l) => ({
+  const lancRows = (lancamentos as unknown as LancRow[]).map((l) => ({
+    codigo: l.folha_rubricas?.codigo ?? "—",
     nome: l.folha_rubricas?.nome ?? "—",
+    tipo: l.folha_rubricas?.tipo ?? "informativa",
     referencia: l.referencia,
     valor: Number(l.valor),
-    tipo: l.folha_rubricas?.tipo ?? "informativa",
   }));
+
+  const irrfLanc = lancRows.find(
+    (l) =>
+      l.tipo === "desconto" &&
+      (l.codigo.toLowerCase() === "irrf" || l.codigo.toLowerCase().startsWith("irrf")),
+  );
+  const faixaIrrf =
+    irrfLanc && baseIrrf > 0 && irrfLanc.valor > 0
+      ? null
+      : null;
+
+  const irrfStoredRef = irrfLanc?.referencia ?? null;
+  const faixaIrrfPct = (() => {
+    if (irrfStoredRef) {
+      const num = parseFloat(irrfStoredRef.replace(",", ".").replace("%", ""));
+      if (!isNaN(num) && num > 0) return num;
+    }
+    return null;
+  })();
+
+  const salarioBase = (() => {
+    const proventosBase = lancRows
+      .filter((l) => l.tipo === "provento" && l.codigo.toLowerCase().includes("base"))
+      .reduce((acc, l) => acc + l.valor, 0);
+    return proventosBase > 0 ? proventosBase : null;
+  })();
 
   const buffer = gerarHoleritePdf({
     empresa: { nome: empresaNome, cnpj: empresaCnpj },
-    funcionario: { nome: funcionarioNome, cpf: funcionarioCpf, perfil },
+    funcionario: {
+      codigo: funcionarioCodigo,
+      nome: funcionarioNome,
+      cpf: funcionarioCpf,
+      cargo: funcionarioCargo,
+      cbo: funcionarioCbo,
+      admissao: funcionarioAdmissao,
+    },
     competencia,
-    lancamentos: rows,
+    tipoFolha: "Folha Mensal",
+    lancamentos: lancRows,
     bases: {
-      inss: Number((item as unknown as Record<string, unknown>).base_inss ?? 0),
-      irrf: Number((item as unknown as Record<string, unknown>).base_irrf ?? 0),
-      fgts: Number((item as unknown as Record<string, unknown>).base_fgts ?? 0),
+      inss: baseInss,
+      irrf: baseIrrf,
+      fgts: baseFgts,
+      salarioBase,
+      faixaIrrf: faixaIrrfPct,
     },
     totais: {
-      proventos: Number((item as unknown as Record<string, unknown>).total_proventos ?? 0),
-      descontos: Number((item as unknown as Record<string, unknown>).total_descontos ?? 0),
-      liquido: Number((item as unknown as Record<string, unknown>).liquido ?? 0),
+      vencimentos: totalVencimentos,
+      descontos: totalDescontos,
+      liquido,
+      fgtsMes,
     },
   });
 
