@@ -21,7 +21,7 @@ Substituir dashboard atual (`src/app/(app)/page.tsx`) por painel executivo orien
 
 ## Configuração por escola — gestão financeira
 
-Nem toda escola opera o financeiro internamente. RRB Escola **terceiriza** a cobrança (não há inadimplência visível no sistema). Outras escolas operam **gestão própria** (cobram alunos, controlam inadimplência).
+Nem toda escola opera o financeiro internamente. CRM Escola **terceiriza** a cobrança (não há inadimplência visível no sistema). Outras escolas operam **gestão própria** (cobram alunos, controlam inadimplência).
 
 Dashboard deve **se adaptar ao modelo da escola logada**.
 
@@ -37,7 +37,7 @@ alter table escolas
 
 Migration: `supabase/migrations/202605280001_escolas_gestao_financeira.sql`
 
-Seed: marcar RRB Escola como `terceirizada`.
+Seed: marcar CRM Escola como `terceirizada`.
 
 ### Comportamento
 

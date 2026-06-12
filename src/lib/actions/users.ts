@@ -69,7 +69,7 @@ export async function createUserAction(formData: FormData) {
 
   const emailResult = await sendEmail({
     to: email,
-    subject: "RRB Escola — Sua conta foi criada",
+    subject: "CRM Escola — Sua conta foi criada",
     html: renderUserCreatedEmail({ nome, email, password, appUrl: getAppUrl() }),
   });
   if (!emailResult.ok) {
@@ -158,7 +158,7 @@ export async function resetPasswordAction(formData: FormData) {
 
   const emailResult = await sendEmail({
     to: perfil.email,
-    subject: "RRB Escola — Sua senha foi redefinida",
+    subject: "CRM Escola — Sua senha foi redefinida",
     html: renderPasswordResetEmail({
       nome: perfilFull?.nome ?? perfil.email,
       email: perfil.email,

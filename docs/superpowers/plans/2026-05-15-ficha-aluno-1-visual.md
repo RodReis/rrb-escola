@@ -361,7 +361,7 @@ export function StudentSheetView({
   return (
     <div className="mx-auto max-w-[900px] bg-white p-4 shadow-soft">
       <header className="mb-3 border-b border-ink/30 pb-2 text-center">
-        <p className="text-xs font-bold uppercase tracking-wide text-ink">RRB Escola</p>
+        <p className="text-xs font-bold uppercase tracking-wide text-ink">CRM Escola</p>
         <p className="text-[0.65rem] text-muted">Goiânia / GO · Gerado em {generatedAt(geradoEm ?? new Date())}</p>
         <h1 className="mt-2 text-lg font-black text-ink">Ficha do Aluno</h1>
       </header>
@@ -631,7 +631,7 @@ Expected: clean.
 - Logar como admin.
 - Abrir `/alunos/[id]/editar`. Ver campo "Disciplina eletiva". Preencher e salvar.
 - Abrir `/alunos/[id]`. Ver:
-  - [ ] Cabeçalho "RRB Escola" + timestamp.
+  - [ ] Cabeçalho "CRM Escola" + timestamp.
   - [ ] Bloco "Dados do Aluno" com campo "Disciplina Eletiva" preenchido.
   - [ ] "Relação de Matrículas" com 6 colunas (Ano/Série/Turma/Data/Idade/Status).
   - [ ] Sem "Histórico Completo de Matrículas".

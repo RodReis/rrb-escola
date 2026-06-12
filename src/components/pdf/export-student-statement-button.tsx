@@ -46,7 +46,7 @@ export function ExportStudentStatementButton({ aluno, de, ate, charges }: Props)
     const doc = new jsPDF({ orientation: "portrait", unit: "mm", format: "a4" });
     doc.setFont("helvetica", "bold");
     doc.setFontSize(13);
-    doc.text("RRB Escola — Extrato Financeiro", 105, 14, { align: "center" });
+    doc.text("CRM Escola — Extrato Financeiro", 105, 14, { align: "center" });
     doc.setFontSize(9);
     doc.setFont("helvetica", "normal");
     doc.text(`Aluno: ${aluno.nome} (matrícula ${aluno.matricula_codigo})`, 12, 22);

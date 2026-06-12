@@ -23,7 +23,7 @@ create policy "authenticated read segmentos" on segmentos for select to authenti
 insert into escolas (id, nome, cnpj, telefone, email, endereco, cidade, uf, cep)
 values (
   '00000000-0000-0000-0000-000000000001',
-  'RRB Escola',
+  'CRM Escola',
   '00.000.000/0001-00',
   '(62) 3333-0000',
   'secretaria@rrbescola.local',

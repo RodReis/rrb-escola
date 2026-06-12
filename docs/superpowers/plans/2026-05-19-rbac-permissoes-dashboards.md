@@ -1724,7 +1724,7 @@ export async function Topbar({
     supabase.from("escolas").select("nome, logo_url").eq("id", perfil.escola_id).maybeSingle(),
     supabase.from("perfis").select("foto_url").eq("id", perfil.id).maybeSingle(),
   ]);
-  const escolaNome = escolaRes.data?.nome ?? "RRB Escola";
+  const escolaNome = escolaRes.data?.nome ?? "CRM Escola";
   const [logoUrl, avatarUrl] = await Promise.all([
     getPublicUrl("escola-logos", escolaRes.data?.logo_url),
     getPublicUrl("perfis-fotos", perfilRes.data?.foto_url),

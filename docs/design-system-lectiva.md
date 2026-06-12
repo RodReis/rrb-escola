@@ -1,6 +1,6 @@
 # Lectiva Design System
 
-Base visual do sistema escolar RRB Escola.
+Base visual do sistema escolar CRM Escola.
 
 ## Direcao
 

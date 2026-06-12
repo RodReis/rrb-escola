@@ -465,7 +465,7 @@ Expected: passa sem erros.
 - [ ] **Step 3: Teste manual de envio (opcional — requer env configurado)**
 
 Se o usuário já configurou as 3 variáveis Evolution: criar um script ou rota temporária
-que chame `enviarWhatsApp({ telefone: "<seu número>", mensagem: "Teste RRB Escola" })`,
+que chame `enviarWhatsApp({ telefone: "<seu número>", mensagem: "Teste CRM Escola" })`,
 verificar que a mensagem chega no WhatsApp e que um registro `enviada` aparece na tabela
 `mensagens_whatsapp`. Remover o script/rota temporária após o teste.
 

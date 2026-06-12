@@ -1,29 +1,28 @@
 "use client";
 
-import { Monitor, Moon, Sun } from "lucide-react";
+import { Moon, Sun } from "lucide-react";
 import { useEffect, useState } from "react";
 import { cn } from "@/lib/utils";
 
-type ThemeMode = "system" | "light" | "dark";
+type ThemeMode = "light" | "dark";
 
 const STORAGE_KEY = "theme";
 
-const modes: Array<{ mode: ThemeMode; label: string; icon: typeof Monitor }> = [
-  { mode: "system", label: "Usar tema do sistema", icon: Monitor },
-  { mode: "light",  label: "Tema claro",           icon: Sun },
-  { mode: "dark",   label: "Tema escuro",           icon: Moon },
+const modes: Array<{ mode: ThemeMode; label: string; icon: typeof Sun }> = [
+  { mode: "light", label: "Tema claro",  icon: Sun },
+  { mode: "dark",  label: "Tema escuro", icon: Moon },
 ];
 
 function readStored(): ThemeMode {
   try {
     const v = localStorage.getItem(STORAGE_KEY);
-    if (v === "light" || v === "dark" || v === "system") return v;
+    if (v === "light" || v === "dark") return v;
   } catch {}
-  return "system";
+  return "light";
 }
 
 function applyTheme(mode: ThemeMode) {
-  if (mode === "system") {
+  if (mode === "light") {
     delete document.documentElement.dataset.theme;
   } else {
     document.documentElement.dataset.theme = mode;
@@ -31,7 +30,7 @@ function applyTheme(mode: ThemeMode) {
 }
 
 export function ThemeToggle({ className }: { className?: string }) {
-  const [mode, setMode] = useState<ThemeMode>("system");
+  const [mode, setMode] = useState<ThemeMode>("light");
 
   // Sync from localStorage after hydration
   useEffect(() => {

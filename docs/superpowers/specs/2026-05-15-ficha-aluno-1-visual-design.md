@@ -109,7 +109,7 @@ type Props = {
 
 ```tsx
 <header className="mb-3 border-b border-ink/30 pb-2 text-center">
-  <p className="text-xs font-bold uppercase tracking-wide">RRB Escola</p>
+  <p className="text-xs font-bold uppercase tracking-wide">CRM Escola</p>
   <p className="text-[0.65rem] text-muted">
     Goiânia / GO · Gerado em {format(geradoEm ?? new Date(), "dd/MM/yyyy HH:mm", { timeZone: "America/Sao_Paulo" })}
   </p>
