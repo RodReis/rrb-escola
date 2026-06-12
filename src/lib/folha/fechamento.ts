@@ -92,6 +92,7 @@ export async function gerarDespesasDaRun(run: RunParaDespesas): Promise<void> {
       escola_id: run.escola_id,
       competencia: run.competencia,
       status: "aberta" as const,
+      tipo: "fixa" as const,
       folha_run_id: run.id,
     })),
   );
