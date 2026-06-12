@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { FileSpreadsheet } from "lucide-react";
 import { PageHeader } from "@/components/ui/page-header";
 import { Card } from "@/components/ui/card";
 import { StatusPill, type StatusTone } from "@/components/ui/status-pill";
@@ -62,6 +63,7 @@ export default async function RunPage({ params }: { params: { id: string } }) {
     .eq("folha_run_id", run.id);
 
   const editavel = ["rascunho", "em_revisao"].includes(run.status);
+  const podeExportar = ["aprovada", "paga", "fechada"].includes(run.status);
   const company = run.companies as { name: string } | null;
   const itensAtivos = ((run.folha_itens ?? []) as unknown as ItemRow[]).filter(
     (i) => i.status === "ativo"
@@ -84,6 +86,18 @@ export default async function RunPage({ params }: { params: { id: string } }) {
       />
 
       <RunAcoes runId={run.id} status={run.status} />
+
+      {podeExportar && (
+        <div className="flex flex-wrap gap-2">
+          <a
+            href={`/api/folha/pacote/${run.id}`}
+            className="ds-button ds-button-secondary inline-flex items-center gap-1.5 text-sm"
+          >
+            <FileSpreadsheet size={14} />
+            Pacote do contador (.xlsx)
+          </a>
+        </div>
+      )}
 
       <DataTableShell
         footer={
