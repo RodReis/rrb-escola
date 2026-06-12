@@ -43,6 +43,11 @@ export const rubricaSchema = z.object({
 
 export type RubricaInput = z.infer<typeof rubricaSchema>;
 
+const optionalInt = z.preprocess(
+  (v) => (v === "" || v == null ? undefined : Number(v)),
+  z.number().int().min(0).optional()
+);
+
 export const contratoSchema = z
   .object({
     company_id: z.string().uuid("Empresa obrigatória"),
@@ -59,6 +64,11 @@ export const contratoSchema = z
       z.number().int().min(0)
     ).default(0),
     ativo: z.preprocess((v) => v === "on" || v === true, z.boolean()).default(true),
+    cargo: z.string().max(100).optional().nullable(),
+    cbo: z.string().max(20).optional().nullable(),
+    aulas_manha: optionalInt,
+    aulas_tarde: optionalInt,
+    aulas_noite: optionalInt,
   })
   .superRefine((data, ctx) => {
     const temSalario = data.salario_base != null && data.salario_base > 0;
@@ -85,6 +95,19 @@ export const contratoSchema = z
         message: "Aulas semanais obrigatórias quando valor/hora-aula é informado",
         path: ["aulas_semanais"],
       });
+    }
+    const { aulas_manha, aulas_tarde, aulas_noite, aulas_semanais } = data;
+    const turnos = [aulas_manha, aulas_tarde, aulas_noite];
+    const todosPreenchidos = turnos.every((v) => v != null);
+    if (todosPreenchidos && temAulas) {
+      const soma = (aulas_manha ?? 0) + (aulas_tarde ?? 0) + (aulas_noite ?? 0);
+      if (soma !== aulas_semanais) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: `Soma das aulas por turno (${soma}) deve ser igual ao total de aulas semanais (${aulas_semanais})`,
+          path: ["aulas_manha"],
+        });
+      }
     }
   });
 

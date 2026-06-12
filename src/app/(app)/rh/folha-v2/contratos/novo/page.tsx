@@ -100,6 +100,32 @@ export default async function NovoContratoPage({
             </label>
           </div>
 
+          <div className="grid grid-cols-3 gap-4">
+            <label className="flex flex-col gap-1 text-sm font-medium text-ink/80">
+              Aulas manhã
+              <input name="aulas_manha" type="number" min="0" step="1" placeholder="—" />
+            </label>
+            <label className="flex flex-col gap-1 text-sm font-medium text-ink/80">
+              Aulas tarde
+              <input name="aulas_tarde" type="number" min="0" step="1" placeholder="—" />
+            </label>
+            <label className="flex flex-col gap-1 text-sm font-medium text-ink/80">
+              Aulas noite
+              <input name="aulas_noite" type="number" min="0" step="1" placeholder="—" />
+            </label>
+          </div>
+
+          <div className="grid grid-cols-2 gap-4">
+            <label className="flex flex-col gap-1 text-sm font-medium text-ink/80">
+              Cargo
+              <input name="cargo" type="text" maxLength={100} placeholder="Ex.: Professor de Matemática" />
+            </label>
+            <label className="flex flex-col gap-1 text-sm font-medium text-ink/80">
+              CBO
+              <input name="cbo" type="text" maxLength={20} placeholder="Ex.: 2312-05" />
+            </label>
+          </div>
+
           <label className="flex flex-col gap-1 text-sm font-medium text-ink/80">
             Data de admissão
             <input name="data_admissao" type="date" required className="w-48" />

@@ -46,6 +46,8 @@ export default async function EditarContratoPage({
 
   if (!contratoRaw) notFound();
 
+  type AulasPorTurno = { manha?: number | null; tarde?: number | null; noite?: number | null } | null;
+
   type ContratoFull = {
     id: string;
     salario_base: number | null;
@@ -55,6 +57,9 @@ export default async function EditarContratoPage({
     data_admissao: string;
     data_desligamento: string | null;
     ativo: boolean;
+    cargo: string | null;
+    cbo: string | null;
+    aulas_por_turno: AulasPorTurno;
     employees: { id: string; name: string } | null;
     companies: { id: string; name: string } | null;
     folha_perfis_calculo: { id: string; codigo: string; nome: string } | null;
@@ -152,6 +157,32 @@ export default async function EditarContratoPage({
             <label className="flex flex-col gap-1 text-sm font-medium text-ink/80">
               Dependentes IRRF
               <input name="dependentes_irrf" type="number" min="0" step="1" defaultValue={c.dependentes_irrf} />
+            </label>
+          </div>
+
+          <div className="grid grid-cols-3 gap-4">
+            <label className="flex flex-col gap-1 text-sm font-medium text-ink/80">
+              Aulas manhã
+              <input name="aulas_manha" type="number" min="0" step="1" defaultValue={c.aulas_por_turno?.manha ?? ""} placeholder="—" />
+            </label>
+            <label className="flex flex-col gap-1 text-sm font-medium text-ink/80">
+              Aulas tarde
+              <input name="aulas_tarde" type="number" min="0" step="1" defaultValue={c.aulas_por_turno?.tarde ?? ""} placeholder="—" />
+            </label>
+            <label className="flex flex-col gap-1 text-sm font-medium text-ink/80">
+              Aulas noite
+              <input name="aulas_noite" type="number" min="0" step="1" defaultValue={c.aulas_por_turno?.noite ?? ""} placeholder="—" />
+            </label>
+          </div>
+
+          <div className="grid grid-cols-2 gap-4">
+            <label className="flex flex-col gap-1 text-sm font-medium text-ink/80">
+              Cargo
+              <input name="cargo" type="text" maxLength={100} defaultValue={c.cargo ?? ""} placeholder="Ex.: Professor de Matemática" />
+            </label>
+            <label className="flex flex-col gap-1 text-sm font-medium text-ink/80">
+              CBO
+              <input name="cbo" type="text" maxLength={20} defaultValue={c.cbo ?? ""} placeholder="Ex.: 2312-05" />
             </label>
           </div>
 

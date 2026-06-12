@@ -208,6 +208,11 @@ export async function createContratoAction(formData: FormData) {
     aulas_semanais: formText(formData, "aulas_semanais"),
     dependentes_irrf: formText(formData, "dependentes_irrf"),
     ativo: formData.get("ativo"),
+    cargo: formText(formData, "cargo"),
+    cbo: formText(formData, "cbo"),
+    aulas_manha: formText(formData, "aulas_manha"),
+    aulas_tarde: formText(formData, "aulas_tarde"),
+    aulas_noite: formText(formData, "aulas_noite"),
   });
   if (!parsed.success) {
     redirect(
@@ -218,6 +223,11 @@ export async function createContratoAction(formData: FormData) {
   if (!data_admissao) {
     redirect("/rh/folha-v2/contratos/novo?erro=data_admissao_obrigatoria");
   }
+  const { aulas_manha, aulas_tarde, aulas_noite } = parsed.data;
+  const aulas_por_turno =
+    aulas_manha != null || aulas_tarde != null || aulas_noite != null
+      ? { manha: aulas_manha ?? null, tarde: aulas_tarde ?? null, noite: aulas_noite ?? null }
+      : null;
   const supabase = await createServerClient();
   const { data: contrato, error } = await supabase
     .from("folha_contratos")
@@ -232,6 +242,9 @@ export async function createContratoAction(formData: FormData) {
       dependentes_irrf: parsed.data.dependentes_irrf,
       data_admissao: data_admissao!,
       ativo: parsed.data.ativo,
+      cargo: parsed.data.cargo ?? null,
+      cbo: parsed.data.cbo ?? null,
+      aulas_por_turno,
     })
     .select("id")
     .single();
@@ -257,6 +270,11 @@ export async function updateContratoAction(formData: FormData) {
     aulas_semanais: formText(formData, "aulas_semanais"),
     dependentes_irrf: formText(formData, "dependentes_irrf"),
     ativo: formData.get("ativo"),
+    cargo: formText(formData, "cargo"),
+    cbo: formText(formData, "cbo"),
+    aulas_manha: formText(formData, "aulas_manha"),
+    aulas_tarde: formText(formData, "aulas_tarde"),
+    aulas_noite: formText(formData, "aulas_noite"),
   });
   if (!parsed.success) {
     redirect(
@@ -265,6 +283,11 @@ export async function updateContratoAction(formData: FormData) {
   }
   const data_admissao = formText(formData, "data_admissao");
   const data_desligamento = formText(formData, "data_desligamento");
+  const { aulas_manha, aulas_tarde, aulas_noite } = parsed.data;
+  const aulas_por_turno =
+    aulas_manha != null || aulas_tarde != null || aulas_noite != null
+      ? { manha: aulas_manha ?? null, tarde: aulas_tarde ?? null, noite: aulas_noite ?? null }
+      : null;
   const supabase = await createServerClient();
   const { error } = await supabase
     .from("folha_contratos")
@@ -278,6 +301,9 @@ export async function updateContratoAction(formData: FormData) {
       data_admissao: data_admissao ?? undefined,
       data_desligamento: data_desligamento ?? null,
       ativo: parsed.data.ativo,
+      cargo: parsed.data.cargo ?? null,
+      cbo: parsed.data.cbo ?? null,
+      aulas_por_turno,
     })
     .eq("id", id!)
     .eq("escola_id", DEFAULT_SCHOOL_ID);
