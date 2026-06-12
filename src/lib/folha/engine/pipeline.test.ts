@@ -61,28 +61,55 @@ describe("calcularItem — professor com dobra (Ana Flávia)", () => {
   it("hora-aula = 27,0168 x 20 x 4,5 = 2431,51", () => {
     expect(r.lancamentos.find((l) => l.rubrica_codigo === "hora_aula")?.valor).toBe(2431.51);
   });
-  it("DSR em duas linhas: 486,30 (base) + 491,50 (dobra)", () => {
+  it("DSR em duas linhas (÷6): 405,25 (base) + 409,59 (dobra)", () => {
     const dsrs = r.lancamentos.filter((l) => l.rubrica_codigo === "dsr").map((l) => l.valor).sort();
-    expect(dsrs).toEqual([486.3, 491.5]);
+    expect(dsrs).toEqual([405.25, 409.59]);
   });
-  it("total proventos = 2431,51 + 2457,51 + 486,30 + 491,50 = 5866,82", () => {
-    expect(r.total_proventos).toBe(5866.82);
+  it("total proventos = 2431,51 + 2457,51 + 405,25 + 409,59 = 5703,86", () => {
+    expect(r.total_proventos).toBe(5703.86);
   });
   it("bases INSS/IRRF/FGTS = total proventos (todas as rubricas incidem)", () => {
-    expect(r.base_inss).toBe(5866.82);
-    expect(r.base_fgts).toBe(5866.82);
+    expect(r.base_inss).toBe(5703.86);
+    expect(r.base_fgts).toBe(5703.86);
   });
-  it("INSS progressivo sobre 5866,82 com faixas fixture", () => {
-    const esperado = 1621 * 0.075 + (2902.84 - 1621) * 0.09 + (4354.27 - 2902.84) * 0.12 + (5866.82 - 4354.27) * 0.14;
+  it("INSS progressivo sobre 5703,86 com faixas fixture", () => {
+    const esperado = 1621 * 0.075 + (2902.84 - 1621) * 0.09 + (4354.27 - 2902.84) * 0.12 + (5703.86 - 4354.27) * 0.14;
     expect(r.lancamentos.find((l) => l.rubrica_codigo === "inss")?.valor).toBeCloseTo(esperado, 2);
   });
   it("liquido = proventos - descontos; FGTS informativo nao reduz liquido", () => {
     expect(r.liquido).toBeCloseTo(r.total_proventos - r.total_descontos, 2);
-    expect(r.encargos.fgts).toBeCloseTo(5866.82 * 0.08, 2);
+    expect(r.encargos.fgts).toBeCloseTo(5703.86 * 0.08, 2);
   });
   it("provisoes: 13o = 1/12 da base; ferias = (base x 4/3)/12", () => {
-    expect(r.encargos.provisao_13).toBeCloseTo(5866.82 / 12, 2);
-    expect(r.encargos.provisao_ferias).toBeCloseTo((5866.82 * 4) / 3 / 12, 2);
+    expect(r.encargos.provisao_13).toBeCloseTo(5703.86 / 12, 2);
+    expect(r.encargos.provisao_ferias).toBeCloseTo((5703.86 * 4) / 3 / 12, 2);
+  });
+});
+
+describe("calcularItem — gabarito oficial Ana Flávia (hora-aula 23,16 x 48, sem dobra)", () => {
+  const contrato: ContratoCalculo = {
+    id: "of1", salario_base: null, valor_hora_aula: 23.16, aulas_semanais: 48,
+    dependentes_irrf: 0, verbas: [],
+  };
+  const perfil = [pr(RUB.horaAula, 10), pr(RUB.dsr, 30), pr(RUB.horaAtiv, 40),
+    pr(RUB.inss, 60), pr(RUB.irrf, 61), pr(RUB.fgts, 80), pr(RUB.patronal, 81),
+    pr(RUB.prov13, 82), pr(RUB.provFerias, 83)];
+  const r = calcularItem({ contrato, perfilRubricas: perfil, config, manuais: [],
+    faixas: { inss: inssFaixas, ir: irFaixas }, redutor });
+
+  it("hora-aula oficial: 23,16 x 48 x 4,5 = 5002,56", () => {
+    expect(r.lancamentos.find((l) => l.rubrica_codigo === "hora_aula")?.valor).toBe(5002.56);
+  });
+  it("DSR unico 1/6: 833,76", () => {
+    const dsrs = r.lancamentos.filter((l) => l.rubrica_codigo === "dsr");
+    expect(dsrs).toHaveLength(1);
+    expect(dsrs[0].valor).toBe(833.76);
+  });
+  it("total proventos oficial: 5836,32", () => {
+    expect(r.total_proventos).toBe(5836.32);
+  });
+  it("INSS oficial ~618,58 (faixas seed oficiais; fixture pode dar 618,60)", () => {
+    expect(r.lancamentos.find((l) => l.rubrica_codigo === "inss")?.valor).toBeCloseTo(618.58, 0);
   });
 });
 

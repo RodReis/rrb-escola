@@ -6,9 +6,9 @@ export function calcHoraAula(valorHoraAula: number, aulasSemanais: number, seman
   return round2(valorHoraAula * aulasSemanais * semanasMes);
 }
 
-export function calcDsrSobre(valorSemDsr: number, divisorDsr: number): number {
-  if (valorSemDsr <= 0 || divisorDsr <= 1) return 0;
-  return round2(valorSemDsr / (divisorDsr - 1));
+export function calcDsrSobre(valorVerba: number, divisorDsr: number): number {
+  if (valorVerba <= 0 || divisorDsr <= 0) return 0;
+  return round2(valorVerba / divisorDsr);
 }
 
 export function calcHoraAtividade(baseComDsr: number, percentual: number): number {

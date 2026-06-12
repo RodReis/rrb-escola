@@ -5,11 +5,11 @@ describe("proventos professor", () => {
   it("hora-aula: valor x aulas x semanas_mes", () => {
     expect(calcHoraAula(10, 20, 4.5)).toBe(900);
   });
-  it("DSR com divisor 6 = 1/5 do valor sem DSR (Ana Flávia: base)", () => {
-    expect(calcDsrSobre(2431.51, 6)).toBe(486.3);
+  it("DSR oficial: salario-aulas / 6 (contracheque mai/2026)", () => {
+    expect(calcDsrSobre(5002.56, 6)).toBe(833.76);
   });
-  it("DSR da dobra (Ana Flávia: valor calculado, pendente confirmacao 460,95 vs 491,50)", () => {
-    expect(calcDsrSobre(2457.51, 6)).toBe(491.5);
+  it("DSR sobre verba de dobra-como-rubrica (mecanismo valor_contratual)", () => {
+    expect(calcDsrSobre(2457.51, 6)).toBe(409.59);
   });
   it("hora-atividade: percentual sobre base+DSR", () => {
     expect(calcHoraAtividade(2917.81, 5)).toBe(145.89);
