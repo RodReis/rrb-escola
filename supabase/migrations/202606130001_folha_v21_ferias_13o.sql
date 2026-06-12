@@ -43,6 +43,9 @@ drop trigger if exists folha_aquisitivos_updated_at on folha_periodos_aquisitivo
 create trigger folha_aquisitivos_updated_at before update on folha_periodos_aquisitivos
 for each row execute function public.set_updated_at();
 
+alter table public.folha_itens
+  add column if not exists periodo_aquisitivo_id uuid references folha_periodos_aquisitivos(id) on delete set null;
+
 alter table public.folha_contratos
   add column if not exists antecipa_13_com_ferias boolean not null default false,
   add column if not exists janela_ferias text;
