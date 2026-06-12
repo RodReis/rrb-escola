@@ -15,8 +15,8 @@
 -- Desconto máximo: R$ 988,09
 --
 -- Âncoras de validação (calcINSS progressivo):
---   calcINSS(1621.00) = 1621.00 × 0.075 = 121.58
---   calcINSS(8475.55) = 121.58 + 115.36 + 174.17 + 576.98 = 988.09
+--   calcINSS(1621.00) = 1621.00 × 0.075 = 121.57
+--   calcINSS(8475.55) = 121.57 + 115.36 + 174.17 + 576.98 = 988.09
 -- -----------------------------------------------------------------------------
 insert into public.inss_brackets (vigencia_inicio, ordem, valor_de, valor_ate, aliquota, parcela_deduzir)
 values
