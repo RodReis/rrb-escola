@@ -50,6 +50,21 @@ export async function getItemLancamentos(itemId: string) {
   );
 }
 
+export async function getItemComRun(itemId: string) {
+  const supabase = await createServerClient();
+  const { data, error } = await supabase
+    .from("folha_itens")
+    .select(
+      `id, status, total_proventos, total_descontos, liquido,
+       folha_runs:run_id(id, status, competencia, companies:company_id(name)),
+       folha_contratos(employees(name), folha_perfis_calculo:perfil_calculo_id(nome))`
+    )
+    .eq("id", itemId)
+    .single();
+  if (error) throw error;
+  return data;
+}
+
 export async function getRubricas() {
   const supabase = await createServerClient();
   const { data, error } = await supabase
