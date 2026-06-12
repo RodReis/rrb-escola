@@ -252,13 +252,21 @@ export default async function ContrachequeePage({
         </Card>
       )}
 
-      <div className="flex gap-3">
+      <div className="flex items-center gap-4">
         <Link
           href={`/rh/folha-v2/${runId}`}
           className="text-sm font-medium text-brand hover:underline"
         >
           ← Voltar para a folha
         </Link>
+        <a
+          href={`/api/folha/holerite/${params.itemId}`}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="ds-button ds-button-primary text-sm"
+        >
+          Holerite (PDF)
+        </a>
       </div>
     </div>
   );
