@@ -27,18 +27,24 @@ create policy "eventos escola tenant" on eventos_escola for all to authenticated
   using (escola_id = (select escola_id from current_perfil()))
   with check (escola_id = (select escola_id from current_perfil()));
 
--- Seed RBAC: módulo eventos no grupo secretaria
-insert into modulos (codigo, grupo, nome, ordem) values
-  ('eventos', 'secretaria', 'Eventos', 18);
+-- Seed RBAC: módulo eventos no grupo secretaria.
+-- Defensivo: modulos/role_permissoes são criadas depois (202605300001); a garantia
+-- idempotente está em 202606120007. Só insere aqui se as tabelas já existirem.
+do $$
+begin
+  if exists (select 1 from information_schema.tables
+             where table_schema = 'public' and table_name = 'modulos')
+     and exists (select 1 from information_schema.tables
+             where table_schema = 'public' and table_name = 'role_permissoes') then
+    insert into modulos (codigo, grupo, nome, ordem) values
+      ('eventos', 'secretaria', 'Eventos', 18)
+    on conflict (codigo) do nothing;
 
-insert into role_permissoes (role_codigo, modulo_codigo, pode_ler, pode_criar, pode_editar, pode_deletar)
-  values ('admin', 'eventos', true, true, true, true);
-
-insert into role_permissoes (role_codigo, modulo_codigo, pode_ler, pode_criar, pode_editar, pode_deletar)
-  values ('secretaria', 'eventos', true, true, true, true);
-
-insert into role_permissoes (role_codigo, modulo_codigo, pode_ler, pode_criar, pode_editar, pode_deletar)
-  values ('financeiro', 'eventos', true, false, false, false);
-
-insert into role_permissoes (role_codigo, modulo_codigo, pode_ler, pode_criar, pode_editar, pode_deletar)
-  values ('professor', 'eventos', true, false, false, false);
+    insert into role_permissoes (role_codigo, modulo_codigo, pode_ler, pode_criar, pode_editar, pode_deletar) values
+      ('admin', 'eventos', true, true, true, true),
+      ('secretaria', 'eventos', true, true, true, true),
+      ('financeiro', 'eventos', true, false, false, false),
+      ('professor', 'eventos', true, false, false, false)
+    on conflict (role_codigo, modulo_codigo) do nothing;
+  end if;
+end $$;
