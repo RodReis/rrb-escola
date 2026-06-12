@@ -248,7 +248,11 @@ export async function recalcularItemDb(
   }
   if (!item) throw new Error("Falha ao criar item");
 
-  await supabase.from("folha_lancamentos").delete().eq("item_id", item.id);
+  const { error: delErr } = await supabase
+    .from("folha_lancamentos")
+    .delete()
+    .eq("item_id", item.id);
+  if (delErr) throw delErr;
 
   const rubricaIds = new Map(
     (todasRubricas ?? []).map((r) => [
@@ -276,9 +280,12 @@ export async function recalcularItemDb(
     })
     .filter((l): l is NonNullable<typeof l> => l !== null);
 
-  if (linhas.length) await supabase.from("folha_lancamentos").insert(linhas);
+  if (linhas.length) {
+    const { error: insErr } = await supabase.from("folha_lancamentos").insert(linhas);
+    if (insErr) throw insErr;
+  }
 
-  await supabase
+  const { error: updItemErr } = await supabase
     .from("folha_itens")
     .update({
       total_proventos: resultado.total_proventos,
@@ -289,6 +296,7 @@ export async function recalcularItemDb(
       base_fgts: resultado.base_fgts,
     })
     .eq("id", item.id);
+  if (updItemErr) throw updItemErr;
 
   return resultado;
 }
@@ -318,7 +326,7 @@ export async function recalcularTotaisRun(runId: string) {
     { p: 0, d: 0, l: 0 }
   );
 
-  await supabase
+  const { error: updRunErr } = await supabase
     .from("folha_runs")
     .update({
       total_proventos: t.p,
@@ -326,4 +334,5 @@ export async function recalcularTotaisRun(runId: string) {
       total_liquido: t.l,
     })
     .eq("id", runId);
+  if (updRunErr) throw updRunErr;
 }
