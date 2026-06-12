@@ -85,7 +85,8 @@ docker exec -i supabase_db_rrb-escola pg_restore \
 | Financeiro | `/financeiro` | Cobranças e pagamentos por competência |
 | Despesas | `/despesas` | CRUD de despesas operacionais por mês + categorias + comprovantes |
 | RH | `/rh/empresas`, `/rh/funcionarios` | Empresas, funcionários, base salarial, GPS |
-| Folha | `/rh/folha/[mes]` | Geração + edição da folha de pagamento mensal |
+| Folha | `/rh/folha/[mes]` | Geração + edição da folha de pagamento mensal (v1, legado) |
+| Folha v2 | `/rh/folha-v2` | Motor de rubricas: runs mensais por empresa, contracheque editável, conciliação com despesas, provisões, holerite PDF, pacote do contador (xlsx). Cron diário `/api/jobs/dispatch` gera a folha no dia de fechamento |
 | Portaria | `/portaria` | Reconhecimento facial, eventos de acesso |
 | Frequência | `/frequencias` | Registro de presença |
 | Importações | `/importacoes` | Upload e processamento de PDFs/xlsx |
