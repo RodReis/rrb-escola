@@ -1,7 +1,7 @@
 # Folha de Pagamento v2 — Design
 
 Data: 2026-06-12
-Status: aprovado em brainstorming, aguardando plano de implementação
+Status: aprovado em brainstorming, aguardando plano de implementação  Rodrigo Reis
 
 ## Contexto e objetivo
 
