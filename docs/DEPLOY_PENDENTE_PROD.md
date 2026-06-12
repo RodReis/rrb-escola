@@ -18,6 +18,10 @@ Folha v2 + adendos:
 - `202606120004_folha_v2_permissao.sql` — RBAC rh.folha-v2 (admin + financeiro)
 - `202606120005_folha_v2_adendos.sql` — cargo/cbo/aulas_por_turno + coefs IRRF (ADENDO 1+2)
 
+Férias e 13º (Folha v2.1):
+- `202606130001_folha_v21_ferias_13o.sql` — tipo em runs, folha_periodos_aquisitivos, periodo_aquisitivo_id em itens, campos contrato/config, rubricas 13º/férias/dobro, recesso, companies endereco/cidade
+- `202606130002_seed_faixas_2025.sql` — faixas INSS/IRRF 2025 (vigencia_inicio 2025-01-01) para média/caso dourado
+
 Correções de bugs de ordem PRÉ-EXISTENTES (afetam db reset; idempotentes):
 - `202605200004_rh_payroll_rls_policies.sql` — tornada defensiva (do-block if exists)
 - `202605230002_eventos_escola.sql` — seed RBAC tornado defensivo
@@ -33,3 +37,11 @@ Correções de bugs de ordem PRÉ-EXISTENTES (afetam db reset; idempotentes):
 - [ ] Confirmar IRRF oficial com 2-3 contracheques reais (âncora mai/2026: rendimento 5836,32 → IRRF 324,61; fórmula dá 324,59)
 - [ ] Migração de contratos a partir de `employees` (script one-off, revisão manual de hora-aula dos professores)
 - [ ] Rodar folha da competência de corte em paralelo com a planilha do financeiro; bater totais (caso Ana Flávia: hora-aula 23,16 × 48 = 5002,56)
+
+## Férias e 13º (v2.1) — operacional
+
+- [ ] Habilitar `jobs.gerar_especiais` na config de cada empresa (tela Config → Férias e 13º) para o cron gerar 13º/férias automaticamente
+- [ ] Ajustar `inicio` dos períodos aquisitivos backfillados (admissão antiga gera período já vencido — alinhar período corrente real com o contador)
+- [ ] Import de bases históricas 2025 (opcional, só se usar média 12 meses): `node scripts/importar_bases_historicas.mjs --dry-run` depois `--apply`
+- [ ] Smoke E2E com `?hoje=` simulado (dev): jobs geram decimo_1a (01/11), decimo_2a (01/12), férias (01/06); fechar férias baixa provisão + abre período; mensal de julho recebe ferias_desconto_gozo
+- [ ] INSS 2025 método: caso dourado dá 842,12 (progressivo) vs 842,11 oficial (tabela única) — diferença de R$0,01 por método; confirmar com contador se o cliente exige tabela-única exata
