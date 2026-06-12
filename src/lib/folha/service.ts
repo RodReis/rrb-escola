@@ -1,7 +1,9 @@
 import { createServerClient } from "@/lib/supabase/server";
+import { createAdminClient } from "@/lib/supabase/admin";
 import { getFaixasVigentes } from "@/lib/data/folha";
 import { calcularItem } from "./engine/pipeline";
 import type { LancamentoManual } from "./engine/types";
+import type { SupabaseClient } from "@supabase/supabase-js";
 
 export async function gerarRun(companyId: string, competencia: string, geradaPor: string) {
   const supabase = await createServerClient();
@@ -333,6 +335,289 @@ export async function recalcularTotaisRun(runId: string) {
       total_descontos: t.d,
       total_liquido: t.l,
     })
+    .eq("id", runId);
+  if (updRunErr) throw updRunErr;
+}
+
+export async function gerarRunAdmin(companyId: string, competencia: string, geradaPor: string) {
+  const supabase = createAdminClient() as SupabaseClient;
+
+  const existente = await supabase
+    .from("folha_runs")
+    .select("id")
+    .eq("company_id", companyId)
+    .eq("competencia", competencia)
+    .maybeSingle();
+  if (existente.data) return { runId: existente.data.id as string, criada: false };
+
+  const [{ data: config }, { data: contratos }] = await Promise.all([
+    supabase.from("folha_config").select("*").eq("company_id", companyId).single(),
+    supabase
+      .from("folha_contratos")
+      .select("*, folha_contratos_rubricas(valor, percentual, ativa, folha_rubricas(codigo))")
+      .eq("company_id", companyId)
+      .eq("ativo", true),
+  ]);
+  if (!config || !contratos) throw new Error("Config/contratos não encontrados");
+
+  const { data: run, error } = await supabase
+    .from("folha_runs")
+    .insert({
+      escola_id: config.escola_id as string,
+      company_id: companyId,
+      competencia,
+      gerada_por: geradaPor,
+    })
+    .select("id")
+    .single();
+  if (error) throw error;
+
+  const runId = run.id as string;
+  const recorrentes = await buscarRecorrentesAdmin(supabase, companyId, competencia);
+
+  for (const contrato of contratos) {
+    const manuais = recorrentes.get(contrato.id as string) ?? [];
+    await recalcularItemAdmin(supabase, runId, contrato.id as string, manuais);
+  }
+  await recalcularTotaisAdmin(supabase, runId);
+  return { runId, criada: true };
+}
+
+async function buscarRecorrentesAdmin(
+  supabase: SupabaseClient,
+  companyId: string,
+  competencia: string
+): Promise<Map<string, LancamentoManual[]>> {
+  const [ano, mes] = competencia.split("-").map(Number);
+  const anterior =
+    mes === 1 ? `${ano - 1}-12` : `${ano}-${String(mes - 1).padStart(2, "0")}`;
+
+  const { data } = await supabase
+    .from("folha_lancamentos")
+    .select(
+      `valor, referencia, recorrente_parcelas, recorrente_parcela_atual,
+       folha_rubricas(codigo),
+       folha_itens!inner(contrato_id, folha_runs!inner(company_id, competencia))`
+    )
+    .eq("folha_itens.folha_runs.company_id", companyId)
+    .eq("folha_itens.folha_runs.competencia", anterior)
+    .in("origem", ["manual", "recorrente"])
+    .not("recorrente_parcelas", "is", null);
+
+  const porContrato = new Map<string, LancamentoManual[]>();
+  for (const l of data ?? []) {
+    const row = l as unknown as {
+      valor: number;
+      referencia: string | null;
+      recorrente_parcelas: number | null;
+      recorrente_parcela_atual: number | null;
+      folha_rubricas: { codigo: string } | null;
+      folha_itens: { contrato_id: string; folha_runs: { company_id: string; competencia: string } };
+    };
+    if (!row.folha_rubricas?.codigo) continue;
+    const atual = (row.recorrente_parcela_atual ?? 0) + 1;
+    if (row.recorrente_parcelas != null && atual > row.recorrente_parcelas) continue;
+    const contratoId = row.folha_itens.contrato_id;
+    const arr = porContrato.get(contratoId) ?? [];
+    arr.push({
+      rubrica_codigo: row.folha_rubricas.codigo,
+      valor: row.valor,
+      referencia: `${atual}/${row.recorrente_parcelas}`,
+      origem: "recorrente",
+      recorrente_parcelas: row.recorrente_parcelas ?? undefined,
+      recorrente_parcela_atual: atual,
+    });
+    porContrato.set(contratoId, arr);
+  }
+  return porContrato;
+}
+
+async function recalcularItemAdmin(
+  supabase: SupabaseClient,
+  runId: string,
+  contratoId: string,
+  manuaisOverride: LancamentoManual[]
+) {
+  const { data: run } = await supabase
+    .from("folha_runs")
+    .select("competencia, company_id, status")
+    .eq("id", runId)
+    .single();
+  if (!run) throw new Error("Run não encontrada");
+
+  const [{ data: contrato }, { data: config }, faixas] = await Promise.all([
+    supabase
+      .from("folha_contratos")
+      .select("*, folha_contratos_rubricas(valor, percentual, ativa, folha_rubricas(codigo))")
+      .eq("id", contratoId)
+      .single(),
+    supabase
+      .from("folha_config")
+      .select("*")
+      .eq("company_id", run.company_id as string)
+      .single(),
+    getFaixasVigentes(run.competencia as string),
+  ]);
+  if (!contrato || !config) throw new Error("Contrato/config não encontrados");
+
+  const { data: perfilRubricas } = await supabase
+    .from("folha_perfis_rubricas")
+    .select("automatica, ordem_execucao, folha_rubricas(*)")
+    .eq("perfil_id", contrato.perfil_calculo_id as string);
+
+  const { data: todasRubricas } = await supabase
+    .from("folha_rubricas")
+    .select("*")
+    .eq("escola_id", contrato.escola_id as string)
+    .eq("ativa", true);
+
+  const itemResult = await supabase
+    .from("folha_itens")
+    .select("id")
+    .eq("run_id", runId)
+    .eq("contrato_id", contratoId)
+    .maybeSingle();
+  let item = itemResult.data as { id: string } | null;
+
+  type VerbaRow = {
+    valor: number | null;
+    percentual: number | null;
+    ativa: boolean;
+    folha_rubricas: { codigo: string } | null;
+  };
+
+  const verbas = ((contrato.folha_contratos_rubricas ?? []) as VerbaRow[])
+    .filter((v) => v.ativa && v.folha_rubricas?.codigo)
+    .map((v) => ({
+      rubrica_codigo: v.folha_rubricas!.codigo,
+      valor: v.valor,
+      percentual: v.percentual,
+    }));
+
+  type PerfilRow = {
+    automatica: boolean;
+    ordem_execucao: number;
+    folha_rubricas: {
+      id: string;
+      codigo: string;
+      nome: string;
+      tipo: "provento" | "desconto" | "base" | "informativa";
+      metodo_calculo: string;
+      incide_inss: boolean;
+      incide_irrf: boolean;
+      incide_fgts: boolean;
+      incide_dsr: boolean;
+      ordem_holerite: number;
+    };
+  };
+
+  const perfilMapped = ((perfilRubricas ?? []) as unknown as PerfilRow[]).map((p) => ({
+    rubrica: p.folha_rubricas,
+    automatica: p.automatica,
+    ordem_execucao: p.ordem_execucao,
+  }));
+
+  const resultado = calcularItem({
+    contrato: {
+      id: contrato.id as string,
+      salario_base: contrato.salario_base as number | null,
+      valor_hora_aula: contrato.valor_hora_aula as number | null,
+      aulas_semanais: contrato.aulas_semanais as number | null,
+      dependentes_irrf: (contrato.dependentes_irrf as number) ?? 0,
+      verbas,
+    },
+    perfilRubricas: perfilMapped,
+    config: {
+      divisor_dsr: config.divisor_dsr as number,
+      percentual_hora_atividade: Number(config.percentual_hora_atividade),
+      semanas_mes: Number(config.semanas_mes),
+    },
+    manuais: manuaisOverride,
+    faixas: { inss: faixas.inss, ir: faixas.ir },
+    redutor: faixas.redutor,
+    rubricasExtras: (todasRubricas ?? []) as Parameters<typeof calcularItem>[0]["rubricasExtras"],
+  });
+
+  if (!item) {
+    const inserted = await supabase
+      .from("folha_itens")
+      .insert({ run_id: runId, contrato_id: contratoId })
+      .select("id")
+      .single();
+    item = inserted.data as { id: string } | null;
+  }
+  if (!item) throw new Error("Falha ao criar item");
+
+  const { error: delErr } = await supabase.from("folha_lancamentos").delete().eq("item_id", item.id);
+  if (delErr) throw delErr;
+
+  const rubricaIds = new Map(
+    (todasRubricas ?? []).map((r) => [
+      (r as { codigo: string; id: string }).codigo,
+      (r as { codigo: string; id: string }).id,
+    ])
+  );
+
+  const linhas = resultado.lancamentos
+    .map((l) => {
+      const rubrica_id = rubricaIds.get(l.rubrica_codigo);
+      if (!rubrica_id) return null;
+      const m = manuaisOverride.find(
+        (x) => x.rubrica_codigo === l.rubrica_codigo && x.valor === l.valor
+      );
+      return {
+        item_id: item!.id,
+        rubrica_id,
+        referencia: l.referencia,
+        valor: l.valor,
+        origem: l.origem,
+        recorrente_parcelas: m?.recorrente_parcelas ?? null,
+        recorrente_parcela_atual: m?.recorrente_parcela_atual ?? null,
+      };
+    })
+    .filter((l): l is NonNullable<typeof l> => l !== null);
+
+  if (linhas.length) {
+    const { error: insErr } = await supabase.from("folha_lancamentos").insert(linhas);
+    if (insErr) throw insErr;
+  }
+
+  const { error: updItemErr } = await supabase
+    .from("folha_itens")
+    .update({
+      total_proventos: resultado.total_proventos,
+      total_descontos: resultado.total_descontos,
+      liquido: resultado.liquido,
+      base_inss: resultado.base_inss,
+      base_irrf: resultado.base_irrf,
+      base_fgts: resultado.base_fgts,
+    })
+    .eq("id", item.id);
+  if (updItemErr) throw updItemErr;
+}
+
+async function recalcularTotaisAdmin(supabase: SupabaseClient, runId: string) {
+  const { data: itens } = await supabase
+    .from("folha_itens")
+    .select("total_proventos, total_descontos, liquido")
+    .eq("run_id", runId)
+    .eq("status", "ativo");
+
+  const t = (itens ?? []).reduce(
+    (acc, i) => {
+      const row = i as { total_proventos: number | null; total_descontos: number | null; liquido: number | null };
+      return {
+        p: acc.p + Number(row.total_proventos ?? 0),
+        d: acc.d + Number(row.total_descontos ?? 0),
+        l: acc.l + Number(row.liquido ?? 0),
+      };
+    },
+    { p: 0, d: 0, l: 0 }
+  );
+
+  const { error: updRunErr } = await supabase
+    .from("folha_runs")
+    .update({ total_proventos: t.p, total_descontos: t.d, total_liquido: t.l })
     .eq("id", runId);
   if (updRunErr) throw updRunErr;
 }
