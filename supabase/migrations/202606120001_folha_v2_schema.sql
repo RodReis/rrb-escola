@@ -199,6 +199,12 @@ create policy "folha_perfis_rubricas_rw" on folha_perfis_rubricas for all to aut
     where p.id = perfil_id
       and p.escola_id = (select escola_id from current_perfil())
       and (select perfil from current_perfil()) in ('admin','financeiro')
+  ))
+  with check (exists (
+    select 1 from folha_perfis_calculo p
+    where p.id = perfil_id
+      and p.escola_id = (select escola_id from current_perfil())
+      and (select perfil from current_perfil()) in ('admin','financeiro')
   ));
 
 create policy "folha_contratos_rw" on folha_contratos for all to authenticated
@@ -213,6 +219,12 @@ create policy "folha_contratos_rw" on folha_contratos for all to authenticated
 
 create policy "folha_contratos_rubricas_rw" on folha_contratos_rubricas for all to authenticated
   using (exists (
+    select 1 from folha_contratos c
+    where c.id = contrato_id
+      and c.escola_id = (select escola_id from current_perfil())
+      and (select perfil from current_perfil()) in ('admin','financeiro')
+  ))
+  with check (exists (
     select 1 from folha_contratos c
     where c.id = contrato_id
       and c.escola_id = (select escola_id from current_perfil())
@@ -235,6 +247,12 @@ create policy "folha_itens_rw" on folha_itens for all to authenticated
     where r.id = run_id
       and r.escola_id = (select escola_id from current_perfil())
       and (select perfil from current_perfil()) in ('admin','financeiro')
+  ))
+  with check (exists (
+    select 1 from folha_runs r
+    where r.id = run_id
+      and r.escola_id = (select escola_id from current_perfil())
+      and (select perfil from current_perfil()) in ('admin','financeiro')
   ));
 
 create policy "folha_lancamentos_rw" on folha_lancamentos for all to authenticated
@@ -244,10 +262,23 @@ create policy "folha_lancamentos_rw" on folha_lancamentos for all to authenticat
     where i.id = item_id
       and r.escola_id = (select escola_id from current_perfil())
       and (select perfil from current_perfil()) in ('admin','financeiro')
+  ))
+  with check (exists (
+    select 1 from folha_itens i
+    join folha_runs r on r.id = i.run_id
+    where i.id = item_id
+      and r.escola_id = (select escola_id from current_perfil())
+      and (select perfil from current_perfil()) in ('admin','financeiro')
   ));
 
 create policy "folha_provisoes_rw" on folha_provisoes for all to authenticated
   using (exists (
+    select 1 from folha_contratos c
+    where c.id = contrato_id
+      and c.escola_id = (select escola_id from current_perfil())
+      and (select perfil from current_perfil()) in ('admin','financeiro')
+  ))
+  with check (exists (
     select 1 from folha_contratos c
     where c.id = contrato_id
       and c.escola_id = (select escola_id from current_perfil())
