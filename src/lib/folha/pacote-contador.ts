@@ -31,6 +31,19 @@ type ItemRow = {
   lancamentos: Lancamento[];
 };
 
+type ItemEspecial = {
+  employee_nome: string;
+  employee_cpf: string;
+  tipo: string;
+  base: number;
+  memoria_media: string;
+  avos: number | null;
+  total_proventos: number;
+  inss: number;
+  irrf: number;
+  liquido: number;
+};
+
 type Provisao = {
   contrato_id: string;
   funcionario_nome: string;
@@ -43,6 +56,7 @@ export type PacoteInput = {
   empresa_nome: string;
   itens: ItemRow[];
   provisoes: Provisao[];
+  itensEspeciais?: ItemEspecial[];
 };
 
 function estiloCabecalho(ws: ExcelJS.Worksheet, rowNum: number, numCols: number) {
@@ -233,6 +247,53 @@ function addProvisoes(wb: ExcelJS.Workbook, provisoes: Provisao[]) {
   ws.getColumn("saldo").numFmt = MOEDA;
 }
 
+const TIPO_ESPECIAL_LABEL: Record<string, string> = {
+  ferias: "Férias",
+  decimo_1a: "13º — 1ª parcela",
+  decimo_2a: "13º — 2ª parcela",
+};
+
+function addFeriasDecimo(wb: ExcelJS.Workbook, itens: ItemEspecial[]) {
+  const ws = wb.addWorksheet("Ferias-13o");
+
+  ws.columns = [
+    { header: "Funcionário", key: "nome", width: 30 },
+    { header: "CPF", key: "cpf", width: 16 },
+    { header: "Tipo", key: "tipo", width: 20 },
+    { header: "Base", key: "base", width: 16 },
+    { header: "Memória da Média", key: "memoria", width: 40 },
+    { header: "Avos", key: "avos", width: 8 },
+    { header: "Proventos", key: "proventos", width: 16 },
+    { header: "INSS", key: "inss", width: 14 },
+    { header: "IRRF", key: "irrf", width: 14 },
+    { header: "Líquido", key: "liquido", width: 16 },
+  ];
+
+  for (const item of itens) {
+    ws.addRow({
+      nome: item.employee_nome,
+      cpf: item.employee_cpf,
+      tipo: TIPO_ESPECIAL_LABEL[item.tipo] ?? item.tipo,
+      base: item.base,
+      memoria: item.memoria_media,
+      avos: item.avos ?? "",
+      proventos: item.total_proventos,
+      inss: item.inss,
+      irrf: item.irrf,
+      liquido: item.liquido,
+    });
+  }
+
+  if (itens.length === 0) {
+    ws.addRow({ nome: "Nenhum lançamento especial nesta competência." });
+  }
+
+  estiloCabecalho(ws, 1, 10);
+  ["base", "proventos", "inss", "irrf", "liquido"].forEach((k) => {
+    ws.getColumn(k).numFmt = MOEDA;
+  });
+}
+
 export async function gerarPacoteContador(input: PacoteInput): Promise<Buffer> {
   const wb = new ExcelJS.Workbook();
   wb.creator = "rrb-escola";
@@ -242,6 +303,9 @@ export async function gerarPacoteContador(input: PacoteInput): Promise<Buffer> {
   addAnalitico(wb, input.itens);
   addRpaPj(wb, input.itens);
   addProvisoes(wb, input.provisoes);
+  if (input.itensEspeciais && input.itensEspeciais.length > 0) {
+    addFeriasDecimo(wb, input.itensEspeciais);
+  }
 
   const buffer = await wb.xlsx.writeBuffer();
   return Buffer.from(buffer);

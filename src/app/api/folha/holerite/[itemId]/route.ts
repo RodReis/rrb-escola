@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { createServerClient } from "@/lib/supabase/server";
 import { requirePermission } from "@/lib/auth/session";
 import { getItemLancamentos } from "@/lib/data/folha";
-import { gerarHoleritePdf } from "@/lib/folha/holerite-pdf";
+import { gerarHoleritePdf, HoleriteOpcoes } from "@/lib/folha/holerite-pdf";
 
 export async function GET(
   _req: Request,
@@ -17,7 +17,8 @@ export async function GET(
     .from("folha_itens")
     .select(
       `id, base_inss, base_irrf, base_fgts, total_proventos, total_descontos, liquido,
-       folha_runs:run_id(competencia, companies:company_id(name, cnpj)),
+       periodo_aquisitivo_id,
+       folha_runs:run_id(competencia, tipo, companies:company_id(name, cnpj, endereco, cidade)),
        folha_contratos:contrato_id(
          id,
          cargo,
@@ -34,11 +35,11 @@ export async function GET(
     return NextResponse.json({ error: "Item não encontrado" }, { status: 404 });
   }
 
-  const lancamentos = await getItemLancamentos(itemId);
-
+  type CompanyShape = { name: string; cnpj: string; endereco: string | null; cidade: string | null };
   type RunShape = {
     competencia: string;
-    companies: { name: string; cnpj: string } | null;
+    tipo: string;
+    companies: CompanyShape | null;
   };
   type ContratoShape = {
     id: string;
@@ -53,8 +54,11 @@ export async function GET(
   const contrato = item.folha_contratos as unknown as ContratoShape | null;
   const itemData = item as unknown as Record<string, unknown>;
 
+  const runTipo = run?.tipo ?? "mensal";
   const empresaNome = run?.companies?.name ?? "—";
   const empresaCnpj = run?.companies?.cnpj ?? "";
+  const empresaEndereco = run?.companies?.endereco ?? "";
+  const empresaCidade = run?.companies?.cidade ?? "";
   const competencia = run?.competencia ?? "";
   const funcionarioNome = contrato?.employees?.name ?? "—";
   const funcionarioCpf = contrato?.employees?.cpf ?? "";
@@ -77,6 +81,8 @@ export async function GET(
   const liquido = Number(itemData.liquido ?? 0);
   const fgtsMes = baseFgts * 0.08;
 
+  const lancamentos = await getItemLancamentos(itemId);
+
   type LancRow = {
     valor: number;
     referencia: string | null;
@@ -96,10 +102,6 @@ export async function GET(
       l.tipo === "desconto" &&
       (l.codigo.toLowerCase() === "irrf" || l.codigo.toLowerCase().startsWith("irrf")),
   );
-  const faixaIrrf =
-    irrfLanc && baseIrrf > 0 && irrfLanc.valor > 0
-      ? null
-      : null;
 
   const irrfStoredRef = irrfLanc?.referencia ?? null;
   const faixaIrrfPct = (() => {
@@ -117,8 +119,59 @@ export async function GET(
     return proventosBase > 0 ? proventosBase : null;
   })();
 
+  let tipoFolhaLabel = "Folha Mensal";
+  let opcoes: HoleriteOpcoes | undefined;
+
+  if (runTipo === "ferias") {
+    const periodoAquisitivoId = itemData.periodo_aquisitivo_id as string | null;
+
+    let periodoAquisitivoStr = "—";
+    let gozoStr = "—";
+
+    if (periodoAquisitivoId) {
+      const { data: periodo } = await supabase
+        .from("folha_periodos_aquisitivos")
+        .select("inicio, fim, gozo_inicio, gozo_dias")
+        .eq("id", periodoAquisitivoId)
+        .single();
+
+      if (periodo) {
+        const fmtD = (iso: string | null) => {
+          if (!iso) return "—";
+          const [y, m, d] = iso.split("-");
+          return `${d}/${m}/${y}`;
+        };
+        periodoAquisitivoStr = `${fmtD(periodo.inicio)} a ${fmtD(periodo.fim)}`;
+        const gozoDias = periodo.gozo_dias ?? 30;
+        gozoStr = `${fmtD(periodo.gozo_inicio)} (${gozoDias} dias)`;
+      }
+    }
+
+    tipoFolhaLabel = "Recibo de Férias";
+    opcoes = {
+      titulo: "Recibo de Férias",
+      assinatura: true,
+      cabecalhoExtra: [
+        `Período aquisitivo: ${periodoAquisitivoStr}`,
+        `Gozo: ${gozoStr}`,
+      ],
+      ferias: {
+        periodoAquisitivo: periodoAquisitivoStr,
+        gozo: gozoStr,
+        empresaEndereco,
+        empresaCidade,
+      },
+    };
+  } else if (runTipo === "decimo_1a") {
+    tipoFolhaLabel = "Recibo 13º Salário — 1ª parcela";
+    opcoes = { titulo: tipoFolhaLabel };
+  } else if (runTipo === "decimo_2a") {
+    tipoFolhaLabel = "Recibo 13º Salário — 2ª parcela";
+    opcoes = { titulo: tipoFolhaLabel };
+  }
+
   const buffer = gerarHoleritePdf({
-    empresa: { nome: empresaNome, cnpj: empresaCnpj },
+    empresa: { nome: empresaNome, cnpj: empresaCnpj, endereco: empresaEndereco, cidade: empresaCidade },
     funcionario: {
       codigo: funcionarioCodigo,
       nome: funcionarioNome,
@@ -128,7 +181,7 @@ export async function GET(
       admissao: funcionarioAdmissao,
     },
     competencia,
-    tipoFolha: "Folha Mensal",
+    tipoFolha: tipoFolhaLabel,
     lancamentos: lancRows,
     bases: {
       inss: baseInss,
@@ -143,9 +196,9 @@ export async function GET(
       liquido,
       fgtsMes,
     },
-  });
+  }, opcoes);
 
-  const safeName = `holerite_${funcionarioNome.replace(/\s+/g, "_")}_${competencia}.pdf`;
+  const safeName = `holerite_${funcionarioNome.replace(/\s+/g, "_")}_${competencia}_${runTipo}.pdf`;
 
   return new NextResponse(Buffer.from(buffer), {
     status: 200,
