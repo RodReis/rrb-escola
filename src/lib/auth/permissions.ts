@@ -42,6 +42,7 @@ export const MODULOS = {
   "valores-praticados": { grupo: "financeiro", nome: "Valores Praticados" },
   bolsistas: { grupo: "financeiro", nome: "Bolsistas" },
   "rh.folha": { grupo: "financeiro", nome: "Folha de Pagamento" },
+  "rh.folha-v2": { grupo: "financeiro", nome: "Folha de Pagamento v2" },
   // rh
   "rh.funcionarios": { grupo: "rh", nome: "Funcionários" },
   "rh.empresas": { grupo: "rh", nome: "Empresas" },
