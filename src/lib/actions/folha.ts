@@ -190,6 +190,11 @@ export async function transicionarRunAction(formData: FormData) {
   revalidatePath("/rh/folha-v2");
 }
 
+export async function validarRunAction(runId: string): Promise<string[]> {
+  await requirePermission("rh.folha-v2", "read");
+  return validarRun(runId);
+}
+
 export async function reabrirRunAction(formData: FormData) {
   const session = await requirePermission("rh.folha-v2", "delete");
   if (session.profile.perfil !== "admin") throw new Error("Apenas admin reabre folha");
