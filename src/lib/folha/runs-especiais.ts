@@ -1,3 +1,4 @@
+import type { SupabaseClient } from "@supabase/supabase-js";
 import { createServerClient } from "@/lib/supabase/server";
 import { getFaixasVigentes } from "@/lib/data/folha";
 import { avos, baseCalculo13Ferias } from "./engine/avos";
@@ -31,8 +32,9 @@ async function contratosCltAtivos(
   companyId: string,
   tipo: string,
   anoRef: number,
+  client?: SupabaseClient,
 ): Promise<Array<{ contrato: ContratoEspecial; periodo?: PeriodoAgendado }>> {
-  const supabase = await createServerClient();
+  const supabase = client ?? (await createServerClient());
 
   const { data: config, error: cfgErr } = await supabase
     .from("folha_config")
@@ -141,8 +143,9 @@ async function contratosComFeriasAgendadas(
   companyId: string,
   janela: string | undefined,
   competencia: string,
+  client?: SupabaseClient,
 ): Promise<Array<{ contrato: ContratoEspecial; periodo?: PeriodoAgendado }>> {
-  const supabase = await createServerClient();
+  const supabase = client ?? (await createServerClient());
 
   const [ano, mes] = competencia.split("-").map(Number);
   const proxMesAno = mes === 12 ? ano + 1 : ano;
@@ -247,8 +250,8 @@ async function contratosComFeriasAgendadas(
   return resultado;
 }
 
-async function basesUltimos12(contratoId: string, competencia: string): Promise<number[]> {
-  const supabase = await createServerClient();
+async function basesUltimos12(contratoId: string, competencia: string, client?: SupabaseClient): Promise<number[]> {
+  const supabase = client ?? (await createServerClient());
   const { data, error } = await supabase
     .from("folha_itens")
     .select("base_fgts, folha_runs!inner(competencia, tipo, status)")
@@ -264,8 +267,8 @@ async function basesUltimos12(contratoId: string, competencia: string): Promise<
   return (data ?? []).map((r) => Number((r as unknown as ItemBase).base_fgts));
 }
 
-async function valor1aPagaNoAno(contratoId: string, anoRef: number): Promise<number> {
-  const supabase = await createServerClient();
+async function valor1aPagaNoAno(contratoId: string, anoRef: number, client?: SupabaseClient): Promise<number> {
+  const supabase = client ?? (await createServerClient());
   const competenciaInicio = `${anoRef}-01`;
   const competenciaFim = `${anoRef}-12`;
 
@@ -290,8 +293,9 @@ async function persistirItemEspecial(
   contratoId: string,
   resultado: ResultadoEspecial,
   periodoId?: string,
+  client?: SupabaseClient,
 ): Promise<void> {
-  const supabase = await createServerClient();
+  const supabase = client ?? (await createServerClient());
 
   const { data: contrato, error: cErr } = await supabase
     .from("folha_contratos")
@@ -359,8 +363,9 @@ export async function gerarRunEspecial(
   tipo: "decimo_1a" | "decimo_2a" | "ferias",
   geradaPor: string,
   janelaCodigo?: string,
+  client?: SupabaseClient,
 ) {
-  const supabase = await createServerClient();
+  const supabase = client ?? (await createServerClient());
 
   const { data: existente } = await supabase
     .from("folha_runs")
@@ -382,9 +387,9 @@ export async function gerarRunEspecial(
 
   let contratos: Array<{ contrato: ContratoEspecial; periodo?: PeriodoAgendado }> = [];
   if (tipo === "ferias") {
-    contratos = await contratosComFeriasAgendadas(companyId, janelaCodigo, competencia);
+    contratos = await contratosComFeriasAgendadas(companyId, janelaCodigo, competencia, supabase);
   } else {
-    contratos = await contratosCltAtivos(companyId, tipo, anoRef);
+    contratos = await contratosCltAtivos(companyId, tipo, anoRef, supabase);
   }
 
   if (contratos.length === 0) {
@@ -407,7 +412,7 @@ export async function gerarRunEspecial(
   const base13FeriasConfig = (config as { base_13_ferias: Record<string, string> }).base_13_ferias ?? {};
 
   for (const { contrato, periodo } of contratos) {
-    const basesAnteriores = await basesUltimos12(contrato.id, competencia);
+    const basesAnteriores = await basesUltimos12(contrato.id, competencia, supabase);
     const base = baseCalculo13Ferias(
       contrato.perfil_codigo,
       base13FeriasConfig,
@@ -423,7 +428,7 @@ export async function gerarRunEspecial(
         avos: avos(contrato.data_admissao, contrato.data_desligamento, anoRef),
       });
     } else if (tipo === "decimo_2a") {
-      const valor1a = await valor1aPagaNoAno(contrato.id, anoRef);
+      const valor1a = await valor1aPagaNoAno(contrato.id, anoRef, supabase);
       resultado = calcularDecimo2a({
         base,
         avos: avos(contrato.data_admissao, contrato.data_desligamento, anoRef),
@@ -444,7 +449,7 @@ export async function gerarRunEspecial(
       });
 
       if (contrato.antecipa_13_com_ferias) {
-        const valor1aJaPago = await valor1aPagaNoAno(contrato.id, anoRef);
+        const valor1aJaPago = await valor1aPagaNoAno(contrato.id, anoRef, supabase);
         if (!valor1aJaPago) {
           const d1 = calcularDecimo1a({
             base,
@@ -458,9 +463,9 @@ export async function gerarRunEspecial(
       }
     }
 
-    await persistirItemEspecial(run.id as string, contrato.id, resultado, periodo?.id);
+    await persistirItemEspecial(run.id as string, contrato.id, resultado, periodo?.id, supabase);
   }
 
-  await recalcularTotaisRun(run.id as string);
+  await recalcularTotaisRun(run.id as string, supabase);
   return { runId: run.id as string, criada: true };
 }

@@ -1,5 +1,7 @@
 import { createAdminClient } from "@/lib/supabase/admin";
 import { gerarRunAdmin } from "@/lib/folha/service";
+import { gerarRunEspecial } from "@/lib/folha/runs-especiais";
+import { marcarVencidos } from "@/lib/folha/aquisitivos";
 import { nthDiaUtil } from "@/lib/folha/date-utils";
 import { DEFAULT_SCHOOL_ID } from "@/lib/constants";
 
@@ -129,4 +131,154 @@ export async function jobAlertasFolha(hoje: Date): Promise<AlertaResult[]> {
   }
 
   return alertas;
+}
+
+type DecimoResult = { tipo: string; runId: string | null; criada: boolean; motivo?: string };
+
+export async function jobGerarDecimo(hoje: Date): Promise<DecimoResult[]> {
+  const supabase = createAdminClient();
+  const hojeMMDD = hoje.toISOString().slice(5, 10);
+  const competencia = hoje.toISOString().slice(0, 7);
+
+  const { data: configs } = await supabase
+    .from("folha_config")
+    .select("company_id, escola_id, decimo_gerar_dia, jobs");
+
+  const resultados: DecimoResult[] = [];
+
+  for (const cfg of configs ?? []) {
+    const jobs = cfg.jobs as { gerar_especiais?: boolean } | null;
+    if (!jobs?.gerar_especiais) continue;
+
+    const diaMap = cfg.decimo_gerar_dia as { decimo_1a?: string; decimo_2a?: string } | null;
+
+    for (const tipo of ["decimo_1a", "decimo_2a"] as const) {
+      if (diaMap?.[tipo] !== hojeMMDD) continue;
+      const r = await gerarRunEspecial(cfg.company_id as string, competencia, tipo, "cron", undefined, supabase);
+      resultados.push({ tipo, ...r });
+    }
+  }
+
+  return resultados;
+}
+
+type FeriasResult = { janela: string; runId: string | null; criada: boolean; motivo?: string };
+
+export async function jobGerarFerias(hoje: Date): Promise<FeriasResult[]> {
+  const supabase = createAdminClient();
+
+  const { data: configs } = await supabase
+    .from("folha_config")
+    .select("company_id, escola_id, ferias_janelas, ferias_gerar_antes_dias, jobs");
+
+  const resultados: FeriasResult[] = [];
+
+  for (const cfg of configs ?? []) {
+    const jobs = cfg.jobs as { gerar_especiais?: boolean } | null;
+    if (!jobs?.gerar_especiais) continue;
+
+    const janelas = (cfg.ferias_janelas as Array<{ codigo: string; mes_gozo: number }> | null) ?? [];
+    const antecipaDias = (cfg.ferias_gerar_antes_dias as number | null) ?? 30;
+
+    for (const janela of janelas) {
+      const alvo = new Date(hoje);
+      alvo.setUTCDate(alvo.getUTCDate() + antecipaDias);
+      if (alvo.getUTCMonth() + 1 !== janela.mes_gozo || hoje.getUTCDate() !== 1) continue;
+
+      const competencia = hoje.toISOString().slice(0, 7);
+      const r = await gerarRunEspecial(cfg.company_id as string, competencia, "ferias", "cron", janela.codigo, supabase);
+      resultados.push({ janela: janela.codigo, ...r });
+    }
+  }
+
+  return resultados;
+}
+
+type AquisitivoResult = { vencidosNovos: number; alertas: number };
+
+export async function jobAlertasAquisitivo(hoje: Date): Promise<AquisitivoResult> {
+  const supabase = createAdminClient();
+  const hojeISO = hoje.toISOString().slice(0, 10);
+
+  const vencidosNovos = await marcarVencidos(hojeISO, supabase);
+
+  const { data: configs } = await supabase
+    .from("folha_config")
+    .select("alerta_aquisitivo_dias");
+
+  const marcos: number[] = (configs?.[0]?.alerta_aquisitivo_dias as number[] | null) ?? [60, 30];
+
+  type PeriodoRow = {
+    id: string;
+    fim: string;
+    status: string;
+    folha_contratos: { escola_id: string; employees: { name: string } | null } | null;
+  };
+
+  const { data: periodos, error: pErr } = await supabase
+    .from("folha_periodos_aquisitivos")
+    .select("id, fim, status, folha_contratos(escola_id, employees(name))")
+    .in("status", ["aberto", "vencido"]);
+  if (pErr) throw pErr;
+
+  const novas: Array<{
+    escola_id: string;
+    perfil_id: null;
+    tipo: string;
+    descricao: string;
+    href: string;
+    severidade: "info" | "atencao";
+  }> = [];
+
+  for (const p of (periodos ?? []) as unknown as PeriodoRow[]) {
+    const escolaId = p.folha_contratos?.escola_id ?? DEFAULT_SCHOOL_ID;
+    const nome = p.folha_contratos?.employees?.name ?? "Funcionário";
+
+    if (p.status === "vencido") {
+      novas.push({
+        escola_id: escolaId,
+        perfil_id: null,
+        tipo: "folha",
+        descricao: `Férias vencidas (pagto em dobro): ${nome}`,
+        href: "/rh/folha-v2/ferias",
+        severidade: "atencao",
+      });
+      continue;
+    }
+
+    const limite = new Date(`${p.fim}T12:00:00Z`);
+    limite.setUTCMonth(limite.getUTCMonth() + 11);
+    const dias = Math.floor((limite.getTime() - new Date(`${hojeISO}T12:00:00Z`).getTime()) / 86400000);
+
+    if (marcos.includes(dias)) {
+      novas.push({
+        escola_id: escolaId,
+        perfil_id: null,
+        tipo: "folha",
+        descricao: `Férias de ${nome} vencem em ${dias} dias sem agendamento`,
+        href: "/rh/folha-v2/ferias",
+        severidade: dias <= 30 ? "atencao" : "info",
+      });
+    }
+  }
+
+  if (novas.length) {
+    const { data: existentes } = await supabase
+      .from("notificacoes")
+      .select("descricao")
+      .eq("tipo", "folha")
+      .eq("href", "/rh/folha-v2/ferias")
+      .gte("criada_em", `${hojeISO}T00:00:00Z`)
+      .lte("criada_em", `${hojeISO}T23:59:59Z`);
+
+    const jaAlertadas = new Set((existentes ?? []).map((n) => n.descricao as string));
+    const deduplicadas = novas.filter((n) => !jaAlertadas.has(n.descricao));
+
+    if (deduplicadas.length) {
+      const { error: insErr } = await supabase.from("notificacoes").insert(deduplicadas);
+      if (insErr) throw insErr;
+    }
+  }
+
+  return { vencidosNovos, alertas: novas.length };
 }

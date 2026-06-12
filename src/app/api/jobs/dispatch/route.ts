@@ -2,7 +2,13 @@ import { NextResponse } from "next/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { processarLote } from "@/lib/comunicados/processar";
 import { processarLembretes } from "@/lib/lembretes/processar";
-import { jobGerarFolha, jobAlertasFolha } from "@/lib/actions/folha-jobs";
+import {
+  jobGerarFolha,
+  jobAlertasFolha,
+  jobGerarDecimo,
+  jobGerarFerias,
+  jobAlertasAquisitivo,
+} from "@/lib/actions/folha-jobs";
 
 export const dynamic = "force-dynamic";
 export const maxDuration = 60;
@@ -15,13 +21,22 @@ export async function GET(req: Request) {
   }
 
   const supabase = createAdminClient();
-  const hoje = new Date();
+
+  let hoje = new Date();
+  if (process.env.NODE_ENV !== "production") {
+    const url = new URL(req.url);
+    const hojeParam = url.searchParams.get("hoje");
+    if (hojeParam) hoje = new Date(`${hojeParam}T12:00:00Z`);
+  }
 
   const jobs: Array<[string, () => Promise<unknown>]> = [
     ["comunicados", () => processarLote()],
     ["lembretes", () => processarLembretes({ forcarReenvio: false })],
     ["folha_gerar", () => jobGerarFolha(hoje)],
     ["folha_alertas", () => jobAlertasFolha(hoje)],
+    ["folha_decimo", () => jobGerarDecimo(hoje)],
+    ["folha_ferias", () => jobGerarFerias(hoje)],
+    ["folha_aquisitivos", () => jobAlertasAquisitivo(hoje)],
   ];
 
   const resultados: Record<string, unknown> = {};

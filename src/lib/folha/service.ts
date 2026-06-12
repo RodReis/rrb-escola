@@ -409,8 +409,8 @@ export async function recalcularItemDb(
   return resultado;
 }
 
-export async function recalcularTotaisRun(runId: string) {
-  const supabase = await createServerClient();
+export async function recalcularTotaisRun(runId: string, client?: SupabaseClient) {
+  const supabase = client ?? (await createServerClient());
 
   const { data: itens } = await supabase
     .from("folha_itens")
