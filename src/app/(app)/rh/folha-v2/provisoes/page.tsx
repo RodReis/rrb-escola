@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { PageHeader } from "@/components/ui/page-header";
 import { Card } from "@/components/ui/card";
 import { DataTableShell } from "@/components/ui/data-table";
@@ -14,6 +15,12 @@ const TIPO_LABEL: Record<string, string> = {
   inss_patronal: "INSS Patronal",
 };
 
+function fmtDate(iso: string | null) {
+  if (!iso) return null;
+  const [y, m, d] = iso.slice(0, 10).split("-");
+  return `${d}/${m}/${y}`;
+}
+
 type Provisao = {
   id: string;
   contrato_id: string;
@@ -21,6 +28,8 @@ type Provisao = {
   tipo: string;
   valor_mes: number;
   saldo_acumulado: number;
+  baixada_em: string | null;
+  run_id: string | null;
   folha_contratos: { employees: { name: string } | null } | null;
 };
 
@@ -29,15 +38,24 @@ export default async function ProvisoesPage() {
   const rawData = await getProvisoesSaldo();
   const provisoes = rawData as unknown as Provisao[];
 
-  const byFuncionario = new Map<string, { nome: string; saldos: Record<string, number> }>();
+  const byFuncionario = new Map<string, {
+    nome: string;
+    saldos: Record<string, number>;
+    baixada_em: string | null;
+    run_id: string | null;
+  }>();
   for (const p of provisoes) {
     const nome = p.folha_contratos?.employees?.name ?? "—";
     if (!byFuncionario.has(p.contrato_id)) {
-      byFuncionario.set(p.contrato_id, { nome, saldos: {} });
+      byFuncionario.set(p.contrato_id, { nome, saldos: {}, baixada_em: null, run_id: null });
     }
     const entry = byFuncionario.get(p.contrato_id)!;
     const prev = entry.saldos[p.tipo] ?? 0;
     if (p.saldo_acumulado > prev) entry.saldos[p.tipo] = p.saldo_acumulado;
+    if (p.baixada_em && (!entry.baixada_em || p.baixada_em > entry.baixada_em)) {
+      entry.baixada_em = p.baixada_em;
+      entry.run_id = p.run_id;
+    }
   }
 
   const tipos = ["decimo_terceiro", "ferias", "fgts", "inss_patronal"];
@@ -73,7 +91,7 @@ export default async function ProvisoesPage() {
           ) : undefined
         }
       >
-        <table className="ds-dt min-w-[720px]">
+        <table className="ds-dt min-w-[820px]">
           <thead>
             <tr>
               <th>Funcionário</th>
@@ -81,18 +99,20 @@ export default async function ProvisoesPage() {
                 <th key={t} className="text-right">{TIPO_LABEL[t]}</th>
               ))}
               <th className="text-right">Total</th>
+              <th className="text-right">Baixado em</th>
             </tr>
           </thead>
           <tbody>
             {byFuncionario.size === 0 ? (
               <tr>
-                <td colSpan={6} className="py-8 text-center text-sm text-ink/40">
+                <td colSpan={7} className="py-8 text-center text-sm text-ink/40">
                   Nenhuma provisão registrada.
                 </td>
               </tr>
             ) : null}
             {allEntries.map(([contratoId, f]) => {
               const total = Object.values(f.saldos).reduce((s: number, v: number) => s + v, 0);
+              const baixadaLabel = fmtDate(f.baixada_em);
               return (
                 <tr key={contratoId}>
                   <td className="font-medium">{f.nome}</td>
@@ -102,6 +122,20 @@ export default async function ProvisoesPage() {
                     </td>
                   ))}
                   <td className="text-right tabular-nums font-semibold">{money.format(total)}</td>
+                  <td className="text-right tabular-nums text-sm text-ink/60">
+                    {baixadaLabel ? (
+                      f.run_id ? (
+                        <Link
+                          href={`/rh/folha-v2/${f.run_id}`}
+                          className="text-brand hover:underline"
+                        >
+                          {baixadaLabel}
+                        </Link>
+                      ) : (
+                        baixadaLabel
+                      )
+                    ) : "—"}
+                  </td>
                 </tr>
               );
             })}
@@ -116,6 +150,7 @@ export default async function ProvisoesPage() {
                 );
               })}
               <td className="text-right tabular-nums">{money.format(totalGeral)}</td>
+              <td />
             </tr>
           </tfoot>
         </table>

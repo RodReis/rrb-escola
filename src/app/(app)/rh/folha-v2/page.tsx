@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Plus, FileText } from "lucide-react";
+import { Plus, FileText, AlertCircle, CheckCircle2 } from "lucide-react";
 import { Button, ButtonLink } from "@/components/ui/button";
 import { PageHeader } from "@/components/ui/page-header";
 import { Card } from "@/components/ui/card";
@@ -7,6 +7,7 @@ import { DataTableShell } from "@/components/ui/data-table";
 import { StatusPill, type StatusTone } from "@/components/ui/status-pill";
 import { getRuns } from "@/lib/data/folha";
 import { gerarFolhaManualAction } from "@/lib/actions/folha";
+import { gerarRunEspecialAction } from "@/lib/actions/folha-especiais";
 import { money } from "@/lib/constants";
 import { createServerClient } from "@/lib/supabase/server";
 import { requirePermission } from "@/lib/auth/session";
@@ -38,8 +39,25 @@ function mesLabel(competencia: string) {
   return `${meses[Number(m) - 1]} ${y}`;
 }
 
-export default async function FolhaV2Page() {
+const TIPO_LABEL: Record<string, string> = {
+  decimo_1a: "13º 1ª",
+  decimo_2a: "13º 2ª",
+  ferias: "Férias",
+};
+
+const TIPO_TONE: Record<string, StatusTone> = {
+  decimo_1a: "neutral",
+  decimo_2a: "neutral",
+  ferias: "warning",
+};
+
+export default async function FolhaV2Page({
+  searchParams,
+}: {
+  searchParams: Promise<{ erro?: string; ok?: string }>;
+}) {
   await requirePermission("rh.folha-v2", "read");
+  const { erro, ok } = await searchParams;
 
   const supabase = await createServerClient();
   const [runs, companiesRes] = await Promise.all([
@@ -59,6 +77,17 @@ export default async function FolhaV2Page() {
         counter={runs.length.toLocaleString("pt-BR")}
         description="Folhas mensais por empresa — motor de rubricas v2."
       />
+
+      {erro ? (
+        <div className="flex items-center gap-2 rounded-ui bg-danger/10 p-3 text-sm font-semibold text-danger">
+          <AlertCircle size={16} /> {erro}
+        </div>
+      ) : null}
+      {ok ? (
+        <div className="flex items-center gap-2 rounded-ui bg-success/10 p-3 text-sm font-semibold text-success">
+          <CheckCircle2 size={16} /> Folha especial gerada com sucesso.
+        </div>
+      ) : null}
 
       <Card>
         <div className="mb-4 text-xs font-bold uppercase tracking-kicker text-ink/55">
@@ -82,6 +111,42 @@ export default async function FolhaV2Page() {
             <Plus size={14} /> Gerar folha
           </Button>
         </form>
+
+        <div className="mt-6 border-t border-line pt-5">
+          <div className="mb-3 text-xs font-bold uppercase tracking-kicker text-ink/55">
+            Gerar 13º / Férias
+          </div>
+          <form action={gerarRunEspecialAction} className="flex flex-wrap items-end gap-3">
+            <label className="flex flex-col gap-1 text-sm font-medium text-ink/80">
+              Empresa
+              <select name="company_id" required>
+                <option value="">Selecione…</option>
+                {companies.map((c) => (
+                  <option key={c.id} value={c.id}>{c.name}</option>
+                ))}
+              </select>
+            </label>
+            <label className="flex flex-col gap-1 text-sm font-medium text-ink/80">
+              Competência
+              <input name="competencia" type="month" defaultValue={competenciaAtual} required />
+            </label>
+            <label className="flex flex-col gap-1 text-sm font-medium text-ink/80">
+              Tipo
+              <select name="tipo" required>
+                <option value="decimo_1a">13º 1ª parcela</option>
+                <option value="decimo_2a">13º 2ª parcela</option>
+                <option value="ferias">Férias</option>
+              </select>
+            </label>
+            <label className="flex flex-col gap-1 text-sm font-medium text-ink/80">
+              Janela (férias, opcional)
+              <input name="janela" type="text" placeholder="Ex.: J1" className="w-24" />
+            </label>
+            <Button type="submit" variant="accent">
+              <Plus size={14} /> Gerar 13º / Férias
+            </Button>
+          </form>
+        </div>
       </Card>
 
       <DataTableShell
@@ -93,11 +158,12 @@ export default async function FolhaV2Page() {
           ) : undefined
         }
       >
-        <table className="ds-dt min-w-[820px]">
+        <table className="ds-dt min-w-[900px]">
           <thead>
             <tr>
               <th>Competência</th>
               <th>Empresa</th>
+              <th>Tipo</th>
               <th>Status</th>
               <th className="text-right">Proventos</th>
               <th className="text-right">Líquido</th>
@@ -107,7 +173,7 @@ export default async function FolhaV2Page() {
           <tbody>
             {runs.length === 0 ? (
               <tr>
-                <td colSpan={6} className="py-12">
+                <td colSpan={7} className="py-12">
                   <div className="flex flex-col items-center justify-center gap-2 text-ink/40">
                     <FileText size={28} />
                     <p className="text-sm">Nenhuma folha gerada ainda.</p>
@@ -117,10 +183,20 @@ export default async function FolhaV2Page() {
             ) : null}
             {runs.map((r) => {
               const company = r.companies as { name: string } | null;
+              const tipoRaw = (r as { tipo?: string }).tipo;
+              const tipoLabel = tipoRaw ? TIPO_LABEL[tipoRaw] : null;
+              const tipoTone = tipoRaw ? (TIPO_TONE[tipoRaw] ?? "neutral") : null;
               return (
                 <tr key={r.id}>
                   <td className="font-medium tabular-nums">{mesLabel(r.competencia)}</td>
                   <td className="text-ink/80">{company?.name ?? "—"}</td>
+                  <td>
+                    {tipoLabel ? (
+                      <StatusPill tone={tipoTone ?? "neutral"}>{tipoLabel}</StatusPill>
+                    ) : (
+                      <span className="text-xs text-ink/40">Mensal</span>
+                    )}
+                  </td>
                   <td>
                     <StatusPill tone={STATUS_TONE[r.status] ?? "neutral"}>
                       {STATUS_LABEL[r.status] ?? r.status}

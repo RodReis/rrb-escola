@@ -69,6 +69,8 @@ export const contratoSchema = z
     aulas_manha: optionalInt,
     aulas_tarde: optionalInt,
     aulas_noite: optionalInt,
+    antecipa_13_com_ferias: z.preprocess((v) => v === "on" || v === true, z.boolean()).default(false),
+    janela_ferias: z.string().max(20).optional().nullable(),
   })
   .superRefine((data, ctx) => {
     const temSalario = data.salario_base != null && data.salario_base > 0;

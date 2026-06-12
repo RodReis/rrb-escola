@@ -214,6 +214,8 @@ export async function createContratoAction(formData: FormData) {
     aulas_manha: formText(formData, "aulas_manha"),
     aulas_tarde: formText(formData, "aulas_tarde"),
     aulas_noite: formText(formData, "aulas_noite"),
+    antecipa_13_com_ferias: formData.get("antecipa_13_com_ferias"),
+    janela_ferias: formText(formData, "janela_ferias"),
   });
   if (!parsed.success) {
     redirect(
@@ -246,6 +248,8 @@ export async function createContratoAction(formData: FormData) {
       cargo: parsed.data.cargo ?? null,
       cbo: parsed.data.cbo ?? null,
       aulas_por_turno,
+      antecipa_13_com_ferias: parsed.data.antecipa_13_com_ferias,
+      janela_ferias: parsed.data.janela_ferias ?? null,
     })
     .select("id")
     .single();
@@ -277,6 +281,8 @@ export async function updateContratoAction(formData: FormData) {
     aulas_manha: formText(formData, "aulas_manha"),
     aulas_tarde: formText(formData, "aulas_tarde"),
     aulas_noite: formText(formData, "aulas_noite"),
+    antecipa_13_com_ferias: formData.get("antecipa_13_com_ferias"),
+    janela_ferias: formText(formData, "janela_ferias"),
   });
   if (!parsed.success) {
     redirect(
@@ -306,6 +312,8 @@ export async function updateContratoAction(formData: FormData) {
       cargo: parsed.data.cargo ?? null,
       cbo: parsed.data.cbo ?? null,
       aulas_por_turno,
+      antecipa_13_com_ferias: parsed.data.antecipa_13_com_ferias,
+      janela_ferias: parsed.data.janela_ferias ?? null,
     })
     .eq("id", id!)
     .eq("escola_id", DEFAULT_SCHOOL_ID);
@@ -424,6 +432,31 @@ export async function updateConfigAction(formData: FormData) {
   const regra_tipo = formText(formData, "regra_tipo") ?? "dia_util";
   const regra_n = formNumber(formData, "regra_n") ?? 5;
 
+  const decimo_1a_prazo = formText(formData, "decimo_1a_prazo") ?? null;
+  const decimo_2a_prazo = formText(formData, "decimo_2a_prazo") ?? null;
+  const ferias_gerar_antes_dias = formNumber(formData, "ferias_gerar_antes_dias") ?? 30;
+  const ferias_pagar_antes_dias = formNumber(formData, "ferias_pagar_antes_dias") ?? 2;
+  const alerta_aquisitivo_dias = formNumber(formData, "alerta_aquisitivo_dias") ?? 60;
+  const base_13_ferias = formText(formData, "base_13_ferias") ?? "salario";
+  const recesso_inicio = formText(formData, "recesso_inicio") ?? null;
+  const recesso_fim = formText(formData, "recesso_fim") ?? null;
+  const jobs_gerar_especiais = formData.get("jobs_gerar_especiais") === "on";
+
+  let ferias_janelas: unknown = null;
+  const janelasRaw = formText(formData, "ferias_janelas") ?? "";
+  if (janelasRaw.trim()) {
+    try {
+      ferias_janelas = JSON.parse(janelasRaw);
+    } catch {
+      redirect(
+        `/rh/folha-v2/config?company_id=${companyId}&erro=${encodeURIComponent("JSON de janelas inválido")}`
+      );
+    }
+  }
+
+  const recesso =
+    recesso_inicio && recesso_fim ? { inicio: recesso_inicio, fim: recesso_fim } : null;
+
   const supabase = await createServerClient();
   const { error } = await supabase.from("folha_config").upsert(
     {
@@ -439,6 +472,15 @@ export async function updateConfigAction(formData: FormData) {
       categoria_despesa_encargos: categoria_despesa_encargos ?? null,
       feriados_locais,
       regra_pagamento: { tipo: regra_tipo, n: regra_n },
+      decimo_1a_prazo,
+      decimo_2a_prazo,
+      ferias_gerar_antes_dias,
+      ferias_pagar_antes_dias,
+      alerta_aquisitivo_dias,
+      base_13_ferias,
+      recesso,
+      ferias_janelas: ferias_janelas ?? null,
+      jobs: { gerar_especiais: jobs_gerar_especiais },
     },
     { onConflict: "company_id" }
   );

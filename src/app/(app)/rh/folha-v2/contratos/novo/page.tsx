@@ -131,6 +131,18 @@ export default async function NovoContratoPage({
             <input name="data_admissao" type="date" required className="w-48" />
           </label>
 
+          <div className="grid grid-cols-2 gap-4">
+            <label className="flex flex-col gap-1 text-sm font-medium text-ink/80">
+              Janela de férias (ex.: J1)
+              <input name="janela_ferias" type="text" maxLength={20} placeholder="Opcional" />
+            </label>
+            <div className="flex flex-col gap-3 pt-5">
+              <label className="flex items-center gap-2 text-sm font-medium text-ink/80 cursor-pointer">
+                <input type="checkbox" name="antecipa_13_com_ferias" /> Antecipar 13º com férias
+              </label>
+            </div>
+          </div>
+
           <label className="flex items-center gap-2 text-sm font-medium text-ink/80 cursor-pointer">
             <input type="checkbox" name="ativo" defaultChecked /> Contrato ativo
           </label>

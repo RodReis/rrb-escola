@@ -60,6 +60,8 @@ export default async function EditarContratoPage({
     cargo: string | null;
     cbo: string | null;
     aulas_por_turno: AulasPorTurno;
+    antecipa_13_com_ferias: boolean;
+    janela_ferias: string | null;
     employees: { id: string; name: string } | null;
     companies: { id: string; name: string } | null;
     folha_perfis_calculo: { id: string; codigo: string; nome: string } | null;
@@ -195,6 +197,20 @@ export default async function EditarContratoPage({
               Data de desligamento
               <input name="data_desligamento" type="date" defaultValue={c.data_desligamento ?? ""} className="w-48" />
             </label>
+          </div>
+
+          <div className="grid grid-cols-2 gap-4">
+            <label className="flex flex-col gap-1 text-sm font-medium text-ink/80">
+              Janela de férias (ex.: J1)
+              <input name="janela_ferias" type="text" maxLength={20}
+                defaultValue={c.janela_ferias ?? ""} placeholder="Opcional" />
+            </label>
+            <div className="flex flex-col gap-3 pt-5">
+              <label className="flex items-center gap-2 text-sm font-medium text-ink/80 cursor-pointer">
+                <input type="checkbox" name="antecipa_13_com_ferias"
+                  defaultChecked={c.antecipa_13_com_ferias} /> Antecipar 13º com férias
+              </label>
+            </div>
           </div>
 
           <label className="flex items-center gap-2 text-sm font-medium text-ink/80 cursor-pointer">

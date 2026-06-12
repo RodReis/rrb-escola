@@ -156,6 +156,48 @@ export async function getEmployeesWithoutContract() {
   return (empData ?? []).filter((e) => !comContrato.has(e.id));
 }
 
+export async function getPeriodosAquisitivos() {
+  const supabase = await createServerClient();
+  const hoje = new Date().toISOString().slice(0, 10);
+  const limite60 = new Date();
+  limite60.setDate(limite60.getDate() + 60);
+  const limite60ISO = limite60.toISOString().slice(0, 10);
+
+  const { data, error } = await supabase
+    .from("folha_periodos_aquisitivos")
+    .select(
+      `id, inicio, fim, status, gozo_inicio, gozo_dias, dias_abono, dias_direito, janela,
+       folha_contratos(id, employees(name), companies(id, name))`
+    )
+    .order("fim", { ascending: true });
+  if (error) throw error;
+
+  const periodos = (data ?? []) as unknown as PeriodoAquisitivo[];
+  const vencendoEm60 = periodos.filter((p) => {
+    if (!["aberto", "vencido"].includes(p.status)) return false;
+    return p.fim <= limite60ISO && p.fim >= hoje;
+  });
+
+  return { periodos, vencendoEm60: vencendoEm60.length };
+}
+
+export type PeriodoAquisitivo = {
+  id: string;
+  inicio: string;
+  fim: string;
+  status: string;
+  gozo_inicio: string | null;
+  gozo_dias: number | null;
+  dias_abono: number | null;
+  dias_direito: number;
+  janela: string | null;
+  folha_contratos: {
+    id: string;
+    employees: { name: string } | null;
+    companies: { id: string; name: string } | null;
+  } | null;
+};
+
 export async function getCategoriasDespesa() {
   const supabase = await createServerClient();
   const { data, error } = await supabase

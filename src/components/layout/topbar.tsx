@@ -56,6 +56,7 @@ const RH_ITEMS: DropdownItem[] = [
   { href: "/rh/folha-v2/contratos", label: "Contratos", iconName: "FileText" },
   { href: "/rh/folha-v2/rubricas", label: "Rubricas", iconName: "Tags" },
   { href: "/rh/folha-v2/perfis", label: "Perfis de Cálculo", iconName: "Layers3" },
+  { href: "/rh/folha-v2/ferias", label: "Férias", iconName: "CalendarOff" },
   { href: "/rh/folha-v2/provisoes", label: "Provisões", iconName: "Receipt" },
   { href: "/rh/folha-v2/config", label: "Config. Folha", iconName: "Settings2" },
   { href: "/rh/folha-v2/historico", label: "Histórico", iconName: "History" },
