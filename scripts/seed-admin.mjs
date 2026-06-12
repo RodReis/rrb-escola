@@ -41,7 +41,7 @@ if (!user) {
     email,
     password,
     email_confirm: true,
-    user_metadata: { nome: "Administrador RRB Escola" }
+    user_metadata: { nome: "Administrador CRM Escola" }
   });
   if (createError) {
     console.error("Falha ao criar admin:", createError.message);
@@ -58,7 +58,7 @@ if (user) {
     {
       user_id: user.id,
       escola_id: escolaId,
-      nome: "Administrador RRB Escola",
+      nome: "Administrador CRM Escola",
       email,
       perfil: "admin",
       ativo: true

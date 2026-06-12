@@ -1,4 +1,4 @@
-# RRB Escola
+# CRM Escola
 
 Sistema Next.js 14 + Supabase para gestão escolar: alunos, matrículas, financeiro, RH/folha de pagamento, despesas operacionais, portaria e relatórios.
 

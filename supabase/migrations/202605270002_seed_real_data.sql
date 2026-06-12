@@ -60,7 +60,7 @@ SET row_security = off;
 -- Data for Name: escolas; Type: TABLE DATA; Schema: public; Owner: -
 --
 
-INSERT INTO public.escolas (id, nome, cnpj, telefone, email, endereco, cidade, uf, cep, created_at, updated_at) VALUES ('00000000-0000-0000-0000-000000000001', 'RRB Escola', NULL, NULL, NULL, NULL, NULL, NULL, NULL, '2026-05-17 03:21:48.947108+00', '2026-05-17 03:21:48.947108+00') ON CONFLICT DO NOTHING;
+INSERT INTO public.escolas (id, nome, cnpj, telefone, email, endereco, cidade, uf, cep, created_at, updated_at) VALUES ('00000000-0000-0000-0000-000000000001', 'CRM Escola', NULL, NULL, NULL, NULL, NULL, NULL, NULL, '2026-05-17 03:21:48.947108+00', '2026-05-17 03:21:48.947108+00') ON CONFLICT DO NOTHING;
 
 
 --

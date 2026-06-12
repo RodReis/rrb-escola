@@ -255,7 +255,7 @@ Layout A5 vertical:
 
 ```
 [cabeçalho escola]                      Recibo Nº: <pagamento.id curto>
-RRB Escola | CNPJ | endereço | telefone
+CRM Escola | CNPJ | endereço | telefone
 
 RECIBO DE PAGAMENTO
 ====================================================

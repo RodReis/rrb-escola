@@ -1,4 +1,4 @@
-# Roadmap MVP2 — RRB Escola
+d# Roadmap MVP2 — CRM Escola
 
 > Documento de referência. Não é spec executável — cada frente abaixo recebe seu próprio
 > spec (`docs/superpowers/specs/`) e plano de implementação no momento de execução.

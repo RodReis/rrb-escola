@@ -899,7 +899,7 @@ export function Topbar({ perfil }: { perfil: SessionProfile }) {
           <BrandMark />
           <span className="leading-none">
             <strong className="block text-lg font-black text-ink">Lectiva</strong>
-            <small className="text-[0.68rem] font-black uppercase tracking-[0.16em] text-accent">RRB Escola</small>
+            <small className="text-[0.68rem] font-black uppercase tracking-[0.16em] text-accent">CRM Escola</small>
           </span>
         </Link>
 

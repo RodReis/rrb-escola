@@ -19,7 +19,7 @@ export async function sendEmail({ to, subject, html }: SendEmailParams): Promise
   const resend = getResend();
   if (!resend) return { ok: false, reason: "RESEND_API_KEY not configured" };
 
-  const from = process.env.RESEND_FROM ?? "RRB Escola <onboarding@resend.dev>";
+  const from = process.env.RESEND_FROM ?? "CRM Escola <onboarding@resend.dev>";
 
   try {
     const { error } = await resend.emails.send({ from, to, subject, html });
@@ -46,13 +46,13 @@ export function renderPasswordResetEmail({
 <html>
 <head>
 <meta charset="utf-8">
-<title>RRB Escola — Nova senha</title>
+<title>CRM Escola — Nova senha</title>
 </head>
 <body style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #f5f6f8; padding: 24px;">
   <table width="100%" cellpadding="0" cellspacing="0" style="max-width: 560px; margin: 0 auto; background: #fff; border-radius: 8px; overflow: hidden; box-shadow: 0 1px 3px rgba(0,0,0,0.08);">
     <tr>
       <td style="background: linear-gradient(180deg, #1B3FB8 0%, #15349E 100%); padding: 24px; color: white;">
-        <h1 style="margin: 0; font-size: 18px; font-weight: 600;">RRB Escola</h1>
+        <h1 style="margin: 0; font-size: 18px; font-weight: 600;">CRM Escola</h1>
         <p style="margin: 4px 0 0; font-size: 12px; opacity: 0.7;">Sistema de Gestão Escolar</p>
       </td>
     </tr>

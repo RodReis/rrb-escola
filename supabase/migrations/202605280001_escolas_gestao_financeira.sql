@@ -6,7 +6,7 @@ alter table escolas
   add column if not exists gestao_financeira text not null default 'propria'
   check (gestao_financeira in ('propria', 'terceirizada'));
 
--- RRB Escola opera com cobrança terceirizada
+-- CRM Escola opera com cobrança terceirizada
 update escolas
   set gestao_financeira = 'terceirizada'
   where id = '00000000-0000-0000-0000-000000000001';

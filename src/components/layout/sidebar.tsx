@@ -44,7 +44,7 @@ export function Sidebar() {
         </span>
         <span>
           <strong className="block text-lg leading-none text-ink">Lectiva</strong>
-          <small className="text-[0.68rem] font-black uppercase text-accent">RRB Escola</small>
+          <small className="text-[0.68rem] font-black uppercase text-accent">CRM Escola</small>
         </span>
       </Link>
       <nav className="grid gap-1">

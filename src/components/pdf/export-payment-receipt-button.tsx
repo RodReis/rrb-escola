@@ -41,7 +41,7 @@ export function ExportPaymentReceiptButton({ pagamento, cobranca, aluno, saldoAp
 
     doc.setFont("helvetica", "bold");
     doc.setFontSize(13);
-    doc.text("RRB Escola", 12, y);
+    doc.text("CRM Escola", 12, y);
     doc.setFontSize(9);
     doc.setFont("helvetica", "normal");
     doc.text("CNPJ 00.000.000/0001-00 | (62) 3333-0000", 12, y + 5);

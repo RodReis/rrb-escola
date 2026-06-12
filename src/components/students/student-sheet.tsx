@@ -48,7 +48,7 @@ export function StudentSheetView({
   return (
     <div className="w-full bg-white p-4 shadow-soft">
       <header className="mb-3 border-b border-ink/30 pb-2 text-center">
-        <p className="text-xs font-bold uppercase tracking-wide text-ink">RRB Escola</p>
+        <p className="text-xs font-bold uppercase tracking-wide text-ink">CRM Escola</p>
         <p className="text-[0.65rem] text-muted">Goiânia / GO · Gerado em {generatedAt(geradoEm ?? new Date())}</p>
         <h1 className="mt-2 text-lg font-black text-ink">Ficha do Aluno</h1>
       </header>

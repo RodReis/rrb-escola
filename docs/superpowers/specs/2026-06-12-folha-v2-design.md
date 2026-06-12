@@ -27,7 +27,7 @@ Nenhuma tabela existente é alterada. `payroll` antiga vira somente leitura (aba
 - `metodo_calculo`: `fixo` | `manual` | `formula:<chave>` — chaves do motor: `salario_base`, `hora_aula`, `dsr_professor`, `hora_atividade`, `inss`, `irrf`, `inss_rpa`, `fgts`, `inss_patronal`, `provisao_13`, `provisao_ferias`, `percentual_sobre_base`, `valor_por_dependente`
 - `incide_inss`, `incide_irrf`, `incide_fgts`, `incide_dsr` (boolean)
 - `ordem_holerite` (int), `ativa` (boolean)
-- Seed com rubricas padrão (salário base, hora-aula, DSR, hora-atividade, HE 50%, adicional noturno, gratificação, salário-família, VT 6%, VA, adiantamento, consignado, faltas, INSS, IRRF, e informativas: FGTS 8%, INSS patronal, provisões)
+- Seed com rubricas padrão (salário base, hora-aula, **salário dobra** (segundo bloco salarial, valor contratual, incide DSR/INSS/IRRF/FGTS), DSR, hora-atividade, **1/3 de férias** (no mês de gozo), HE 50%, adicional noturno, gratificação, salário-família, VT 6%, VA, adiantamento, consignado, **mensalidade sindical**, faltas, INSS, IRRF, e informativas: FGTS 8%, INSS patronal, provisões)
 
 ### `folha_perfis_calculo` — perfil por vínculo
 - `id`, `escola_id`, `codigo` (`clt`, `clt_professor`, `pj`, `rpa`, `estagiario` no seed), `nome`, `ativo`
@@ -39,6 +39,11 @@ Nenhuma tabela existente é alterada. `payroll` antiga vira somente leitura (aba
 - `salario_base` numeric(12,2) NULL, `valor_hora_aula` numeric(12,2) NULL, `aulas_semanais` int NULL (constraint: salário OU hora-aula conforme perfil)
 - `dependentes_irrf` int default 0, `data_admissao`, `data_desligamento` NULL, `ativo`
 - Único contrato ativo por employee (unique partial index `where ativo`)
+
+### `folha_contratos_rubricas` — verbas recorrentes por contrato
+- `id`, `contrato_id`, `rubrica_id`, `valor` numeric(12,2) NULL, `percentual` numeric(7,4) NULL, `ativa`
+- Mecanismo genérico para qualquer verba fixa do contrato: salário dobra (turno extra do professor), gratificação fixa, mensalidade sindical etc. O motor materializa essas verbas como lançamentos `auto` em toda folha gerada
+- **Dobra de turno NÃO é flag nem caso especial no código**: é a rubrica "salário dobra" com valor próprio no contrato, e o DSR incide sobre ela automaticamente via flag `incide_dsr` (modelo confirmado na planilha real da escola: dobra com valor independente da base e DSR próprio)
 
 ### `folha_runs` — folha do mês por empresa
 - `id`, `escola_id`, `company_id`, `competencia` text `YYYY-MM` (unique company+competencia)
@@ -83,7 +88,7 @@ Local: `src/lib/folha/engine/` — **funções puras**, zero import de Supabase.
 
 Pipeline por contrato:
 1. Resolve perfil → rubricas automáticas em `ordem_execucao`
-2. Proventos: `salario_base` OU `hora_aula` (valor × aulas_semanais × `semanas_mes`), depois `dsr_professor` (base/`divisor_dsr` sobre rubricas `incide_dsr`), `hora_atividade` (% config sobre base+DSR), demais proventos
+2. Proventos: `salario_base` OU `hora_aula` (valor × aulas_semanais × `semanas_mes`), verbas contratuais de `folha_contratos_rubricas` (ex.: salário dobra), depois DSR — calculado **por rubrica** com `incide_dsr` (valor_sem_dsr / (`divisor_dsr` − 1); com divisor 6 equivale a 1/5 do valor sem DSR ou 1/6 do total, como a planilha atual da escola), uma linha de DSR por verba no holerite — então `hora_atividade` (% config sobre base+DSR) e demais proventos
 3. Acumula bases por flags de incidência (base INSS, base IRRF, base FGTS)
 4. Descontos legais: INSS progressivo (reaproveita `calcINSS` atual + faixas 2026), IRRF (faixas + **redutor Lei 15.270/2025**), depois descontos simples (VT 6% limitado, VA, adiantamento, consignado…)
 5. Informativas: FGTS 8%, INSS patronal, provisão 13º (1/12 da remuneração), provisão férias ((remuneração + 1/3)/12) — não afetam líquido; alimentam `folha_provisoes` e projeção de caixa
@@ -157,6 +162,7 @@ Bloqueiam fechamento (lista de pendências na tela da run): líquido negativo; c
 ## Testes
 
 - Unit (Vitest): motor por perfil com valores reais conhecidos (casos dourados: professor com N aulas, CLT acima do teto INSS, IRRF nas 3 zonas da Lei 15.270 — isento/redutor/normal, RPA no teto, consignado terminando parcelas)
+- **Caso dourado "Ana Flávia"** (planilha real): base 2.917,81 (sem DSR 2.431,51 + DSR 486,30), salário dobra 2.457,51 + DSR próprio, total 5.836,27, deduções GPS 618,58 + IRRF 324,61, líquido 4.893,08. Atenção: o DSR da dobra na planilha (460,95) diverge do calculado (491,50) — usuário verificará se era ajuste intencional ou erro antes de fixar o valor esperado do teste
 - Unit: dias úteis (5º dia útil com feriado no meio), redutor IRRF nas bordas (5.000,00 / 5.000,01 / 7.350,00 / 7.350,01)
 - Integração: transições de estado (gera despesas, trava edição, reabre remove não pagas); idempotência do job de geração
 - Smoke manual: gerar folha real de uma competência em paralelo com a planilha atual do financeiro e bater valores antes do corte
@@ -170,6 +176,7 @@ Bloqueiam fechamento (lista de pendências na tela da run): líquido negativo; c
 ## Riscos e pendências
 
 1. **Convenção coletiva regional dos professores** (piso, % hora-atividade, reajuste): usuário precisa fornecer antes do go-live — sem isso, defaults legais genéricos
+1b. **DSR da dobra na planilha atual** (460,95 vs 491,50 calculado): usuário verificará se era ajuste intencional ou erro — define o valor esperado do caso de teste dourado
 2. Valores exatos das faixas INSS/IRRF 2026: confirmar com fonte oficial (gov.br) na implementação do seed
 3. NFS-e obrigatória para autônomos (2026): processo operacional com o contador, fora do app
 4. Plano Vercel Hobby: horário do cron fixo; jobs apenas diários

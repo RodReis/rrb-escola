@@ -20,8 +20,8 @@ const serif = Instrument_Serif({
 });
 
 export const metadata: Metadata = {
-  title: "RRB Escola",
-  description: "Gestao financeira escolar com Supabase local"
+  title: "CRM Escola",
+  description: "Gestao financeira escolar"
 };
 
 const themeScript = `(function(){try{var t=localStorage.getItem('theme');if(t==='light'||t==='dark')document.documentElement.dataset.theme=t;}catch(e){}})();`;

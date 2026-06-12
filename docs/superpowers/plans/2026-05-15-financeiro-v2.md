@@ -1730,7 +1730,7 @@ export function ExportPaymentReceiptButton({ pagamento, cobranca, aluno, saldoAp
 
     doc.setFont("helvetica", "bold");
     doc.setFontSize(13);
-    doc.text("RRB Escola", 12, y);
+    doc.text("CRM Escola", 12, y);
     doc.setFontSize(9);
     doc.setFont("helvetica", "normal");
     doc.text("CNPJ 00.000.000/0001-00 | (62) 3333-0000", 12, y + 5);
@@ -1861,7 +1861,7 @@ export function ExportStudentStatementButton({ aluno, de, ate, charges }: Props)
     const doc = new jsPDF({ orientation: "portrait", unit: "mm", format: "a4" });
     doc.setFont("helvetica", "bold");
     doc.setFontSize(13);
-    doc.text("RRB Escola — Extrato Financeiro", 105, 14, { align: "center" });
+    doc.text("CRM Escola — Extrato Financeiro", 105, 14, { align: "center" });
     doc.setFontSize(9);
     doc.setFont("helvetica", "normal");
     doc.text(`Aluno: ${aluno.nome} (matricula ${aluno.matricula_codigo})`, 12, 22);

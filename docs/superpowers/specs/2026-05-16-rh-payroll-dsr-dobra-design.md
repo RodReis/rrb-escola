@@ -7,7 +7,7 @@
 
 ## Contexto
 
-Modelo atual da folha trata `base_salary` como entrada única do salário do funcionário. Real-world do RRB Escola separa essa entrada em:
+Modelo atual da folha trata `base_salary` como entrada única do salário do funcionário. Real-world do CRM Escola separa essa entrada em:
 
 - **Salário s/ DSR** — valor contratual sem descanso semanal
 - **DSR** — descanso semanal remunerado, calculado como `s/DSR × 1/5` (Lei 605)
