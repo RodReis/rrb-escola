@@ -51,7 +51,7 @@ export async function jobAlertasFolha(hoje: Date): Promise<AlertaResult[]> {
     .from("folha_runs")
     .select("id, status, competencia, company_id")
     .eq("competencia", competencia)
-    .in("status", ["rascunho", "em_revisao", "aprovada"]);
+    .in("status", ["rascunho", "em_revisao"]);
 
   if (!runs?.length) return [];
 
@@ -96,8 +96,22 @@ export async function jobAlertasFolha(hoje: Date): Promise<AlertaResult[]> {
 
   if (alertas.length) {
     const escolaId = configs?.[0]?.escola_id as string | undefined ?? DEFAULT_SCHOOL_ID;
-    await supabase.from("notificacoes").insert(
-      alertas.map((a) => ({
+
+    const { data: existentes, error: existErr } = await supabase
+      .from("notificacoes")
+      .select("descricao")
+      .eq("escola_id", escolaId)
+      .eq("tipo", "folha")
+      .eq("href", "/rh/folha-v2")
+      .eq("severidade", "atencao")
+      .gte("criada_em", `${hojeISO}T00:00:00Z`)
+      .lte("criada_em", `${hojeISO}T23:59:59Z`);
+    if (existErr) throw existErr;
+
+    const jaAlertadas = new Set((existentes ?? []).map((n) => n.descricao as string));
+
+    const novas = alertas
+      .map((a) => ({
         escola_id: escolaId,
         perfil_id: null,
         tipo: "folha",
@@ -106,7 +120,12 @@ export async function jobAlertasFolha(hoje: Date): Promise<AlertaResult[]> {
         href: "/rh/folha-v2",
         severidade: "atencao" as const,
       }))
-    );
+      .filter((n) => !jaAlertadas.has(n.descricao));
+
+    if (novas.length) {
+      const { error: insErr } = await supabase.from("notificacoes").insert(novas);
+      if (insErr) throw insErr;
+    }
   }
 
   return alertas;
