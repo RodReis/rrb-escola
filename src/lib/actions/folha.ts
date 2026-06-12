@@ -38,7 +38,7 @@ export async function editarLancamentoAction(formData: FormData) {
   const row = lanc as unknown as LancRow;
   if (!row.folha_itens) throw new Error("Item do lançamento não encontrado");
 
-  await supabase
+  const { error: updError } = await supabase
     .from("folha_lancamentos")
     .update({
       valor,
@@ -47,6 +47,7 @@ export async function editarLancamentoAction(formData: FormData) {
       editado_por: session.profile.id,
     })
     .eq("id", id);
+  if (updError) throw updError;
 
   await recalcularItemDb(row.folha_itens.run_id, row.folha_itens.contrato_id);
   await recalcularTotaisRun(row.folha_itens.run_id);
@@ -72,7 +73,7 @@ export async function adicionarLancamentoAction(formData: FormData) {
   type ItemRow = { run_id: string; contrato_id: string };
   const itemRow = item as unknown as ItemRow;
 
-  await supabase.from("folha_lancamentos").insert({
+  const { error: insError } = await supabase.from("folha_lancamentos").insert({
     item_id: itemId,
     rubrica_id: rubricaId,
     valor,
@@ -80,6 +81,7 @@ export async function adicionarLancamentoAction(formData: FormData) {
     recorrente_parcelas: parcelas ?? null,
     recorrente_parcela_atual: parcelas ? 1 : null,
   });
+  if (insError) throw insError;
 
   await recalcularItemDb(itemRow.run_id, itemRow.contrato_id);
   await recalcularTotaisRun(itemRow.run_id);
@@ -102,10 +104,11 @@ export async function excluirItemAction(formData: FormData) {
   type ItemStatusRow = { run_id: string; status: string };
   const itemRow = item as unknown as ItemStatusRow;
 
-  await supabase
+  const { error: updError } = await supabase
     .from("folha_itens")
     .update({ status: itemRow.status === "ativo" ? "excluido" : "ativo" })
     .eq("id", itemId);
+  if (updError) throw updError;
 
   await recalcularTotaisRun(itemRow.run_id);
   revalidatePath("/rh/folha-v2");
