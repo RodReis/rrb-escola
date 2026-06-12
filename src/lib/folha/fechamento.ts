@@ -3,24 +3,58 @@ import { nthDiaUtil } from "@/lib/folha/date-utils";
 
 export async function validarRun(runId: string): Promise<string[]> {
   const supabase = await createServerClient();
+
+  const { data: run, error: runErr } = await supabase
+    .from("folha_runs")
+    .select("tipo")
+    .eq("id", runId)
+    .single();
+  if (runErr) throw runErr;
+
+  const tipoRun = (run as unknown as { tipo: string }).tipo ?? "mensal";
+
   const { data: itens, error } = await supabase
     .from("folha_itens")
-    .select("liquido, total_proventos, folha_contratos(employees(name))")
+    .select(
+      "id, liquido, total_proventos, periodo_aquisitivo_id, folha_contratos(id, employees(name)), folha_lancamentos(folha_rubricas(codigo))",
+    )
     .eq("run_id", runId)
     .eq("status", "ativo");
   if (error) throw error;
+
   const pendencias: string[] = [];
+
   for (const i of itens ?? []) {
     type ItemRow = {
+      id: string;
       liquido: number;
       total_proventos: number;
-      folha_contratos: { employees: { name: string } | null } | null;
+      periodo_aquisitivo_id: string | null;
+      folha_contratos: { id: string; employees: { name: string } | null } | null;
+      folha_lancamentos: Array<{ folha_rubricas: { codigo: string } | null }>;
     };
     const row = i as unknown as ItemRow;
     const nome = row.folha_contratos?.employees?.name ?? "?";
+
     if (Number(row.liquido) < 0) pendencias.push(`${nome}: líquido negativo`);
     if (Number(row.total_proventos) === 0) pendencias.push(`${nome}: sem proventos`);
+
+    if (tipoRun === "ferias" && !row.periodo_aquisitivo_id) {
+      pendencias.push(`${nome}: item de férias sem período aquisitivo vinculado`);
+    }
+
+    if (tipoRun === "decimo_2a") {
+      const codigos = row.folha_lancamentos
+        .map((l) => l.folha_rubricas?.codigo)
+        .filter(Boolean);
+      const tem1aParcela = codigos.includes("decimo_1a_parcela") || codigos.includes("desconto_adiantamento_13");
+      const temDesconto = codigos.includes("desconto_adiantamento_13");
+      if (tem1aParcela && !temDesconto) {
+        pendencias.push(`${nome}: 13º com adiantamento mas sem desconto_adiantamento_13`);
+      }
+    }
   }
+
   return pendencias;
 }
 

@@ -7,6 +7,7 @@ import { gerarRun, recalcularItemDb, recalcularTotaisRun } from "@/lib/folha/ser
 import { formNumber, formText } from "@/lib/utils";
 import { podeTransicionar } from "@/lib/folha/estados";
 import { validarRun, gerarDespesasDaRun, gravarProvisoes, type RunParaDespesas } from "@/lib/folha/fechamento";
+import { abrirProximoPeriodo } from "@/lib/folha/aquisitivos";
 
 export async function gerarFolhaManualAction(formData: FormData) {
   const session = await requirePermission("rh.folha-v2", "create");
@@ -126,7 +127,7 @@ export async function transicionarRunAction(formData: FormData) {
   const { data: run, error: runErr } = await supabase
     .from("folha_runs")
     .select(
-      "*, folha_config:company_id(categoria_despesa_folha, categoria_despesa_encargos, regra_pagamento, feriados_locais, dia_vencimento_gps, dia_vencimento_fgts)",
+      "*, tipo, folha_config:company_id(categoria_despesa_folha, categoria_despesa_encargos, regra_pagamento, feriados_locais, dia_vencimento_gps, dia_vencimento_fgts)",
     )
     .eq("id", runId)
     .single();
@@ -139,6 +140,7 @@ export async function transicionarRunAction(formData: FormData) {
     competencia: string;
     total_liquido: number;
     status: string;
+    tipo: string;
     folha_config: RunParaDespesas["folha_config"];
   };
   const runRow = run as unknown as RunRow;
@@ -174,7 +176,45 @@ export async function transicionarRunAction(formData: FormData) {
       .eq("id", runId);
     if (updErr) throw updErr;
   } else if (destino === "fechada") {
-    await gravarProvisoes(runId, runRow.competencia);
+    if (runRow.tipo === "mensal") {
+      await gravarProvisoes(runId, runRow.competencia);
+    } else {
+      const { data: itensRun, error: itensErr } = await supabase
+        .from("folha_itens")
+        .select("contrato_id, periodo_aquisitivo_id")
+        .eq("run_id", runId)
+        .eq("status", "ativo");
+      if (itensErr) throw itensErr;
+
+      type ItemFecha = { contrato_id: string; periodo_aquisitivo_id: string | null };
+      const itensRows = (itensRun ?? []) as unknown as ItemFecha[];
+      const contratoIds = itensRows.map((i) => i.contrato_id);
+
+      if (contratoIds.length > 0) {
+        const tipoProvisao =
+          runRow.tipo === "decimo_2a" ? "decimo_terceiro" : "ferias";
+        const { error: baixaErr } = await supabase
+          .from("folha_provisoes")
+          .update({ baixada_em: new Date().toISOString() })
+          .in("contrato_id", contratoIds)
+          .eq("tipo", tipoProvisao)
+          .is("baixada_em", null);
+        if (baixaErr) throw baixaErr;
+      }
+
+      if (runRow.tipo === "ferias") {
+        for (const item of itensRows) {
+          if (!item.periodo_aquisitivo_id) continue;
+          const { error: gozoErr } = await supabase
+            .from("folha_periodos_aquisitivos")
+            .update({ status: "gozado", run_id: runId })
+            .eq("id", item.periodo_aquisitivo_id);
+          if (gozoErr) throw gozoErr;
+          await abrirProximoPeriodo(item.periodo_aquisitivo_id);
+        }
+      }
+    }
+
     const { error: updErr } = await supabase
       .from("folha_runs")
       .update({ status: destino, fechada_por: session.profile.id, fechada_em: new Date().toISOString() })

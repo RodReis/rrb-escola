@@ -2,6 +2,8 @@ import { createServerClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { getFaixasVigentes } from "@/lib/data/folha";
 import { calcularItem } from "./engine/pipeline";
+import { descontoGozoNaMensal } from "./engine/ferias";
+import { calcHoraAula } from "./engine/proventos";
 import type { LancamentoManual } from "./engine/types";
 import type { SupabaseClient } from "@supabase/supabase-js";
 
@@ -101,6 +103,93 @@ async function buscarRecorrentesDoMesAnterior(
   return porContrato;
 }
 
+function diasIntersecaoNoMes(
+  gozoInicioISO: string,
+  gozoDias: number,
+  competencia: string,
+): number {
+  const [ano, mes] = competencia.split("-").map(Number);
+  const mesInicio = new Date(Date.UTC(ano, mes - 1, 1));
+  const mesFim = new Date(Date.UTC(ano, mes, 0));
+
+  const gozo = new Date(`${gozoInicioISO}T12:00:00Z`);
+  const gozoFim = new Date(gozo);
+  gozoFim.setUTCDate(gozoFim.getUTCDate() + gozoDias - 1);
+
+  const intersecaoInicio = gozo > mesInicio ? gozo : mesInicio;
+  const intersecaoFim = gozoFim < mesFim ? gozoFim : mesFim;
+
+  if (intersecaoInicio > intersecaoFim) return 0;
+  return (
+    Math.floor((intersecaoFim.getTime() - intersecaoInicio.getTime()) / 86400000) + 1
+  );
+}
+
+type ContratoGozo = {
+  salario_base: number | null;
+  valor_hora_aula: number | null;
+  aulas_semanais: number | null;
+  perfil_codigo?: string;
+};
+
+async function injetarDescontoGozo(
+  supabase: SupabaseClient,
+  contratoId: string,
+  competencia: string,
+  contrato: ContratoGozo,
+  semanasMes: number,
+  manuaisBase: LancamentoManual[],
+): Promise<LancamentoManual[]> {
+  const jaTemGozo = manuaisBase.some(
+    (m) => m.rubrica_codigo === "ferias_desconto_gozo",
+  );
+  if (jaTemGozo) return manuaisBase;
+
+  const { data: periodos, error } = await supabase
+    .from("folha_periodos_aquisitivos")
+    .select("gozo_inicio, gozo_dias")
+    .eq("contrato_id", contratoId)
+    .in("status", ["agendado", "gozado"])
+    .not("gozo_inicio", "is", null);
+  if (error) throw error;
+
+  type PRow = { gozo_inicio: string; gozo_dias: number };
+  const rows = (periodos ?? []) as unknown as PRow[];
+
+  for (const p of rows) {
+    const dias = diasIntersecaoNoMes(p.gozo_inicio, p.gozo_dias, competencia);
+    if (dias <= 0) continue;
+
+    let base: number;
+    if (contrato.perfil_codigo === "clt_professor") {
+      base = Math.round(
+        calcHoraAula(
+          contrato.valor_hora_aula ?? 0,
+          contrato.aulas_semanais ?? 0,
+          semanasMes,
+        ) * 100,
+      ) / 100;
+    } else {
+      base = contrato.salario_base ?? 0;
+    }
+
+    const valor = descontoGozoNaMensal(base, dias);
+    if (valor <= 0) continue;
+
+    return [
+      ...manuaisBase,
+      {
+        rubrica_codigo: "ferias_desconto_gozo",
+        valor,
+        referencia: `${dias} dias`,
+        origem: "manual" as const,
+      },
+    ];
+  }
+
+  return manuaisBase;
+}
+
 export async function recalcularItemDb(
   runId: string,
   contratoId: string,
@@ -120,7 +209,7 @@ export async function recalcularItemDb(
   const [{ data: contrato }, { data: config }, faixas] = await Promise.all([
     supabase
       .from("folha_contratos")
-      .select("*, folha_contratos_rubricas(valor, percentual, ativa, folha_rubricas(codigo))")
+      .select("*, folha_contratos_rubricas(valor, percentual, ativa, folha_rubricas(codigo)), folha_perfis_calculo!perfil_calculo_id(codigo)")
       .eq("id", contratoId)
       .single(),
     supabase
@@ -219,6 +308,23 @@ export async function recalcularItemDb(
     ordem_execucao: p.ordem_execucao,
   }));
 
+  type PerfilCalculo = { codigo: string } | null;
+  const perfilCalculo = (contrato as unknown as { folha_perfis_calculo: PerfilCalculo }).folha_perfis_calculo;
+
+  const manuaisComGozo = await injetarDescontoGozo(
+    supabase,
+    contratoId,
+    run.competencia as string,
+    {
+      salario_base: contrato.salario_base as number | null,
+      valor_hora_aula: contrato.valor_hora_aula as number | null,
+      aulas_semanais: contrato.aulas_semanais as number | null,
+      perfil_codigo: perfilCalculo?.codigo,
+    },
+    Number(config.semanas_mes),
+    manuais ?? [],
+  );
+
   const resultado = calcularItem({
     contrato: {
       id: contrato.id as string,
@@ -234,7 +340,7 @@ export async function recalcularItemDb(
       percentual_hora_atividade: Number(config.percentual_hora_atividade),
       semanas_mes: Number(config.semanas_mes),
     },
-    manuais: manuais ?? [],
+    manuais: manuaisComGozo,
     faixas: { inss: faixas.inss, ir: faixas.ir },
     redutor: faixas.redutor,
     rubricasExtras: (todasRubricas ?? []) as Parameters<typeof calcularItem>[0]["rubricasExtras"],
