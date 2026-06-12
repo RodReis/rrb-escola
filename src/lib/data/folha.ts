@@ -7,6 +7,8 @@ export type RedutorIrrf = {
   valido_ate: string | null;
   limite_isencao: number;
   limite_reducao: number;
+  coef_fixo: number;
+  coef_mult: number;
 };
 
 export async function getRuns(competencia?: string) {

@@ -43,7 +43,7 @@ const irFaixas = [
   { ordem: 4, valor_de: 3751.05, valor_ate: 4664.68, aliquota: 0.225, parcela_deduzir: 675.49, deducao_dependente: 189.59 },
   { ordem: 5, valor_de: 4664.68, valor_ate: null, aliquota: 0.275, parcela_deduzir: 908.73, deducao_dependente: 189.59 },
 ];
-const redutor = { limite_isencao: 5000, limite_reducao: 7350 };
+const redutor = { limite_isencao: 5000, limite_reducao: 7350, coef_fixo: 978.62, coef_mult: 0.133145 };
 const config = { divisor_dsr: 6, percentual_hora_atividade: 0, semanas_mes: 4.5 };
 
 describe("calcularItem — professor com dobra (Ana Flávia)", () => {

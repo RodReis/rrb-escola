@@ -8,7 +8,7 @@ const faixas = [
   { ordem: 4, valor_de: 3751.05, valor_ate: 4664.68, aliquota: 0.225, parcela_deduzir: 675.49, deducao_dependente: 189.59 },
   { ordem: 5, valor_de: 4664.68, valor_ate: null, aliquota: 0.275, parcela_deduzir: 908.73, deducao_dependente: 189.59 },
 ];
-const redutor = { limite_isencao: 5000, limite_reducao: 7350 };
+const redutor = { limite_isencao: 5000, limite_reducao: 7350, coef_fixo: 978.62, coef_mult: 0.133145 };
 
 describe("calcIrrf2026", () => {
   it("isento total quando rendimento <= 5000", () => {
@@ -29,5 +29,9 @@ describe("calcIrrf2026", () => {
   it("borda exata 7350: redutor zera", () => {
     const v = calcIrrf2026({ baseIr: 7350, rendimento: 7350, dependentes: 0, faixas, redutor });
     expect(v).toBeCloseTo(7350 * 0.275 - 908.73, 2);
+  });
+  it("ancora oficial mai/2026: rendimento 5836,32, base 5217,74 -> IRRF ~324,59", () => {
+    const v = calcIrrf2026({ baseIr: 5217.74, rendimento: 5836.32, dependentes: 0, faixas, redutor });
+    expect(v).toBeCloseTo(324.59, 1);
   });
 });
