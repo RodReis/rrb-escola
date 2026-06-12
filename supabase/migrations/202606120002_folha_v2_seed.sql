@@ -98,7 +98,7 @@ cross join (values
   ('vale_alimentacao',  'Vale alimentação',         'desconto',    'valor_contratual',        false, false, false, false, 63),
   ('adiantamento',      'Adiantamento',             'desconto',    'manual',                  false, false, false, false, 64),
   ('consignado',        'Empréstimo consignado',    'desconto',    'valor_contratual',        false, false, false, false, 65),
-  ('sindicato',         'Mensalidade sindical',     'desconto',    'valor_contratual',        false, false, false, false, 66),
+  ('sindicato',         'Mensalidade sindical',     'desconto',    'percentual_sobre_base',   false, false, false, false, 66),
   ('faltas',            'Faltas',                   'desconto',    'manual',                  false, false, false, false, 67),
   ('fgts',              'FGTS 8%',                  'informativa', 'fgts',                    false, false, false, false, 80),
   ('inss_patronal',     'INSS patronal',            'informativa', 'inss_patronal',            false, false, false, false, 81),
