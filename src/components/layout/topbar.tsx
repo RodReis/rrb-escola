@@ -52,6 +52,13 @@ const RH_ITEMS: DropdownItem[] = [
   { href: "/calendario", label: "Calendário Letivo", iconName: "CalendarDays" },
   { href: "/comunicados", label: "Comunicados", iconName: "Megaphone" },
   { href: "/configuracoes/lembretes", label: "Lembretes", iconName: "BellRing" },
+  { href: "/rh/folha-v2", label: "Folhas v2", iconName: "Wallet" },
+  { href: "/rh/folha-v2/contratos", label: "Contratos", iconName: "FileText" },
+  { href: "/rh/folha-v2/rubricas", label: "Rubricas", iconName: "Tags" },
+  { href: "/rh/folha-v2/perfis", label: "Perfis de Cálculo", iconName: "Layers3" },
+  { href: "/rh/folha-v2/provisoes", label: "Provisões", iconName: "Receipt" },
+  { href: "/rh/folha-v2/config", label: "Config. Folha", iconName: "Settings2" },
+  { href: "/rh/folha-v2/historico", label: "Histórico", iconName: "History" },
 ];
 
 const FINANCEIRO_ITEMS: DropdownItem[] = [

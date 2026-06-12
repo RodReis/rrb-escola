@@ -92,7 +92,7 @@ export default async function ContrachequeePage({
   );
 
   const rubricasAtivas = (todasRubricas ?? []).filter(
-    (r) => (r as unknown as { ativo: boolean }).ativo !== false
+    (r) => (r as unknown as { ativa: boolean }).ativa !== false
   );
 
   const totalProventos = proventos.reduce((s, l) => s + Number(l.valor), 0);

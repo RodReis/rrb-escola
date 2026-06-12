@@ -120,6 +120,61 @@ export async function getProvisoesSaldo() {
   return data;
 }
 
+export async function getContrato(id: string) {
+  const supabase = await createServerClient();
+  const { data, error } = await supabase
+    .from("folha_contratos")
+    .select(
+      `*, employees(id, name), companies(id, name),
+       folha_perfis_calculo:perfil_calculo_id(id, codigo, nome),
+       folha_contratos_rubricas(*, folha_rubricas(id, codigo, nome))`
+    )
+    .eq("id", id)
+    .single();
+  if (error) throw error;
+  return data;
+}
+
+export async function getEmployeesWithoutContract() {
+  const supabase = await createServerClient();
+  const { data: empData, error: empErr } = await supabase
+    .from("employees")
+    .select("id, name")
+    .eq("active", true)
+    .order("name");
+  if (empErr) throw empErr;
+
+  const { data: contratoData, error: cErr } = await supabase
+    .from("folha_contratos")
+    .select("employee_id")
+    .eq("ativo", true);
+  if (cErr) throw cErr;
+
+  const comContrato = new Set((contratoData ?? []).map((c) => (c as { employee_id: string }).employee_id));
+  return (empData ?? []).filter((e) => !comContrato.has(e.id));
+}
+
+export async function getCategoriasDespesa() {
+  const supabase = await createServerClient();
+  const { data, error } = await supabase
+    .from("categorias_despesa")
+    .select("id, nome")
+    .eq("ativo", true)
+    .order("nome");
+  if (error) throw error;
+  return data ?? [];
+}
+
+export async function getConfigOrNull(companyId: string) {
+  const supabase = await createServerClient();
+  const { data } = await supabase
+    .from("folha_config")
+    .select("*")
+    .eq("company_id", companyId)
+    .maybeSingle();
+  return data;
+}
+
 export async function getFaixasVigentes(competencia: string): Promise<{
   inss: InssBracketRow[];
   ir: IrBracketRow[];
