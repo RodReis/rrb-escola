@@ -176,8 +176,24 @@ Bloqueiam fechamento (lista de pendências na tela da run): líquido negativo; c
 ## Riscos e pendências
 
 1. **Convenção coletiva regional dos professores** (piso, % hora-atividade, reajuste): usuário precisa fornecer antes do go-live — sem isso, defaults legais genéricos
-1b. **DSR da dobra na planilha atual** (460,95 vs 491,50 calculado): usuário verificará se era ajuste intencional ou erro — define o valor esperado do caso de teste dourado
+1b. ~~DSR da dobra na planilha (460,95 vs 491,50)~~ **RESOLVIDO**: o contracheque oficial do contador (maio/2026) mostra que a dobra não é bloco separado — é horas totais (216h = 2×108) numa linha única de SALARIO HORA (23,16 × 216 = 5.002,56) com um único DSR 1/6 (833,76). O 460,95 da planilha era valor de fechamento ("plug") para bater com o total oficial. Ver "Adendo 1" abaixo
+1c. ~~Calibração do redutor IRRF~~ **RESOLVIDO** (texto oficial da Lei 15.270/2025, art. 3º-A da Lei 9.250): Redução mensal = **R$ 978,62 − (0,133145 × rendimentos tributáveis mensais)**, limitada ao imposto da tabela (§1º), zero para rendimentos > 7.350 (§2º), aplica também ao 13º (§3º). CRÍTICO: o multiplicador usa o **rendimento tributável bruto** (antes do INSS), não a base de cálculo. Validado com a âncora: cheio 526,15 − (978,62 − 0,133145×5.836,32) = 324,59 ≈ 324,61 oficial. `irrf_redutor` ganha colunas `coef_fixo numeric` (978.62) e `coef_mult numeric(10,6)` (0.133145); `calcIrrf2026` troca a interpolação linear pela fórmula oficial: `redutor = clamp(coef_fixo − coef_mult × rendimento, 0, impostoIntegral)`, retornando `impostoIntegral − redutor` (zero garantido até 5.000; integral acima de 7.350)
 2. Valores exatos das faixas INSS/IRRF 2026: confirmar com fonte oficial (gov.br) na implementação do seed
 3. NFS-e obrigatória para autônomos (2026): processo operacional com o contador, fora do app
 4. Plano Vercel Hobby: horário do cron fixo; jobs apenas diários
 5. Volume: 100 contratos × 12 meses × ~15 lançamentos ≈ 18k linhas/ano em `folha_lancamentos` — irrelevante para Postgres, sem necessidade de particionamento
+
+## Adendo 1 (2026-06-12) — correções a partir do contracheque oficial
+
+Fonte: contracheque real do contador, Ana Flávia, maio/2026 (Escola Infantil Pinguinho de Gente LTDA).
+
+1. **Dobra (modelo oficial)**: o contador trata dobra como horas totais — SALARIO HORA 216,00h × 23,16 = 5.002,56 + DSR PROFESSOR AULISTA 16,67% = 833,76. No v2: contrato da professora usa `aulas_semanais` totais (48) e `valor_hora_aula` 23,16; nenhuma rubrica de dobra. O motor já produz isso sem mudança (hora_aula 23,16 × 48 × 4,5 = 5.002,56; DSR único 1/6). A rubrica `salario_dobra` permanece no catálogo para empresas que queiram o bloco separado. `folha_contratos` ganha campo opcional `aulas_por_turno jsonb` (ex.: `{"matutino":24,"vespertino":24}`) só para rastreabilidade — cálculo usa o total.
+2. **Caso dourado atualizado (gabarito oficial)**: proventos 5.002,56 + 833,76 = 5.836,32; INSS 618,58; base IRRF 5.217,74; IRRF 324,61; sindicato 3,33% = 194,35; descontos 1.137,54; líquido 4.698,78; FGTS do mês 466,90. Substitui os valores da planilha interna.
+3. **Sindicato**: contribuição assistencial é `percentual_sobre_base` (3,33% do bruto), não valor fixo — e não ocorre todo mês: verba ativável por competência (lançamento manual/recorrente), não automática do perfil.
+4. **IRRF — calibração obrigatória**: ver pendência 1c. A interpolação linear da spec NÃO reproduz o valor oficial; tratar a fórmula como parametrizável e calibrar com contracheques reais antes do corte.
+5. **Holerite PDF — layout oficial**: colunas Código | Descrição | Referência | Vencimentos | Descontos; cabeçalho com empresa/CNPJ, tipo de folha, competência; funcionário com código, cargo, CBO, departamento/filial, data de admissão; rodapé com Salário Base, Sal. Contr. INSS, Base Cálc. FGTS, FGTS do mês, Base Cálc. IRRF e Faixa IRRF. Coluna Referência exibe: horas (216,00), percentual do DSR (16,67), alíquota efetiva INSS (10,60), faixa IRRF (27,50), percentual sindicato (3,33).
+6. **`folha_contratos`**: + `cargo text`, + `cbo text` (aparecem no holerite).
+
+## Adendo 2 (2026-06-12) — desligamento (rescisão fica com o contador)
+
+Decisão: rescisão (verbas rescisórias, TRCT, homologação) permanece com o contador — fora do app. Gancho mínimo no v2: ao encerrar contrato (`data_desligamento` + `ativo=false`), as provisões acumuladas do contrato precisam de **baixa manual** — action `baixarProvisaoAction` (tipo, motivo livre ex.: "rescisão paga pelo contador", data) + botão na tela de provisões, para o passivo provisionado refletir a realidade. Sem cálculo de rescisão no motor.

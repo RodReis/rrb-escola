@@ -57,10 +57,24 @@ const RH_ITEMS: DropdownItem[] = [
 const FINANCEIRO_ITEMS: DropdownItem[] = [
   { href: "/financeiro", label: "Financeiro", iconName: "BarChart3" },
   { href: "/financeiro/alunos-sem-valor", label: "Sem valor / Descontos", iconName: "AlertTriangle" },
-  { href: "/financeiro/folha", label: "Folha de Pgto.", iconName: "Wallet" },
   { href: "/despesas", label: "Despesas", iconName: "Receipt" },
   { href: "/valores-praticados", label: "Valores praticados", iconName: "ReceiptText" },
   { href: "/planos", label: "Planos", iconName: "CreditCard" },
+  {
+    href: "/rh/folha-v2",
+    label: "Folha",
+    iconName: "Wallet",
+    children: [
+      { href: "/rh/folha-v2", label: "Folhas", iconName: "Wallet" },
+      { href: "/rh/folha-v2/contratos", label: "Contratos", iconName: "FileText" },
+      { href: "/rh/folha-v2/rubricas", label: "Rubricas", iconName: "Tags" },
+      { href: "/rh/folha-v2/perfis", label: "Perfis de Cálculo", iconName: "Layers3" },
+      { href: "/rh/folha-v2/ferias", label: "Férias", iconName: "CalendarOff" },
+      { href: "/rh/folha-v2/provisoes", label: "Provisões", iconName: "Receipt" },
+      { href: "/rh/folha-v2/config", label: "Config. Folha", iconName: "Settings2" },
+      { href: "/rh/folha-v2/historico", label: "Histórico", iconName: "History" },
+    ],
+  },
 ];
 
 const CONFIG_ITEMS: DropdownItem[] = [
@@ -77,11 +91,22 @@ function filterByPermissions(
   isAdmin: boolean,
 ): DropdownItem[] {
   if (isAdmin) return items;
-  return items.filter((item) => {
-    const modulo = ROTA_PARA_MODULO[item.href];
-    if (!modulo) return true; // rota não mapeada = sempre visível
-    return can(perms, modulo, "read");
-  });
+  return items
+    .map((item) => {
+      if (!item.children) return item;
+      const children = item.children.filter((child) => {
+        const m = ROTA_PARA_MODULO[child.href];
+        return !m || can(perms, m, "read");
+      });
+      return { ...item, children };
+    })
+    .filter((item) => {
+      const modulo = ROTA_PARA_MODULO[item.href];
+      const selfOk = !modulo || can(perms, modulo, "read");
+      // item com filhos: visível se o próprio passa OU sobrou algum filho
+      if (item.children) return selfOk || item.children.length > 0;
+      return selfOk;
+    });
 }
 
 function BrandBlock({ logoUrl, nome }: { logoUrl: string | null; nome: string }) {

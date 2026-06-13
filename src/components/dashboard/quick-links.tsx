@@ -7,7 +7,7 @@ import {
   ClipboardCheck, ClipboardList, CreditCard, DoorOpen, FileText,
   GraduationCap, HandHeart, Inbox, Layers3, Network, Pencil,
   Plus, Receipt, ReceiptText, School, ShieldCheck, SlidersHorizontal,
-  Tags, UserCheck, UsersRound, Wallet, Webhook, FileBarChart, X,
+  Tags, UserCheck, UsersRound, Webhook, FileBarChart, X,
   type LucideIcon,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -30,7 +30,6 @@ const ALL_ROUTES: RouteItem[] = [
   { href: "/organograma",               label: "Organograma",          group: "Secretaria",   Icon: Network },
   { href: "/importacoes",               label: "Importações",          group: "Secretaria",   Icon: Inbox },
   { href: "/financeiro",                label: "Financeiro",           group: "Financeiro",   Icon: BarChart3 },
-  { href: "/financeiro/folha",          label: "Folha de Pgto.",       group: "Financeiro",   Icon: Wallet },
   { href: "/despesas",                  label: "Despesas",             group: "Financeiro",   Icon: Receipt },
   { href: "/valores-praticados",        label: "Valores praticados",   group: "Financeiro",   Icon: ReceiptText },
   { href: "/planos",                    label: "Planos",               group: "Financeiro",   Icon: CreditCard },

@@ -39,11 +39,6 @@ function monthRange(competencia: string): { first: string; last: string } {
   return { first, last };
 }
 
-function competenciaToReferenceMonth(competencia: string): string {
-  const [y, m] = competencia.split("-").map(Number);
-  return `${y}-${pad(m)}-01`;
-}
-
 function prevCompetencia(competencia: string): string {
   const [y, m] = competencia.split("-").map(Number);
   const d = new Date(y, m - 2, 1);
@@ -128,19 +123,19 @@ async function somaDespesasPorTipo(
   return { fixas, variaveis };
 }
 
-// Nota: tabela payroll nao tem escola_id; reference_month e DATE (YYYY-MM-01).
-// Soma total_earnings (proventos brutos) do mes inteiro.
+// Folha v2: soma total_proventos das folhas APROVADAS da competência (YYYY-MM).
 async function somaFolha(
   supabase: Supa,
-  _escolaId: string,
+  escolaId: string,
   competencia: string
 ): Promise<number> {
-  const referenceMonth = competenciaToReferenceMonth(competencia);
   const { data } = await supabase
-    .from("payroll")
-    .select("total_earnings")
-    .eq("reference_month", referenceMonth);
-  return (data ?? []).reduce((s, r) => s + Number(r.total_earnings ?? 0), 0);
+    .from("folha_runs")
+    .select("total_proventos")
+    .eq("escola_id", escolaId)
+    .eq("competencia", competencia)
+    .eq("status", "aprovado");
+  return (data ?? []).reduce((s, r) => s + Number(r.total_proventos ?? 0), 0);
 }
 
 export async function getHero(
@@ -230,11 +225,13 @@ export async function getRevenueTrend(
       .select("valor, competencia")
       .eq("escola_id", escolaId)
       .in("competencia", competencias),
-    // payroll uses reference_month (DATE) — convert competencias to DATEs
+    // Folha v2: folhas aprovadas por competência (YYYY-MM)
     supabase
-      .from("payroll")
-      .select("reference_month, total_earnings")
-      .in("reference_month", competencias.map((c) => `${c}-01`)),
+      .from("folha_runs")
+      .select("competencia, total_proventos")
+      .eq("escola_id", escolaId)
+      .in("competencia", competencias)
+      .eq("status", "aprovado"),
   ]);
 
   const receitaPorComp = new Map<string, number>();
@@ -252,8 +249,8 @@ export async function getRevenueTrend(
     despesaPorComp.set(d.competencia, (despesaPorComp.get(d.competencia) ?? 0) + Number(d.valor ?? 0));
   }
   for (const f of folhaRes.data ?? []) {
-    const comp = String(f.reference_month).slice(0, 7);
-    folhaPorComp.set(comp, (folhaPorComp.get(comp) ?? 0) + Number(f.total_earnings ?? 0));
+    const comp = String(f.competencia);
+    folhaPorComp.set(comp, (folhaPorComp.get(comp) ?? 0) + Number(f.total_proventos ?? 0));
   }
 
   return competencias.map((competencia) => ({
@@ -482,60 +479,84 @@ export type FolhaEmpresaRow = {
   liquido: number;
 };
 
-// Nota: tabela payroll é por funcionario+mes, sem escola_id.
-// Agregamos por company_id (employees.companies.name).
+// Folha v2: agrega por empresa as folhas APROVADAS da competência.
+// bruto/líquido/headcount vêm dos itens; INSS/IRRF dos lançamentos por rubrica.
+const RUBRICAS_INSS = new Set(["inss", "inss_rpa"]);
+const RUBRICAS_IRRF = new Set(["irrf"]);
+
 export async function getFolhaPorEmpresa(
   competencia: string,
-  _escolaId: string = DEFAULT_SCHOOL_ID
+  escolaId: string = DEFAULT_SCHOOL_ID
 ): Promise<FolhaEmpresaRow[]> {
   const supabase = await createServerClient();
-  const referenceMonth = competenciaToReferenceMonth(competencia);
 
-  const { data } = await supabase
-    .from("payroll")
-    .select(
-      "employee_id, total_earnings, inss, ir, net_amount, employees(company_id, companies(name))"
-    )
-    .eq("reference_month", referenceMonth);
+  // 1. Runs aprovadas da competência → itens (bruto/líquido/headcount) por empresa
+  const { data: runsData } = await supabase
+    .from("folha_runs")
+    .select("id, company_id, companies(name), folha_itens(total_proventos, liquido, status)")
+    .eq("escola_id", escolaId)
+    .eq("competencia", competencia)
+    .eq("status", "aprovado");
 
-  type Row = {
-    employee_id: string;
-    total_earnings: number | null;
-    inss: number | null;
-    ir: number | null;
-    net_amount: number | null;
-    employees:
-      | { company_id: string | null; companies: { name: string } | { name: string }[] | null }
-      | { company_id: string | null; companies: { name: string } | { name: string }[] | null }[]
-      | null;
+  type RunRow = {
+    id: string;
+    company_id: string | null;
+    companies: { name: string } | { name: string }[] | null;
+    folha_itens: { total_proventos: number | null; liquido: number | null; status: string }[] | null;
   };
 
   const porEmpresa = new Map<string, FolhaEmpresaRow>();
-  for (const r of ((data ?? []) as unknown as Row[])) {
-    const emp = Array.isArray(r.employees) ? r.employees[0] : r.employees;
-    const empresaId = emp?.company_id ?? "sem-empresa";
-    const compRel = emp?.companies
-      ? Array.isArray(emp.companies)
-        ? emp.companies[0]
-        : emp.companies
-      : null;
-    const nome = compRel?.name ?? "—";
+  const runToEmpresa = new Map<string, string>();
+
+  for (const run of ((runsData ?? []) as unknown as RunRow[])) {
+    const empresaId = run.company_id ?? "sem-empresa";
+    runToEmpresa.set(run.id, empresaId);
+    const compRel = Array.isArray(run.companies) ? run.companies[0] : run.companies;
     const acc =
       porEmpresa.get(empresaId) ?? {
         empresaId,
-        empresa: nome,
+        empresa: compRel?.name ?? "—",
         headcount: 0,
         bruto: 0,
         inss: 0,
         irrf: 0,
         liquido: 0,
       };
-    acc.headcount += 1;
-    acc.bruto += Number(r.total_earnings ?? 0);
-    acc.inss += Number(r.inss ?? 0);
-    acc.irrf += Number(r.ir ?? 0);
-    acc.liquido += Number(r.net_amount ?? 0);
+    for (const item of run.folha_itens ?? []) {
+      if (item.status === "excluido") continue;
+      acc.headcount += 1;
+      acc.bruto += Number(item.total_proventos ?? 0);
+      acc.liquido += Number(item.liquido ?? 0);
+    }
     porEmpresa.set(empresaId, acc);
+  }
+
+  if (porEmpresa.size === 0) return [];
+
+  // 2. Lançamentos INSS/IRRF das mesmas runs → soma por empresa
+  const { data: lancData } = await supabase
+    .from("folha_lancamentos")
+    .select("valor, folha_rubricas(codigo), folha_itens!inner(run_id, status)")
+    .in("folha_itens.run_id", Array.from(runToEmpresa.keys()));
+
+  type LancRow = {
+    valor: number | null;
+    folha_rubricas: { codigo: string } | { codigo: string }[] | null;
+    folha_itens: { run_id: string; status: string } | { run_id: string; status: string }[] | null;
+  };
+
+  for (const l of ((lancData ?? []) as unknown as LancRow[])) {
+    const item = Array.isArray(l.folha_itens) ? l.folha_itens[0] : l.folha_itens;
+    if (!item || item.status === "excluido") continue;
+    const empresaId = runToEmpresa.get(item.run_id);
+    if (!empresaId) continue;
+    const acc = porEmpresa.get(empresaId);
+    if (!acc) continue;
+    const rub = Array.isArray(l.folha_rubricas) ? l.folha_rubricas[0] : l.folha_rubricas;
+    const codigo = rub?.codigo ?? "";
+    const valor = Number(l.valor ?? 0);
+    if (RUBRICAS_INSS.has(codigo)) acc.inss += valor;
+    else if (RUBRICAS_IRRF.has(codigo)) acc.irrf += valor;
   }
 
   return Array.from(porEmpresa.values());
@@ -1647,14 +1668,16 @@ export async function getSaldoYTD(
       .eq("escola_id", escolaId)
       .in("competencia", competencias),
     supabase
-      .from("payroll")
-      .select("total_earnings")
-      .in("reference_month", competencias.map((c) => `${c}-01`)),
+      .from("folha_runs")
+      .select("total_proventos")
+      .eq("escola_id", escolaId)
+      .in("competencia", competencias)
+      .eq("status", "aprovado"),
   ]);
 
   const receita = (pagamentosRes.data ?? []).reduce((s, r) => s + Number(r.valor_pago ?? 0), 0);
   const despesa = (despesasRes.data ?? []).reduce((s, r) => s + Number(r.valor ?? 0), 0);
-  const folha = (folhaRes.data ?? []).reduce((s, r) => s + Number(r.total_earnings ?? 0), 0);
+  const folha = (folhaRes.data ?? []).reduce((s, r) => s + Number(r.total_proventos ?? 0), 0);
 
   return {
     receita,

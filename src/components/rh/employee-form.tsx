@@ -2,7 +2,6 @@
 
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { CurrencyInput } from "@/components/ui/currency-input";
 import { maskCPF, maskPhone } from "@/lib/format/masks";
 import type { Employee } from "@/lib/data/rh";
 import type { Company } from "@/lib/data/rh";
@@ -18,9 +17,6 @@ type Props = {
 export function EmployeeForm({ action, employee, companies, defaultCompanyId, submitLabel = "Salvar" }: Props) {
   const [cpf, setCpf] = useState(employee?.cpf ?? "");
   const [telefone, setTelefone] = useState(employee?.telefone ?? "");
-  const [baseSalary, setBaseSalary] = useState<number>(Number(employee?.base_salary ?? 0));
-  const [salarioSemDsr, setSalarioSemDsr] = useState<number>(Number(employee?.salario_sem_dsr ?? 0));
-  const [gpsDefault, setGpsDefault] = useState<number>(Number(employee?.gps_default ?? 0));
 
   return (
     <form action={action} className="grid gap-4 md:grid-cols-2">
@@ -92,31 +88,6 @@ export function EmployeeForm({ action, employee, companies, defaultCompanyId, su
           <option value="Estagio">Estágio</option>
           <option value="Temporario">Temporário</option>
         </select>
-      </label>
-
-      <label>
-        Salário Base
-        <CurrencyInput name="base_salary" value={baseSalary} onChange={setBaseSalary} />
-      </label>
-
-      <label>
-        Salário s/ DSR
-        <CurrencyInput name="salario_sem_dsr" value={salarioSemDsr} onChange={setSalarioSemDsr} />
-      </label>
-
-      <label className="flex grid-cols-none items-center gap-2 self-end pb-3">
-        <input
-          name="aplica_dobra"
-          type="checkbox"
-          defaultChecked={employee?.aplica_dobra ?? false}
-          className="h-4 w-4"
-        />
-        Aplica dobra mensal
-      </label>
-
-      <label>
-        GPS padrão
-        <CurrencyInput name="gps_default" value={gpsDefault} onChange={setGpsDefault} />
       </label>
 
       <label>

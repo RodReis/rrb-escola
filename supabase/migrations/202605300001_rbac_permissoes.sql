@@ -101,6 +101,7 @@ drop policy if exists "perfil ativo write biometrias" on storage.objects;
 drop policy if exists "perfil ativo write documentos" on storage.objects;
 drop policy if exists "perfil ativo write fotos" on storage.objects;
 drop policy if exists "perfil ativo write importacoes" on storage.objects;
+drop policy if exists "eventos escola tenant" on eventos_escola;
 
 -- 5.2) Drop current_perfil() (depends on perfis%ROWTYPE)
 drop function if exists current_perfil();
@@ -297,6 +298,10 @@ create policy "perfil ativo write fotos" on storage.objects for insert to authen
 
 create policy "perfil ativo write importacoes" on storage.objects for insert to authenticated
   with check (bucket_id = 'importacoes' and exists (select 1 from current_perfil()));
+
+create policy "eventos escola tenant" on eventos_escola for all to authenticated
+  using (escola_id = (select escola_id from current_perfil()))
+  with check (escola_id = (select escola_id from current_perfil()));
 
 -- 6) Seed módulos (25 sub-módulos × 7 grupos)
 insert into modulos (codigo, grupo, nome, ordem) values
