@@ -58,38 +58,38 @@ export function RunAcoes({ runId, status }: Props) {
   const destinos = TRANSICOES[status] ?? [];
   const podeReabrir = status === "aprovado";
 
-  function handleTransicionar(destino: string) {
-    startTransition(async () => {
-      if (!CONFIRMAR_DESTINOS.has(destino)) {
-        if (formRef.current) {
-          const input = formRef.current.elements.namedItem("destino") as HTMLInputElement;
-          if (input) input.value = destino;
-          formRef.current.requestSubmit();
-        }
+  function submitDestino(destino: string) {
+    if (!formRef.current) return;
+    const input = formRef.current.elements.namedItem("destino") as HTMLInputElement;
+    if (input) input.value = destino;
+    const form = formRef.current;
+    startTransition(() => {
+      form.requestSubmit();
+    });
+  }
+
+  async function handleTransicionar(destino: string) {
+    if (!CONFIRMAR_DESTINOS.has(destino)) {
+      submitDestino(destino);
+      return;
+    }
+
+    if (destino === "aprovado") {
+      const pends = await validarRunAction(runId);
+      if (pends.length > 0) {
+        setPendencias(pends);
         return;
       }
+    }
 
-      if (destino === "aprovado") {
-        const pends = await validarRunAction(runId);
-        if (pends.length > 0) {
-          setPendencias(pends);
-          return;
-        }
-      }
-
-      const ok = await confirm({
-        title: "Aprovar folha",
-        message: "Aprovar esta folha gerará as despesas de pagamento e registrará as provisões definitivas. Confirmar aprovação?",
-        confirmLabel: "Aprovar folha",
-        variant: "default",
-      });
-
-      if (ok && formRef.current) {
-        const input = formRef.current.elements.namedItem("destino") as HTMLInputElement;
-        if (input) input.value = destino;
-        formRef.current.requestSubmit();
-      }
+    const ok = await confirm({
+      title: "Aprovar folha",
+      message: "Aprovar esta folha gerará as despesas de pagamento e registrará as provisões definitivas. Confirmar aprovação?",
+      confirmLabel: "Aprovar folha",
+      variant: "default",
     });
+
+    if (ok) submitDestino(destino);
   }
 
   async function handleReabrir() {
@@ -184,18 +184,18 @@ export function ExcluirFolhaButton({ runId }: { runId: string }) {
   const formRef = useRef<HTMLFormElement>(null);
   const [isPending, startTransition] = useTransition();
 
-  function handleExcluir() {
-    startTransition(async () => {
-      const ok = await confirm({
-        title: "Excluir folha",
-        message: "Esta ação é irreversível. Todos os itens e lançamentos desta folha serão excluídos. Confirmar exclusão?",
-        confirmLabel: "Excluir folha",
-        variant: "danger",
-      });
-      if (ok && formRef.current) {
-        formRef.current.requestSubmit();
-      }
+  async function handleExcluir() {
+    const ok = await confirm({
+      title: "Excluir folha",
+      message: "Esta ação é irreversível. Todos os itens e lançamentos desta folha serão excluídos. Confirmar exclusão?",
+      confirmLabel: "Excluir folha",
+      variant: "danger",
     });
+    if (ok && formRef.current) {
+      startTransition(() => {
+        formRef.current?.requestSubmit();
+      });
+    }
   }
 
   return (
