@@ -1,6 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { redirect } from "next/navigation";
 import { requirePermission } from "@/lib/auth/session";
 import { createServerClient } from "@/lib/supabase/server";
 import { gerarRun, recalcularItemDb, recalcularTotaisRun } from "@/lib/folha/service";
@@ -14,8 +15,14 @@ export async function gerarFolhaManualAction(formData: FormData) {
   const companyId = formText(formData, "company_id");
   const competencia = formText(formData, "competencia");
   if (!companyId || !competencia) throw new Error("Empresa e competência obrigatórias");
-  await gerarRun(companyId, competencia, session.profile.id);
+  try {
+    await gerarRun(companyId, competencia, session.profile.id);
+  } catch (e) {
+    const msg = e instanceof Error ? e.message : "Falha ao gerar folha";
+    redirect(`/rh/folha-v2?erro=${encodeURIComponent(msg)}`);
+  }
   revalidatePath("/rh/folha-v2");
+  redirect("/rh/folha-v2?ok=gerada");
 }
 
 export async function editarLancamentoAction(formData: FormData) {
