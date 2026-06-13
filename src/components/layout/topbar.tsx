@@ -65,7 +65,6 @@ const RH_ITEMS: DropdownItem[] = [
 const FINANCEIRO_ITEMS: DropdownItem[] = [
   { href: "/financeiro", label: "Financeiro", iconName: "BarChart3" },
   { href: "/financeiro/alunos-sem-valor", label: "Sem valor / Descontos", iconName: "AlertTriangle" },
-  { href: "/financeiro/folha", label: "Folha de Pgto.", iconName: "Wallet" },
   { href: "/despesas", label: "Despesas", iconName: "Receipt" },
   { href: "/valores-praticados", label: "Valores praticados", iconName: "ReceiptText" },
   { href: "/planos", label: "Planos", iconName: "CreditCard" },

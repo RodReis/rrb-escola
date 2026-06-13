@@ -33,6 +33,19 @@ Correções de bugs de ordem PRÉ-EXISTENTES (afetam db reset; idempotentes):
 
 > **Atenção aos renomes:** se prod já aplicou as versões antigas (`202605230001_rh_empresas_funcionarios`, `202605230003_pdt_employee`), os novos nomes re-executam como migrations "novas". Ambas são idempotentes (`add column if not exists`, alters tolerantes), então re-execução é segura. Conferir `supabase_migrations.schema_migrations` em prod antes do push.
 
+## Remoção da folha legada (motor v1 / payroll) — IRREVERSÍVEL
+
+Aplicada no local (`db push --local` OK). **Em prod, conferir ANTES do push:**
+
+- `202606130005_drop_folha_legada.sql` — dropa tabelas `payroll`, `payroll_periods`, `payroll_import_cache` (cascade) e colunas legadas de `employees` (`base_salary`, `salario_sem_dsr`, `aplica_dobra`, `gps_default`).
+
+> **CHECKLIST OBRIGATÓRIO antes do push em prod (irreversível, apaga dados históricos da folha v1):**
+> - [ ] Confirmar que TODOS os funcionários ativos com salário em `employees` já têm contrato v2 equivalente em `folha_contratos` (a migração de contratos `0003f7a4` consumiu essas colunas; validar cobertura real em prod, não só local).
+> - [ ] Exportar/backup das tabelas `payroll*` em prod antes do drop, se houver necessidade de histórico fiscal da folha v1.
+> - [ ] Confirmar que nenhuma integração externa/relatório fiscal lê `payroll` em prod.
+>
+> Código já removido nesta branch: páginas `financeiro/folha/**`, `lib/{actions,data}/payroll.ts`, `lib/payroll/**`, `components/rh/payroll/**`, `validation/payroll.ts`. Compartilhados extraídos: `lib/folha/engine/brackets-calc.ts` (calcINSS/calcIR) e `lib/validation/brackets.ts`. Dashboard migrado para `folha_runs` (só status `aprovado`). Permissão de `/rh/brackets` movida de `rh.folha` → `rh.folha-v2`. O módulo `rh.folha` permanece no seed RBAC (inerte) — remover é opcional e separado.
+
 ## Validação fiscal antes do corte (operacional)
 
 - [ ] Confirmar IRRF oficial com 2-3 contracheques reais (âncora mai/2026: rendimento 5836,32 → IRRF 324,61; fórmula dá 324,59)

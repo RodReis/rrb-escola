@@ -12,7 +12,6 @@ import {
   LayoutDashboard,
   ReceiptText,
   School,
-  ScrollText,
   UsersRound
 } from "lucide-react";
 
@@ -25,7 +24,6 @@ const items = [
   { href: "/turmas", label: "Turmas", icon: GraduationCap },
   { href: "/planos", label: "Planos", icon: CreditCard },
   { href: "/financeiro", label: "Financeiro", icon: BarChart3 },
-  { href: "/financeiro/folha", label: "Folha de Pgto.", icon: ScrollText },
   { href: "/portaria", label: "Portaria", icon: DoorOpen },
   { href: "/relatorios/alunos", label: "Rel. Alunos", icon: UsersRound },
   { href: "/relatorios/inadimplencia", label: "Inadimplência", icon: ReceiptText },

@@ -1,4 +1,4 @@
-import { calcINSS, type InssBracket, type IrBracket } from "@/lib/payroll/calculators";
+import { calcINSS, type InssBracket, type IrBracket } from "./brackets-calc";
 import { calcIrrf2026, type RedutorIrrf } from "./irrf";
 import { calcDsrSobre, calcHoraAtividade, calcHoraAula } from "./proventos";
 import type {

@@ -1,5 +1,5 @@
 import { createServerClient } from "@/lib/supabase/server";
-import type { InssBracket, IrBracket } from "@/lib/payroll/calculators";
+import type { InssBracket, IrBracket } from "@/lib/folha/engine/brackets-calc";
 
 export type InssBracketRow = InssBracket & { id: string; vigencia_inicio: string };
 export type IrBracketRow = IrBracket & { id: string; vigencia_inicio: string };

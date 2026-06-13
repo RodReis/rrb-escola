@@ -17,7 +17,7 @@ export default async function BracketsPage({
 }: {
   searchParams: Promise<{ tab?: string; vigencia?: string; ok?: string; erro?: string }>;
 }) {
-  await requirePermission("rh.folha", "read");
+  await requirePermission("rh.folha-v2", "read");
   const sp = await searchParams;
 
   const [inssVigencias, irVigencias] = await Promise.all([
@@ -99,8 +99,8 @@ export default async function BracketsPage({
       </Panel>
 
       <Panel className="p-4 text-xs text-ink/55">
-        <Link href="/financeiro/folha" className="inline-flex items-center gap-1 font-semibold text-brand hover:underline">
-          <ArrowLeft size={12} /> Voltar para folha
+        <Link href="/rh/folha-v2" className="inline-flex items-center gap-1 font-semibold text-brand hover:underline">
+          <ArrowLeft size={12} /> Voltar para folha v2
         </Link>
       </Panel>
     </div>

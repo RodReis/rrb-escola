@@ -142,7 +142,7 @@ export default async function DashboardPage({
   const showFinanceiroCobrancas = has("financeiro.cobrancas");
   const showDespesas = has("despesas");
   const showBolsistas = has("bolsistas");
-  const showRhFolha = has("rh.folha");
+  const showRhFolha = has("rh.folha-v2");
   const showAlunos = has("alunos");
   const showMatriculas = has("matriculas");
   const showFrequencias = has("frequencias");

@@ -1,4 +1,4 @@
-import { calcIR, type IrBracket } from "@/lib/payroll/calculators";
+import { calcIR, type IrBracket } from "./brackets-calc";
 
 export type RedutorIrrf = { limite_isencao: number; limite_reducao: number; coef_fixo: number; coef_mult: number };
 
