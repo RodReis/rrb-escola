@@ -21,6 +21,7 @@ Folha v2 + adendos:
 Férias e 13º (Folha v2.1):
 - `202606130001_folha_v21_ferias_13o.sql` — tipo em runs, folha_periodos_aquisitivos, periodo_aquisitivo_id em itens, campos contrato/config, rubricas 13º/férias/dobro, recesso, companies endereco/cidade
 - `202606130002_seed_faixas_2025.sql` — faixas INSS/IRRF 2025 (vigencia_inicio 2025-01-01) para média/caso dourado
+- `202606130003_grants_authenticated.sql` — GRANT DML ao role authenticated/anon/service_role (RLS sozinha não basta; sem isto toda query autenticada dá "permission denied"). Conferir se prod já tem esses grants antes do push; a migration é idempotente.
 
 Correções de bugs de ordem PRÉ-EXISTENTES (afetam db reset; idempotentes):
 - `202605200004_rh_payroll_rls_policies.sql` — tornada defensiva (do-block if exists)
