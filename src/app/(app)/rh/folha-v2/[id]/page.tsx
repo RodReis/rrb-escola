@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { FileSpreadsheet, ArrowRight } from "lucide-react";
+import { FileSpreadsheet, ArrowRight, CheckCircle2, AlertCircle } from "lucide-react";
 import { PageHeader } from "@/components/ui/page-header";
 import { Card } from "@/components/ui/card";
 import { StatusPill, type StatusTone } from "@/components/ui/status-pill";
@@ -10,6 +10,7 @@ import { money } from "@/lib/constants";
 import { requirePermission } from "@/lib/auth/session";
 import { createServerClient } from "@/lib/supabase/server";
 import { RunAcoes } from "@/components/folha/run-acoes";
+import { FolhaStatusBadge } from "@/components/folha/folha-status-badge";
 
 export const dynamic = "force-dynamic";
 
@@ -65,8 +66,15 @@ type ItemRow = {
   } | null;
 };
 
-export default async function RunPage({ params }: { params: { id: string } }) {
+export default async function RunPage({
+  params,
+  searchParams,
+}: {
+  params: { id: string };
+  searchParams: Promise<{ ok?: string; erro?: string }>;
+}) {
   await requirePermission("rh.folha-v2", "read");
+  const { ok, erro } = await searchParams;
 
   const [run, supabase] = await Promise.all([
     getRunDetalhe(params.id),
@@ -94,12 +102,19 @@ export default async function RunPage({ params }: { params: { id: string } }) {
           { label: mesLabel(run.competencia) },
         ]}
         title={`Folha ${mesLabel(run.competencia)} — ${company?.name ?? "—"}`}
-        description={
-          <StatusPill tone={STATUS_TONE[run.status] ?? "neutral"}>
-            {STATUS_LABEL[run.status] ?? run.status}
-          </StatusPill>
-        }
+        description={<FolhaStatusBadge status={run.status} size="md" />}
       />
+
+      {ok ? (
+        <div className="flex items-center gap-2 rounded-ui bg-success/10 p-3 text-sm font-semibold text-success">
+          <CheckCircle2 size={16} /> Folha movida para “{STATUS_LABEL[ok] ?? ok}”.
+        </div>
+      ) : null}
+      {erro ? (
+        <div className="flex items-center gap-2 rounded-ui bg-danger/10 p-3 text-sm font-semibold text-danger">
+          <AlertCircle size={16} /> {erro}
+        </div>
+      ) : null}
 
       <RunAcoes runId={run.id} status={run.status} />
 
