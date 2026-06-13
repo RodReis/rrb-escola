@@ -1,6 +1,5 @@
 import Link from "next/link";
-import { Plus, FileText, AlertCircle, CheckCircle2 } from "lucide-react";
-import { Button, ButtonLink } from "@/components/ui/button";
+import { FileText, AlertCircle, CheckCircle2 } from "lucide-react";
 import { PageHeader } from "@/components/ui/page-header";
 import { Card } from "@/components/ui/card";
 import { DataTableShell } from "@/components/ui/data-table";
@@ -12,6 +11,7 @@ import { money } from "@/lib/constants";
 import { createServerClient } from "@/lib/supabase/server";
 import { requirePermission } from "@/lib/auth/session";
 import { ExcluirFolhaButton } from "@/components/folha/run-acoes";
+import { GerarFolhaButton } from "@/components/folha/gerar-folha-button";
 
 export const dynamic = "force-dynamic";
 
@@ -86,7 +86,7 @@ export default async function FolhaV2Page({
       ) : null}
       {ok ? (
         <div className="flex items-center gap-2 rounded-ui bg-success/10 p-3 text-sm font-semibold text-success">
-          <CheckCircle2 size={16} /> Folha especial gerada com sucesso.
+          <CheckCircle2 size={16} /> {ok === "gerada" ? "Folha gerada com sucesso." : "Folha especial gerada com sucesso."}
         </div>
       ) : null}
 
@@ -108,9 +108,7 @@ export default async function FolhaV2Page({
             Competência
             <input name="competencia" type="month" defaultValue={competenciaAtual} required />
           </label>
-          <Button type="submit" variant="primary">
-            <Plus size={14} /> Gerar folha
-          </Button>
+          <GerarFolhaButton label="Gerar folha" />
         </form>
 
         <div className="mt-6 border-t border-line pt-5">
@@ -143,9 +141,7 @@ export default async function FolhaV2Page({
               Janela (férias, opcional)
               <input name="janela" type="text" placeholder="Ex.: J1" />
             </label>
-            <Button type="submit" variant="accent">
-              <Plus size={14} /> Gerar 13º / Férias
-            </Button>
+            <GerarFolhaButton label="Gerar 13º / Férias" pendingLabel="Gerando…" variant="accent" />
           </form>
         </div>
       </Card>
