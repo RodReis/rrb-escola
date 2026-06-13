@@ -52,6 +52,25 @@ Aplicada no local (`db push --local` OK). **Em prod, conferir ANTES do push:**
 - [ ] Migração de contratos a partir de `employees` (script one-off, revisão manual de hora-aula dos professores)
 - [ ] Rodar folha da competência de corte em paralelo com a planilha do financeiro; bater totais (caso Ana Flávia: hora-aula 23,16 × 48 = 5002,56)
 
+## PENDÊNCIA — finalizar cálculo da folha do PROFESSOR (com contador)
+
+Status: **aberto** — aguardando definição do contador. Contratos de professor em prod
+foram criados (script `criar_contratos_da_planilha.mjs`) com `salario_base` tirado da
+coluna "Salário base" da planilha, mas isso está **conceitualmente errado**.
+
+Diagnóstico (recibo oficial Ana Flávia, mai/2026):
+- Professor é **HORISTA**, não mensalista. Recibo: SALÁRIO HORA 216h = 5.002,56 (valor-hora 23,16) + DSR PROFESSOR AULISTA 833,76 (= salário-hora ÷ 6) = total 5.836,32.
+- INSS 618,58 · IRRF 324,61 · líquido 4.698,78 · base INSS/FGTS/IRRF = 5.836,32 (IRRF base 5.217,74).
+- Relação planilha→recibo: `salário-hora ≈ TOTAL_planilha × 6/7`; `DSR = salário-hora ÷ 6`.
+
+O que falta para fechar:
+- [ ] Obter (RH/contador) `valor_hora_aula` + `aulas_semanais` reais de cada professor (a planilha só tem totais, não horas). Ana = 23,16/h × 48 aulas/sem × 4,5 semanas = 216h.
+- [ ] Preencher `valor_hora_aula`/`aulas_semanais` nos contratos professor; a rubrica `hora_aula` (perfil `clt_professor`) já incide DSR (÷6 automático). Hoje esses campos estão nulos → proventos vinham 0 antes do paliativo.
+- [ ] **Reverter migration `202606130006_professor_salario_base.sql`** (adicionou `salario_base` ao perfil `clt_professor`). Foi paliativo para não zerar; professor não é mensalista. Reverter quando os contratos forem para hora-aula. (rollback: `delete from folha_perfis_rubricas` da dupla clt_professor+salario_base.)
+- [ ] Revalidar com o recibo da Ana após ajuste (e amostra de 2-3 professores).
+
+Não-professores (perfil `clt`, ex.: Keila, Reginalda) já calculam corretamente por `salario_base`.
+
 ## Férias e 13º (v2.1) — operacional
 
 - [ ] Habilitar `jobs.gerar_especiais` na config de cada empresa (tela Config → Férias e 13º) para o cron gerar 13º/férias automaticamente
