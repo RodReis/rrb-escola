@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { FileText, AlertCircle, CheckCircle2 } from "lucide-react";
+import { FileText, AlertCircle, CheckCircle2, ArrowRight } from "lucide-react";
 import { PageHeader } from "@/components/ui/page-header";
 import { Card } from "@/components/ui/card";
 import { DataTableShell } from "@/components/ui/data-table";
@@ -12,24 +12,9 @@ import { createServerClient } from "@/lib/supabase/server";
 import { requirePermission } from "@/lib/auth/session";
 import { ExcluirFolhaButton } from "@/components/folha/run-acoes";
 import { GerarFolhaButton } from "@/components/folha/gerar-folha-button";
+import { FolhaStatusBadge } from "@/components/folha/folha-status-badge";
 
 export const dynamic = "force-dynamic";
-
-const STATUS_LABEL: Record<string, string> = {
-  iniciada:    "Iniciada",
-  em_andamento: "Em andamento",
-  revisao:     "Revisão",
-  aprovacao:   "Aprovação",
-  aprovado:    "Aprovado",
-};
-
-const STATUS_TONE: Record<string, StatusTone> = {
-  iniciada:    "warning",
-  em_andamento: "neutral",
-  revisao:     "neutral",
-  aprovacao:   "neutral",
-  aprovado:    "success",
-};
 
 function mesLabel(competencia: string) {
   const [y, m] = competencia.split("-");
@@ -155,16 +140,15 @@ export default async function FolhaV2Page({
           ) : undefined
         }
       >
-        <table className="ds-dt min-w-[900px]">
+        <table className="w-full min-w-[900px] border-separate border-spacing-0 text-sm">
           <thead>
             <tr>
-              <th>Competência</th>
-              <th>Empresa</th>
-              <th>Tipo</th>
-              <th>Status</th>
-              <th className="text-right">Proventos</th>
-              <th className="text-right">Líquido</th>
-              <th className="text-right">Ações</th>
+              {["Competência", "Empresa", "Tipo", "Status"].map((h) => (
+                <th key={h} className="px-4 py-3 text-left text-[0.68rem] font-bold uppercase tracking-kicker text-ink/45">{h}</th>
+              ))}
+              <th className="px-4 py-3 text-right text-[0.68rem] font-bold uppercase tracking-kicker text-ink/45">Proventos</th>
+              <th className="px-4 py-3 text-right text-[0.68rem] font-bold uppercase tracking-kicker text-ink/45">Líquido</th>
+              <th className="px-4 py-3 text-right text-[0.68rem] font-bold uppercase tracking-kicker text-ink/45">Ações</th>
             </tr>
           </thead>
           <tbody>
@@ -184,30 +168,31 @@ export default async function FolhaV2Page({
               const tipoLabel = tipoRaw ? TIPO_LABEL[tipoRaw] : null;
               const tipoTone = tipoRaw ? (TIPO_TONE[tipoRaw] ?? "neutral") : null;
               return (
-                <tr key={r.id}>
-                  <td className="font-medium tabular-nums">{mesLabel(r.competencia)}</td>
-                  <td className="text-ink/80">{company?.name ?? "—"}</td>
-                  <td>
+                <tr
+                  key={r.id}
+                  className="border-b border-line/60 transition-colors odd:bg-transparent even:bg-muted/20 hover:bg-brand/[0.04]"
+                >
+                  <td className="px-4 py-2.5 font-semibold text-ink tabular-nums">{mesLabel(r.competencia)}</td>
+                  <td className="px-4 py-2.5 text-ink/80">{company?.name ?? "—"}</td>
+                  <td className="px-4 py-2.5">
                     {tipoLabel ? (
                       <StatusPill tone={tipoTone ?? "neutral"}>{tipoLabel}</StatusPill>
                     ) : (
                       <span className="text-xs text-ink/40">Mensal</span>
                     )}
                   </td>
-                  <td>
-                    <StatusPill tone={STATUS_TONE[r.status] ?? "neutral"}>
-                      {STATUS_LABEL[r.status] ?? r.status}
-                    </StatusPill>
+                  <td className="px-4 py-2.5">
+                    <FolhaStatusBadge status={r.status} />
                   </td>
-                  <td className="text-right tabular-nums">{money.format(Number(r.total_proventos ?? 0))}</td>
-                  <td className="text-right tabular-nums">{money.format(Number(r.total_liquido ?? 0))}</td>
-                  <td className="text-right">
+                  <td className="px-4 py-2.5 text-right tabular-nums text-success">{money.format(Number(r.total_proventos ?? 0))}</td>
+                  <td className="px-4 py-2.5 text-right tabular-nums font-bold text-ink">{money.format(Number(r.total_liquido ?? 0))}</td>
+                  <td className="px-4 py-2.5 text-right">
                     <div className="inline-flex items-center gap-3 justify-end">
                       <Link
                         href={`/rh/folha-v2/${r.id}`}
-                        className="inline-flex items-center gap-1 text-xs font-semibold text-brand hover:underline"
+                        className="inline-flex items-center gap-1 text-xs font-semibold text-brand hover:gap-1.5 hover:underline transition-all"
                       >
-                        Abrir
+                        Abrir <ArrowRight size={12} />
                       </Link>
                       {r.status === "iniciada" && (
                         <ExcluirFolhaButton runId={r.id} />
