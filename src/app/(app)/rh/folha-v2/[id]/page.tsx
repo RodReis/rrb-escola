@@ -13,19 +13,19 @@ import { RunAcoes } from "@/components/folha/run-acoes";
 export const dynamic = "force-dynamic";
 
 const STATUS_LABEL: Record<string, string> = {
-  rascunho: "Rascunho",
-  em_revisao: "Em revisão",
-  aprovada: "Aprovada",
-  paga: "Paga",
-  fechada: "Fechada",
+  iniciada:    "Iniciada",
+  em_andamento: "Em andamento",
+  revisao:     "Revisão",
+  aprovacao:   "Aprovação",
+  aprovado:    "Aprovado",
 };
 
 const STATUS_TONE: Record<string, StatusTone> = {
-  rascunho: "warning",
-  em_revisao: "neutral",
-  aprovada: "neutral",
-  paga: "success",
-  fechada: "success",
+  iniciada:    "warning",
+  em_andamento: "neutral",
+  revisao:     "neutral",
+  aprovacao:   "neutral",
+  aprovado:    "success",
 };
 
 function mesLabel(competencia: string) {
@@ -62,8 +62,8 @@ export default async function RunPage({ params }: { params: { id: string } }) {
     .select("descricao, valor, status, data_vencimento")
     .eq("folha_run_id", run.id);
 
-  const editavel = ["rascunho", "em_revisao"].includes(run.status);
-  const podeExportar = ["aprovada", "paga", "fechada"].includes(run.status);
+  const editavel = ["iniciada", "em_andamento", "revisao"].includes(run.status);
+  const podeExportar = run.status === "aprovado";
   const company = run.companies as { name: string } | null;
   const itensAtivos = ((run.folha_itens ?? []) as unknown as ItemRow[]).filter(
     (i) => i.status === "ativo"

@@ -2,32 +2,32 @@ import { describe, expect, it } from "vitest";
 import { podeTransicionar } from "@/lib/folha/estados";
 
 describe("estados da run", () => {
-  it("fluxo feliz", () => {
-    expect(podeTransicionar("rascunho", "aprovada")).toBe(true);
-    expect(podeTransicionar("aprovada", "paga")).toBe(true);
-    expect(podeTransicionar("paga", "fechada")).toBe(true);
+  it("fluxo feliz iniciada→aprovado", () => {
+    expect(podeTransicionar("iniciada", "em_andamento")).toBe(true);
+    expect(podeTransicionar("em_andamento", "revisao")).toBe(true);
+    expect(podeTransicionar("revisao", "aprovacao")).toBe(true);
+    expect(podeTransicionar("aprovacao", "aprovado")).toBe(true);
   });
 
-  it("bloqueia pulos e retrocessos", () => {
-    expect(podeTransicionar("rascunho", "paga")).toBe(false);
-    expect(podeTransicionar("fechada", "rascunho")).toBe(false);
-    expect(podeTransicionar("aprovada", "rascunho")).toBe(false);
+  it("back-transitions permitidas", () => {
+    expect(podeTransicionar("em_andamento", "iniciada")).toBe(true);
+    expect(podeTransicionar("revisao", "em_andamento")).toBe(true);
+    expect(podeTransicionar("aprovacao", "revisao")).toBe(true);
   });
 
-  it("rascunho permite em_revisao", () => {
-    expect(podeTransicionar("rascunho", "em_revisao")).toBe(true);
+  it("bloqueia pulos e retrocessos inválidos", () => {
+    expect(podeTransicionar("iniciada", "revisao")).toBe(false);
+    expect(podeTransicionar("iniciada", "aprovado")).toBe(false);
+    expect(podeTransicionar("aprovado", "iniciada")).toBe(false);
+    expect(podeTransicionar("aprovado", "revisao")).toBe(false);
   });
 
-  it("em_revisao permite voltar a rascunho", () => {
-    expect(podeTransicionar("em_revisao", "rascunho")).toBe(true);
-  });
-
-  it("fechada nao permite nenhuma transicao", () => {
-    expect(podeTransicionar("fechada", "paga")).toBe(false);
-    expect(podeTransicionar("fechada", "aprovada")).toBe(false);
+  it("aprovado não permite nenhuma transição", () => {
+    expect(podeTransicionar("aprovado", "aprovacao")).toBe(false);
+    expect(podeTransicionar("aprovado", "em_andamento")).toBe(false);
   });
 
   it("estado desconhecido retorna false", () => {
-    expect(podeTransicionar("inexistente", "aprovada")).toBe(false);
+    expect(podeTransicionar("inexistente", "aprovado")).toBe(false);
   });
 });

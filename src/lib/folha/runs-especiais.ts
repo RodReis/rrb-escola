@@ -85,7 +85,7 @@ async function contratosCltAtivos(
         "folha_itens!inner(contrato_id, folha_runs!inner(competencia, status))",
       )
       .eq("folha_rubricas.codigo", "decimo_1a_parcela")
-      .in("folha_itens.folha_runs.status", ["aprovada", "fechada"])
+      .in("folha_itens.folha_runs.status", ["aprovado"])
       .gte("folha_itens.folha_runs.competencia", anoInicio.slice(0, 7))
       .lte("folha_itens.folha_runs.competencia", anoFim.slice(0, 7));
     if (jpErr) throw jpErr;
@@ -257,7 +257,7 @@ async function basesUltimos12(contratoId: string, competencia: string, client?: 
     .select("base_fgts, folha_runs!inner(competencia, tipo, status)")
     .eq("contrato_id", contratoId)
     .eq("folha_runs.tipo", "mensal")
-    .eq("folha_runs.status", "fechada")
+    .eq("folha_runs.status", "aprovado")
     .lt("folha_runs.competencia", competencia)
     .order("folha_runs.competencia", { ascending: false })
     .limit(12);
@@ -279,7 +279,7 @@ async function valor1aPagaNoAno(contratoId: string, anoRef: number, client?: Sup
     )
     .eq("folha_rubricas.codigo", "decimo_1a_parcela")
     .eq("folha_itens.contrato_id", contratoId)
-    .in("folha_itens.folha_runs.status", ["aprovada", "fechada", "paga"])
+    .in("folha_itens.folha_runs.status", ["aprovado"])
     .gte("folha_itens.folha_runs.competencia", competenciaInicio)
     .lte("folha_itens.folha_runs.competencia", competenciaFim);
   if (error) throw error;

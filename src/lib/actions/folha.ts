@@ -148,9 +148,12 @@ export async function transicionarRunAction(formData: FormData) {
   if (!podeTransicionar(runRow.status, destino))
     throw new Error(`Transição ${runRow.status} → ${destino} inválida`);
 
-  if (destino === "aprovada") {
+  if (destino === "aprovado") {
+    // Validar pendências antes de aprovar
     const pendencias = await validarRun(runId);
     if (pendencias.length) throw new Error(`Pendências bloqueiam aprovação: ${pendencias.join("; ")}`);
+
+    // Gerar despesas de pagamento (líquidos, GPS, FGTS)
     await gerarDespesasDaRun({
       id: runRow.id,
       escola_id: runRow.escola_id,
@@ -158,27 +161,12 @@ export async function transicionarRunAction(formData: FormData) {
       total_liquido: runRow.total_liquido,
       folha_config: runRow.folha_config,
     });
-    const { error: updErr } = await supabase
-      .from("folha_runs")
-      .update({ status: destino, aprovada_por: session.profile.id, aprovada_em: new Date().toISOString() })
-      .eq("id", runId);
-    if (updErr) throw updErr;
-  } else if (destino === "paga") {
-    const { error: despErr } = await supabase
-      .from("despesas")
-      .update({ data_pagamento: new Date().toISOString().slice(0, 10), status: "paga" })
-      .eq("folha_run_id", runId)
-      .eq("status", "aberta");
-    if (despErr) throw despErr;
-    const { error: updErr } = await supabase
-      .from("folha_runs")
-      .update({ status: destino, paga_em: new Date().toISOString() })
-      .eq("id", runId);
-    if (updErr) throw updErr;
-  } else if (destino === "fechada") {
+
+    // Gravar provisões mensais OU baixar provisões de runs especiais
     if (runRow.tipo === "mensal") {
       await gravarProvisoes(runId, runRow.competencia);
     } else {
+      // Runs especiais (decimo_2a, ferias): baixar provisões acumuladas
       const { data: itensRun, error: itensErr } = await supabase
         .from("folha_itens")
         .select("contrato_id, periodo_aquisitivo_id")
@@ -191,8 +179,7 @@ export async function transicionarRunAction(formData: FormData) {
       const contratoIds = itensRows.map((i) => i.contrato_id);
 
       if (contratoIds.length > 0) {
-        const tipoProvisao =
-          runRow.tipo === "decimo_2a" ? "decimo_terceiro" : "ferias";
+        const tipoProvisao = runRow.tipo === "decimo_2a" ? "decimo_terceiro" : "ferias";
         const { error: baixaErr } = await supabase
           .from("folha_provisoes")
           .update({ baixada_em: new Date().toISOString() })
@@ -202,6 +189,7 @@ export async function transicionarRunAction(formData: FormData) {
         if (baixaErr) throw baixaErr;
       }
 
+      // Férias: marcar período aquisitivo como gozado e abrir próximo
       if (runRow.tipo === "ferias") {
         for (const item of itensRows) {
           if (!item.periodo_aquisitivo_id) continue;
@@ -217,7 +205,7 @@ export async function transicionarRunAction(formData: FormData) {
 
     const { error: updErr } = await supabase
       .from("folha_runs")
-      .update({ status: destino, fechada_por: session.profile.id, fechada_em: new Date().toISOString() })
+      .update({ status: "aprovado", aprovada_por: session.profile.id, aprovada_em: new Date().toISOString() })
       .eq("id", runId);
     if (updErr) throw updErr;
   } else {
@@ -227,6 +215,7 @@ export async function transicionarRunAction(formData: FormData) {
       .eq("id", runId);
     if (updErr) throw updErr;
   }
+
   revalidatePath("/rh/folha-v2");
 }
 
@@ -275,9 +264,44 @@ export async function reabrirRunAction(formData: FormData) {
 
   const { error: updErr } = await supabase
     .from("folha_runs")
-    .update({ status: "rascunho", reaberta_motivo: motivo })
+    .update({ status: "iniciada", reaberta_motivo: motivo })
     .eq("id", runId);
   if (updErr) throw updErr;
+
+  revalidatePath("/rh/folha-v2");
+}
+
+export async function excluirRunAction(formData: FormData) {
+  await requirePermission("rh.folha-v2", "delete");
+  const supabase = await createServerClient();
+  const runId = formText(formData, "run_id");
+  if (!runId) throw new Error("run_id obrigatório");
+
+  const { data: run, error: runErr } = await supabase
+    .from("folha_runs")
+    .select("status")
+    .eq("id", runId)
+    .single();
+  if (runErr) throw runErr;
+  if (!run) throw new Error("Folha não encontrada");
+
+  type RunStatus = { status: string };
+  if ((run as unknown as RunStatus).status !== "iniciada")
+    throw new Error("Só folhas em status iniciada podem ser excluídas");
+
+  // folha_itens e folha_lancamentos têm ON DELETE CASCADE a partir de folha_runs
+  // despesas têm ON DELETE SET NULL — apagar explicitamente as vinculadas (nenhuma se nunca aprovada)
+  const { error: despErr } = await supabase
+    .from("despesas")
+    .delete()
+    .eq("folha_run_id", runId);
+  if (despErr) throw despErr;
+
+  const { error: delErr } = await supabase
+    .from("folha_runs")
+    .delete()
+    .eq("id", runId);
+  if (delErr) throw delErr;
 
   revalidatePath("/rh/folha-v2");
 }

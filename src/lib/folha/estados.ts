@@ -1,9 +1,9 @@
 export const TRANSICOES: Record<string, string[]> = {
-  rascunho: ["em_revisao", "aprovada"],
-  em_revisao: ["rascunho", "aprovada"],
-  aprovada: ["paga"],
-  paga: ["fechada"],
-  fechada: [],
+  iniciada:    ["em_andamento"],
+  em_andamento: ["revisao", "iniciada"],
+  revisao:     ["aprovacao", "em_andamento"],
+  aprovacao:   ["aprovado", "revisao"],
+  aprovado:    [],
 };
 
 export function podeTransicionar(de: string, para: string): boolean {

@@ -31,7 +31,7 @@ export async function jobGerarFolha(hoje: Date): Promise<GerarResult[]> {
         perfil_id: null,
         tipo: "folha",
         titulo: `Folha ${competencia} gerada`,
-        descricao: "Folha em rascunho aguardando revisão.",
+        descricao: "Folha iniciada aguardando andamento.",
         href: `/rh/folha-v2/${r.runId}`,
         severidade: "info",
       });
@@ -53,7 +53,7 @@ export async function jobAlertasFolha(hoje: Date): Promise<AlertaResult[]> {
     .from("folha_runs")
     .select("id, status, competencia, company_id")
     .eq("competencia", competencia)
-    .in("status", ["rascunho", "em_revisao"]);
+    .in("status", ["iniciada", "em_andamento", "revisao", "aprovacao"]);
 
   if (!runs?.length) return [];
 
@@ -91,7 +91,7 @@ export async function jobAlertasFolha(hoje: Date): Promise<AlertaResult[]> {
     }
 
     const diff = (new Date(vencimento).getTime() - new Date(hojeISO).getTime()) / 86400000;
-    if (r.status !== "aprovada" && diff <= 2 && diff >= 0) {
+    if (r.status !== "aprovado" && diff <= 2 && diff >= 0) {
       alertas.push({ run_id: r.id, competencia: r.competencia, vencimento, status: r.status });
     }
   }

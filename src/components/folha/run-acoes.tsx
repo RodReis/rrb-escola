@@ -3,31 +3,48 @@
 import { useRef, useState, useTransition } from "react";
 import { Button } from "@/components/ui/button";
 import { useConfirm } from "@/components/ui/confirm-dialog";
-import { transicionarRunAction, reabrirRunAction, validarRunAction } from "@/lib/actions/folha";
+import { transicionarRunAction, reabrirRunAction, validarRunAction, excluirRunAction } from "@/lib/actions/folha";
 import { TRANSICOES } from "@/lib/folha/estados";
 
 const DESTINO_LABEL: Record<string, string> = {
-  em_revisao: "Enviar para revisão",
-  aprovada: "Aprovar folha",
-  paga: "Marcar como paga",
-  fechada: "Fechar folha",
-  rascunho: "Voltar a rascunho",
+  em_andamento: "Enviar para andamento",
+  revisao:      "Enviar para revisão",
+  aprovacao:    "Enviar para aprovação",
+  aprovado:     "Aprovar folha",
+  iniciada:     "Voltar para iniciada",
+  em_andamento_back: "Voltar",
+  revisao_back: "Voltar",
 };
 
 const DESTINO_VARIANT: Record<string, "primary" | "secondary" | "accent" | "ghost"> = {
-  em_revisao: "secondary",
-  aprovada: "primary",
-  paga: "accent",
-  fechada: "secondary",
-  rascunho: "ghost",
+  em_andamento: "secondary",
+  revisao:      "secondary",
+  aprovacao:    "secondary",
+  aprovado:     "primary",
+  iniciada:     "ghost",
 };
 
-const CONFIRMAR_DESTINOS = new Set(["aprovada", "fechada"]);
+const CONFIRMAR_DESTINOS = new Set(["aprovado"]);
 
 type Props = {
   runId: string;
   status: string;
 };
+
+function destinoLabel(de: string, para: string): string {
+  if (para === "iniciada") return "Voltar para iniciada";
+  if (para === "em_andamento" && de !== "iniciada") return "Voltar";
+  if (para === "revisao" && de !== "em_andamento") return "Voltar";
+  return DESTINO_LABEL[para] ?? para;
+}
+
+function destinoVariant(de: string, para: string): "primary" | "secondary" | "accent" | "ghost" {
+  if (para === "aprovado") return "primary";
+  if (de !== "iniciada" && para === "iniciada") return "ghost";
+  if (de !== "iniciada" && de !== "em_andamento" && para === "em_andamento") return "ghost";
+  if (de !== "revisao" && para === "revisao" && de === "aprovacao") return "ghost";
+  return DESTINO_VARIANT[para] ?? "secondary";
+}
 
 export function RunAcoes({ runId, status }: Props) {
   const confirm = useConfirm();
@@ -39,7 +56,7 @@ export function RunAcoes({ runId, status }: Props) {
   const [isPending, startTransition] = useTransition();
 
   const destinos = TRANSICOES[status] ?? [];
-  const podeReabrir = ["aprovada", "paga", "fechada"].includes(status);
+  const podeReabrir = status === "aprovado";
 
   function handleTransicionar(destino: string) {
     startTransition(async () => {
@@ -52,16 +69,7 @@ export function RunAcoes({ runId, status }: Props) {
         return;
       }
 
-      const msgs: Record<string, string> = {
-        aprovada: "Aprovar esta folha gerará as despesas de pagamento. Confirmar aprovação?",
-        fechada: "Fechar esta folha registrará as provisões definitivas. Confirmar fechamento?",
-      };
-      const titles: Record<string, string> = {
-        aprovada: "Aprovar folha",
-        fechada: "Fechar folha",
-      };
-
-      if (destino === "aprovada") {
+      if (destino === "aprovado") {
         const pends = await validarRunAction(runId);
         if (pends.length > 0) {
           setPendencias(pends);
@@ -70,10 +78,10 @@ export function RunAcoes({ runId, status }: Props) {
       }
 
       const ok = await confirm({
-        title: titles[destino],
-        message: msgs[destino],
-        confirmLabel: DESTINO_LABEL[destino],
-        variant: destino === "fechada" ? "warning" : "default",
+        title: "Aprovar folha",
+        message: "Aprovar esta folha gerará as despesas de pagamento e registrará as provisões definitivas. Confirmar aprovação?",
+        confirmLabel: "Aprovar folha",
+        variant: "default",
       });
 
       if (ok && formRef.current) {
@@ -107,11 +115,11 @@ export function RunAcoes({ runId, status }: Props) {
             <Button
               key={destino}
               type="button"
-              variant={DESTINO_VARIANT[destino] ?? "secondary"}
+              variant={destinoVariant(status, destino)}
               disabled={isPending}
               onClick={() => handleTransicionar(destino)}
             >
-              {DESTINO_LABEL[destino] ?? destino}
+              {destinoLabel(status, destino)}
             </Button>
           ))}
           {podeReabrir && (
@@ -168,5 +176,40 @@ export function RunAcoes({ runId, status }: Props) {
         </ul>
       )}
     </div>
+  );
+}
+
+export function ExcluirFolhaButton({ runId }: { runId: string }) {
+  const confirm = useConfirm();
+  const formRef = useRef<HTMLFormElement>(null);
+  const [isPending, startTransition] = useTransition();
+
+  function handleExcluir() {
+    startTransition(async () => {
+      const ok = await confirm({
+        title: "Excluir folha",
+        message: "Esta ação é irreversível. Todos os itens e lançamentos desta folha serão excluídos. Confirmar exclusão?",
+        confirmLabel: "Excluir folha",
+        variant: "danger",
+      });
+      if (ok && formRef.current) {
+        formRef.current.requestSubmit();
+      }
+    });
+  }
+
+  return (
+    <form ref={formRef} action={excluirRunAction}>
+      <input type="hidden" name="run_id" value={runId} />
+      <Button
+        type="button"
+        variant="ghost"
+        disabled={isPending}
+        onClick={handleExcluir}
+        className="text-danger hover:text-danger"
+      >
+        Excluir
+      </Button>
+    </form>
   );
 }

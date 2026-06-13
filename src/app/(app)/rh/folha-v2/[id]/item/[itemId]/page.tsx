@@ -13,19 +13,19 @@ import { money } from "@/lib/constants";
 export const dynamic = "force-dynamic";
 
 const STATUS_LABEL: Record<string, string> = {
-  rascunho: "Rascunho",
-  em_revisao: "Em revisão",
-  aprovada: "Aprovada",
-  paga: "Paga",
-  fechada: "Fechada",
+  iniciada:    "Iniciada",
+  em_andamento: "Em andamento",
+  revisao:     "Revisão",
+  aprovacao:   "Aprovação",
+  aprovado:    "Aprovado",
 };
 
 const STATUS_TONE: Record<string, StatusTone> = {
-  rascunho: "warning",
-  em_revisao: "neutral",
-  aprovada: "neutral",
-  paga: "success",
-  fechada: "success",
+  iniciada:    "warning",
+  em_andamento: "neutral",
+  revisao:     "neutral",
+  aprovacao:   "neutral",
+  aprovado:    "success",
 };
 
 function mesLabel(competencia: string) {
@@ -74,14 +74,14 @@ export default async function ContrachequeePage({
   const runData = item.folha_runs as unknown as RunShape | null;
   const contratoData = item.folha_contratos as unknown as ContratoShape | null;
 
-  const runStatus = runData?.status ?? "fechada";
+  const runStatus = runData?.status ?? "aprovado";
   const runId = runData?.id ?? params.id;
   const competencia = runData?.competencia ?? "";
   const companyName = runData?.companies?.name ?? "—";
   const funcionarioName = contratoData?.employees?.name ?? "—";
   const perfilNome = contratoData?.folha_perfis_calculo?.nome ?? "—";
 
-  const editavel = ["rascunho", "em_revisao"].includes(runStatus);
+  const editavel = ["iniciada", "em_andamento", "revisao"].includes(runStatus);
 
   const rows = lancamentos as unknown as LancamentoRow2[];
 

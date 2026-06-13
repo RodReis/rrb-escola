@@ -11,23 +11,24 @@ import { gerarRunEspecialAction } from "@/lib/actions/folha-especiais";
 import { money } from "@/lib/constants";
 import { createServerClient } from "@/lib/supabase/server";
 import { requirePermission } from "@/lib/auth/session";
+import { ExcluirFolhaButton } from "@/components/folha/run-acoes";
 
 export const dynamic = "force-dynamic";
 
 const STATUS_LABEL: Record<string, string> = {
-  rascunho: "Rascunho",
-  em_revisao: "Em revisão",
-  aprovada: "Aprovada",
-  paga: "Paga",
-  fechada: "Fechada",
+  iniciada:    "Iniciada",
+  em_andamento: "Em andamento",
+  revisao:     "Revisão",
+  aprovacao:   "Aprovação",
+  aprovado:    "Aprovado",
 };
 
 const STATUS_TONE: Record<string, StatusTone> = {
-  rascunho: "warning",
-  em_revisao: "neutral",
-  aprovada: "neutral",
-  paga: "success",
-  fechada: "success",
+  iniciada:    "warning",
+  em_andamento: "neutral",
+  revisao:     "neutral",
+  aprovacao:   "neutral",
+  aprovado:    "success",
 };
 
 function mesLabel(competencia: string) {
@@ -94,7 +95,7 @@ export default async function FolhaV2Page({
           Gerar folha manualmente
         </div>
         <form action={gerarFolhaManualAction} className="flex flex-wrap items-end gap-3">
-          <label className="flex flex-col gap-1 text-sm font-medium text-ink/80">
+          <label className="flex w-full flex-col gap-1 text-sm font-medium text-ink/80 sm:w-64">
             Empresa
             <select name="company_id" required>
               <option value="">Selecione…</option>
@@ -103,7 +104,7 @@ export default async function FolhaV2Page({
               ))}
             </select>
           </label>
-          <label className="flex flex-col gap-1 text-sm font-medium text-ink/80">
+          <label className="flex w-full flex-col gap-1 text-sm font-medium text-ink/80 sm:w-48">
             Competência
             <input name="competencia" type="month" defaultValue={competenciaAtual} required />
           </label>
@@ -117,7 +118,7 @@ export default async function FolhaV2Page({
             Gerar 13º / Férias
           </div>
           <form action={gerarRunEspecialAction} className="flex flex-wrap items-end gap-3">
-            <label className="flex flex-col gap-1 text-sm font-medium text-ink/80">
+            <label className="flex w-full flex-col gap-1 text-sm font-medium text-ink/80 sm:w-56">
               Empresa
               <select name="company_id" required>
                 <option value="">Selecione…</option>
@@ -126,11 +127,11 @@ export default async function FolhaV2Page({
                 ))}
               </select>
             </label>
-            <label className="flex flex-col gap-1 text-sm font-medium text-ink/80">
+            <label className="flex w-full flex-col gap-1 text-sm font-medium text-ink/80 sm:w-44">
               Competência
               <input name="competencia" type="month" defaultValue={competenciaAtual} required />
             </label>
-            <label className="flex flex-col gap-1 text-sm font-medium text-ink/80">
+            <label className="flex w-full flex-col gap-1 text-sm font-medium text-ink/80 sm:w-40">
               Tipo
               <select name="tipo" required>
                 <option value="decimo_1a">13º 1ª parcela</option>
@@ -138,9 +139,9 @@ export default async function FolhaV2Page({
                 <option value="ferias">Férias</option>
               </select>
             </label>
-            <label className="flex flex-col gap-1 text-sm font-medium text-ink/80">
+            <label className="flex w-full flex-col gap-1 text-sm font-medium text-ink/80 sm:w-36">
               Janela (férias, opcional)
-              <input name="janela" type="text" placeholder="Ex.: J1" className="w-24" />
+              <input name="janela" type="text" placeholder="Ex.: J1" />
             </label>
             <Button type="submit" variant="accent">
               <Plus size={14} /> Gerar 13º / Férias
@@ -167,7 +168,7 @@ export default async function FolhaV2Page({
               <th>Status</th>
               <th className="text-right">Proventos</th>
               <th className="text-right">Líquido</th>
-              <th className="text-right">Abrir</th>
+              <th className="text-right">Ações</th>
             </tr>
           </thead>
           <tbody>
@@ -205,12 +206,17 @@ export default async function FolhaV2Page({
                   <td className="text-right tabular-nums">{money.format(Number(r.total_proventos ?? 0))}</td>
                   <td className="text-right tabular-nums">{money.format(Number(r.total_liquido ?? 0))}</td>
                   <td className="text-right">
-                    <Link
-                      href={`/rh/folha-v2/${r.id}`}
-                      className="inline-flex items-center gap-1 text-xs font-semibold text-brand hover:underline"
-                    >
-                      Abrir
-                    </Link>
+                    <div className="inline-flex items-center gap-3 justify-end">
+                      <Link
+                        href={`/rh/folha-v2/${r.id}`}
+                        className="inline-flex items-center gap-1 text-xs font-semibold text-brand hover:underline"
+                      >
+                        Abrir
+                      </Link>
+                      {r.status === "iniciada" && (
+                        <ExcluirFolhaButton runId={r.id} />
+                      )}
+                    </div>
                   </td>
                 </tr>
               );

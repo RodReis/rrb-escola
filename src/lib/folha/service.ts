@@ -203,7 +203,7 @@ export async function recalcularItemDb(
     .eq("id", runId)
     .single();
   if (!run) throw new Error("Run não encontrada");
-  if (!["rascunho", "em_revisao"].includes(run.status as string))
+  if (!["iniciada", "em_andamento", "revisao"].includes(run.status as string))
     throw new Error("Run travada para edição");
 
   const [{ data: contrato }, { data: config }, faixas] = await Promise.all([
