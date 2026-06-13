@@ -95,7 +95,7 @@ export default async function EditarContratoPage({
 
       <Panel className="p-6">
         <p className="mb-4 text-xs font-bold uppercase tracking-kicker text-ink/55">Dados do contrato</p>
-        <form action={updateContratoAction} className="grid gap-5 max-w-2xl">
+        <form action={updateContratoAction} className="grid gap-5">
           <input type="hidden" name="id" value={c.id} />
           <input type="hidden" name="funcionario_id" value={c.employees?.id ?? ""} />
 
@@ -114,7 +114,7 @@ export default async function EditarContratoPage({
               <select name="perfil_calculo_id" required defaultValue={c.folha_perfis_calculo?.id ?? ""}>
                 <option value="">Selecione…</option>
                 {perfis.map((p) => (
-                  <option key={p.id} value={p.id}>{p.codigo} — {p.nome}</option>
+                  <option key={p.id} value={p.id}>{p.nome}</option>
                 ))}
               </select>
             </label>
@@ -205,16 +205,16 @@ export default async function EditarContratoPage({
               <input name="janela_ferias" type="text" maxLength={20}
                 defaultValue={c.janela_ferias ?? ""} placeholder="Opcional" />
             </label>
-            <div className="flex flex-col gap-3 pt-5">
-              <label className="flex items-center gap-2 text-sm font-medium text-ink/80 cursor-pointer">
+            <div className="flex items-end pb-2">
+              <label className="flex cursor-pointer items-center gap-2.5 text-sm font-medium text-ink/80">
                 <input type="checkbox" name="antecipa_13_com_ferias"
-                  defaultChecked={c.antecipa_13_com_ferias} /> Antecipar 13º com férias
+                  defaultChecked={c.antecipa_13_com_ferias} className="h-4 w-4 shrink-0 accent-brand" /> Antecipar 13º com férias
               </label>
             </div>
           </div>
 
-          <label className="flex items-center gap-2 text-sm font-medium text-ink/80 cursor-pointer">
-            <input type="checkbox" name="ativo" defaultChecked={c.ativo} /> Contrato ativo
+          <label className="flex cursor-pointer items-center gap-2.5 text-sm font-medium text-ink/80">
+            <input type="checkbox" name="ativo" defaultChecked={c.ativo} className="h-4 w-4 shrink-0 accent-brand" /> Contrato ativo
           </label>
 
           <div className="flex gap-3">
@@ -303,7 +303,7 @@ export default async function EditarContratoPage({
             <input name="percentual" type="number" step="0.0001" min="0" placeholder="Ou use valor" className="w-28" />
           </label>
           <label className="flex items-center gap-2 text-sm font-medium text-ink/80 cursor-pointer mt-5">
-            <input type="checkbox" name="ativa" defaultChecked /> Ativa
+            <input type="checkbox" name="ativa" defaultChecked className="h-4 w-4 shrink-0 accent-brand" /> Ativa
           </label>
           <Button type="submit" variant="secondary" className="mt-5">Adicionar verba</Button>
         </form>
