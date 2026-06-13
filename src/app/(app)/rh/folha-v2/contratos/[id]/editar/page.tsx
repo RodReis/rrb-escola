@@ -14,6 +14,7 @@ import { getContrato, getPerfis, getRubricas } from "@/lib/data/folha";
 import { requirePermission } from "@/lib/auth/session";
 import { createServerClient } from "@/lib/supabase/server";
 import { money } from "@/lib/constants";
+import { CurrencyField } from "@/components/folha/currency-field";
 
 export const dynamic = "force-dynamic";
 
@@ -121,28 +122,18 @@ export default async function EditarContratoPage({
           </div>
 
           <div className="grid grid-cols-2 gap-4">
-            <label className="flex flex-col gap-1 text-sm font-medium text-ink/80">
-              Salário base (R$)
-              <input
-                name="salario_base"
-                type="number"
-                step="0.01"
-                min="0"
-                defaultValue={c.salario_base ?? ""}
-                placeholder="Deixe em branco se hora-aula"
-              />
-            </label>
-            <label className="flex flex-col gap-1 text-sm font-medium text-ink/80">
-              Valor hora-aula (R$)
-              <input
-                name="valor_hora_aula"
-                type="number"
-                step="0.01"
-                min="0"
-                defaultValue={c.valor_hora_aula ?? ""}
-                placeholder="Deixe em branco se salário"
-              />
-            </label>
+            <CurrencyField
+              name="salario_base"
+              label="Salário base"
+              defaultValue={c.salario_base}
+              hint="Deixe em branco se hora-aula"
+            />
+            <CurrencyField
+              name="valor_hora_aula"
+              label="Valor hora-aula"
+              defaultValue={c.valor_hora_aula}
+              hint="Deixe em branco se salário"
+            />
           </div>
 
           <div className="grid grid-cols-2 gap-4">
@@ -294,10 +285,7 @@ export default async function EditarContratoPage({
               ))}
             </select>
           </label>
-          <label className="flex flex-col gap-1 text-sm font-medium text-ink/80">
-            Valor (R$)
-            <input name="valor" type="number" step="0.01" min="0" placeholder="Ou use percentual" className="w-32" />
-          </label>
+          <CurrencyField name="valor" label="Valor" placeholder="Ou use percentual" className="w-36" />
           <label className="flex flex-col gap-1 text-sm font-medium text-ink/80">
             Percentual (%)
             <input name="percentual" type="number" step="0.0001" min="0" placeholder="Ou use valor" className="w-28" />

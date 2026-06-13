@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Plus, FileText } from "lucide-react";
+import { Plus, FileText, AlertCircle, CheckCircle2 } from "lucide-react";
 import { ButtonLink } from "@/components/ui/button";
 import { PageHeader } from "@/components/ui/page-header";
 import { DataTableShell } from "@/components/ui/data-table";
@@ -7,6 +7,7 @@ import { StatusPill } from "@/components/ui/status-pill";
 import { getContratos } from "@/lib/data/folha";
 import { requirePermission } from "@/lib/auth/session";
 import { money } from "@/lib/constants";
+import { ExcluirContratoButton } from "@/components/folha/excluir-contrato-button";
 
 export const dynamic = "force-dynamic";
 
@@ -21,8 +22,13 @@ type ContratoRow = {
   folha_perfis_calculo: { codigo: string; nome: string } | null;
 };
 
-export default async function ContratosPage() {
+export default async function ContratosPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ erro?: string; ok?: string }>;
+}) {
   await requirePermission("rh.folha-v2", "read");
+  const { erro, ok } = await searchParams;
   const ativos = await getContratos(true);
   const inativos = await getContratos(false);
   const todos = [...ativos, ...inativos.filter((c) => !(c as unknown as ContratoRow).ativo)];
@@ -45,6 +51,17 @@ export default async function ContratosPage() {
           </ButtonLink>
         }
       />
+
+      {erro ? (
+        <div className="flex items-center gap-2 rounded-ui bg-danger/10 p-3 text-sm font-semibold text-danger">
+          <AlertCircle size={16} /> {erro}
+        </div>
+      ) : null}
+      {ok ? (
+        <div className="flex items-center gap-2 rounded-ui bg-success/10 p-3 text-sm font-semibold text-success">
+          <CheckCircle2 size={16} /> Contrato excluído com sucesso.
+        </div>
+      ) : null}
 
       <DataTableShell
         footer={
@@ -97,12 +114,15 @@ export default async function ContratosPage() {
                   </StatusPill>
                 </td>
                 <td className="text-right">
-                  <Link
-                    href={`/rh/folha-v2/contratos/${r.id}/editar`}
-                    className="text-xs font-semibold text-brand hover:underline"
-                  >
-                    Editar
-                  </Link>
+                  <div className="inline-flex items-center gap-3 justify-end">
+                    <Link
+                      href={`/rh/folha-v2/contratos/${r.id}/editar`}
+                      className="text-xs font-semibold text-brand hover:underline"
+                    >
+                      Editar
+                    </Link>
+                    <ExcluirContratoButton id={r.id} nome={r.employees?.name ?? "este funcionário"} />
+                  </div>
                 </td>
               </tr>
             ))}

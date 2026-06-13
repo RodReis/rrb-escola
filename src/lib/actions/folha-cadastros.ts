@@ -326,6 +326,38 @@ export async function updateContratoAction(formData: FormData) {
   redirect("/rh/folha-v2/contratos");
 }
 
+export async function deleteContratoAction(formData: FormData) {
+  await requirePermission(PERM, "delete");
+  const id = formText(formData, "id");
+  if (!id) redirect("/rh/folha-v2/contratos");
+
+  const supabase = await createServerClient();
+
+  const { count, error: countErr } = await supabase
+    .from("folha_itens")
+    .select("id", { count: "exact", head: true })
+    .eq("contrato_id", id!);
+  if (countErr) {
+    redirect(`/rh/folha-v2/contratos?erro=${encodeURIComponent(countErr.message)}`);
+  }
+  if ((count ?? 0) > 0) {
+    redirect(
+      `/rh/folha-v2/contratos?erro=${encodeURIComponent("Contrato já possui folha gerada e não pode ser excluído. Desative-o.")}`
+    );
+  }
+
+  const { error } = await supabase
+    .from("folha_contratos")
+    .delete()
+    .eq("id", id!)
+    .eq("escola_id", DEFAULT_SCHOOL_ID);
+  if (error) {
+    redirect(`/rh/folha-v2/contratos?erro=${encodeURIComponent(error.message)}`);
+  }
+  revalidatePath(`${REVALIDATE}/contratos`);
+  redirect("/rh/folha-v2/contratos?ok=excluido");
+}
+
 export async function createVerbaAction(formData: FormData) {
   await requirePermission(PERM, "update");
   const parsed = verbaContratualSchema.safeParse({

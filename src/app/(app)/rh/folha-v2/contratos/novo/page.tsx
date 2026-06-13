@@ -6,6 +6,8 @@ import { createContratoAction } from "@/lib/actions/folha-cadastros";
 import { getEmployeesWithoutContract, getPerfis } from "@/lib/data/folha";
 import { requirePermission } from "@/lib/auth/session";
 import { createServerClient } from "@/lib/supabase/server";
+import { ContratoVinculo } from "@/components/folha/contrato-vinculo";
+import { CurrencyField } from "@/components/folha/currency-field";
 
 export const dynamic = "force-dynamic";
 
@@ -25,6 +27,7 @@ export default async function NovoContratoPage({
   ]);
   const perfis = perfisRaw as unknown as { id: string; codigo: string; nome: string }[];
   const companies = companiesRes.data ?? [];
+  const funcionariosList = funcionarios as { id: string; name: string; company_id: string | null }[];
 
   return (
     <div className="grid gap-8">
@@ -47,50 +50,17 @@ export default async function NovoContratoPage({
 
       <Panel className="p-6 lg:p-8">
         <form action={createContratoAction} className="grid gap-8">
-          <section className="grid gap-4">
-            <h2 className="text-xs font-bold uppercase tracking-kicker text-ink/55">Vínculo</h2>
-            <div className="grid gap-4 md:grid-cols-3">
-              <label className="flex flex-col gap-1 text-sm font-medium text-ink/80">
-                Funcionário
-                <select name="funcionario_id" required>
-                  <option value="">Selecione…</option>
-                  {funcionarios.map((f) => (
-                    <option key={f.id} value={f.id}>{f.name}</option>
-                  ))}
-                </select>
-              </label>
-              <label className="flex flex-col gap-1 text-sm font-medium text-ink/80">
-                Empresa
-                <select name="company_id" required>
-                  <option value="">Selecione…</option>
-                  {companies.map((c) => (
-                    <option key={c.id} value={c.id}>{c.name}</option>
-                  ))}
-                </select>
-              </label>
-              <label className="flex flex-col gap-1 text-sm font-medium text-ink/80">
-                Perfil de cálculo
-                <select name="perfil_calculo_id" required>
-                  <option value="">Selecione…</option>
-                  {perfis.map((p) => (
-                    <option key={p.id} value={p.id}>{p.nome}</option>
-                  ))}
-                </select>
-              </label>
-            </div>
-          </section>
+          <ContratoVinculo
+            funcionarios={funcionariosList}
+            empresas={companies}
+            perfis={perfis}
+          />
 
           <section className="grid gap-4">
             <h2 className="text-xs font-bold uppercase tracking-kicker text-ink/55">Remuneração</h2>
             <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-              <label className="flex flex-col gap-1 text-sm font-medium text-ink/80">
-                Salário base (R$)
-                <input name="salario_base" type="number" step="0.01" min="0" placeholder="Se mensalista" />
-              </label>
-              <label className="flex flex-col gap-1 text-sm font-medium text-ink/80">
-                Valor hora-aula (R$)
-                <input name="valor_hora_aula" type="number" step="0.01" min="0" placeholder="Se horista" />
-              </label>
+              <CurrencyField name="salario_base" label="Salário base" placeholder="Se mensalista" />
+              <CurrencyField name="valor_hora_aula" label="Valor hora-aula" placeholder="Se horista" />
               <label className="flex flex-col gap-1 text-sm font-medium text-ink/80">
                 Aulas semanais
                 <input name="aulas_semanais" type="number" min="1" step="1" placeholder="Se hora-aula" />

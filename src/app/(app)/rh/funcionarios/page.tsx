@@ -1,25 +1,19 @@
 import Link from "next/link";
-import { Plus, Pencil, Users, CheckCircle2, AlertCircle } from "lucide-react";
+import { Plus, Pencil, Users, CheckCircle2, AlertCircle, FileText } from "lucide-react";
 import { ButtonLink } from "@/components/ui/button";
 import { PageHeader } from "@/components/ui/page-header";
 import { DataTableShell } from "@/components/ui/data-table";
-import { StatusPill, type StatusTone } from "@/components/ui/status-pill";
+import { StatusPill } from "@/components/ui/status-pill";
 import { Avatar } from "@/components/ui/avatar";
 import { EmployeeFilters } from "@/components/rh/employee-filters";
 import { DeleteEmployeeButton } from "@/components/rh/delete-employee-button";
 import { ToggleEmployeeButton } from "@/components/rh/toggle-employee-button";
 import { listCompanies, listEmployees, getEmployeeSegmentCounts } from "@/lib/data/rh";
+import { getContratoIdsByEmployee } from "@/lib/data/folha";
 import { requirePermission } from "@/lib/auth/session";
 import { can } from "@/lib/auth/permissions";
 
 export const dynamic = "force-dynamic";
-
-const contratoTone: Record<string, StatusTone> = {
-  CLT: "success",
-  PJ: "neutral",
-  Estagio: "warning",
-  Temporario: "danger"
-};
 
 const categoryLabels: Record<string, string> = {
   admin: "Admin",
@@ -46,10 +40,11 @@ export default async function FuncionariosPage({
     includeInactive: isAdmin && params.inativos === "1"
   };
 
-  const [employees, companies, counts] = await Promise.all([
+  const [employees, companies, counts, contratoIds] = await Promise.all([
     listEmployees(filters),
     listCompanies({ includeInactive: true }),
-    getEmployeeSegmentCounts(filters)
+    getEmployeeSegmentCounts(filters),
+    getContratoIdsByEmployee()
   ]);
 
   const ativos = employees.filter((e) => e.ativo).length;
@@ -107,7 +102,6 @@ export default async function FuncionariosPage({
               <th>Funcionário</th>
               <th>Empresa</th>
               <th>Categoria</th>
-              <th>Cargo</th>
               <th>Contato</th>
               <th>Contrato</th>
               <th>Status</th>
@@ -117,7 +111,7 @@ export default async function FuncionariosPage({
           <tbody>
             {employees.length === 0 ? (
               <tr>
-                <td colSpan={canMutate ? 8 : 7} className="py-12">
+                <td colSpan={canMutate ? 7 : 6} className="py-12">
                   <div className="flex flex-col items-center justify-center gap-2 text-ink/40">
                     <Users size={28} />
                     <p className="text-sm">Nenhum funcionário encontrado.</p>
@@ -143,7 +137,6 @@ export default async function FuncionariosPage({
                 <td className="text-ink/80">
                   {emp.school_category ? categoryLabels[emp.school_category] ?? emp.school_category : "—"}
                 </td>
-                <td className="text-ink/80">{emp.cargo ?? "—"}</td>
                 <td>
                   <span className="flex flex-col leading-tight">
                     <span className="text-sm text-ink/80">{emp.email ?? "—"}</span>
@@ -151,12 +144,20 @@ export default async function FuncionariosPage({
                   </span>
                 </td>
                 <td>
-                  {emp.status_contrato ? (
-                    <StatusPill tone={contratoTone[emp.status_contrato] ?? "neutral"}>
-                      {emp.status_contrato}
-                    </StatusPill>
+                  {contratoIds.has(emp.id) ? (
+                    <Link
+                      href={`/rh/folha-v2/contratos/${contratoIds.get(emp.id)}/editar`}
+                      className="inline-flex items-center gap-1 text-xs font-semibold text-brand hover:underline"
+                    >
+                      <FileText size={13} /> Ver contrato
+                    </Link>
                   ) : (
-                    <span className="text-ink/40">—</span>
+                    <Link
+                      href={`/rh/folha-v2/contratos/novo`}
+                      className="inline-flex items-center gap-1 text-xs font-semibold text-ink/50 hover:text-brand hover:underline"
+                    >
+                      <Plus size={13} /> Criar contrato
+                    </Link>
                   )}
                 </td>
                 <td>

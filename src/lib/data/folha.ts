@@ -141,8 +141,8 @@ export async function getEmployeesWithoutContract() {
   const supabase = await createServerClient();
   const { data: empData, error: empErr } = await supabase
     .from("employees")
-    .select("id, name")
-    .eq("active", true)
+    .select("id, name, company_id")
+    .eq("ativo", true)
     .order("name");
   if (empErr) throw empErr;
 
@@ -154,6 +154,19 @@ export async function getEmployeesWithoutContract() {
 
   const comContrato = new Set((contratoData ?? []).map((c) => (c as { employee_id: string }).employee_id));
   return (empData ?? []).filter((e) => !comContrato.has(e.id));
+}
+
+export async function getContratoIdsByEmployee(): Promise<Map<string, string>> {
+  const supabase = await createServerClient();
+  const { data, error } = await supabase
+    .from("folha_contratos")
+    .select("id, employee_id");
+  if (error) throw error;
+  const map = new Map<string, string>();
+  for (const row of (data ?? []) as { id: string; employee_id: string }[]) {
+    if (!map.has(row.employee_id)) map.set(row.employee_id, row.id);
+  }
+  return map;
 }
 
 export async function getPeriodosAquisitivos() {
