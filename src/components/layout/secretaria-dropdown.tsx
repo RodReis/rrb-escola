@@ -12,6 +12,7 @@ export type DropdownItem = {
   href: string;
   label: string;
   iconName: string;
+  children?: DropdownItem[];
 };
 
 export function SecretariaDropdown({ items }: { items: DropdownItem[] }) {
