@@ -29,24 +29,45 @@ const RELATORIOS_ITEMS: DropdownItem[] = [
 ];
 
 const SECRETARIA_ITEMS: DropdownItem[] = [
-  { href: "/alunos", label: "Alunos", iconName: "UsersRound" },
-  { href: "/bolsistas", label: "Bolsistas", iconName: "HandHeart" },
-  { href: "/matriculas", label: "Matrículas", iconName: "FileText" },
-  { href: "/series", label: "Séries", iconName: "Layers3" },
-  { href: "/turmas", label: "Turmas", iconName: "GraduationCap" },
-  { href: "/disciplinas", label: "Disciplinas", iconName: "ClipboardList" },
-  { href: "/avaliacoes", label: "Avaliações", iconName: "ClipboardCheck" },
-  { href: "/professores/atribuicoes", label: "Atribuições", iconName: "UserCheck" },
-  { href: "/frequencias", label: "Frequência", iconName: "CalendarCheck" },
+  {
+    href: "/alunos",
+    label: "Aluno",
+    iconName: "UsersRound",
+    children: [
+      { href: "/alunos", label: "Alunos", iconName: "UsersRound" },
+      { href: "/matriculas", label: "Matrículas", iconName: "FileText" },
+      { href: "/bolsistas", label: "Bolsistas", iconName: "HandHeart" },
+      { href: "/avaliacoes", label: "Avaliações", iconName: "ClipboardCheck" },
+      { href: "/frequencias", label: "Frequência", iconName: "CalendarCheck" },
+      { href: "/mural/aniversariantes", label: "Mural aniversários", iconName: "Cake" },
+    ],
+  },
+  {
+    href: "/series",
+    label: "Acadêmico",
+    iconName: "GraduationCap",
+    children: [
+      { href: "/series", label: "Séries", iconName: "Layers3" },
+      { href: "/turmas", label: "Turmas", iconName: "GraduationCap" },
+      { href: "/disciplinas", label: "Disciplinas", iconName: "ClipboardList" },
+      { href: "/professores/atribuicoes", label: "Atribuições", iconName: "UserCheck" },
+    ],
+  },
+  {
+    href: "/comercial/produtos",
+    label: "Produtos",
+    iconName: "Tags",
+    children: [
+      { href: "/comercial/produtos", label: "Produtos", iconName: "Tags" },
+      { href: "/comercial/vendas", label: "Vendas", iconName: "Receipt" },
+      { href: "/comercial/estoque", label: "Estoque", iconName: "Layers3" },
+    ],
+  },
   { href: "/portaria", label: "Portaria", iconName: "DoorOpen" },
-  { href: "/mural/aniversariantes", label: "Mural aniversários", iconName: "Cake" },
   { href: "/organograma", label: "Organograma", iconName: "Network" },
   { href: "/calendario", label: "Calendário Letivo", iconName: "CalendarDays" },
   { href: "/eventos", label: "Eventos", iconName: "CalendarHeart" },
   { href: "/importacoes", label: "Importações", iconName: "Inbox" },
-  { href: "/comercial/produtos", label: "Produtos", iconName: "Tags" },
-  { href: "/comercial/vendas", label: "Vendas", iconName: "Receipt" },
-  { href: "/comercial/estoque", label: "Estoque", iconName: "Layers3" },
 ];
 
 const RH_ITEMS: DropdownItem[] = [
@@ -61,7 +82,6 @@ const RH_ITEMS: DropdownItem[] = [
 
 const FINANCEIRO_ITEMS: DropdownItem[] = [
   { href: "/financeiro", label: "Financeiro", iconName: "BarChart3" },
-  { href: "/financeiro/alunos-sem-valor", label: "Sem valor / Descontos", iconName: "AlertTriangle" },
   { href: "/financeiro/lancamentos", label: "Livro-Razão", iconName: "ReceiptText" },
   { href: "/financeiro/contratos", label: "Contratos de Receita", iconName: "FileText" },
   { href: "/valores-praticados", label: "Valores praticados", iconName: "ReceiptText" },
