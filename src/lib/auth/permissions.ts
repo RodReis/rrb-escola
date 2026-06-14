@@ -106,6 +106,7 @@ export const ROTA_PARA_MODULO: Record<string, ModuloCodigo> = {
   "/importacoes": "importacoes",
   "/rh/folha-v2": "rh.folha-v2",
   "/financeiro/alunos-sem-valor": "relatorios",
+  "/financeiro/lancamentos/categorias": "financeiro.lancamentos",
   "/financeiro/lancamentos": "financeiro.lancamentos",
   "/financeiro/contratos": "financeiro.contratos",
   "/relatorios/dre": "relatorios.dre",
