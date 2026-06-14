@@ -90,6 +90,56 @@ export async function createVariacaoAction(formData: FormData) {
   redirect(`${PRODUTOS}/${produto_id}/editar`);
 }
 
+export async function updateVariacaoAction(formData: FormData) {
+  await requirePermission("comercial.produtos", "update");
+  const id = formText(formData, "id");
+  const produto_id = formText(formData, "produto_id");
+  if (!id || !produto_id) redirect(`${PRODUTOS}?erro=id`);
+
+  const parsed = variacaoSchema.safeParse({
+    sku: formText(formData, "sku"),
+    atributos: {},
+    preco_venda: formNumber(formData, "preco_venda"),
+    custo: formNumber(formData, "custo"),
+    estoque_minimo: formNumber(formData, "estoque_minimo"),
+    ativo: formBoolean(formData, "ativo")
+  });
+  if (!parsed.success) {
+    redirect(`${PRODUTOS}/${produto_id}/editar?erro=${encodeURIComponent(parsed.error.issues[0]?.message ?? "validacao")}`);
+  }
+
+  const supabase = await createServerClient();
+  const { error } = await supabase
+    .from("produto_variacao")
+    .update(parsed.data)
+    .eq("id", id)
+    .eq("escola_id", DEFAULT_SCHOOL_ID);
+  if (error) redirect(`${PRODUTOS}/${produto_id}/editar?erro=${encodeURIComponent(error.message)}`);
+
+  revalidatePath(`${PRODUTOS}/${produto_id}/editar`);
+  redirect(`${PRODUTOS}/${produto_id}/editar`);
+}
+
+export async function deleteVariacaoAction(formData: FormData) {
+  await requirePermission("comercial.produtos", "delete");
+  const id = formText(formData, "id");
+  const produto_id = formText(formData, "produto_id");
+  if (!id || !produto_id) redirect(`${PRODUTOS}?erro=id`);
+
+  const supabase = await createServerClient();
+  // delete restrito por FK se houver venda_item/movimento referenciando — nesse
+  // caso o banco bloqueia (on delete restrict) e a action devolve o erro.
+  const { error } = await supabase
+    .from("produto_variacao")
+    .delete()
+    .eq("id", id)
+    .eq("escola_id", DEFAULT_SCHOOL_ID);
+  if (error) redirect(`${PRODUTOS}/${produto_id}/editar?erro=${encodeURIComponent("Nao foi possivel excluir (variacao em uso?)")}`);
+
+  revalidatePath(`${PRODUTOS}/${produto_id}/editar`);
+  redirect(`${PRODUTOS}/${produto_id}/editar`);
+}
+
 // ------------------------------------------------------------------ Vendas ---
 
 // Cria venda (rascunho) + itens. itens vêm como JSON no campo "itens".

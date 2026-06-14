@@ -1,12 +1,12 @@
 import { notFound } from "next/navigation";
-import { AlertCircle, FileText, Plus, Tags } from "lucide-react";
+import { AlertCircle, FileText, Tags } from "lucide-react";
 import { PageHeader } from "@/components/ui/page-header";
 import { Panel } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
 import { ProdutoForm } from "@/components/comercial/produto-form";
+import { VariacaoForm } from "@/components/comercial/variacao-form";
+import { VariacaoRowItem } from "@/components/comercial/variacao-row";
 import { updateProdutoAction, createVariacaoAction } from "@/lib/actions/comercial";
 import { getProdutoById } from "@/lib/data/comercial";
-import { money } from "@/lib/constants";
 import { requirePermission } from "@/lib/auth/session";
 
 export const dynamic = "force-dynamic";
@@ -64,44 +64,18 @@ export default async function EditarProdutoPage({
                 <th className="py-1.5 px-2 text-right">Custo</th>
                 <th className="py-1.5 px-2 text-right">Estoque mín.</th>
                 <th className="py-1.5 px-2">Ativa</th>
+                <th className="py-1.5 px-2 text-right">Ações</th>
               </tr>
             </thead>
             <tbody>
               {produto.variacoes.map((v) => (
-                <tr key={v.id} className="border-t border-line">
-                  <td className="py-1.5 px-2 text-ink/70">{v.sku ?? "—"}</td>
-                  <td className="py-1.5 px-2 text-right tabular-nums">{money.format(v.preco_venda)}</td>
-                  <td className="py-1.5 px-2 text-right tabular-nums">{money.format(v.custo)}</td>
-                  <td className="py-1.5 px-2 text-right tabular-nums">{v.estoque_minimo}</td>
-                  <td className="py-1.5 px-2">{v.ativo ? "Sim" : "Não"}</td>
-                </tr>
+                <VariacaoRowItem key={v.id} v={v} produtoId={produto.id} />
               ))}
             </tbody>
           </table>
         )}
 
-        <form action={createVariacaoAction} className="grid gap-3 md:grid-cols-5 items-end">
-          <input type="hidden" name="produto_id" value={produto.id} />
-          <label>
-            SKU
-            <input name="sku" maxLength={60} placeholder="Ex.: CAM-M" />
-          </label>
-          <label>
-            Preço
-            <input type="number" name="preco_venda" step="0.01" min="0" required defaultValue="0" />
-          </label>
-          <label>
-            Custo
-            <input type="number" name="custo" step="0.01" min="0" defaultValue="0" />
-          </label>
-          <label>
-            Estoque mín.
-            <input type="number" name="estoque_minimo" step="1" min="0" defaultValue="0" />
-          </label>
-          <Button type="submit" variant="secondary">
-            <Plus size={14} /> Adicionar
-          </Button>
-        </form>
+        <VariacaoForm action={createVariacaoAction} produtoId={produto.id} />
         <p className="mt-2 text-xs text-ink/45">Saldo de estoque entra na Fase 2; aqui você só define o cadastro e o mínimo.</p>
       </Panel>
     </div>
