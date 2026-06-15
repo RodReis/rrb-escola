@@ -99,6 +99,11 @@ export function AniversariantesHojeCard({
                   <div className="min-w-0 flex-1 overflow-hidden">
                     <p className="truncate text-sm font-bold leading-tight text-ink">{a.nome}</p>
                     <p className="text-xs font-semibold text-gold">🎂 {a.idade} anos</p>
+                    {(a.serie || a.turma) && (
+                      <p className="truncate text-[0.65rem] text-ink/55">
+                        {[a.serie, a.turma].filter(Boolean).join(" · ")}
+                      </p>
+                    )}
                   </div>
                 </Link>
               </li>
