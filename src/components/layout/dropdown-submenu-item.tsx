@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useRef } from "react";
 import Link from "next/link";
 import { ChevronRight } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -23,7 +23,17 @@ export function SubmenuItem({
   onNavigate: () => void;
 }) {
   const [openSub, setOpenSub] = useState(false);
+  const closeTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const Icon = ICON_MAP[item.iconName] ?? ICON_MAP.FileText;
+
+  function openNow() {
+    if (closeTimer.current) clearTimeout(closeTimer.current);
+    setOpenSub(true);
+  }
+  function closeSoon() {
+    if (closeTimer.current) clearTimeout(closeTimer.current);
+    closeTimer.current = setTimeout(() => setOpenSub(false), 180);
+  }
   const childHrefs = item.children ? hrefsOf(item.children) : [];
   const branchActive =
     pathname === item.href ||
@@ -52,8 +62,8 @@ export function SubmenuItem({
   return (
     <div
       className="relative"
-      onMouseEnter={() => setOpenSub(true)}
-      onMouseLeave={() => setOpenSub(false)}
+      onMouseEnter={openNow}
+      onMouseLeave={closeSoon}
     >
       <button
         type="button"
@@ -71,7 +81,10 @@ export function SubmenuItem({
       </button>
 
       {openSub ? (
-        <div className="absolute left-full top-0 ml-1 w-[190px] rounded-[10px] border border-[#1B3FB8]/20 bg-white shadow-[0_14px_40px_-10px_rgba(0,0,0,0.18),0_2px_8px_-4px_rgba(0,0,0,0.08)] p-1">
+        <div
+          onMouseEnter={openNow}
+          onMouseLeave={closeSoon}
+          className="absolute left-full top-0 ml-1 w-[190px] rounded-[10px] border border-[#1B3FB8]/20 bg-white shadow-[0_14px_40px_-10px_rgba(0,0,0,0.18),0_2px_8px_-4px_rgba(0,0,0,0.08)] p-1 before:absolute before:right-full before:top-0 before:h-full before:w-2 before:content-['']">
           {item.children.map((child) => {
             const ChildIcon = ICON_MAP[child.iconName] ?? ICON_MAP.FileText;
             const active = pathname === child.href || pathname.startsWith(`${child.href}/`);
