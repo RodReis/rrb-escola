@@ -117,7 +117,7 @@ export async function updateVariacaoAction(formData: FormData) {
   if (error) redirect(`${PRODUTOS}/${produto_id}/editar?erro=${encodeURIComponent(error.message)}`);
 
   revalidatePath(`${PRODUTOS}/${produto_id}/editar`);
-  redirect(`${PRODUTOS}/${produto_id}/editar`);
+  redirect(`${PRODUTOS}/${produto_id}/editar?ok=Variação salva`);
 }
 
 export async function deleteVariacaoAction(formData: FormData) {
@@ -137,7 +137,7 @@ export async function deleteVariacaoAction(formData: FormData) {
   if (error) redirect(`${PRODUTOS}/${produto_id}/editar?erro=${encodeURIComponent("Nao foi possivel excluir (variacao em uso?)")}`);
 
   revalidatePath(`${PRODUTOS}/${produto_id}/editar`);
-  redirect(`${PRODUTOS}/${produto_id}/editar`);
+  redirect(`${PRODUTOS}/${produto_id}/editar?ok=Variação excluída`);
 }
 
 // ------------------------------------------------------------------ Vendas ---
