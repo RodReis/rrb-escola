@@ -865,6 +865,25 @@ textarea {
   50% { transform: translate(12px, -10px); }
 }
 
+/* ===================== Login: painel aurora (claro) / spotlight (escuro) ===================== */
+.login-aurora { background: linear-gradient(160deg, var(--bg-grad-a), var(--bg-grad-b)); }
+[data-theme="dark"] .login-aurora {
+  background: radial-gradient(120% 90% at 20% 0%, #16213f, var(--bg) 70%);
+}
+.login-aurora-bg { position: absolute; inset: 0; overflow: hidden; pointer-events: none; }
+.login-blob {
+  position: absolute;
+  border-radius: 50%;
+  filter: blur(60px);
+  opacity: 0.55;
+  animation: drift 16s var(--ease) infinite;
+}
+[data-theme="dark"] .login-blob { opacity: 0.4; }
+.login-blob-a { background: var(--c-blue);   width: 340px; height: 340px; left: -6%;  top: 6%; }
+.login-blob-b { background: var(--c-violet); width: 300px; height: 300px; right: -4%; top: -8%;  animation-delay: -5s; }
+.login-blob-c { background: var(--c-teal);   width: 260px; height: 260px; left: 34%;  bottom: -10%; animation-delay: -9s; }
+[data-theme="dark"] .login-blob-a { background: var(--brand-glow); }
+
 .sheet-table {
   width: 100%;
   border-collapse: collapse;
