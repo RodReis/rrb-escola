@@ -7,9 +7,19 @@ export interface ComercialResumo {
   alertasReposicao: number;   // variações com saldo <= mínimo
 }
 
+// Primeiro dia do mês seguinte à competência YYYY-MM (limite exclusivo seguro,
+// evita usar dia 31 em meses que não têm).
+function proximoMesInicio(competencia: string): string {
+  const [y, m] = competencia.split("-").map(Number);
+  const d = new Date(Date.UTC(y, m, 1)); // m (0-based) = mês seguinte ao 1-based
+  return `${d.getUTCFullYear()}-${String(d.getUTCMonth() + 1).padStart(2, "0")}-01`;
+}
+
 // Resumo comercial para o painel do dashboard. Tudo escopado por escola.
 export async function getComercialResumo(competencia: string, escolaId: string): Promise<ComercialResumo> {
   const supabase = await createServerClient();
+  const inicioMes = `${competencia}-01`;
+  const inicioProximo = proximoMesInicio(competencia);
 
   const [receitaRes, vendasRes, variacoesRes, saldosRes] = await Promise.all([
     // receita de vendas pagas na competência (origem=venda)
@@ -20,14 +30,14 @@ export async function getComercialResumo(competencia: string, escolaId: string):
       .eq("competencia", competencia)
       .eq("origem_tipo", "venda")
       .eq("status", "paga"),
-    // vendas confirmadas na competência (data_venda no mês)
+    // vendas confirmadas no mês (data_venda >= 1o dia e < 1o dia do mês seguinte)
     supabase
       .from("venda")
       .select("id, data_venda, status")
       .eq("escola_id", escolaId)
       .eq("status", "confirmada")
-      .gte("data_venda", `${competencia}-01`)
-      .lte("data_venda", `${competencia}-31`),
+      .gte("data_venda", inicioMes)
+      .lt("data_venda", inicioProximo),
     // variações ativas (custo + estoque_minimo)
     supabase
       .from("produto_variacao")
