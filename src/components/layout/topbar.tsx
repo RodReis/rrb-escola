@@ -14,7 +14,7 @@ import { listNotificacoes } from "@/lib/data/notificacoes";
 import { createServerClient } from "@/lib/supabase/server";
 import { getPublicUrl } from "@/lib/storage/public-urls";
 import { School } from "lucide-react";
-import { AnoLetivoPicker } from "@/components/layout/ano-letivo-picker";
+import { ThemeToggle } from "@/components/ui/theme-toggle";
 import { can, ROTA_PARA_MODULO, type PermissionMap } from "@/lib/auth/permissions";
 
 const primaryItems: Array<{ href: string; label: string; icon: TopbarIconName }> = [
@@ -218,8 +218,7 @@ export async function Topbar({
       </div>
 
       <div className="flex items-center gap-2 shrink-0">
-        {/* Year picker */}
-        <AnoLetivoPicker anos={anosLetivos} />
+        <ThemeToggle />
 
         <NotificationBell perfilId={perfil.id} escolaId={perfil.escola_id} initial={notifs} />
 
