@@ -80,7 +80,18 @@ export function VendaForm({ action, variacoes }: Props) {
           </Button>
         </div>
         {variacoes.length === 0 ? (
-          <p className="text-sm text-danger">Nenhuma variação ativa. Cadastre um produto com variação antes de vender.</p>
+          <div className="flex flex-col items-start gap-2 rounded-ui border border-dashed border-line bg-muted/20 p-4">
+            <p className="text-sm font-medium text-ink/70">Nenhuma variação ativa para vender.</p>
+            <p className="text-xs text-ink/45">
+              Cadastre um produto e ao menos uma variação (SKU) ativa antes de montar a venda.
+            </p>
+            <a
+              href="/comercial/produtos/novo"
+              className="mt-1 inline-flex items-center gap-1 rounded-ui bg-brand px-3 py-1.5 text-xs font-semibold text-white transition hover:bg-brand/90"
+            >
+              <Plus size={13} /> Cadastrar produto
+            </a>
+          </div>
         ) : itens.length === 0 ? (
           <p className="text-sm text-ink/45">Nenhum item. Clique em &quot;Adicionar item&quot;.</p>
         ) : (

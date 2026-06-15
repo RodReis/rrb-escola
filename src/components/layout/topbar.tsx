@@ -3,6 +3,7 @@ import { TopbarNavLink, type TopbarIconName } from "@/components/layout/topbar-n
 import { SecretariaDropdown, type DropdownItem } from "@/components/layout/secretaria-dropdown";
 import { RhDropdown } from "@/components/layout/rh-dropdown";
 import { FinanceiroDropdown } from "@/components/layout/financeiro-dropdown";
+import { ComercialDropdown } from "@/components/layout/comercial-dropdown";
 import { ConfiguracoesDropdown } from "@/components/layout/configuracoes-dropdown";
 import { RelatoriosDropdown } from "@/components/layout/relatorios-dropdown";
 import { NotificationBell } from "@/components/layout/notification-bell";
@@ -53,21 +54,17 @@ const SECRETARIA_ITEMS: DropdownItem[] = [
       { href: "/professores/atribuicoes", label: "Atribuições", iconName: "UserCheck" },
     ],
   },
-  {
-    href: "/comercial/produtos",
-    label: "Produtos",
-    iconName: "Tags",
-    children: [
-      { href: "/comercial/produtos", label: "Produtos", iconName: "Tags" },
-      { href: "/comercial/vendas", label: "Vendas", iconName: "Receipt" },
-      { href: "/comercial/estoque", label: "Estoque", iconName: "Layers3" },
-    ],
-  },
   { href: "/portaria", label: "Portaria", iconName: "DoorOpen" },
   { href: "/organograma", label: "Organograma", iconName: "Network" },
   { href: "/calendario", label: "Calendário Letivo", iconName: "CalendarDays" },
   { href: "/eventos", label: "Eventos", iconName: "CalendarHeart" },
   { href: "/importacoes", label: "Importações", iconName: "Inbox" },
+];
+
+const COMERCIAL_ITEMS: DropdownItem[] = [
+  { href: "/comercial/produtos", label: "Produtos", iconName: "Tags" },
+  { href: "/comercial/vendas", label: "Vendas", iconName: "Receipt" },
+  { href: "/comercial/estoque", label: "Estoque", iconName: "Layers3" },
 ];
 
 const RH_ITEMS: DropdownItem[] = [
@@ -180,6 +177,7 @@ export async function Topbar({
 
   const isAdmin = perfil.perfil === "admin";
   const secretariaItems = filterByPermissions(SECRETARIA_ITEMS, permissions, isAdmin);
+  const comercialItems = filterByPermissions(COMERCIAL_ITEMS, permissions, isAdmin);
   const rhItems = filterByPermissions(RH_ITEMS, permissions, isAdmin);
   const financeiroItems = filterByPermissions(FINANCEIRO_ITEMS, permissions, isAdmin);
   const configItems = filterByPermissions(CONFIG_ITEMS, permissions, isAdmin);
@@ -211,6 +209,7 @@ export async function Topbar({
       <div className="flex items-center gap-0.5 shrink-0">
         <RelatoriosDropdown items={relatoriosItems} />
         <FinanceiroDropdown items={financeiroItems} />
+        <ComercialDropdown items={comercialItems} />
         <SecretariaDropdown items={secretariaItems} />
         <RhDropdown items={rhItems} />
         <ConfiguracoesDropdown items={configItems} />

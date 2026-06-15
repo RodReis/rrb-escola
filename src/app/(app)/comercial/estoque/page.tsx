@@ -1,8 +1,8 @@
-import { Boxes, ArrowDownToLine, SlidersHorizontal, CheckCircle2, AlertCircle } from "lucide-react";
+import { Boxes, ArrowDownToLine, SlidersHorizontal, CheckCircle2, AlertCircle, Plus } from "lucide-react";
 import { AlertasReposicao } from "@/components/comercial/alertas-reposicao";
 import { PageHeader } from "@/components/ui/page-header";
 import { Panel } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
+import { Button, ButtonLink } from "@/components/ui/button";
 import { money } from "@/lib/constants";
 import { getSaldos } from "@/lib/data/estoque";
 import { registrarEntradaAction, registrarAjusteAction } from "@/lib/actions/estoque";
@@ -64,7 +64,13 @@ export default async function EstoquePage({
             <ArrowDownToLine size={12} /> Registrar entrada
           </h2>
           {opcoes.length === 0 ? (
-            <p className="text-sm text-ink/45">Cadastre variações primeiro.</p>
+            <div className="flex flex-col items-start gap-2 rounded-ui border border-dashed border-line bg-muted/20 p-4">
+              <p className="text-sm font-medium text-ink/70">Sem variações ativas.</p>
+              <p className="text-xs text-ink/45">Cadastre um produto com variação (SKU) ativa para movimentar estoque.</p>
+              <ButtonLink href="/comercial/produtos/novo" variant="primary" className="mt-1">
+                <Plus size={13} /> Cadastrar produto
+              </ButtonLink>
+            </div>
           ) : (
             <form action={registrarEntradaAction} className="grid gap-3">
               <label>
@@ -89,7 +95,13 @@ export default async function EstoquePage({
             <SlidersHorizontal size={12} /> Ajuste de contagem
           </h2>
           {opcoes.length === 0 ? (
-            <p className="text-sm text-ink/45">Cadastre variações primeiro.</p>
+            <div className="flex flex-col items-start gap-2 rounded-ui border border-dashed border-line bg-muted/20 p-4">
+              <p className="text-sm font-medium text-ink/70">Sem variações ativas.</p>
+              <p className="text-xs text-ink/45">Cadastre um produto com variação (SKU) ativa para movimentar estoque.</p>
+              <ButtonLink href="/comercial/produtos/novo" variant="primary" className="mt-1">
+                <Plus size={13} /> Cadastrar produto
+              </ButtonLink>
+            </div>
           ) : (
             <form action={registrarAjusteAction} className="grid gap-3">
               <label>
