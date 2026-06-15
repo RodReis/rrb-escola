@@ -78,3 +78,12 @@ Não-professores (perfil `clt`, ex.: Keila, Reginalda) já calculam corretamente
 - [ ] Import de bases históricas 2025 (opcional, só se usar média 12 meses): `node scripts/importar_bases_historicas.mjs --dry-run` depois `--apply`
 - [ ] Smoke E2E com `?hoje=` simulado (dev): jobs geram decimo_1a (01/11), decimo_2a (01/12), férias (01/06); fechar férias baixa provisão + abre período; mensal de julho recebe ferias_desconto_gozo
 - [ ] INSS 2025 método: caso dourado dá 842,12 (progressivo) vs 842,11 oficial (tabela única) — diferença de R$0,01 por método; confirmar com contador se o cliente exige tabela-única exata
+
+## Branches pendentes de merge na main
+
+- [ ] **PR #5 — `scripts-dados-prod`** — scripts one-off de dados prod (atualizar_cpf_funcionarios.mjs, criar_contratos_da_planilha.mjs) + remoção do migrar_contratos quebrado + .gitignore (backup/). Já aberto, falta revisar e mergear na `main`.
+
+## Pendências técnicas (código)
+
+- [ ] **Aprovação da folha não é transacional** (`transicionarRunAction` → `aprovado`): gera despesas + provisões ANTES do UPDATE de status. Se o UPDATE falhar, deixa despesas/provisões órfãs e status preso em `aprovacao` (aconteceu em prod 2026-06; limpeza manual necessária). Envolver as 3 operações (gerarDespesasDaRun + gravarProvisoes/baixa + update status) numa transação (RPC/função no Postgres ou rollback manual em catch).
+- [ ] Rotacionar a senha do banco de produção (foi exposta em sessão de trabalho).

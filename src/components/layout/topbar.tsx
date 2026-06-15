@@ -24,20 +24,46 @@ const RELATORIOS_ITEMS: DropdownItem[] = [
   { href: "/relatorios/alunos", label: "Rel. Alunos", iconName: "UsersRound" },
   { href: "/relatorios/frequencia", label: "Rel. Frequência", iconName: "CalendarCheck" },
   { href: "/relatorios/inadimplencia", label: "Inadimplência", iconName: "AlertCircle" },
+  { href: "/relatorios/comercial", label: "Rel. Comercial", iconName: "BarChart3" },
+  { href: "/relatorios/dre", label: "DRE / Resultado", iconName: "BarChart3" },
 ];
 
 const SECRETARIA_ITEMS: DropdownItem[] = [
-  { href: "/alunos", label: "Alunos", iconName: "UsersRound" },
-  { href: "/bolsistas", label: "Bolsistas", iconName: "HandHeart" },
-  { href: "/matriculas", label: "Matrículas", iconName: "FileText" },
-  { href: "/series", label: "Séries", iconName: "Layers3" },
-  { href: "/turmas", label: "Turmas", iconName: "GraduationCap" },
-  { href: "/disciplinas", label: "Disciplinas", iconName: "ClipboardList" },
-  { href: "/avaliacoes", label: "Avaliações", iconName: "ClipboardCheck" },
-  { href: "/professores/atribuicoes", label: "Atribuições", iconName: "UserCheck" },
-  { href: "/frequencias", label: "Frequência", iconName: "CalendarCheck" },
+  {
+    href: "/alunos",
+    label: "Aluno",
+    iconName: "UsersRound",
+    children: [
+      { href: "/alunos", label: "Alunos", iconName: "UsersRound" },
+      { href: "/matriculas", label: "Matrículas", iconName: "FileText" },
+      { href: "/bolsistas", label: "Bolsistas", iconName: "HandHeart" },
+      { href: "/avaliacoes", label: "Avaliações", iconName: "ClipboardCheck" },
+      { href: "/frequencias", label: "Frequência", iconName: "CalendarCheck" },
+      { href: "/mural/aniversariantes", label: "Mural aniversários", iconName: "Cake" },
+    ],
+  },
+  {
+    href: "/series",
+    label: "Acadêmico",
+    iconName: "GraduationCap",
+    children: [
+      { href: "/series", label: "Séries", iconName: "Layers3" },
+      { href: "/turmas", label: "Turmas", iconName: "GraduationCap" },
+      { href: "/disciplinas", label: "Disciplinas", iconName: "ClipboardList" },
+      { href: "/professores/atribuicoes", label: "Atribuições", iconName: "UserCheck" },
+    ],
+  },
+  {
+    href: "/comercial/produtos",
+    label: "Produtos",
+    iconName: "Tags",
+    children: [
+      { href: "/comercial/produtos", label: "Produtos", iconName: "Tags" },
+      { href: "/comercial/vendas", label: "Vendas", iconName: "Receipt" },
+      { href: "/comercial/estoque", label: "Estoque", iconName: "Layers3" },
+    ],
+  },
   { href: "/portaria", label: "Portaria", iconName: "DoorOpen" },
-  { href: "/mural/aniversariantes", label: "Mural aniversários", iconName: "Cake" },
   { href: "/organograma", label: "Organograma", iconName: "Network" },
   { href: "/calendario", label: "Calendário Letivo", iconName: "CalendarDays" },
   { href: "/eventos", label: "Eventos", iconName: "CalendarHeart" },
@@ -56,8 +82,8 @@ const RH_ITEMS: DropdownItem[] = [
 
 const FINANCEIRO_ITEMS: DropdownItem[] = [
   { href: "/financeiro", label: "Financeiro", iconName: "BarChart3" },
-  { href: "/financeiro/alunos-sem-valor", label: "Sem valor / Descontos", iconName: "AlertTriangle" },
-  { href: "/despesas", label: "Despesas", iconName: "Receipt" },
+  { href: "/financeiro/lancamentos", label: "Livro-Razão", iconName: "ReceiptText" },
+  { href: "/financeiro/contratos", label: "Contratos de Receita", iconName: "FileText" },
   { href: "/valores-praticados", label: "Valores praticados", iconName: "ReceiptText" },
   { href: "/planos", label: "Planos", iconName: "CreditCard" },
   {
@@ -82,7 +108,7 @@ const CONFIG_ITEMS: DropdownItem[] = [
   { href: "/usuarios", label: "Usuários", iconName: "UsersRound" },
   { href: "/configuracoes/perfis", label: "Perfis e Permissões", iconName: "ShieldCheck" },
   { href: "/configuracoes/webhook", label: "Webhook", iconName: "Webhook" },
-  { href: "/despesas/categorias", label: "Categorias despesa", iconName: "Tags" },
+  { href: "/financeiro/lancamentos/categorias", label: "Categorias financeiras", iconName: "Tags" },
 ];
 
 function filterByPermissions(

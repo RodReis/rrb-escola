@@ -40,6 +40,15 @@ const config: Config = {
       },
       letterSpacing: {
         kicker: "0.14em"
+      },
+      keyframes: {
+        fadeInUp: {
+          "0%": { opacity: "0", transform: "translateY(6px)" },
+          "100%": { opacity: "1", transform: "translateY(0)" }
+        }
+      },
+      animation: {
+        "fade-in-up": "fadeInUp 0.35s ease-out both"
       }
     }
   },

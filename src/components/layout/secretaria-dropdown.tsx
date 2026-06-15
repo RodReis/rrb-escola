@@ -2,11 +2,10 @@
 
 import { useState, useRef, useEffect } from "react";
 import { createPortal } from "react-dom";
-import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { BookOpen, ChevronDown } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { ICON_MAP } from "./dropdown-icons";
+import { SubmenuItem, hrefsOf } from "./dropdown-submenu-item";
 
 export type DropdownItem = {
   href: string;
@@ -23,8 +22,7 @@ export function SecretariaDropdown({ items }: { items: DropdownItem[] }) {
   const ref = useRef<HTMLDivElement>(null);
   const btnRef = useRef<HTMLButtonElement>(null);
 
-  const hrefs = items.map((i) => i.href);
-  const isActive = hrefs.some(
+  const isActive = hrefsOf(items).some(
     (href) => pathname === href || pathname.startsWith(`${href}/`)
   );
 
@@ -76,26 +74,9 @@ export function SecretariaDropdown({ items }: { items: DropdownItem[] }) {
               className="rounded-[10px] border border-[#1B3FB8]/20 bg-white shadow-[0_14px_40px_-10px_rgba(0,0,0,0.18),0_2px_8px_-4px_rgba(0,0,0,0.08)] p-1"
               onMouseDown={(e) => e.stopPropagation()}
             >
-              {items.map((item) => {
-                const Icon = ICON_MAP[item.iconName] ?? ICON_MAP.FileText;
-                const active = pathname === item.href || pathname.startsWith(`${item.href}/`);
-                return (
-                  <Link
-                    key={item.href}
-                    href={item.href}
-                    onClick={() => setOpen(false)}
-                    className={cn(
-                      "flex items-center gap-2.5 px-2.5 py-2 text-[12px] rounded-[7px] transition-colors duration-100",
-                      active
-                        ? "bg-[#1B3FB8]/[0.07] font-semibold text-[#1B3FB8]"
-                        : "font-medium text-[#1A2240] hover:bg-slate-50"
-                    )}
-                  >
-                    <Icon size={13} strokeWidth={active ? 2 : 1.7} />
-                    {item.label}
-                  </Link>
-                );
-              })}
+              {items.map((item) => (
+                <SubmenuItem key={item.href} item={item} pathname={pathname} onNavigate={() => setOpen(false)} />
+              ))}
             </div>,
             document.body
           )
