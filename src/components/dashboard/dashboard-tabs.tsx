@@ -1,10 +1,11 @@
 import Link from "next/link";
-import { BookOpen, ClipboardList, Wallet, type LucideIcon } from "lucide-react";
+import { BookOpen, ClipboardList, ShoppingBag, Wallet, type LucideIcon } from "lucide-react";
 
-type Tab = "financeiro" | "secretaria" | "pedagogico";
+type Tab = "financeiro" | "comercial" | "secretaria" | "pedagogico";
 
 const TABS: Array<{ id: Tab; label: string; icon: LucideIcon }> = [
   { id: "financeiro", label: "Financeiro", icon: Wallet },
+  { id: "comercial", label: "Comercial", icon: ShoppingBag },
   { id: "secretaria", label: "Secretaria", icon: ClipboardList },
   { id: "pedagogico", label: "Pedagógico", icon: BookOpen },
 ];
@@ -18,7 +19,7 @@ export function DashboardTabs({
   competencia?: string;
   visible?: ReadonlyArray<Tab>;
 }) {
-  const allowed = visible ?? (["financeiro", "secretaria", "pedagogico"] as const);
+  const allowed = visible ?? (["financeiro", "comercial", "secretaria", "pedagogico"] as const);
   return (
     <nav className="flex gap-1 border-b border-line">
       {TABS.filter((t) => allowed.includes(t.id)).map((t) => {
@@ -53,5 +54,6 @@ export function parseTab(value: string | undefined): Tab {
   // Backward compat: aba=alunos -> secretaria
   if (value === "alunos" || value === "secretaria") return "secretaria";
   if (value === "pedagogico") return "pedagogico";
+  if (value === "comercial") return "comercial";
   return "financeiro";
 }

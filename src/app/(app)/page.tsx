@@ -42,6 +42,8 @@ import { BeneficiosCard } from "@/components/dashboard/beneficios-card";
 import { BolsistasReceitaCard } from "@/components/dashboard/bolsistas-receita-card";
 import { CompetenciaPicker } from "@/components/dashboard/competencia-picker";
 import { DashboardTabs, parseTab } from "@/components/dashboard/dashboard-tabs";
+import { ComercialResumoCards } from "@/components/dashboard/comercial-resumo-cards";
+import { getComercialResumo } from "@/lib/data/dashboard-comercial";
 import { FolhaEmpresas } from "@/components/dashboard/folha-empresas";
 import { HeroFinancial } from "@/components/dashboard/hero-financial";
 import { FolhaRatioCard } from "@/components/dashboard/folha-ratio-card";
@@ -93,7 +95,7 @@ function isValidAno(val: string | undefined): boolean {
   return Number.isInteger(n) && n >= 2000 && n <= 2100;
 }
 
-type DashTab = "financeiro" | "secretaria" | "pedagogico";
+type DashTab = "financeiro" | "comercial" | "secretaria" | "pedagogico";
 
 function SectionHeader({ title, subtitle }: { title: string; subtitle?: string }) {
   return (
@@ -148,6 +150,7 @@ export default async function DashboardPage({
   const showFrequencias = has("frequencias");
   const showTurmas = has("turmas");
   const showAvaliacoes = has("avaliacoes");
+  const showComercial = has("comercial.vendas") || has("comercial.estoque") || has("comercial.produtos");
 
   // Tab visibility
   const tabFinanceiroVisible =
@@ -156,9 +159,11 @@ export default async function DashboardPage({
   const tabSecretariaVisible =
     showAlunos || showMatriculas || showFrequencias || showTurmas || showEventos;
   const tabPedagogicoVisible = showAvaliacoes || showFrequencias;
+  const tabComercialVisible = showComercial;
 
   const tabsVisiveis: DashTab[] = [];
   if (tabFinanceiroVisible) tabsVisiveis.push("financeiro");
+  if (tabComercialVisible) tabsVisiveis.push("comercial");
   if (tabSecretariaVisible) tabsVisiveis.push("secretaria");
   if (tabPedagogicoVisible) tabsVisiveis.push("pedagogico");
 
@@ -225,6 +230,7 @@ export default async function DashboardPage({
     aniversariantesSemana,
     feriadosProximos,
     eventosProximos,
+    comercialResumo,
   ] = await Promise.all([
     showFinanceiroCobrancas ? getHero(competencia, escolaId) : null,
     showFinanceiroCobrancas ? getRevenueTrend(6, escolaId) : null,
@@ -263,6 +269,7 @@ export default async function DashboardPage({
     showAlunos ? getAniversariantesSemana(escolaId) : null,
     showFrequencias ? getFeriadosProximos(escolaId) : null,
     showEventos ? getEventosProximos(escolaId, 5) : null,
+    showComercial ? getComercialResumo(competencia, escolaId) : null,
   ]);
 
   // slot2 currently is computed but not rendered in the original page (was unused).
@@ -350,6 +357,13 @@ export default async function DashboardPage({
             {showDespesas && topCategorias && <TopCategoriasCard items={topCategorias} />}
             {showRhFolha && folhaEmpresas && <FolhaEmpresas items={folhaEmpresas} />}
           </section>
+        </>
+      )}
+
+      {tabEfetiva === "comercial" && comercialResumo && (
+        <>
+          <SectionHeader title="Comercial" subtitle="Vendas e estoque do mês" />
+          <ComercialResumoCards data={comercialResumo} />
         </>
       )}
 
