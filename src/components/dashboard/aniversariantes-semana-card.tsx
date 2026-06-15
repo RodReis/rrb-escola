@@ -54,14 +54,60 @@ function Avatar({
   );
 }
 
-/** Card compacto — só os de HOJE — para coluna lateral da dashboard */
+/**
+ * Card dos aniversariantes de HOJE.
+ * - padrão: coluna compacta (lateral do dashboard)
+ * - destaque: banner full-width no topo, com os cards em grid horizontal
+ */
 export function AniversariantesHojeCard({
   items,
+  destaque = false,
 }: {
   items: AniversarioSemanaRow[];
+  destaque?: boolean;
 }) {
   const hoje = items.filter((i) => i.hoje);
   if (hoje.length === 0) return null;
+
+  // Modo destaque com mais de 1 aniversariante: grid horizontal full-width.
+  if (destaque && hoje.length > 1) {
+    return (
+      <article className="w-full overflow-hidden rounded-panel border border-gold/40 bg-gradient-to-br from-[#fdf3d0] via-[#fef9ec] to-[#fffdf7] shadow-[0_4px_24px_rgba(201,151,54,0.14)] dark:from-gold/20 dark:via-gold/10 dark:to-gold/5">
+        <div className="h-1 w-full bg-gradient-to-r from-gold/50 via-gold to-gold/50" />
+        <div className="px-5 pb-5 pt-4">
+          <div className="flex items-center gap-1.5">
+            <PartyPopper size={15} className="text-gold" />
+            <span className="text-xs font-black uppercase tracking-[0.16em] text-gold">
+              Aniversário hoje
+            </span>
+            <span className="text-xs font-bold text-gold/70">· {hoje.length}</span>
+            <PartyPopper size={15} className="text-gold -scale-x-100" />
+          </div>
+          <ul className="mt-3 grid gap-2.5 sm:grid-cols-2 lg:grid-cols-3">
+            {hoje.map((a) => (
+              <li key={a.alunoId}>
+                <Link
+                  href={`/alunos/${a.alunoId}`}
+                  className="flex w-full min-w-0 items-center gap-3 rounded-ui bg-white/70 p-2.5 ring-1 ring-gold/25 transition hover:bg-gold/10 dark:bg-surface/60"
+                >
+                  <div className="relative">
+                    <Avatar fotoUrl={a.fotoUrl} nome={a.nome} size={48} />
+                    <span className="absolute -bottom-1 -right-1 flex h-5 w-5 items-center justify-center rounded-full border-2 border-white bg-gold text-[0.55rem] font-black text-white">
+                      {a.idade}
+                    </span>
+                  </div>
+                  <div className="min-w-0 flex-1 overflow-hidden">
+                    <p className="truncate text-sm font-bold leading-tight text-ink">{a.nome}</p>
+                    <p className="text-xs font-semibold text-gold">🎂 {a.idade} anos</p>
+                  </div>
+                </Link>
+              </li>
+            ))}
+          </ul>
+        </div>
+      </article>
+    );
+  }
 
   return (
     <article className="w-full h-full overflow-hidden rounded-panel border border-gold/40 bg-gradient-to-br from-[#fdf3d0] via-[#fef9ec] to-[#fffdf7] shadow-[0_4px_24px_rgba(201,151,54,0.14)] dark:from-gold/20 dark:via-gold/10 dark:to-gold/5">

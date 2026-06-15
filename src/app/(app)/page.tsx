@@ -369,6 +369,11 @@ export default async function DashboardPage({
 
       {tabEfetiva === "secretaria" && (
         <>
+          {/* DESTAQUE — aniversariantes de hoje no topo */}
+          {showAlunos && aniversariantesSemana && (
+            <AniversariantesHojeCard items={aniversariantesSemana} destaque />
+          )}
+
           {/* ESTA SEMANA — agenda primeiro: próximos aniversariantes, eventos, feriados, aniv. matrícula */}
           <SectionHeader title="Esta semana" subtitle="Próximos dias da agenda" />
           {showAlunos && aniversariantesSemana && (
@@ -384,20 +389,13 @@ export default async function DashboardPage({
             <AniversarioMatriculaCard items={aniversariantesMatricula} />
           )}
 
-          {/* HOJE — aniversariantes do dia + frequência atual */}
+          {/* HOJE — frequência atual + saúde do sistema */}
           <SectionHeader title="Hoje" subtitle="O que acontece agora" />
-          <section className="grid gap-6 lg:grid-cols-[1fr_auto]">
-            <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
-              {showFrequencias && frequencia && frequenciaPorTurma && (
-                <FrequenciaCard data={frequencia} porTurma={frequenciaPorTurma} />
-              )}
-              <SaudeSistemaCard data={saudeSistema} />
-            </div>
-            {showAlunos && aniversariantesSemana && (
-              <div className="w-80 shrink-0">
-                <AniversariantesHojeCard items={aniversariantesSemana} />
-              </div>
+          <section className="grid grid-cols-1 gap-6 sm:grid-cols-2">
+            {showFrequencias && frequencia && frequenciaPorTurma && (
+              <FrequenciaCard data={frequencia} porTurma={frequenciaPorTurma} />
             )}
+            <SaudeSistemaCard data={saudeSistema} />
           </section>
 
           {/* VISÃO GERAL — indicadores estruturais */}
