@@ -1,4 +1,5 @@
-import { Boxes, AlertTriangle, ArrowDownToLine, SlidersHorizontal, CheckCircle2, AlertCircle } from "lucide-react";
+import { Boxes, ArrowDownToLine, SlidersHorizontal, CheckCircle2, AlertCircle } from "lucide-react";
+import { AlertasReposicao } from "@/components/comercial/alertas-reposicao";
 import { PageHeader } from "@/components/ui/page-header";
 import { Panel } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -55,20 +56,7 @@ export default async function EstoquePage({
         </div>
       ) : null}
 
-      {alertas.length > 0 && (
-        <Panel className="border-danger/30 p-5">
-          <h2 className="mb-3 flex items-center gap-2 text-xs font-bold uppercase tracking-kicker text-danger">
-            <AlertTriangle size={12} /> Tamanhos acabando ({alertas.length})
-          </h2>
-          <div className="flex flex-wrap gap-2">
-            {alertas.map((a) => (
-              <span key={a.variacao_id} className="inline-flex items-center gap-1 rounded-pill bg-danger/10 px-3 py-1 text-xs font-semibold text-danger">
-                {a.produto_nome} {a.sku ? `(${a.sku})` : ""} — {attrText(a.atributos)}: {a.saldo}/{a.estoque_minimo}
-              </span>
-            ))}
-          </div>
-        </Panel>
-      )}
+      <AlertasReposicao alertas={alertas} />
 
       <div className="grid gap-4 md:grid-cols-2">
         <Panel className="p-5">
