@@ -237,141 +237,175 @@ textarea {
 }
 
 @layer components {
+  /* ============================================================
+     Primitivos ds-* retematizados ao contrato do DS (§8) — Fase 3.
+     API/classes preservadas; só o visual interno muda.
+     Classes rb-* novas adicionadas conforme rrb-tokens.css.
+     ============================================================ */
+
   .ds-shell {
     min-height: 100vh;
-    background: rgb(var(--color-paper));
+    background: var(--bg);
   }
 
   .ds-topbar {
     height: var(--topbar-height);
-    border-bottom: 1px solid rgb(var(--color-line));
-    background: rgba(var(--color-surface), 0.88);
-    backdrop-filter: blur(18px);
+    border-bottom: 1px solid var(--border);
+    background: var(--surface);
+    box-shadow: var(--shadow-xs);
   }
 
+  /* Card/panel — §8.2 */
   .ds-panel {
-    border: 1px solid rgb(var(--color-line));
-    border-radius: var(--radius-panel);
-    background: rgb(var(--color-surface));
-    box-shadow: var(--shadow-soft);
+    border: 1px solid var(--border);
+    border-radius: var(--r-lg);
+    background: var(--surface);
+    box-shadow: var(--shadow-sm);
   }
-
   .ds-card {
-    border: 1px solid rgb(var(--color-line));
-    border-radius: var(--radius-panel);
-    background: rgb(var(--color-surface));
+    border: 1px solid var(--border);
+    border-radius: var(--r-lg);
+    background: var(--surface);
+    box-shadow: var(--shadow-sm);
   }
 
-  .ds-button {
+  /* Botões — §8.1. ds-button* mapeados; rb-btn* novos espelham. */
+  .ds-button,
+  .rb-btn {
+    --b-h: 38px;
     display: inline-flex;
-    min-height: 2.25rem;
     align-items: center;
     justify-content: center;
-    gap: 0.45rem;
+    gap: 8px;
+    height: var(--b-h);
+    min-height: var(--b-h);
+    padding: 0 16px;
     border: 1px solid transparent;
-    padding: 0.5rem 0.95rem;
-    font-size: 0.82rem;
-    font-weight: 600;
+    border-radius: var(--r-sm);
+    font-family: var(--font-body, var(--font-sans));
+    font-size: 13.5px;
+    font-weight: 550;
+    letter-spacing: -0.006em;
     line-height: 1;
-    border-radius: var(--radius-ui);
+    white-space: nowrap;
+    cursor: pointer;
+    user-select: none;
+    text-decoration: none;
     transition:
-      box-shadow 140ms ease,
-      border-color 140ms ease,
-      background-color 140ms ease,
-      color 140ms ease;
+      transform 0.16s var(--ease),
+      box-shadow 0.2s var(--ease),
+      background 0.16s var(--ease),
+      border-color 0.16s var(--ease),
+      color 0.16s var(--ease);
+  }
+  .ds-button:active,
+  .rb-btn:active { transform: translateY(1px) scale(0.99); }
+  .rb-btn.sm { --b-h: 32px; font-size: 12.5px; padding: 0 12px; border-radius: var(--r-xs); }
+  .rb-btn.lg { --b-h: 46px; font-size: 14.5px; padding: 0 22px; border-radius: var(--r-md); }
+  .rb-btn-ghost.icon,
+  .rb-btn-soft.icon { padding: 0; width: var(--b-h); }
+  .ds-button:disabled,
+  .rb-btn:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+
+  .ds-button-primary,
+  .ds-button-accent,
+  .rb-btn-primary {
+    background: linear-gradient(180deg, var(--brand-500), var(--brand-600));
+    color: #fff;
+    box-shadow: 0 1px 0 rgba(255, 255, 255, 0.22) inset, var(--shadow-brand);
+  }
+  .ds-button-primary:hover,
+  .ds-button-accent:hover,
+  .rb-btn-primary:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 1px 0 rgba(255, 255, 255, 0.25) inset, 0 22px 50px -16px rgba(35, 72, 201, 0.6);
   }
 
-  .ds-button:hover { filter: brightness(1.04); }
-
-  .ds-button-primary {
-    background: rgb(var(--color-primary));
-    color: white;
-    box-shadow: 0 4px 12px rgba(27, 79, 216, 0.25);
+  .ds-button-secondary,
+  .rb-btn-ghost {
+    background: var(--surface);
+    color: var(--text);
+    border-color: var(--border-strong);
+    box-shadow: var(--shadow-xs);
   }
-  .ds-button-primary:hover { box-shadow: 0 6px 16px rgba(27, 79, 216, 0.32); }
+  .ds-button-secondary:hover,
+  .rb-btn-ghost:hover { background: var(--surface-2); border-color: var(--text-faint); }
 
-  .ds-button-accent {
-    background: rgb(var(--color-primary));
-    color: white;
-    box-shadow: 0 4px 12px rgba(27, 79, 216, 0.25);
+  .rb-btn-soft {
+    background: color-mix(in oklab, var(--brand-600) 12%, var(--surface));
+    color: var(--brand-600);
   }
+  .rb-btn-soft:hover { background: color-mix(in oklab, var(--brand-600) 18%, var(--surface)); }
 
-  .ds-button-secondary {
-    border-color: rgb(var(--color-line));
-    background: rgb(var(--color-surface));
-    color: rgb(var(--color-ink));
-  }
-  .ds-button-secondary:hover { background: rgba(var(--color-ink), 0.03); }
+  .rb-btn-danger { background: var(--bad); color: #fff; }
+  .rb-btn-danger:hover { filter: brightness(1.05); transform: translateY(-1px); }
 
-  .ds-kicker {
-    font-size: 0.72rem;
-    font-weight: 900;
+  /* Eyebrow / kicker — §4 */
+  .ds-kicker,
+  .rb-eyebrow {
+    font-family: var(--font-mono);
+    font-size: 10.5px;
+    font-weight: 600;
     letter-spacing: 0.16em;
     text-transform: uppercase;
-    color: rgb(var(--color-primary));
+    color: var(--brand-600);
   }
 
+  /* Tabela legada ds-table → contrato DS (§8.12) */
   .ds-table {
     width: 100%;
-    border-collapse: collapse;
-    background: rgb(var(--color-surface));
+    border-collapse: separate;
+    border-spacing: 0;
+    background: var(--surface);
+    font-size: 13px;
   }
-
   .ds-table th {
-    background: rgb(var(--color-primary));
-    color: white;
-    font-size: 0.72rem;
-    font-weight: 900;
-    letter-spacing: 0.08em;
+    background: var(--surface-2);
+    color: var(--text-muted);
+    font-size: 10.5px;
+    font-weight: 600;
+    letter-spacing: 0.06em;
     text-align: left;
     text-transform: uppercase;
   }
-
   .ds-table th,
   .ds-table td {
-    border-bottom: 1px solid rgb(var(--color-line));
-    padding: 0.85rem 1rem;
+    border-bottom: 1px solid var(--border-soft);
+    padding: 11px 14px;
   }
 
   .no-scrollbar {
     scrollbar-width: none;
     -ms-overflow-style: none;
   }
-
-  .no-scrollbar::-webkit-scrollbar {
-    display: none;
-    width: 0;
-    height: 0;
-  }
-
+  .no-scrollbar::-webkit-scrollbar { display: none; width: 0; height: 0; }
   .no-scrollbar::-webkit-scrollbar-track,
-  .no-scrollbar::-webkit-scrollbar-thumb {
-    display: none;
-  }
+  .no-scrollbar::-webkit-scrollbar-thumb { display: none; }
 
-  /* ============ NEW DESIGN-SYSTEM PRIMITIVES ============ */
-
+  /* Breadcrumb — §8.9 */
   .ds-breadcrumb {
     display: inline-flex;
     align-items: center;
     gap: 0.6rem;
-    font-size: 0.68rem;
-    font-weight: 700;
-    letter-spacing: 0.14em;
+    font-family: var(--font-mono);
+    font-size: 12.5px;
+    font-weight: 500;
+    letter-spacing: 0.04em;
     text-transform: uppercase;
-    color: rgba(var(--color-ink), 0.45);
+    color: var(--text-muted);
   }
-  .ds-breadcrumb a:hover { color: rgb(var(--color-primary)); }
-  .ds-breadcrumb .sep { color: rgba(var(--color-ink), 0.22); }
-  .ds-breadcrumb .current { color: rgba(var(--color-ink), 0.85); }
+  .ds-breadcrumb a:hover { color: var(--brand-600); }
+  .ds-breadcrumb .sep { opacity: 0.4; }
+  .ds-breadcrumb .current { color: var(--brand-600); font-weight: 600; }
 
+  /* Headings */
   .ds-heading {
     font-family: var(--font-display);
     font-weight: 700;
     font-size: clamp(2rem, 3vw, 2.6rem);
     letter-spacing: -0.025em;
     line-height: 1.05;
-    color: rgb(var(--color-ink));
+    color: var(--text);
   }
   .ds-heading-counter {
     font-family: var(--font-display);
@@ -385,10 +419,72 @@ textarea {
     max-width: 38rem;
     font-size: 0.875rem;
     line-height: 1.55;
-    color: rgba(var(--color-ink), 0.62);
+    color: var(--text-muted);
     font-weight: 500;
   }
 
+  /* KPI dirigido por --hue — §8.11. Define style="--hue:var(--c-blue)". */
+  .ds-kpi,
+  .kpi {
+    position: relative;
+    border-radius: var(--r-lg);
+    padding: 17px 18px 18px;
+    overflow: hidden;
+    border: 1px solid color-mix(in oklab, var(--hue, var(--c-blue)) var(--tint-border), var(--border));
+    background: linear-gradient(
+      165deg,
+      color-mix(in oklab, var(--hue, var(--c-blue)) calc(var(--tint-strength) + 4%), var(--surface)),
+      var(--surface) 78%
+    );
+    transition: transform 0.2s var(--ease), box-shadow 0.2s var(--ease);
+  }
+  .ds-kpi:hover,
+  .kpi:hover { transform: translateY(-3px); box-shadow: var(--shadow-md); }
+  .ds-kpi::after,
+  .kpi::after {
+    content: "";
+    position: absolute;
+    right: -30px;
+    top: -30px;
+    width: 120px;
+    height: 120px;
+    border-radius: 50%;
+    background: radial-gradient(circle, color-mix(in oklab, var(--hue, var(--c-blue)) 28%, transparent), transparent 70%);
+    pointer-events: none;
+  }
+  .ds-kpi .ico,
+  .kpi .ico {
+    width: 34px;
+    height: 34px;
+    border-radius: 9px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    color: #fff;
+    background: var(--hue, var(--c-blue));
+    box-shadow: 0 6px 14px -6px var(--hue, var(--c-blue));
+  }
+  .ds-kpi .klabel,
+  .kpi .klabel {
+    font-family: var(--font-mono);
+    font-size: 10.5px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--text-muted);
+    margin-top: 13px;
+  }
+  .ds-kpi .kval,
+  .kpi .kval {
+    font-family: var(--font-display);
+    font-weight: 700;
+    font-size: 27px;
+    letter-spacing: -0.03em;
+    margin-top: 4px;
+    font-variant-numeric: tabular-nums;
+    color: var(--text);
+  }
+
+  /* KPI legado (grid de células) — retematizado p/ tokens DS */
   .ds-kpi-grid {
     display: grid;
     grid-auto-flow: column;
@@ -397,7 +493,7 @@ textarea {
   }
   .ds-kpi-cell {
     padding: 0 1.25rem;
-    border-left: 1px solid rgba(var(--color-line), 1);
+    border-left: 1px solid var(--border);
     min-width: 0;
   }
   .ds-kpi-cell:first-child { border-left: none; padding-left: 0; }
@@ -406,68 +502,97 @@ textarea {
     display: block;
     font-size: 0.72rem;
     font-weight: 500;
-    color: rgba(var(--color-ink), 0.58);
+    color: var(--text-muted);
     line-height: 1.2;
   }
   .ds-kpi-value {
     margin-top: 0.35rem;
+    font-family: var(--font-display);
     font-size: 1.5rem;
-    font-weight: 800;
-    color: rgb(var(--color-ink));
+    font-weight: 700;
+    color: var(--text);
     line-height: 1.05;
     letter-spacing: -0.02em;
+    font-variant-numeric: tabular-nums;
   }
-  .ds-kpi-value-accent { color: rgb(var(--color-success)); }
-  .ds-kpi-value-warn { color: rgb(var(--color-warning)); }
-  .ds-kpi-value-danger { color: rgb(var(--color-danger)); }
+  .ds-kpi-value-accent { color: var(--ok); }
+  .ds-kpi-value-warn { color: var(--warn); }
+  .ds-kpi-value-danger { color: var(--bad); }
 
-  /* Filter chips (segment pills with counter) */
+  /* Tabs segmentadas — §8.7. Variante filtro = ds-chip[data-active] azul. */
+  .seg {
+    display: inline-flex;
+    gap: 2px;
+    background: var(--surface-3);
+    border: 1px solid var(--border);
+    border-radius: var(--r-pill);
+    padding: 3px;
+  }
+  .seg button {
+    border: none;
+    background: transparent;
+    padding: 8px 16px;
+    border-radius: var(--r-pill);
+    font-size: 12.5px;
+    font-weight: 500;
+    color: var(--text-muted);
+    cursor: pointer;
+    font-family: inherit;
+    transition: all 0.16s var(--ease);
+  }
+  .seg button.on {
+    background: var(--surface);
+    color: var(--text);
+    box-shadow: var(--shadow-xs);
+    font-weight: 600;
+  }
+
+  /* Filter chips (segment pills com contador) — §8.7 variante filtro */
   .ds-chip {
     display: inline-flex;
     align-items: center;
     gap: 0.5rem;
     height: 2.25rem;
     padding: 0 0.95rem;
-    border-radius: 9999px;
+    border-radius: var(--r-pill);
     font-size: 0.82rem;
-    font-weight: 600;
-    color: rgba(var(--color-ink), 0.72);
+    font-weight: 500;
+    color: var(--text-muted);
     background: transparent;
     border: 1px solid transparent;
     cursor: pointer;
-    transition: background 140ms ease, color 140ms ease, border-color 140ms ease;
+    transition: background 0.16s var(--ease), color 0.16s var(--ease), border-color 0.16s var(--ease);
   }
-  .ds-chip:hover {
-    background: rgba(var(--color-ink), 0.04);
-    color: rgb(var(--color-ink));
-  }
+  .ds-chip:hover { background: var(--surface-3); color: var(--text); }
   .ds-chip-count {
+    font-family: var(--font-mono);
     font-size: 0.7rem;
-    font-weight: 700;
-    color: rgba(var(--color-ink), 0.45);
-    background: rgba(var(--color-ink), 0.06);
+    font-weight: 600;
+    color: var(--text-muted);
+    background: var(--surface-3);
     padding: 0.1rem 0.45rem;
-    border-radius: 9999px;
+    border-radius: var(--r-pill);
     line-height: 1.2;
   }
   .ds-chip[data-active="true"] {
-    background: rgb(var(--color-primary));
-    color: white;
-    box-shadow: 0 4px 12px rgba(27, 79, 216, 0.22);
+    background: var(--brand-600);
+    color: #fff;
+    box-shadow: var(--shadow-brand);
+    font-weight: 600;
   }
   .ds-chip[data-active="true"] .ds-chip-count {
-    background: rgba(255, 255, 255, 0.22);
-    color: white;
+    background: rgba(255, 255, 255, 0.24);
+    color: #fff;
   }
 
-  /* Inline search */
+  /* Inline search → contrato .rb-input.has-icon (§8.3) */
   .ds-search-inline {
     display: inline-flex;
     align-items: center;
     gap: 0.55rem;
     min-width: 240px;
     flex: 1;
-    color: rgba(var(--color-ink), 0.5);
+    color: var(--text-faint);
   }
   .ds-search-inline input {
     border: none;
@@ -475,148 +600,269 @@ textarea {
     padding: 0.5rem 0;
     box-shadow: none;
     font-size: 0.875rem;
-    color: rgb(var(--color-ink));
+    color: var(--text);
   }
-  .ds-search-inline input::placeholder { color: rgba(var(--color-ink), 0.42); font-weight: 500; }
+  .ds-search-inline input::placeholder { color: var(--text-faint); font-weight: 500; }
   .ds-search-inline input:focus { box-shadow: none; border: none; outline: none; }
 
-  /* Compact dropdown trigger */
+  /* Dropdown / chip de filtro — §9.5 */
   .ds-dropdown {
     display: inline-flex;
     align-items: center;
     gap: 0.4rem;
     height: 2.25rem;
     padding: 0 0.85rem;
-    border-radius: var(--radius-ui);
-    background: rgb(var(--color-surface));
-    border: 1px solid rgb(var(--color-line));
+    border-radius: var(--r-sm);
+    background: var(--surface);
+    border: 1px solid var(--border-strong);
     font-size: 0.82rem;
     font-weight: 500;
-    color: rgba(var(--color-ink), 0.85);
+    color: var(--text);
     cursor: pointer;
-    transition: border-color 140ms ease, background 140ms ease;
+    transition: border-color 0.16s var(--ease), background 0.16s var(--ease);
   }
-  .ds-dropdown:hover { border-color: rgba(var(--color-ink), 0.25); }
-  .ds-dropdown-label { color: rgba(var(--color-ink), 0.55); font-weight: 500; }
-  .ds-dropdown-value { color: rgb(var(--color-ink)); font-weight: 600; }
+  .ds-dropdown:hover { border-color: var(--text-faint); background: var(--surface-2); }
+  .ds-dropdown-label { color: var(--text-muted); font-weight: 500; }
+  .ds-dropdown-value { color: var(--text); font-weight: 600; }
 
-  /* Status pill (dot + label) */
+  /* Pills de status — §8.5. rb-pill* novos; ds-status* mapeados. */
+  .rb-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    height: 23px;
+    padding: 0 10px;
+    border-radius: var(--r-pill);
+    font-size: 11.5px;
+    font-weight: 600;
+    letter-spacing: -0.005em;
+    white-space: nowrap;
+  }
+  .rb-pill .dot { width: 6px; height: 6px; border-radius: 50%; flex-shrink: 0; }
+  .rb-pill-ok { background: var(--tint-green); color: color-mix(in oklab, var(--ok) var(--on-tint), var(--text)); }
+  .rb-pill-ok .dot { background: var(--ok); }
+  .rb-pill-warn { background: var(--tint-amber); color: color-mix(in oklab, var(--warn) var(--on-tint), var(--text)); }
+  .rb-pill-warn .dot { background: var(--warn); }
+  .rb-pill-bad { background: var(--tint-coral); color: color-mix(in oklab, var(--bad) var(--on-tint), var(--text)); }
+  .rb-pill-bad .dot { background: var(--bad); }
+  .rb-pill-info { background: var(--tint-blue); color: color-mix(in oklab, var(--c-blue) var(--on-tint), var(--text)); }
+  .rb-pill-info .dot { background: var(--c-blue); }
+  .rb-pill-neutral { background: var(--surface-3); color: var(--text-soft); }
+  .rb-pill-neutral .dot { background: var(--text-faint); }
+
+  /* Tag de contorno — §8.6 */
+  .rb-tag {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    height: 24px;
+    padding: 0 9px;
+    border-radius: var(--r-xs);
+    font-size: 11.5px;
+    font-weight: 550;
+    border: 1px solid var(--border-strong);
+    color: var(--text-soft);
+    background: var(--surface);
+  }
+
+  /* Status legado (dot + label) — retematizado p/ tokens DS */
   .ds-status {
     display: inline-flex;
     align-items: center;
     gap: 0.45rem;
     font-size: 0.8rem;
     font-weight: 500;
-    color: rgba(var(--color-ink), 0.85);
+    color: var(--text);
     white-space: nowrap;
   }
   .ds-status::before {
     content: "";
     width: 0.45rem;
     height: 0.45rem;
-    border-radius: 9999px;
-    background: rgb(var(--color-ink));
+    border-radius: var(--r-pill);
+    background: var(--text-faint);
     flex-shrink: 0;
   }
-  .ds-status-success { color: rgb(var(--color-success)); }
-  .ds-status-success::before { background: rgb(var(--color-success)); box-shadow: 0 0 0 3px rgba(var(--color-success), 0.15); }
-  .ds-status-warning { color: rgb(var(--color-warning)); }
-  .ds-status-warning::before { background: rgb(var(--color-warning)); box-shadow: 0 0 0 3px rgba(var(--color-warning), 0.18); }
-  .ds-status-danger { color: rgb(var(--color-danger)); }
-  .ds-status-danger::before { background: rgb(var(--color-danger)); box-shadow: 0 0 0 3px rgba(var(--color-danger), 0.18); }
-  .ds-status-neutral { color: rgba(var(--color-ink), 0.7); }
-  .ds-status-neutral::before { background: rgba(var(--color-ink), 0.4); }
+  .ds-status-success { color: color-mix(in oklab, var(--ok) var(--on-tint), var(--text)); }
+  .ds-status-success::before { background: var(--ok); box-shadow: 0 0 0 3px var(--tint-green); }
+  .ds-status-warning { color: color-mix(in oklab, var(--warn) var(--on-tint), var(--text)); }
+  .ds-status-warning::before { background: var(--warn); box-shadow: 0 0 0 3px var(--tint-amber); }
+  .ds-status-danger { color: color-mix(in oklab, var(--bad) var(--on-tint), var(--text)); }
+  .ds-status-danger::before { background: var(--bad); box-shadow: 0 0 0 3px var(--tint-coral); }
+  .ds-status-neutral { color: var(--text-soft); }
+  .ds-status-neutral::before { background: var(--text-faint); }
 
-  /* DataTable v2 */
+  /* Switch — §8.4 */
+  .rb-switch { display: inline-flex; align-items: center; gap: 8px; cursor: pointer; }
+  .rb-switch .track {
+    width: 40px;
+    height: 23px;
+    border-radius: var(--r-pill);
+    background: var(--surface-3);
+    border: 1px solid var(--border-strong);
+    position: relative;
+    transition: background 0.2s var(--ease), border-color 0.2s var(--ease);
+    flex-shrink: 0;
+  }
+  .rb-switch .knob {
+    position: absolute;
+    top: 2px;
+    left: 2px;
+    width: 17px;
+    height: 17px;
+    border-radius: 50%;
+    background: #fff;
+    box-shadow: var(--shadow-xs);
+    transition: transform 0.22s var(--spring);
+  }
+  .rb-switch.on .track { background: var(--brand-600); border-color: var(--brand-600); }
+  .rb-switch.on .knob { transform: translateX(17px); }
+
+  /* DataTable v2 — §8.12 */
   .ds-dt {
     width: 100%;
     border-collapse: separate;
     border-spacing: 0;
-    background: rgb(var(--color-surface));
-    font-size: 0.875rem;
+    background: var(--surface);
+    font-size: 13px;
   }
   .ds-dt thead th {
     position: sticky;
     top: 0;
-    background: rgba(var(--color-muted), 0.6);
-    color: rgba(var(--color-ink), 0.55);
-    font-size: 0.66rem;
-    font-weight: 700;
-    letter-spacing: 0.12em;
+    background: var(--surface-2);
+    color: var(--text-muted);
+    font-size: 10.5px;
+    font-weight: 600;
+    letter-spacing: 0.06em;
     text-transform: uppercase;
     text-align: left;
-    padding: 0.85rem 1rem;
-    border-bottom: 1px solid rgb(var(--color-line));
+    padding: 11px 14px;
+    border-bottom: 1px solid var(--border);
   }
-  .ds-dt tbody tr {
-    position: relative;
-    transition: background 120ms ease;
-  }
-  .ds-dt tbody tr:hover { background: rgba(var(--color-muted), 0.5); }
+  .ds-dt tbody tr { position: relative; transition: background 0.12s var(--ease); }
+  .ds-dt tbody tr:hover { background: var(--surface-2); }
   .ds-dt tbody td {
-    padding: 0.95rem 1rem;
-    border-bottom: 1px solid rgba(var(--color-line), 0.7);
+    padding: 12px 14px;
+    border-bottom: 1px solid var(--border-soft);
     vertical-align: middle;
   }
   .ds-dt tbody tr[data-selected="true"] {
-    background: rgba(var(--color-primary), 0.06);
+    background: color-mix(in oklab, var(--brand-600) 7%, var(--surface));
   }
   .ds-dt tbody tr[data-selected="true"] td:first-child {
-    box-shadow: inset 3px 0 0 rgb(var(--color-primary));
+    box-shadow: inset 3px 0 0 var(--brand-600);
   }
   .ds-dt-foot {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    padding: 0.85rem 1rem;
-    background: rgba(var(--color-muted), 0.35);
-    border-top: 1px solid rgb(var(--color-line));
+    padding: 11px 14px;
+    background: var(--surface-2);
+    border-top: 1px solid var(--border);
     font-size: 0.8rem;
-    color: rgba(var(--color-ink), 0.62);
+    color: var(--text-muted);
   }
 
-  /* Avatar */
+  /* Ações por linha — §8.13. Define style="--c:var(--c-green)". */
+  .row-action {
+    width: 30px;
+    height: 30px;
+    border-radius: 8px;
+    border: 1px solid transparent;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--text-faint);
+    background: transparent;
+    transition: all 0.14s var(--ease);
+  }
+  .row-action:hover {
+    color: var(--c, var(--brand-600));
+    border-color: color-mix(in oklab, var(--c, var(--brand-600)) 40%, var(--border));
+    background: color-mix(in oklab, var(--c, var(--brand-600)) 12%, var(--surface));
+  }
+
+  /* Bulk bar — §8.14 */
+  .bulk-bar {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 0 16px;
+    height: 50px;
+    background: color-mix(in oklab, var(--brand-600) 9%, var(--surface));
+    border-bottom: 1px solid color-mix(in oklab, var(--brand-600) 22%, var(--border));
+    animation: rbSlideDown 0.22s var(--ease-out);
+  }
+
+  /* Avatar — §8.10. Pastel via style inline; default neutro. */
   .ds-avatar {
     display: inline-flex;
     align-items: center;
     justify-content: center;
     width: 2rem;
     height: 2rem;
-    border-radius: 9999px;
-    background: rgba(var(--color-primary), 0.10);
-    color: rgb(var(--color-primary));
+    border-radius: var(--r-pill);
+    background: var(--surface-3);
+    color: var(--text-soft);
     font-size: 0.72rem;
-    font-weight: 700;
+    font-weight: 600;
     letter-spacing: 0.02em;
     flex-shrink: 0;
     overflow: hidden;
   }
   .ds-avatar img { width: 100%; height: 100%; object-fit: cover; }
 
-  /* Pagination */
-  .ds-pager {
-    display: inline-flex;
-    align-items: center;
-    gap: 0.15rem;
-  }
-  .ds-pager button {
-    min-width: 1.85rem;
-    height: 1.85rem;
-    padding: 0 0.5rem;
-    border-radius: var(--radius-ui);
-    background: transparent;
-    border: none;
-    color: rgba(var(--color-ink), 0.6);
-    font-size: 0.78rem;
+  /* Paginação — §8.15. ds-pager mapeado; pg-btn novo. */
+  .ds-pager { display: inline-flex; align-items: center; gap: 0.25rem; }
+  .ds-pager button,
+  .pg-btn {
+    min-width: 32px;
+    height: 32px;
+    padding: 0 9px;
+    border-radius: 8px;
+    background: var(--surface);
+    border: 1px solid var(--border-strong);
+    color: var(--text-soft);
+    font-size: 12.5px;
     font-weight: 600;
     cursor: pointer;
-    transition: background 120ms ease, color 120ms ease;
+    transition: background 0.12s var(--ease), color 0.12s var(--ease), border-color 0.12s var(--ease);
   }
-  .ds-pager button:hover { background: rgba(var(--color-ink), 0.05); color: rgb(var(--color-ink)); }
-  .ds-pager button[data-active="true"] {
-    background: rgb(var(--color-primary));
-    color: white;
+  .ds-pager button:hover,
+  .pg-btn:hover { background: var(--surface-2); color: var(--text); }
+  .ds-pager button[data-active="true"],
+  .pg-btn.on {
+    border: none;
+    background: var(--brand-600);
+    color: #fff;
+    box-shadow: var(--shadow-brand);
   }
+}
+
+/* ===================== Utilitários tipográficos (§4) ===================== */
+.rb-display { font-family: var(--font-display); font-weight: 600; letter-spacing: -0.02em; line-height: 1.05; }
+.rb-mono { font-family: var(--font-mono); font-variant-numeric: tabular-nums; }
+.rb-num { font-variant-numeric: tabular-nums; }
+.rb-scroll::-webkit-scrollbar { width: 10px; height: 10px; }
+.rb-scroll::-webkit-scrollbar-thumb {
+  background: color-mix(in oklab, var(--text-faint) 50%, transparent);
+  border-radius: 6px;
+  border: 3px solid transparent;
+  background-clip: padding-box;
+}
+.rb-scroll::-webkit-scrollbar-thumb:hover {
+  background: var(--text-faint);
+  border: 3px solid transparent;
+  background-clip: padding-box;
+}
+
+/* ===================== Animações (§11) ===================== */
+@keyframes rbGrow { from { transform: scaleY(0); opacity: 0; } to { transform: scaleY(1); opacity: 1; } }
+@keyframes rbSlideDown { from { transform: translateY(-8px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+@keyframes drift {
+  0%, 100% { transform: translate(0, 0); }
+  50% { transform: translate(12px, -10px); }
 }
 
 .sheet-table {
