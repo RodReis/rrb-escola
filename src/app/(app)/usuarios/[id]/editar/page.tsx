@@ -34,7 +34,7 @@ export default async function EditarUsuarioPage({
     <section className="ds-section max-w-lg">
       <header className="mb-6">
         <p className="ds-kicker">Administração</p>
-        <h1 className="font-serif text-3xl text-ink">Editar usuário</h1>
+        <h1 className="font-display text-3xl text-ink">Editar usuário</h1>
         <p className="mt-2 text-sm text-muted">{perfil.email}</p>
       </header>
 

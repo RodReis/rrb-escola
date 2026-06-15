@@ -99,7 +99,7 @@ export default async function ChamadaPage({ searchParams }: { searchParams: Sear
               {summary.map(([label, value]) => (
                 <div key={label} className="border-line py-1 sm:border-l sm:px-6 first:sm:border-l-0">
                   <dt className="text-xs font-medium text-ink/62">{label}</dt>
-                  <dd className="mt-1 font-serif text-2xl italic leading-none text-brand">{value}</dd>
+                  <dd className="mt-1 font-display text-2xl italic leading-none text-brand">{value}</dd>
                 </div>
               ))}
             </dl>

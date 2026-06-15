@@ -54,7 +54,7 @@ export function StudentGatePanel({ alunoId, settings }: Props) {
     <Panel className="grid gap-5">
       <div className="flex items-center gap-3">
         <ShieldCheck className="text-moss" />
-        <h2 className="font-serif text-2xl text-ink">Portaria e biometria</h2>
+        <h2 className="font-display text-2xl text-ink">Portaria e biometria</h2>
       </div>
 
       <form action={saveStudentGateSettingsAction} className="grid gap-4 md:grid-cols-4">

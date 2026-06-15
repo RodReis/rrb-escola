@@ -54,7 +54,7 @@ export function GateCameraConsole({ students, devices }: { students: Student[]; 
     <div className="grid gap-5 xl:grid-cols-[1.2fr_0.8fr]">
       <Panel className="grid gap-4">
         <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
-          <h2 className="font-serif text-2xl text-ink">Camera da portaria</h2>
+          <h2 className="font-display text-2xl text-ink">Camera da portaria</h2>
           <div className="flex gap-2">
             <Button type="button" onClick={startCamera} variant="accent">
               <Camera size={16} />
@@ -78,7 +78,7 @@ export function GateCameraConsole({ students, devices }: { students: Student[]; 
       </Panel>
 
       <Panel className="grid gap-4">
-        <h2 className="font-serif text-2xl text-ink">Identificacao simulada</h2>
+        <h2 className="font-display text-2xl text-ink">Identificacao simulada</h2>
         <form action={registerGateEventAction} className="grid gap-4">
           <label>
             Aluno reconhecido

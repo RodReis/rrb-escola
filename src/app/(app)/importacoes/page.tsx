@@ -41,7 +41,7 @@ export default async function ImportaçõesPage() {
               <span className="text-brand">Importações</span>
             </p>
             <h1 className="mt-8 text-4xl font-black leading-none text-brand md:text-5xl">
-              Importações <span className="font-serif italic text-ink/42">{files.length}</span>
+              Importações <span className="font-display italic text-ink/42">{files.length}</span>
             </h1>
             <p className="mt-4 max-w-2xl text-sm font-medium leading-6 text-ink/68">
               Controle de PDFs e planilhas recebidos para conferência e cadastro em lote na base local.
@@ -52,7 +52,7 @@ export default async function ImportaçõesPage() {
             {summary.map(([label, value]) => (
               <div key={label} className="border-line py-1 sm:border-l sm:px-6 first:sm:border-l-0">
                 <dt className="text-xs font-medium text-ink/62">{label}</dt>
-                <dd className="mt-1 font-serif text-2xl italic leading-none text-brand">{value}</dd>
+                <dd className="mt-1 font-display text-2xl italic leading-none text-brand">{value}</dd>
               </div>
             ))}
           </dl>

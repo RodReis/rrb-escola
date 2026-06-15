@@ -29,7 +29,7 @@ export default async function StudentPage({ params, searchParams }: { params: { 
         <div>
           <p className="ds-kicker">Gestao / Ficha do aluno</p>
           <div className="mt-7 flex flex-wrap items-center gap-3">
-            <h1 className="font-serif text-4xl text-ink">{student.nome}</h1>
+            <h1 className="font-display text-4xl text-ink">{student.nome}</h1>
             {activeEnrollment ? <Badge tone="green">{activeEnrollment.status}</Badge> : null}
           </div>
           <div className="mt-3 flex flex-wrap items-center gap-2 text-sm text-muted">

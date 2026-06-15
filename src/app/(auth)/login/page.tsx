@@ -32,7 +32,7 @@ export default async function LoginPage({ searchParams }: { searchParams: { erro
         <div className="max-w-3xl">
           <BrandMark />
           <p className="mt-8 ds-kicker">Gestão escolar local</p>
-          <h1 className="mt-4 font-serif text-5xl leading-none text-brand md:text-7xl">Lectiva</h1>
+          <h1 className="mt-4 font-display text-5xl leading-none text-brand md:text-7xl">Lectiva</h1>
           <p className="mt-5 max-w-2xl text-xl font-semibold leading-8 text-ink">
             Secretaria, matrículas e cobranças em uma base local.
           </p>
@@ -53,7 +53,7 @@ export default async function LoginPage({ searchParams }: { searchParams: { erro
         <div className="ds-panel p-6">
           <div className="mb-7">
             <p className="ds-kicker">Acesso administrativo</p>
-            <h2 className="mt-2 font-serif text-3xl text-ink">Entrar no sistema</h2>
+            <h2 className="mt-2 font-display text-3xl text-ink">Entrar no sistema</h2>
             <p className="mt-2 text-sm font-medium text-muted">Login validado pelo Supabase Auth local.</p>
           </div>
           {error ? (

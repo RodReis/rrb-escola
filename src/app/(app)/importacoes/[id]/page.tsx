@@ -33,7 +33,7 @@ export default async function ImportDetailPage({ params }: { params: { id: strin
       <header className="flex flex-wrap items-end justify-between gap-4 border-b border-line bg-paper px-6 py-7">
         <div>
           <p className="ds-kicker">Importacoes / Revisao</p>
-          <h1 className="mt-7 font-serif text-4xl text-ink">{file.nome_arquivo}</h1>
+          <h1 className="mt-7 font-display text-4xl text-ink">{file.nome_arquivo}</h1>
           <p className="mt-3 max-w-3xl text-sm text-muted">
             Revise as linhas extraidas antes de gravar alunos, responsaveis e matriculas no Supabase local.
             Enviado em {dateText(file.created_at)}.
@@ -87,7 +87,7 @@ export default async function ImportDetailPage({ params }: { params: { id: strin
               <div className="flex flex-wrap items-start justify-between gap-3">
                 <div>
                   <p className="ds-kicker">Linha {row.linha}</p>
-                  <h2 className="mt-1 font-serif text-2xl text-ink">{data.nome || "Aluno sem nome"}</h2>
+                  <h2 className="mt-1 font-display text-2xl text-ink">{data.nome || "Aluno sem nome"}</h2>
                   <p className="mt-1 text-sm text-muted">Matrícula {data.matricula_codigo || "não informada"}</p>
                 </div>
                 <div className="flex flex-wrap items-center gap-2">

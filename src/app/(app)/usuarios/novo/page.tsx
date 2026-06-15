@@ -14,7 +14,7 @@ export default async function NovoUsuarioPage({ searchParams }: { searchParams: 
     <section className="ds-section max-w-lg">
       <header className="mb-6">
         <p className="ds-kicker">Administracao</p>
-        <h1 className="font-serif text-3xl text-ink">Novo usuario</h1>
+        <h1 className="font-display text-3xl text-ink">Novo usuario</h1>
         <p className="mt-2 text-sm text-muted">Senha aleatoria sera gerada e exibida apos criar.</p>
       </header>
 

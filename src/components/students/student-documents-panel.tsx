@@ -20,7 +20,7 @@ function origemBadge(tipo: string) {
 export function StudentDocumentsPanel({ alunoId, documents }: { alunoId: string; documents: StudentDocument[] }) {
   return (
     <Panel className="grid gap-5">
-      <h2 className="font-serif text-2xl text-ink">Documentos do aluno</h2>
+      <h2 className="font-display text-2xl text-ink">Documentos do aluno</h2>
       <form action={uploadStudentDocumentAction} className="grid gap-4 md:grid-cols-[180px_1fr_160px]">
         <input type="hidden" name="aluno_id" value={alunoId} />
         <label>

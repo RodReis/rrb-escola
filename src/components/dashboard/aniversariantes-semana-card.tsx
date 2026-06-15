@@ -72,7 +72,7 @@ export function AniversariantesHojeCard({
   // Modo destaque com mais de 1 aniversariante: grid horizontal full-width.
   if (destaque && hoje.length > 1) {
     return (
-      <article className="w-full overflow-hidden rounded-panel border border-gold/40 bg-gradient-to-br from-[#fdf3d0] via-[#fef9ec] to-[#fffdf7] shadow-[0_4px_24px_rgba(201,151,54,0.14)] dark:from-gold/20 dark:via-gold/10 dark:to-gold/5">
+      <article className="w-full overflow-hidden rounded-panel border border-gold/40 bg-gradient-to-br from-[color-mix(in_oklab,var(--c-amber)_22%,var(--surface))] via-[color-mix(in_oklab,var(--c-amber)_10%,var(--surface))] to-surface shadow-[0_4px_24px_rgba(201,151,54,0.14)]">
         <div className="h-1 w-full bg-gradient-to-r from-gold/50 via-gold to-gold/50" />
         <div className="px-5 pb-5 pt-4">
           <div className="flex items-center gap-1.5">
@@ -115,7 +115,7 @@ export function AniversariantesHojeCard({
   }
 
   return (
-    <article className="w-full h-full overflow-hidden rounded-panel border border-gold/40 bg-gradient-to-br from-[#fdf3d0] via-[#fef9ec] to-[#fffdf7] shadow-[0_4px_24px_rgba(201,151,54,0.14)] dark:from-gold/20 dark:via-gold/10 dark:to-gold/5">
+    <article className="w-full h-full overflow-hidden rounded-panel border border-gold/40 bg-gradient-to-br from-[color-mix(in_oklab,var(--c-amber)_22%,var(--surface))] via-[color-mix(in_oklab,var(--c-amber)_10%,var(--surface))] to-surface shadow-[0_4px_24px_rgba(201,151,54,0.14)]">
       {/* Top strip */}
       <div className="h-1 w-full bg-gradient-to-r from-gold/50 via-gold to-gold/50" />
 
