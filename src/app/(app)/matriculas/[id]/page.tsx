@@ -67,7 +67,7 @@ export default async function EnrollmentDetailPage({
       <header className="flex flex-wrap items-end justify-between gap-4 border-b border-line bg-surface px-6 py-7">
         <div>
           <p className="ds-kicker">Gestão / Histórico de matrícula</p>
-          <h1 className="mt-7 font-serif text-4xl text-ink">{student?.nome ?? "Matrícula"}</h1>
+          <h1 className="mt-7 font-display text-4xl text-ink">{student?.nome ?? "Matrícula"}</h1>
           <p className="mt-3 text-sm text-muted">
             {student?.matricula_codigo ?? "—"} / {serie?.nome ?? "—"} / {turma?.nome ?? "—"} / {enrollment.ano_letivo}
           </p>
@@ -119,7 +119,7 @@ export default async function EnrollmentDetailPage({
           <Panel className="grid gap-5">
             <div>
               <p className="ds-kicker">Cadastro</p>
-              <h2 className="mt-2 flex items-center gap-2 font-serif text-2xl text-ink">
+              <h2 className="mt-2 flex items-center gap-2 font-display text-2xl text-ink">
                 <Pencil size={20} className="text-brand" />
                 Editar matrícula
               </h2>
@@ -166,7 +166,7 @@ export default async function EnrollmentDetailPage({
             <Panel className="grid gap-4">
               <div>
                 <p className="ds-kicker">Financeiro</p>
-                <h2 className="mt-2 flex items-center gap-2 font-serif text-2xl text-ink">
+                <h2 className="mt-2 flex items-center gap-2 font-display text-2xl text-ink">
                   <Receipt size={20} className="text-brand" />
                   Histórico financeiro
                 </h2>
@@ -196,7 +196,7 @@ export default async function EnrollmentDetailPage({
             <Panel className="grid gap-4">
               <div>
                 <p className="ds-kicker">Baixas</p>
-                <h2 className="mt-2 flex items-center gap-2 font-serif text-2xl text-ink">
+                <h2 className="mt-2 flex items-center gap-2 font-display text-2xl text-ink">
                   <Wallet size={20} className="text-brand" />
                   Pagamentos
                 </h2>
@@ -231,7 +231,7 @@ export default async function EnrollmentDetailPage({
           <Panel className="grid gap-4">
             <div>
               <p className="ds-kicker">Presença</p>
-              <h2 className="mt-2 flex items-center gap-2 font-serif text-2xl text-ink">
+              <h2 className="mt-2 flex items-center gap-2 font-display text-2xl text-ink">
                 <Calendar size={20} className="text-brand" />
                 Histórico de frequência
               </h2>
@@ -259,7 +259,7 @@ export default async function EnrollmentDetailPage({
           <Panel className="grid gap-4">
             <div>
               <p className="ds-kicker">Auditoria</p>
-              <h2 className="mt-2 flex items-center gap-2 font-serif text-2xl text-ink">
+              <h2 className="mt-2 flex items-center gap-2 font-display text-2xl text-ink">
                 <History size={20} className="text-brand" />
                 Alterações da matrícula
               </h2>

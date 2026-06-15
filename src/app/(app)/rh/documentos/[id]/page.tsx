@@ -77,7 +77,7 @@ export default async function EditTemplatePage({ params }: { params: Promise<{ i
       )}
 
       <Panel className="grid max-w-2xl gap-4">
-        <h2 className="flex items-center gap-2 font-serif text-xl text-ink">
+        <h2 className="flex items-center gap-2 font-display text-xl text-ink">
           <FileText size={18} className="text-brand" /> Metadados
         </h2>
         <form action={updateTemplateAction} className="grid gap-3">
@@ -119,7 +119,7 @@ export default async function EditTemplatePage({ params }: { params: Promise<{ i
       </Panel>
 
       <Panel className="grid gap-3">
-        <h2 className="flex items-center gap-2 font-serif text-xl text-ink">
+        <h2 className="flex items-center gap-2 font-display text-xl text-ink">
           <Settings size={18} className="text-brand" /> Mappings
         </h2>
         <MappingForm

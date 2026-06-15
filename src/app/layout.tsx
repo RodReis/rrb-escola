@@ -1,23 +1,25 @@
 import type { Metadata } from "next";
-import { Inter, Instrument_Serif } from "next/font/google";
+import { Bricolage_Grotesque } from "next/font/google";
+import { GeistSans } from "geist/font/sans";
+import { GeistMono } from "geist/font/mono";
 import "./globals.css";
 import { Toaster } from "@/components/ui/toaster";
 import { ConfirmProvider } from "@/components/ui/confirm-dialog";
 
-const sans = Inter({
+// Geist (corpo) e Geist Mono vêm do pacote `geist` (self-hosted): o Next 14
+// não expõe essas famílias em next/font/google. Mapeamos as CSS vars do DS
+// (--font-sans / --font-mono) para as vars do pacote no <html> (style).
+const display = Bricolage_Grotesque({
   subsets: ["latin"],
   display: "swap",
-  variable: "--font-sans",
-  weight: ["400", "500", "600", "700", "800", "900"]
+  variable: "--font-display",
+  weight: ["400", "500", "600", "700", "800"]
 });
 
-const serif = Instrument_Serif({
-  subsets: ["latin"],
-  display: "swap",
-  variable: "--font-serif",
-  weight: ["400"],
-  style: ["normal", "italic"]
-});
+const fontVars = {
+  "--font-sans": "var(--font-geist-sans)",
+  "--font-mono": "var(--font-geist-mono)"
+} as React.CSSProperties;
 
 export const metadata: Metadata = {
   title: "CRM Escola",
@@ -28,7 +30,12 @@ const themeScript = `(function(){try{var t=localStorage.getItem('theme');if(t===
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="pt-BR" suppressHydrationWarning className={`${sans.variable} ${serif.variable}`}>
+    <html
+      lang="pt-BR"
+      suppressHydrationWarning
+      className={`${GeistSans.variable} ${GeistMono.variable} ${display.variable}`}
+      style={fontVars}
+    >
       <head>
         <script dangerouslySetInnerHTML={{ __html: themeScript }} />
       </head>

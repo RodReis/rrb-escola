@@ -38,7 +38,7 @@ export default async function EditStudentPage({
       <header className="flex flex-wrap items-end justify-between gap-4 border-b border-line bg-surface px-6 py-7">
         <div>
           <p className="ds-kicker">Gestao / Editar ficha</p>
-          <h1 className="mt-7 font-serif text-4xl text-ink">{student.nome}</h1>
+          <h1 className="mt-7 font-display text-4xl text-ink">{student.nome}</h1>
           <p className="mt-3 max-w-2xl text-sm text-muted">
             Atualize dados cadastrais, documentos, portaria, matriculas e informacoes relacionadas do aluno.
           </p>
@@ -74,7 +74,7 @@ export default async function EditStudentPage({
           <>
             <StudentGatePanel alunoId={student.id} settings={gateSettings} />
             <section className="rounded-panel border border-line bg-surface p-5">
-              <h2 className="mb-3 flex items-center gap-2 font-serif text-2xl text-ink">
+              <h2 className="mb-3 flex items-center gap-2 font-display text-2xl text-ink">
                 <Camera size={20} className="text-brand" />
                 Biometria facial (LGPD)
               </h2>

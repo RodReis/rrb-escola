@@ -149,7 +149,7 @@ export default async function RelatoriosComercialPage({
         <h2 className="mb-4 flex items-center gap-2 text-xs font-bold uppercase tracking-kicker text-ink/55">
           <Boxes size={12} /> Valor imobilizado por item
         </h2>
-        <BarrasChart cor="#7c3aed" data={[...variacoes].filter((v) => v.saldo > 0).sort((a, b) => b.saldo * b.custo - a.saldo * a.custo).slice(0, 12).map((v) => ({ label: v.rotulo, valor: v.saldo * v.custo }))} />
+        <BarrasChart cor="var(--c-violet)" data={[...variacoes].filter((v) => v.saldo > 0).sort((a, b) => b.saldo * b.custo - a.saldo * a.custo).slice(0, 12).map((v) => ({ label: v.rotulo, valor: v.saldo * v.custo }))} />
       </Panel>
 
       <p className="text-xs text-ink/45">Sazonalidade: meses marcados como baixa temporada não contam como giro ao avaliar &quot;parado&quot; (spec 6.4). Meses: {MESES.join(", ")}.</p>

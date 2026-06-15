@@ -37,7 +37,7 @@ export default async function FrequenciasPage() {
               <span className="text-brand">Frequência</span>
             </p>
             <h1 className="mt-8 text-4xl font-black leading-none text-brand md:text-5xl">
-              Frequência <span className="font-serif italic text-ink/42">{frequencias.length}</span>
+              Frequência <span className="font-display italic text-ink/42">{frequencias.length}</span>
             </h1>
             <p className="mt-4 max-w-2xl text-sm font-medium leading-6 text-ink/68">
               Registro diário de presenças e faltas por aluno, com suporte a chamada por turma.
@@ -54,7 +54,7 @@ export default async function FrequenciasPage() {
               {summary.map(([label, value]) => (
                 <div key={label} className="border-line py-1 sm:border-l sm:px-6 first:sm:border-l-0">
                   <dt className="text-xs font-medium text-ink/62">{label}</dt>
-                  <dd className="mt-1 font-serif text-2xl italic leading-none text-brand">{value}</dd>
+                  <dd className="mt-1 font-display text-2xl italic leading-none text-brand">{value}</dd>
                 </div>
               ))}
             </dl>

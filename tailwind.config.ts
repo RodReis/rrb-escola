@@ -10,7 +10,8 @@ const config: Config = {
     extend: {
       fontFamily: {
         sans: ["var(--font-sans)", "ui-sans-serif", "system-ui", "sans-serif"],
-        serif: ["var(--font-serif)", "ui-serif", "Georgia", "serif"]
+        display: ["var(--font-display)", "var(--font-sans)", "ui-sans-serif", "system-ui", "sans-serif"],
+        mono: ["var(--font-mono)", "ui-monospace", "SFMono-Regular", "Menlo", "monospace"]
       },
       colors: {
         ink: "rgb(var(--color-ink) / <alpha-value>)",
@@ -30,12 +31,18 @@ const config: Config = {
       boxShadow: {
         soft: "var(--shadow-soft)",
         lift: "var(--shadow-lift)",
+        brand: "var(--shadow-brand)",
         pill: "0 1px 2px rgba(11, 27, 74, 0.06)",
-        ring: "0 0 0 4px rgba(27, 79, 216, 0.10)"
+        ring: "0 0 0 4px rgba(58, 95, 224, 0.18)"
       },
       borderRadius: {
         ui: "var(--radius-ui)",
         panel: "var(--radius-panel)",
+        "r-xs": "var(--r-xs)",
+        "r-sm": "var(--r-sm)",
+        "r-md": "var(--r-md)",
+        "r-lg": "var(--r-lg)",
+        "r-xl": "var(--r-xl)",
         pill: "9999px"
       },
       letterSpacing: {

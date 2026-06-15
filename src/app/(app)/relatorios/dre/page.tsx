@@ -58,13 +58,13 @@ export default async function DREPage({
           <h2 className="mb-3 flex items-center gap-2 text-xs font-bold uppercase tracking-kicker text-success">
             <TrendingUp size={12} /> Receitas por categoria
           </h2>
-          <BarrasChart cor="#16a34a" data={dre.receitas.map((r) => ({ label: r.categoria_nome, valor: r.total }))} />
+          <BarrasChart cor="var(--c-green)" data={dre.receitas.map((r) => ({ label: r.categoria_nome, valor: r.total }))} />
         </Panel>
         <Panel className="p-5">
           <h2 className="mb-3 flex items-center gap-2 text-xs font-bold uppercase tracking-kicker text-danger">
             <TrendingUp size={12} /> Despesas por categoria
           </h2>
-          <BarrasChart cor="#dc2626" data={dre.despesas.map((d) => ({ label: d.categoria_nome, valor: d.total }))} />
+          <BarrasChart cor="var(--c-coral)" data={dre.despesas.map((d) => ({ label: d.categoria_nome, valor: d.total }))} />
         </Panel>
       </div>
 

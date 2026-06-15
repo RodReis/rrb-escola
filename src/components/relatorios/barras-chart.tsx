@@ -5,7 +5,7 @@ import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell } from 
 type Item = { label: string; valor: number };
 
 // Gráfico de barras horizontal simples e reutilizável para os relatórios.
-export function BarrasChart({ data, cor = "#2563eb", altura = 280 }: { data: Item[]; cor?: string; altura?: number }) {
+export function BarrasChart({ data, cor = "var(--c-blue)", altura = 280 }: { data: Item[]; cor?: string; altura?: number }) {
   if (data.length === 0) return null;
   return (
     <div style={{ width: "100%", height: altura }}>

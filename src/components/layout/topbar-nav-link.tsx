@@ -61,12 +61,15 @@ export function TopbarNavLink({
     <Link
       href={href}
       aria-current={active ? "page" : undefined}
-      className={cn(
-        "inline-flex h-[30px] shrink-0 items-center gap-[7px] rounded-[7px] px-2.5 text-[12px] no-underline outline-none focus:outline-none focus-visible:ring-2 focus-visible:ring-white/40 transition-all duration-150",
-        variant === "primary" ? "font-semibold" : "font-medium",
+      style={
         active
-          ? "bg-white text-[#1B3FB8] shadow-[0_1px_0_rgba(255,255,255,0.16)_inset,0_6px_14px_-6px_rgba(0,0,0,0.25)]"
-          : "text-white/70 hover:bg-white/[0.18] hover:text-white"
+          ? { color: "var(--brand-600)", background: "color-mix(in oklab, var(--brand-600) 12%, var(--surface))" }
+          : { color: "var(--text-muted)" }
+      }
+      className={cn(
+        "inline-flex h-[34px] shrink-0 items-center gap-[7px] rounded-[9px] px-3 text-[12.5px] no-underline outline-none focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--brand-600)]/40 transition-all duration-150",
+        active ? "font-semibold" : variant === "primary" ? "font-semibold" : "font-medium",
+        !active && "hover:bg-[var(--surface-3)] hover:text-[var(--text)]"
       )}
     >
       <Icon size={13} strokeWidth={active ? 2 : 1.7} />

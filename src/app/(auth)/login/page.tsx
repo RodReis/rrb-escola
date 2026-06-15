@@ -29,31 +29,42 @@ export default async function LoginPage({ searchParams }: { searchParams: { erro
         <ThemeToggle />
       </div>
       <section className="mx-auto grid min-h-[calc(100vh-6rem)] max-w-7xl items-center gap-10 lg:grid-cols-[1fr_440px]">
-        <div className="max-w-3xl">
-          <BrandMark />
-          <p className="mt-8 ds-kicker">Gestão escolar local</p>
-          <h1 className="mt-4 font-serif text-5xl leading-none text-brand md:text-7xl">Lectiva</h1>
-          <p className="mt-5 max-w-2xl text-xl font-semibold leading-8 text-ink">
-            Secretaria, matrículas e cobranças em uma base local.
-          </p>
-          <p className="mt-3 max-w-2xl text-sm leading-7 text-muted">
-            Frequência, portaria, relatórios em PDF e operação diária conectados exclusivamente ao Supabase local via Docker.
-          </p>
+        <div
+          className="login-aurora relative overflow-hidden p-8 lg:p-10"
+          style={{ borderRadius: "var(--r-xl)" }}
+        >
+          {/* Camada aurora (claro) / spotlight (escuro) — ref login.jsx */}
+          <div className="login-aurora-bg" aria-hidden="true">
+            <span className="login-blob login-blob-a" />
+            <span className="login-blob login-blob-b" />
+            <span className="login-blob login-blob-c" />
+          </div>
+          <div className="relative z-10 max-w-3xl">
+            <BrandMark />
+            <p className="mt-8 ds-kicker">Gestão escolar local</p>
+            <h1 className="mt-4 font-display text-5xl leading-none text-brand md:text-7xl">Lectiva</h1>
+            <p className="mt-5 max-w-2xl text-xl font-semibold leading-8 text-ink">
+              Secretaria, matrículas e cobranças em uma base local.
+            </p>
+            <p className="mt-3 max-w-2xl text-sm leading-7 text-muted">
+              Frequência, portaria, relatórios em PDF e operação diária conectados exclusivamente ao Supabase local via Docker.
+            </p>
 
-          <div className="mt-8 grid max-w-2xl gap-3 sm:grid-cols-3">
-            {trustItems.map(({ icon: Icon, label }) => (
-              <div key={label} className="ds-card flex items-center gap-3 p-4 text-sm font-bold">
-                <Icon className="text-accent" size={18} />
-                {label}
-              </div>
-            ))}
+            <div className="mt-8 grid max-w-2xl gap-3 sm:grid-cols-3">
+              {trustItems.map(({ icon: Icon, label }) => (
+                <div key={label} className="ds-card flex items-center gap-3 p-4 text-sm font-bold">
+                  <Icon className="text-accent" size={18} />
+                  {label}
+                </div>
+              ))}
+            </div>
           </div>
         </div>
 
         <div className="ds-panel p-6">
           <div className="mb-7">
             <p className="ds-kicker">Acesso administrativo</p>
-            <h2 className="mt-2 font-serif text-3xl text-ink">Entrar no sistema</h2>
+            <h2 className="mt-2 font-display text-3xl text-ink">Entrar no sistema</h2>
             <p className="mt-2 text-sm font-medium text-muted">Login validado pelo Supabase Auth local.</p>
           </div>
           {error ? (

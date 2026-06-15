@@ -127,12 +127,22 @@ export function NotificationBell({ perfilId, escolaId, initial }: Props) {
       <button
         type="button"
         onClick={() => setOpen((v) => !v)}
-        className="relative inline-flex h-[30px] w-[30px] items-center justify-center rounded-[7px] border border-white/[0.12] bg-white/10 text-white hover:bg-white/[0.18]"
+        className="relative inline-flex h-9 w-9 items-center justify-center rounded-[var(--r-sm)] border transition-colors"
+        style={{
+          borderColor: "var(--border-strong)",
+          background: "var(--surface)",
+          color: "var(--text-soft)",
+        }}
+        onMouseEnter={(e) => (e.currentTarget.style.background = "var(--surface-2)")}
+        onMouseLeave={(e) => (e.currentTarget.style.background = "var(--surface)")}
         aria-label="Notificações"
       >
-        <Icon size={13} strokeWidth={pulse ? 2 : 1.8} className={pulse ? "animate-pulse" : ""} />
+        <Icon size={15} strokeWidth={pulse ? 2 : 1.8} className={pulse ? "animate-pulse" : ""} />
         {naoLidas > 0 && (
-          <span className="absolute -top-1 -right-1 grid h-4 min-w-[16px] place-items-center rounded-full bg-[#ff3344] px-1 text-[9px] font-bold text-white shadow-[0_0_0_1.5px_#15349E]">
+          <span
+            className="absolute -top-1 -right-1 grid h-4 min-w-[16px] place-items-center rounded-full px-1 text-[9px] font-bold text-white"
+            style={{ background: "var(--c-coral)", boxShadow: "0 0 0 1.5px var(--surface)" }}
+          >
             {naoLidas > 99 ? "99+" : naoLidas}
           </span>
         )}

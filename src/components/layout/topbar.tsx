@@ -134,21 +134,23 @@ function filterByPermissions(
 
 function BrandBlock({ logoUrl, nome }: { logoUrl: string | null; nome: string }) {
   return (
-    <div className="flex items-center gap-2.5 pr-4 border-r border-white/[0.12] shrink-0">
-      <div className="relative flex h-[34px] w-[34px] shrink-0 items-center justify-center overflow-hidden rounded-[8px] bg-white shadow-[0_1px_2px_rgba(0,0,0,0.20),inset_0_-1px_0_rgba(0,0,0,0.05)]">
+    <div className="flex items-center gap-2.5 pr-4 border-r border-line shrink-0">
+      <div
+        className="relative flex h-[34px] w-[34px] shrink-0 items-center justify-center overflow-hidden shadow-xs"
+        style={{ borderRadius: "var(--r-md)", background: "linear-gradient(150deg, var(--brand-500), var(--brand-700))" }}
+      >
         {logoUrl ? (
           // eslint-disable-next-line @next/next/no-img-element
           <img src={logoUrl} alt={nome} className="h-full w-full object-contain p-0.5" />
         ) : (
-          <>
-            <span className="absolute -right-1.5 top-0 h-9 w-5 rotate-[34deg] bg-[#ff2424] opacity-80" />
-            <School className="relative z-10 text-[#1B3FB8]" size={16} strokeWidth={2} />
-          </>
+          <School className="relative z-10 text-white" size={16} strokeWidth={2} />
         )}
       </div>
       <div className="leading-[1.15] min-w-0">
-        <div className="text-[12.5px] font-semibold text-white tracking-[-0.005em]">{nome}</div>
-        <div className="text-[10px] text-white/50 mt-px tracking-[-0.003em]">Sistemas de Gestão Escolar</div>
+        <div className="font-display text-[13px] font-semibold text-ink tracking-[-0.01em]">{nome}</div>
+        <div className="text-[10px] mt-px tracking-[-0.003em]" style={{ color: "var(--text-muted)" }}>
+          Sistemas de Gestão Escolar
+        </div>
       </div>
     </div>
   );
@@ -185,11 +187,11 @@ export async function Topbar({
 
   return (
     <header
-      className="sticky top-0 z-50 border-b border-black/20"
+      className="sticky top-0 z-50 border-b border-line"
       style={{
-        height: 56,
-        background: "linear-gradient(180deg, #1B3FB8 0%, #15349E 100%)",
-        boxShadow: "inset 0 1px 0 rgba(255,255,255,0.04)",
+        height: 62,
+        background: "var(--surface)",
+        boxShadow: "var(--shadow-xs)",
       }}
     >
       <div className="mx-auto flex h-full max-w-7xl items-center gap-3.5 px-4 sm:px-6 lg:px-8">

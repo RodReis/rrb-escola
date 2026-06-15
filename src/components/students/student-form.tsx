@@ -10,7 +10,7 @@ type Options = {
 function Section({ title, children }: { title: string; children: React.ReactNode }) {
   return (
     <Panel className="grid gap-4">
-      <h2 className="font-serif text-2xl text-ink">{title}</h2>
+      <h2 className="font-display text-2xl text-ink">{title}</h2>
       {children}
     </Panel>
   );
