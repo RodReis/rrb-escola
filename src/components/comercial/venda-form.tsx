@@ -3,6 +3,7 @@
 import { useMemo, useState } from "react";
 import { Plus, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { CurrencyInput } from "@/components/ui/currency-input";
 import { money } from "@/lib/constants";
 import { FORMAS_PAGAMENTO } from "@/lib/validation/comercial";
 import { totalVenda, cupomObrigatorio } from "@/lib/comercial/venda-calc";
@@ -112,13 +113,11 @@ export function VendaForm({ action, variacoes }: Props) {
                 </label>
                 <label className="text-xs">
                   Preço
-                  <input
-                    type="number"
-                    step="0.01"
-                    min="0"
+                  <CurrencyInput
+                    name={`preco_${idx}`}
                     value={it.preco_unit}
-                    onChange={(e) => updateItem(idx, { preco_unit: Number(e.target.value) })}
-                    className="w-28"
+                    onChange={(value) => updateItem(idx, { preco_unit: value })}
+                    className="mt-1 w-28 rounded-ui border border-line bg-surface px-3 py-2 text-sm tabular-nums"
                   />
                 </label>
                 <Button
