@@ -1,5 +1,5 @@
 import { notFound } from "next/navigation";
-import { AlertCircle, FileText, Tags } from "lucide-react";
+import { AlertCircle, CheckCircle2, FileText, Tags } from "lucide-react";
 import { PageHeader } from "@/components/ui/page-header";
 import { Panel } from "@/components/ui/card";
 import { ProdutoForm } from "@/components/comercial/produto-form";
@@ -16,11 +16,11 @@ export default async function EditarProdutoPage({
   searchParams
 }: {
   params: Promise<{ id: string }>;
-  searchParams: Promise<{ erro?: string }>;
+  searchParams: Promise<{ erro?: string; ok?: string }>;
 }) {
   await requirePermission("comercial.produtos", "update");
   const { id } = await params;
-  const { erro } = await searchParams;
+  const { erro, ok } = await searchParams;
   const produto = await getProdutoById(id);
   if (!produto) notFound();
 
@@ -40,6 +40,13 @@ export default async function EditarProdutoPage({
         <div className="flex items-center gap-2 rounded-ui bg-danger/10 p-3 text-sm font-semibold text-danger">
           <AlertCircle size={16} />
           {erro}
+        </div>
+      ) : null}
+
+      {ok ? (
+        <div className="flex items-center gap-2 rounded-ui bg-success/10 p-3 text-sm font-semibold text-success">
+          <CheckCircle2 size={16} />
+          {ok}
         </div>
       ) : null}
 
