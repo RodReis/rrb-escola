@@ -1269,6 +1269,8 @@ export type AniversarioSemanaRow = {
   hoje: boolean;
   idade: number;
   dataLabel: string;
+  serie: string | null;
+  turma: string | null;
 };
 
 export async function getAniversariantesSemana(
@@ -1291,7 +1293,7 @@ export async function getAniversariantesSemana(
 
   const { data: matriculas } = await supabase
     .from("matriculas")
-    .select("aluno_id, alunos(id, nome, data_nascimento, foto_url)")
+    .select("aluno_id, turmas(nome, series(nome)), alunos(id, nome, data_nascimento, foto_url)")
     .eq("escola_id", escolaId)
     .eq("status", "ativa");
 
@@ -1325,6 +1327,9 @@ export async function getAniversariantesSemana(
 
     const dataLabel = `${slot.rotulo.toLowerCase()} ${String(dd).padStart(2, "0")}/${String(mm).padStart(2, "0")}`;
 
+    const turmaRel = Array.isArray(m.turmas) ? m.turmas[0] : m.turmas;
+    const serieRel = turmaRel ? (Array.isArray(turmaRel.series) ? turmaRel.series[0] : turmaRel.series) : null;
+
     rows.push({
       alunoId: aluno.id,
       nome: aluno.nome ?? "—",
@@ -1335,6 +1340,8 @@ export async function getAniversariantesSemana(
       hoje: dd === hoje.getDate() && mm === hoje.getMonth() + 1,
       idade,
       dataLabel,
+      serie: serieRel?.nome ?? null,
+      turma: turmaRel?.nome ?? null,
     });
   }
 
