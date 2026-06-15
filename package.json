@@ -50,6 +50,8 @@
     "@types/react-dom": "^18.3.0",
     "eslint": "^8.57.0",
     "eslint-config-next": "^14.2.35",
+    "pixelmatch": "^7.2.0",
+    "pngjs": "^7.0.0",
     "vitest": "^4.1.7"
   },
   "overrides": {
