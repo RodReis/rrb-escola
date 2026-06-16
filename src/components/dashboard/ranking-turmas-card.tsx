@@ -1,11 +1,16 @@
 import { Trophy } from "lucide-react";
 import type { TurmaRankingRow } from "@/lib/data/dashboard-executive";
 
+// Segmentos com hue do DS (var --c-*) — adaptam ao tema claro/escuro.
+const SEG_HUE: Record<string, string> = {
+  INFANTIL: "var(--c-amber)",
+  FUNDAMENTAL2: "var(--c-coral)",
+  MEDIO: "var(--c-green)",
+};
+
+// Segmentos que continuam em tokens Tailwind válidos do DS (não alterar).
 const SEG_COLOR: Record<string, string> = {
-  INFANTIL: "bg-gold",
   FUNDAMENTAL1: "bg-brand",
-  FUNDAMENTAL2: "bg-clay",
-  MEDIO: "bg-moss",
   outros: "bg-ink/30",
 };
 
@@ -53,6 +58,7 @@ export function RankingTurmasCard({ items }: { items: TurmaRankingRow[] }) {
           {items.map((t, i) => {
             const overbook = t.ocupacao > 1;
             const pctVisual = Math.min(t.ocupacao, 1) * 100;
+            const hue = SEG_HUE[t.segmento];
             const dotColor = SEG_COLOR[t.segmento] ?? "bg-ink/30";
             const isTop3 = i < 3;
             return (
@@ -63,15 +69,24 @@ export function RankingTurmasCard({ items }: { items: TurmaRankingRow[] }) {
                 }`}
               >
                 <div className="flex items-center gap-3">
-                  <span className={`grid h-7 w-7 shrink-0 place-items-center rounded-pill text-xs font-bold ${
-                    i === 0 ? "bg-brand text-paper shadow-soft" :
-                    i === 1 ? "bg-clay text-paper shadow-soft" :
-                    i === 2 ? "bg-gold text-paper shadow-soft" :
-                    "bg-muted text-ink/60"
-                  }`}>
+                  <span
+                    className={`grid h-7 w-7 shrink-0 place-items-center rounded-pill text-xs font-bold ${
+                      i === 0 ? "bg-brand text-paper shadow-soft" :
+                      i === 1 || i === 2 ? "text-paper shadow-soft" :
+                      "bg-muted text-ink/60"
+                    }`}
+                    style={
+                      i === 1 ? { background: "var(--c-coral)" } :
+                      i === 2 ? { background: "var(--c-amber)" } :
+                      undefined
+                    }
+                  >
                     {i + 1}
                   </span>
-                  <span className={`h-2 w-2 shrink-0 rounded-full ${dotColor}`} />
+                  <span
+                    className={`h-2 w-2 shrink-0 rounded-full ${hue ? "" : dotColor}`}
+                    style={hue ? { background: hue } : undefined}
+                  />
                   <div className="min-w-0 flex-1">
                     <p className="truncate text-sm font-semibold text-ink">
                       {t.serie} {t.turmaNome}
@@ -88,7 +103,10 @@ export function RankingTurmasCard({ items }: { items: TurmaRankingRow[] }) {
                   </div>
                 </div>
                 <div className="mt-2 h-1.5 w-full rounded-pill bg-muted overflow-hidden">
-                  <div className={`h-1.5 ${overbook ? "bg-danger" : dotColor}`} style={{ width: `${pctVisual}%` }} />
+                  <div
+                    className={`h-1.5 ${overbook ? "bg-danger" : hue ? "" : dotColor}`}
+                    style={{ width: `${pctVisual}%`, ...(!overbook && hue ? { background: hue } : {}) }}
+                  />
                 </div>
               </li>
             );
