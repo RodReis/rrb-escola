@@ -72,35 +72,47 @@ export function AniversariantesHojeCard({
   // Modo destaque com mais de 1 aniversariante: grid horizontal full-width.
   if (destaque && hoje.length > 1) {
     return (
-      <article className="w-full overflow-hidden rounded-panel border border-gold/40 bg-gradient-to-br from-[color-mix(in_oklab,var(--c-amber)_22%,var(--surface))] via-[color-mix(in_oklab,var(--c-amber)_10%,var(--surface))] to-surface shadow-[0_4px_24px_rgba(201,151,54,0.14)]">
-        <div className="h-1 w-full bg-gradient-to-r from-gold/50 via-gold to-gold/50" />
+      <article
+        className="w-full overflow-hidden rounded-panel border shadow-soft"
+        style={{
+          borderColor: "color-mix(in oklab, var(--c-amber) var(--tint-border), var(--border))",
+          backgroundImage:
+            "linear-gradient(165deg, color-mix(in oklab, var(--c-amber) calc(var(--tint-strength) + 4%), var(--surface)), var(--surface) 80%)",
+        }}
+      >
+        <div className="h-1 w-full" style={{ background: "linear-gradient(90deg, transparent, var(--c-amber), transparent)" }} />
         <div className="px-5 pb-5 pt-4">
-          <div className="flex items-center gap-1.5">
-            <PartyPopper size={15} className="text-gold" />
-            <span className="text-xs font-black uppercase tracking-[0.16em] text-gold">
-              Aniversário hoje
-            </span>
-            <span className="text-xs font-bold text-gold/70">· {hoje.length}</span>
-            <PartyPopper size={15} className="text-gold -scale-x-100" />
+          <div className="flex items-center gap-1.5" style={{ color: "var(--c-amber)" }}>
+            <PartyPopper size={15} />
+            <span className="text-xs font-black uppercase tracking-[0.16em]">Aniversário hoje</span>
+            <span className="text-xs font-bold opacity-70">· {hoje.length}</span>
+            <PartyPopper size={15} className="-scale-x-100" />
           </div>
           <ul className="mt-3 grid gap-2.5 sm:grid-cols-2 lg:grid-cols-3">
             {hoje.map((a) => (
               <li key={a.alunoId}>
                 <Link
                   href={`/alunos/${a.alunoId}`}
-                  className="flex w-full min-w-0 items-center gap-3 rounded-ui bg-white/70 p-2.5 ring-1 ring-gold/25 transition hover:bg-gold/10 dark:bg-surface/60"
+                  className="flex w-full min-w-0 items-center gap-3 rounded-ui border p-2.5 transition"
+                  style={{
+                    background: "var(--surface)",
+                    borderColor: "color-mix(in oklab, var(--c-amber) 28%, var(--border))",
+                  }}
                 >
                   <div className="relative">
                     <Avatar fotoUrl={a.fotoUrl} nome={a.nome} size={48} />
-                    <span className="absolute -bottom-1 -right-1 flex h-5 w-5 items-center justify-center rounded-full border-2 border-white bg-gold text-[0.55rem] font-black text-white">
+                    <span
+                      className="absolute -bottom-1 -right-1 flex h-5 w-5 items-center justify-center rounded-full text-[0.55rem] font-black text-white"
+                      style={{ background: "var(--c-amber)", border: "2px solid var(--surface)" }}
+                    >
                       {a.idade}
                     </span>
                   </div>
                   <div className="min-w-0 flex-1 overflow-hidden">
                     <p className="truncate text-sm font-bold leading-tight text-ink">{a.nome}</p>
-                    <p className="text-xs font-semibold text-gold">🎂 {a.idade} anos</p>
+                    <p className="text-xs font-semibold" style={{ color: "var(--c-amber)" }}>🎂 {a.idade} anos</p>
                     {(a.serie || a.turma) && (
-                      <p className="truncate text-[0.65rem] text-ink/55">
+                      <p className="truncate text-[0.65rem]" style={{ color: "var(--text-muted)" }}>
                         {[a.serie, a.turma].filter(Boolean).join(" · ")}
                       </p>
                     )}
@@ -115,17 +127,22 @@ export function AniversariantesHojeCard({
   }
 
   return (
-    <article className="w-full h-full overflow-hidden rounded-panel border border-gold/40 bg-gradient-to-br from-[color-mix(in_oklab,var(--c-amber)_22%,var(--surface))] via-[color-mix(in_oklab,var(--c-amber)_10%,var(--surface))] to-surface shadow-[0_4px_24px_rgba(201,151,54,0.14)]">
+    <article
+      className="h-full w-full overflow-hidden rounded-panel border shadow-soft"
+      style={{
+        borderColor: "color-mix(in oklab, var(--c-amber) var(--tint-border), var(--border))",
+        backgroundImage:
+          "linear-gradient(165deg, color-mix(in oklab, var(--c-amber) calc(var(--tint-strength) + 4%), var(--surface)), var(--surface) 80%)",
+      }}
+    >
       {/* Top strip */}
-      <div className="h-1 w-full bg-gradient-to-r from-gold/50 via-gold to-gold/50" />
+      <div className="h-1 w-full" style={{ background: "linear-gradient(90deg, transparent, var(--c-amber), transparent)" }} />
 
       <div className="px-4 pb-4 pt-3">
-        <div className="flex items-center gap-1.5">
-          <PartyPopper size={13} className="text-gold" />
-          <span className="text-[0.6rem] font-black uppercase tracking-[0.16em] text-gold">
-            Aniversário hoje
-          </span>
-          <PartyPopper size={13} className="text-gold -scale-x-100" />
+        <div className="flex items-center gap-1.5" style={{ color: "var(--c-amber)" }}>
+          <PartyPopper size={13} />
+          <span className="text-[0.6rem] font-black uppercase tracking-[0.16em]">Aniversário hoje</span>
+          <PartyPopper size={13} className="-scale-x-100" />
         </div>
 
         <ul className="mt-3 grid gap-2">
@@ -139,25 +156,32 @@ export function AniversariantesHojeCard({
                 >
                   <div className="relative">
                     <Avatar fotoUrl={a.fotoUrl} nome={a.nome} size={64} hero />
-                    <span className="absolute -bottom-1 -right-1 flex h-6 w-6 items-center justify-center rounded-full border-2 border-white bg-gold text-[0.6rem] font-black text-white">
+                    <span
+                      className="absolute -bottom-1 -right-1 flex h-6 w-6 items-center justify-center rounded-full text-[0.6rem] font-black text-white"
+                      style={{ background: "var(--c-amber)", border: "2px solid var(--surface)" }}
+                    >
                       {a.idade}
                     </span>
                   </div>
                   <div>
                     <p className="text-sm font-black leading-tight text-ink">{a.nome}</p>
-                    <p className="mt-0.5 text-xs font-semibold text-gold">🎂 {a.idade} anos!</p>
+                    <p className="mt-0.5 text-xs font-semibold" style={{ color: "var(--c-amber)" }}>🎂 {a.idade} anos!</p>
                   </div>
                 </Link>
               ) : (
                 /* Row layout for multiple */
                 <Link
                   href={`/alunos/${a.alunoId}`}
-                  className="flex w-full min-w-0 items-center gap-2.5 rounded-ui bg-white/60 p-2 ring-1 ring-gold/25 transition hover:bg-gold/10 dark:bg-surface/60"
+                  className="flex w-full min-w-0 items-center gap-2.5 rounded-ui border p-2 transition"
+                  style={{
+                    background: "var(--surface)",
+                    borderColor: "color-mix(in oklab, var(--c-amber) 28%, var(--border))",
+                  }}
                 >
                   <Avatar fotoUrl={a.fotoUrl} nome={a.nome} size={36} />
                   <div className="min-w-0 flex-1 overflow-hidden">
-                    <p className="text-xs font-bold text-ink leading-tight">{a.nome}</p>
-                    <p className="text-[0.65rem] font-semibold text-gold">🎂 {a.idade} anos</p>
+                    <p className="text-xs font-bold leading-tight text-ink">{a.nome}</p>
+                    <p className="text-[0.65rem] font-semibold" style={{ color: "var(--c-amber)" }}>🎂 {a.idade} anos</p>
                   </div>
                 </Link>
               )}
