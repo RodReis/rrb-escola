@@ -840,6 +840,29 @@ textarea {
   }
 }
 
+/* ===================== Input do DS (§8.3) =====================
+   Fora do @layer de propósito: precisa vencer o seletor global
+   `input,select,textarea` (sem layer) na especificidade. */
+.rb-input {
+  height: 44px;
+  padding: 0 14px;
+  background: var(--surface);
+  border: 1.5px solid var(--border-strong);
+  border-radius: var(--r-sm);
+  font-family: var(--font-body, var(--font-sans));
+  font-size: 14px;
+  color: var(--text);
+  width: 100%;
+  transition: border-color 0.16s var(--ease), box-shadow 0.16s var(--ease), background 0.16s var(--ease);
+}
+.rb-input::placeholder { color: var(--text-faint); }
+.rb-input:focus {
+  outline: none;
+  border-color: var(--brand-500);
+  box-shadow: 0 0 0 4px color-mix(in oklab, var(--brand-500) 18%, transparent);
+}
+.rb-input.has-icon { padding-left: 42px; }
+
 /* ===================== Utilitários tipográficos (§4) ===================== */
 .rb-display { font-family: var(--font-display); font-weight: 600; letter-spacing: -0.02em; line-height: 1.05; }
 .rb-mono { font-family: var(--font-mono); font-variant-numeric: tabular-nums; }

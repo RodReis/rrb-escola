@@ -47,11 +47,6 @@ export function PageHeader({
               })}
             </nav>
           ) : null}
-          <h1 className="ds-heading mt-3">
-            {title}
-            {counter != null ? <span className="ds-heading-counter">· {counter}</span> : null}
-          </h1>
-          {description ? <p className="ds-subhead">{description}</p> : null}
         </div>
         {actions ? <div className="flex flex-wrap items-center gap-2 lg:justify-end shrink-0">{actions}</div> : null}
       </div>

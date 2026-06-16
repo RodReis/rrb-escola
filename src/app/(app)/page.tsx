@@ -40,7 +40,6 @@ import { AniversariantesHojeCard, AniversariantesProximosRow } from "@/component
 import { AniversarioMatriculaCard } from "@/components/dashboard/aniversario-matricula-card";
 import { BeneficiosCard } from "@/components/dashboard/beneficios-card";
 import { BolsistasReceitaCard } from "@/components/dashboard/bolsistas-receita-card";
-import { CompetenciaPicker } from "@/components/dashboard/competencia-picker";
 import { DashboardTabs, parseTab } from "@/components/dashboard/dashboard-tabs";
 import { ComercialResumoCards } from "@/components/dashboard/comercial-resumo-cards";
 import { getComercialResumo } from "@/lib/data/dashboard-comercial";
@@ -287,7 +286,6 @@ export default async function DashboardPage({
         description="Visão executiva para tomada de decisão."
         actions={
           <>
-            <CompetenciaPicker current={competencia} />
             {showNovoAluno && (
               <ButtonLink href="/alunos/novo" variant="primary">
                 <Plus size={14} /> Novo aluno

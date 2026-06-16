@@ -1,35 +1,13 @@
 import { UsersRound, GraduationCap, BookOpen, Clock, Baby, BookCheck, Library, Award } from "lucide-react";
 import type { PedagogicoOverview } from "@/lib/data/pedagogico";
 
-const ETAPA_CFG: Record<string, { icon: typeof Baby; bar: string; text: string; bg: string; ring: string }> = {
-  INFANTIL: {
-    icon: Baby,
-    bar: "bg-gold",
-    text: "text-gold",
-    bg: "bg-gold/10",
-    ring: "ring-gold/20",
-  },
-  FUNDAMENTAL1: {
-    icon: BookCheck,
-    bar: "bg-brand",
-    text: "text-brand",
-    bg: "bg-brand/10",
-    ring: "ring-brand/20",
-  },
-  FUNDAMENTAL2: {
-    icon: Library,
-    bar: "bg-clay",
-    text: "text-clay",
-    bg: "bg-clay/10",
-    ring: "ring-clay/20",
-  },
-  MEDIO: {
-    icon: Award,
-    bar: "bg-moss",
-    text: "text-moss",
-    bg: "bg-moss/10",
-    ring: "ring-moss/20",
-  },
+// Hue do DS por etapa (mesmo tratamento dos KPI cards da aba Financeiro:
+// tinta de fundo por hue, chip de ícone sólido, valor em --text).
+const ETAPA_CFG: Record<string, { icon: typeof Baby; hue: string }> = {
+  INFANTIL: { icon: Baby, hue: "var(--c-amber)" },
+  FUNDAMENTAL1: { icon: BookCheck, hue: "var(--c-blue)" },
+  FUNDAMENTAL2: { icon: Library, hue: "var(--c-coral)" },
+  MEDIO: { icon: Award, hue: "var(--c-green)" },
 };
 
 export function PedagogicoOverviewSection({ data }: { data: PedagogicoOverview }) {
@@ -54,30 +32,38 @@ export function PedagogicoOverviewSection({ data }: { data: PedagogicoOverview }
         {data.porEtapa.map((e) => {
           const cfg = ETAPA_CFG[e.etapa];
           const Icon = cfg?.icon ?? BookOpen;
+          const hue = cfg?.hue ?? "var(--c-blue)";
           return (
             <article
               key={e.etapa}
-              className={`rounded-ui p-4 ring-1 ${cfg ? cfg.ring : "ring-line"} ${cfg ? `bg-gradient-to-br ${cfg.bg} to-transparent` : "bg-muted/30"}`}
+              className="rounded-panel border p-5 transition hover:-translate-y-0.5 hover:shadow-lift"
+              style={{
+                borderColor: `color-mix(in oklab, ${hue} var(--tint-border), var(--border))`,
+                backgroundImage: `linear-gradient(165deg, color-mix(in oklab, ${hue} calc(var(--tint-strength) + 4%), var(--surface)), var(--surface) 78%)`,
+              }}
             >
               <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <span className={`grid h-8 w-8 place-items-center rounded-ui ${cfg?.bg ?? "bg-muted"} ${cfg?.text ?? "text-ink/60"}`}>
-                    <Icon size={14} />
+                <div className="flex min-w-0 items-center gap-2">
+                  <span
+                    className="grid h-9 w-9 shrink-0 place-items-center rounded-ui text-white"
+                    style={{ background: hue, boxShadow: `0 6px 14px -6px ${hue}` }}
+                  >
+                    <Icon size={16} />
                   </span>
-                  <p className="text-[0.66rem] font-bold uppercase tracking-kicker text-ink/55 truncate">
+                  <p className="truncate text-[0.66rem] font-semibold uppercase tracking-kicker" style={{ color: "var(--text-muted)" }}>
                     {e.label}
                   </p>
                 </div>
-                <span className={`text-[0.66rem] font-bold ${cfg?.text ?? "text-ink/60"}`}>
+                <span className="shrink-0 text-[0.66rem] font-bold tabular-nums" style={{ color: hue }}>
                   {e.percent.toFixed(1)}%
                 </span>
               </div>
-              <strong className={`mt-3 block text-3xl font-bold leading-none ${cfg?.text ?? "text-ink"}`}>
+              <strong className="mt-3 block font-display text-3xl font-bold leading-none tabular-nums text-ink">
                 {e.count}
               </strong>
-              <p className="mt-1 text-[0.66rem] text-ink/55">alunos matriculados</p>
-              <div className="mt-3 h-1.5 w-full rounded-pill bg-muted overflow-hidden">
-                <div className={`h-1.5 rounded-pill ${cfg?.bar ?? "bg-ink/30"}`} style={{ width: `${e.percent}%` }} />
+              <p className="mt-1.5 text-[0.66rem]" style={{ color: "var(--text-muted)" }}>alunos matriculados</p>
+              <div className="mt-3 h-1.5 w-full overflow-hidden rounded-pill" style={{ background: "var(--surface-3)" }}>
+                <div className="h-1.5 rounded-pill" style={{ width: `${e.percent}%`, background: hue }} />
               </div>
             </article>
           );
