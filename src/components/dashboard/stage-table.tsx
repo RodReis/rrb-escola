@@ -10,19 +10,21 @@ const LABELS: Record<string, string> = {
   outros: "Outros",
 };
 
+// Etapas com hue do DS (var --c-*) — adaptam ao tema claro/escuro.
+const ETAPA_HUE: Record<string, string> = {
+  INFANTIL: "var(--c-amber)",
+  FUNDAMENTAL2: "var(--c-coral)",
+  MEDIO: "var(--c-green)",
+};
+
+// Etapas que continuam em tokens Tailwind válidos do DS (não alterar).
 const ETAPA_COLOR: Record<string, string> = {
-  INFANTIL: "bg-gold",
   FUNDAMENTAL1: "bg-brand",
-  FUNDAMENTAL2: "bg-clay",
-  MEDIO: "bg-moss",
   outros: "bg-ink/30",
 };
 
 const ETAPA_TEXT: Record<string, string> = {
-  INFANTIL: "text-gold",
   FUNDAMENTAL1: "text-brand",
-  FUNDAMENTAL2: "text-clay",
-  MEDIO: "text-moss",
   outros: "text-ink/60",
 };
 
@@ -62,6 +64,7 @@ export function StageTable({ rows }: { rows: StageBreakdownRow[] }) {
             {sorted.map((r) => {
               const overbook = r.ocupacao > 1;
               const ocupPct = Math.min(r.ocupacao, 1) * 100;
+              const hue = ETAPA_HUE[r.etapa];
               const dotColor = ETAPA_COLOR[r.etapa] ?? "bg-ink/30";
               const txtColor = ETAPA_TEXT[r.etapa] ?? "text-ink";
               return (
@@ -71,8 +74,14 @@ export function StageTable({ rows }: { rows: StageBreakdownRow[] }) {
                       href={`/alunos?segmento=${r.etapa}`}
                       className="group flex items-center gap-2"
                     >
-                      <span className={`h-2.5 w-2.5 rounded-full ${dotColor}`} />
-                      <span className={`font-semibold ${txtColor} group-hover:underline`}>
+                      <span
+                        className={`h-2.5 w-2.5 rounded-full ${hue ? "" : dotColor}`}
+                        style={hue ? { background: hue } : undefined}
+                      />
+                      <span
+                        className={`font-semibold group-hover:underline ${hue ? "" : txtColor}`}
+                        style={hue ? { color: hue } : undefined}
+                      >
                         {LABELS[r.etapa] ?? r.etapa}
                       </span>
                       <ArrowUpRight size={12} className="text-ink/30 group-hover:text-ink/60" />
@@ -105,7 +114,10 @@ export function StageTable({ rows }: { rows: StageBreakdownRow[] }) {
                   <td className="px-2 py-3">
                     <div className="flex items-center gap-2">
                       <div className="h-2 w-full rounded-pill bg-muted overflow-hidden">
-                        <div className={`h-2 ${overbook ? "bg-danger" : dotColor}`} style={{ width: `${ocupPct}%` }} />
+                        <div
+                          className={`h-2 ${overbook ? "bg-danger" : hue ? "" : dotColor}`}
+                          style={{ width: `${ocupPct}%`, ...(!overbook && hue ? { background: hue } : {}) }}
+                        />
                       </div>
                       <span className={`shrink-0 text-xs font-bold ${overbook ? "text-danger" : "text-ink/70"}`}>
                         {(r.ocupacao * 100).toFixed(0)}%

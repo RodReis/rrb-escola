@@ -4,10 +4,10 @@ import { TrendSpark } from "./trend-spark";
 import type { FrequenciaResumo, FrequenciaPorTurmaRow } from "@/lib/data/dashboard-executive";
 
 const SEG_COLOR: Record<string, string> = {
-  INFANTIL: "bg-gold",
-  FUNDAMENTAL1: "bg-brand",
-  FUNDAMENTAL2: "bg-clay",
-  MEDIO: "bg-moss",
+  INFANTIL: "var(--c-amber)",
+  FUNDAMENTAL1: "rgb(var(--color-brand))",
+  FUNDAMENTAL2: "var(--c-coral)",
+  MEDIO: "var(--c-green)",
 };
 
 type Props = {
@@ -102,7 +102,10 @@ export function FrequenciaCard({ data, porTurma = [] }: Props) {
                       href={`/frequencias?turma=${t.turmaId}`}
                       className="flex items-center gap-2 text-xs hover:underline"
                     >
-                      <span className={`h-1.5 w-1.5 rounded-full ${SEG_COLOR[t.segmento] ?? "bg-ink/30"}`} />
+                      <span
+                        className="h-1.5 w-1.5 rounded-full"
+                        style={{ background: SEG_COLOR[t.segmento] ?? "rgb(var(--color-ink) / 0.3)" }}
+                      />
                       <span className="truncate text-ink">{t.serie} {t.turmaNome}</span>
                       <span className="ml-auto font-bold text-danger">
                         {(t.taxaPresenca * 100).toFixed(0)}%

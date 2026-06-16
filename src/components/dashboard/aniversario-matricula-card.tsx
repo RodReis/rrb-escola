@@ -4,11 +4,18 @@ import type { AniversarioMatriculaRow } from "@/lib/data/dashboard-executive";
 
 const MESES = ["Janeiro","Fevereiro","Março","Abril","Maio","Junho","Julho","Agosto","Setembro","Outubro","Novembro","Dezembro"];
 
-function colorAnos(anos: number): string {
-  if (anos >= 10) return "bg-gold/15 text-gold";
-  if (anos >= 5) return "bg-brand/10 text-brand";
-  if (anos >= 3) return "bg-accent/10 text-accent";
-  return "bg-muted text-ink/60";
+function colorAnos(anos: number): { className: string; style?: React.CSSProperties } {
+  if (anos >= 10)
+    return {
+      className: "text-ink",
+      style: {
+        background: "color-mix(in oklab, var(--c-amber) 15%, var(--surface))",
+        color: "var(--c-amber)",
+      },
+    };
+  if (anos >= 5) return { className: "bg-brand/10 text-brand" };
+  if (anos >= 3) return { className: "bg-accent/10 text-accent" };
+  return { className: "bg-muted text-ink/60" };
 }
 
 export function AniversarioMatriculaCard({ items }: { items: AniversarioMatriculaRow[] }) {
@@ -59,7 +66,10 @@ export function AniversarioMatriculaCard({ items }: { items: AniversarioMatricul
                   href={`/alunos/${a.alunoId}`}
                   className="flex items-center gap-3 rounded-ui bg-surface p-2 ring-1 ring-brand/40 hover:bg-brand/5"
                 >
-                  <span className={`grid h-10 w-10 shrink-0 place-items-center rounded-pill text-sm font-bold shadow-soft ${colorAnos(a.anosNaEscola)}`}>
+                  <span
+                    className={`grid h-10 w-10 shrink-0 place-items-center rounded-pill text-sm font-bold shadow-soft ${colorAnos(a.anosNaEscola).className}`}
+                    style={colorAnos(a.anosNaEscola).style}
+                  >
                     {a.anosNaEscola}
                   </span>
                   <div className="min-w-0 flex-1">
@@ -86,7 +96,10 @@ export function AniversarioMatriculaCard({ items }: { items: AniversarioMatricul
                   href={`/alunos/${a.alunoId}`}
                   className="flex items-center gap-3 rounded-ui border border-line p-2 hover:bg-muted/60"
                 >
-                  <span className={`grid h-9 w-9 shrink-0 place-items-center rounded-pill text-xs font-bold ${colorAnos(a.anosNaEscola)}`}>
+                  <span
+                    className={`grid h-9 w-9 shrink-0 place-items-center rounded-pill text-xs font-bold ${colorAnos(a.anosNaEscola).className}`}
+                    style={colorAnos(a.anosNaEscola).style}
+                  >
                     {a.anosNaEscola}a
                   </span>
                   <div className="min-w-0 flex-1">
