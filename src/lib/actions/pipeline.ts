@@ -44,14 +44,26 @@ export type ActionResult<T = void> =
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
-function mapDbError(error: { message?: string; code?: string } | null, acao: string): string {
-  const msg = error?.message ?? "";
-  if (msg.includes("schema cache") || msg.includes("does not exist") || msg.includes("relation") || error?.code === "42P01") {
-    return `Configuração pendente: execute as migrações do banco para ${acao}. Contate o administrador.`;
+function mapDbError(
+  error: { message?: string; code?: string; details?: string; hint?: string } | null,
+  acao: string,
+): string {
+  if (!error) return `Erro ao ${acao}. Tente novamente ou contate o suporte.`;
+  const haystack = [error.message, error.details, error.hint].join(" ").toLowerCase();
+  if (
+    haystack.includes("schema cache") ||
+    haystack.includes("does not exist") ||
+    haystack.includes("relation") ||
+    haystack.includes("table") ||
+    error.code === "42P01" ||
+    error.code === "PGRST200" ||
+    error.code === "PGRST301"
+  ) {
+    return "As tabelas do pipeline ainda não foram criadas. Execute as migrações do banco (supabase db push) e tente novamente.";
   }
-  if (error?.code === "23505") return "Já existe um registro com esses dados.";
-  if (error?.code === "23503") return "Referência inválida: verifique os dados informados.";
-  if (error?.code === "42501") return "Sem permissão no banco de dados.";
+  if (error.code === "23505") return "Já existe um registro com esses dados.";
+  if (error.code === "23503") return "Referência inválida: verifique os dados informados.";
+  if (error.code === "42501") return "Sem permissão no banco de dados.";
   return `Erro ao ${acao}. Tente novamente ou contate o suporte.`;
 }
 
