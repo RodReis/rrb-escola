@@ -44,6 +44,17 @@ export type ActionResult<T = void> =
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
+function mapDbError(error: { message?: string; code?: string } | null, acao: string): string {
+  const msg = error?.message ?? "";
+  if (msg.includes("schema cache") || msg.includes("does not exist") || msg.includes("relation") || error?.code === "42P01") {
+    return `Configuração pendente: execute as migrações do banco para ${acao}. Contate o administrador.`;
+  }
+  if (error?.code === "23505") return "Já existe um registro com esses dados.";
+  if (error?.code === "23503") return "Referência inválida: verifique os dados informados.";
+  if (error?.code === "42501") return "Sem permissão no banco de dados.";
+  return `Erro ao ${acao}. Tente novamente ou contate o suporte.`;
+}
+
 async function getPipelineCtx() {
   const session = await requirePermission("pipeline", "read");
   return {
@@ -760,7 +771,7 @@ export async function criarQuadroAction(input: QuadroInput): Promise<ActionResul
     .select("id")
     .single();
 
-  if (error || !data) return { ok: false, error: error?.message ?? "Erro ao criar quadro" };
+  if (error || !data) return { ok: false, error: mapDbError(error, "criar quadro") };
 
   revalidatePath("/pipeline/config");
   return { ok: true, data: { id: data.id } };
@@ -791,7 +802,7 @@ export async function editarQuadroAction(
     .eq("id", quadro_id)
     .eq("escola_id", escola_id);
 
-  if (error) return { ok: false, error: error.message };
+  if (error) return { ok: false, error: mapDbError(error, "editar quadro") };
 
   revalidatePath("/pipeline/config");
   return { ok: true, data: undefined };
@@ -814,7 +825,7 @@ export async function arquivarQuadroAction(quadro_id: string): Promise<ActionRes
     .eq("id", quadro_id)
     .eq("escola_id", escola_id);
 
-  if (error) return { ok: false, error: error.message };
+  if (error) return { ok: false, error: mapDbError(error, "arquivar quadro") };
 
   revalidatePath("/pipeline/config");
   return { ok: true, data: undefined };
@@ -870,7 +881,7 @@ export async function criarColunaAction(
     .select("id")
     .single();
 
-  if (error || !data) return { ok: false, error: error?.message ?? "Erro ao criar coluna" };
+  if (error || !data) return { ok: false, error: mapDbError(error, "criar coluna") };
 
   revalidatePath(`/pipeline/config/${quadro_id}`);
   return { ok: true, data: { id: data.id } };
@@ -901,7 +912,7 @@ export async function editarColunaAction(
     .eq("id", coluna_id)
     .eq("escola_id", escola_id);
 
-  if (error) return { ok: false, error: error.message };
+  if (error) return { ok: false, error: mapDbError(error, "editar coluna") };
 
   revalidatePath(PATH);
   return { ok: true, data: undefined };
@@ -936,7 +947,7 @@ export async function excluirColunaAction(coluna_id: string): Promise<ActionResu
     .eq("id", coluna_id)
     .eq("escola_id", escola_id);
 
-  if (error) return { ok: false, error: error.message };
+  if (error) return { ok: false, error: mapDbError(error, "excluir coluna") };
 
   revalidatePath(PATH);
   return { ok: true, data: undefined };
@@ -1047,7 +1058,7 @@ export async function criarTemplateWppAction(input: TemplateWppInput): Promise<A
     .select("id")
     .single();
 
-  if (error || !data) return { ok: false, error: error?.message ?? "Erro ao criar template" };
+  if (error || !data) return { ok: false, error: mapDbError(error, "criar template") };
 
   revalidatePath("/pipeline/config");
   return { ok: true, data: { id: data.id } };
