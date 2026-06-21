@@ -167,14 +167,16 @@ Isso preenche a lacuna da spec original (conversão lead→matrícula nunca espe
 
 - RLS em todas as tabelas: linha visível/editável apenas se `escola_id` = escola do usuário
   (via `auth.uid()` → vínculo de escola), seguindo o padrão das migrations existentes.
-- **Sem perfis novos.** Registrar módulo `pipeline` no RBAC existente (`modulos` /
-  `role_permissoes`, ver `docs/rbac-developer-guide.md`) com permissões:
-  `ver | editar | mover | promover | admin`.
-- Os papéis da spec original mapeiam para combinações:
-  - Atendimento → `ver`, `editar`, `mover`
-  - Secretaria → `ver`, `editar`, `mover`, `promover`
-  - Coordenação → `ver` (+ dados pedagógicos/anamnese no MVP5)
-  - Administrador → `admin`
+- **Sem perfis novos.** Módulo `pipeline` registrado no RBAC existente (`modulos` grupo
+  `secretaria`, ordem 15) com as 4 permissões booleanas do modelo real:
+  `pode_ler | pode_criar | pode_editar | pode_deletar`. Seed atual:
+  - `admin` → full (ler/criar/editar/deletar).
+  - `secretaria` → ler/criar/editar, **sem** deletar (CRUD de quadros/colunas vem no MVP2+).
+- **Divergência conhecida (registrada como pendência):** no MVP1 o *enforcement* está
+  hardcoded como `perfil in ('admin','secretaria')` — tanto nas policies RLS quanto em
+  `requirePipelineSession()`. O módulo RBAC está semeado mas ainda **não é consultado**.
+  Para o MVP1 (só admin/secretaria) é inofensivo; o MVP2 deve passar a checar
+  `role_permissoes.pode_*` quando entrarem perfis diferenciados (ex.: coordenação só leitura).
 - LGPD: auditoria via `pipeline_card_movimentacao`/`_atividade`; dados sensíveis (anamnese)
   só no MVP5, com RLS reforçada e consentimento.
 
@@ -245,7 +247,84 @@ anamnese/indicadores/relatórios (MVP5), CRUD de quadros/colunas pela UI (MVP2+;
   auditoria de acesso a dados sensíveis; indicadores (conversão por origem, tempo médio até
   matrícula, reserva, pendências) e relatórios.
 
-## 10. Riscos e mitigações
+## 10. Componente de Kanban (frontend) — drag-and-drop
+
+### 10.1 Decisão
+
+Separar **motor de DnD** (biblioteca) de **componente visual** (próprio, com tokens do DS).
+Não usar componente de kanban "pronto" (react-trello, react-kanban, planby, etc.): trazem CSS
+e tema próprios que violam as regras do Design System (cor só via token, sem serifa, paridade
+claro/escuro, pixel-perfect) e têm manutenção fora do nosso controle.
+
+Motor: **@dnd-kit** — `@dnd-kit/core` + `@dnd-kit/sortable` + `@dnd-kit/utilities`
+(linha estável 6.x, compatível com React 18.3). Padrão de mercado em 2026, acessível por
+teclado e leitor de tela nativamente, ativamente mantido.
+
+Alternativas avaliadas e rejeitadas:
+
+- `react-beautiful-dnd` — depreciado pela Atlassian. Não usar.
+- `@hello-pangea/dnd` — fork mantido do anterior, ótimo DX e animação "estilo Trello", mas é
+  stopgap (Atlassian não participa) e impõe mais estrutura. **2ª opção aceitável** se quiserem
+  animações prontas em vez de controle fino.
+- `pragmatic-drag-and-drop` (Atlassian) — headless, performance em escala Jira/Trello, porém
+  mais boilerplate (detecção de colisão manual). Ganho só aparece em milhares de cards;
+  reavaliar se o volume crescer muito.
+- `@dnd-kit/react` 0.5.x — reescrita pré-1.0, API instável. Ficar no `core` 6.x.
+
+Pacotes a instalar: `@dnd-kit/core @dnd-kit/sortable @dnd-kit/utilities`. Sem `framer-motion`
+(o `CSS.Transform` do dnd-kit + transições com tokens já dão o polimento; evita dependência extra).
+
+### 10.2 Estrutura de componentes
+
+- `src/components/pipeline/board.tsx` — `<PipelineBoard>`: detém o estado local (colunas +
+  cards agrupados por coluna), envolve tudo em `<DndContext>` com `collisionDetection={closestCorners}`
+  e handlers `onDragStart` / `onDragOver` / `onDragEnd`. Container com scroll horizontal.
+- `src/components/pipeline/coluna.tsx` — `<PipelineColumn>`: header (nome, cor-token, contagem,
+  botão +) e um `<SortableContext strategy={verticalListSortingStrategy}>`. A própria coluna é
+  um `useDroppable` para aceitar drop em coluna vazia.
+- `src/components/pipeline/card.tsx` — `<SortableCard>` via `useSortable`. `React.memo` para
+  não re-renderizar o board inteiro durante o arrasto.
+- `<DragOverlay>` no board renderiza o card ativo durante o arrasto.
+- Sensores: `PointerSensor` com `activationConstraint={{ distance: 8 }}` (abrir o card no clique
+  não dispara drag) + `KeyboardSensor` com `sortableKeyboardCoordinates` (acessibilidade).
+
+### 10.3 Checklist anti-bug do arrasto
+
+1. **`<DragOverlay>` em vez de arrastar o nó original** — elimina o "pulo"/layout-shift e os
+   problemas clássicos de `transform` dentro de containers com `overflow`.
+2. **`activationConstraint` (distance 8px)** — clique para abrir o modal do card não vira drag.
+3. **`closestCorners`** — detecção de alvo mais estável entre colunas do que `closestCenter`.
+4. **`ordem` fracionária (§6)** — sem reindex em massa, sem flicker ao soltar.
+5. **Auto-scroll nativo** do dnd-kit em colunas longas e no board horizontal.
+6. **Keys estáveis (`card.id`) + `React.memo`** — re-render não derruba o gesto de arrasto.
+7. **Coluna vazia como `useDroppable`** — permite soltar onde não há cards.
+8. **Touch**: `PointerSensor` cobre mouse e toque; usar `delay`/tolerância para distinguir
+   scroll de drag no mobile.
+9. **Realtime durante drag**: enquanto `isDragging`, ignorar eventos do próprio usuário vindos
+   do canal (evita o card "saltar" quando o próprio update retorna).
+10. **Update otimista + rollback**: move local na hora; em erro da Server Action, reverte e
+    mostra toast.
+
+### 10.4 UX e design (com tokens do DS)
+
+- Card: `border-radius` token `-lg`, sombra sutil via token, faixa/realce da cor da coluna,
+  avatar pastel (exceção permitida no CLAUDE.md), badges de origem e `status_lead`, indicador
+  de tempo parado quando passar de `prazo_max_dias`.
+- Placeholder/ghost: contorno tracejado com token enquanto arrasta.
+- Estados: skeleton no carregamento, empty state por coluna, toast de erro no rollback.
+- Responsivo: scroll horizontal com snap; no mobile, coluna em largura cheia com swipe.
+- Acessibilidade: arrasto por teclado + anúncios nativos do dnd-kit; foco visível com token.
+
+### 10.5 Critérios de aceite (frontend)
+
+1. Arrastar card dentro da coluna e entre colunas sem layout-shift nem flicker.
+2. Clicar no card abre o modal e **não** inicia arrasto.
+3. Arrasto completo por teclado (Tab → Space → setas → Space) com anúncio ao leitor de tela.
+4. Soltar em coluna vazia funciona.
+5. Sob Realtime, mover por outro usuário atualiza o board sem derrubar um arrasto em andamento.
+6. Paridade claro/escuro só com tokens; sem hex cru.
+
+## 11. Riscos e mitigações
 
 - **Divergência de fonte de verdade** entre lead e aluno → resolvido por promoção idempotente
   e `aluno_id` como ponte; lead nunca é editado após `convertido`.
@@ -255,3 +334,43 @@ anamnese/indicadores/relatórios (MVP5), CRUD de quadros/colunas pela UI (MVP2+;
 - **Reordenação fracionária** pode degradar após muitas inserções → rebalanceamento raro.
 - **Regras do Design System** (sem serifa, cor só via token, paridade de tema) são trava de
   qualidade por fase: `typecheck` + `build` verdes antes de fechar.
+- **Bugs de arrasto** (pulo, flicker, drag em scroll container) → mitigados pelo checklist
+  §10.3 (DragOverlay, closestCorners, ordem fracionária, activationConstraint).
+- **Lock-in de lib de DnD** → camada de apresentação isolada do motor; o estado do board e o
+  cálculo de `ordem` não dependem da API do @dnd-kit, então trocar o motor é localizado.
+
+## 12. Pendências e itens fora de escopo (registro)
+
+> Estado: MVP1 **já está sendo codificado pelo Claude Code**. A migration
+> `202606210001_pipeline_mvp1.sql`, as actions (`src/lib/actions/pipeline.ts`), a validação
+> (`src/lib/validation/pipeline.ts`) e os componentes (`src/components/pipeline/*`) já existem
+> e batem ~1:1 com este design. Falta a rota `src/app/(app)/pipeline`.
+
+### Itens P1–P3 — FECHADOS pelo código já escrito
+- **P1 ✓** — Colunas do seed confirmadas (idênticas ao §8): Novo Lead, Primeiro Contato,
+  Aguardando Retorno, Entrevista, Cadastro de Reserva, Em Análise, Matrícula Confirmada
+  (etapa_final), Perdido (etapa_final).
+- **P2 ✓** — Módulo RBAC `pipeline` semeado; permissões em §5. Ressalva de enforcement abaixo.
+- **P3 ✓** — RLS via `current_perfil()`; predicado
+  `escola_id = (select escola_id from current_perfil()) and perfil in ('admin','secretaria')`.
+  FKs `usuario_id`/`assigned_to` → `perfis(id)`.
+
+### Novas pendências descobertas (a tratar)
+- **N1** — Tokens `color-pipeline-*` usados no seed das colunas **não existem** ainda no
+  Tailwind/DS. Definir (claro/escuro) ou as colunas renderizam sem cor.
+- **N2** — Enforcement de permissão hardcoded (não consulta `role_permissoes`). Migrar para
+  checagem real no MVP2 quando entrarem perfis além de admin/secretaria.
+- **N3** — Rota `src/app/(app)/pipeline` ainda não existe (wiring final do MVP1).
+- **N4** — `students.ts` usa `DEFAULT_SCHOOL_ID` (single-tenant na prática). A promoção do MVP2
+  deve usar o `escola_id` do card, não a constante.
+
+### Deixado para o plano de implementação (não bloqueia a spec)
+- DDL exato das migrations; predicados concretos de cada policy RLS; assinaturas das Server Actions.
+
+### Fora de escopo do MVP1 (decidido, alocado por MVP)
+- Promoção lead→aluno/matrícula — **MVP2**.
+- CRUD de quadros/colunas pela UI — **MVP2** (no MVP1 vêm do seed).
+- WhatsApp (só outbound; inbound/criação automática futura) — **MVP3**.
+- Motor de regras + scheduler (`pg_cron`/edge function) — **MVP4**.
+- Anamnese, dados sensíveis, indicadores/relatórios, permissões finas, auditoria de acesso — **MVP5**.
+- Lock / aviso de edição simultânea — YAGNI, sem data definida.
