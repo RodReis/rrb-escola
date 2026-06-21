@@ -1,0 +1,225 @@
+import { z } from "zod";
+
+export const ORIGENS_LEAD = [
+  "whatsapp",
+  "instagram",
+  "indicacao",
+  "site",
+  "ligacao",
+  "evento",
+  "campanha",
+  "presencial",
+] as const;
+
+export const STATUS_LEAD = [
+  "novo",
+  "em_analise",
+  "reserva",
+  "convertido",
+  "perdido",
+] as const;
+
+export const TIPOS_ATIVIDADE = [
+  "nota",
+  "ligacao",
+  "email",
+  "whatsapp",
+  "sistema",
+] as const;
+
+export type OrigemLead = (typeof ORIGENS_LEAD)[number];
+export type StatusLead = (typeof STATUS_LEAD)[number];
+export type TipoAtividade = (typeof TIPOS_ATIVIDADE)[number];
+
+// --- Lead (dados pessoais) ---
+export const leadSchema = z.object({
+  nome: z.string().min(1, "Nome obrigatório").max(200),
+  data_nascimento: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional().nullable(),
+  sexo: z.string().max(20).optional().nullable(),
+  cpf: z.string().max(14).optional().nullable(),
+  rg: z.string().max(20).optional().nullable(),
+  foto_url: z.string().url().optional().nullable(),
+  serie_interesse: z.string().max(60).optional().nullable(),
+  turno: z.string().max(30).optional().nullable(),
+  ano_letivo: z.number().int().min(2000).max(2100).optional().nullable(),
+});
+export type LeadInput = z.infer<typeof leadSchema>;
+
+// --- Responsável ---
+export const responsavelSchema = z.object({
+  nome: z.string().min(1, "Nome do responsável obrigatório").max(200),
+  parentesco: z.string().max(40).optional().nullable(),
+  cpf: z.string().max(14).optional().nullable(),
+  rg: z.string().max(20).optional().nullable(),
+  telefone: z.string().max(20).optional().nullable(),
+  whatsapp: z.string().max(20).optional().nullable(),
+  email: z.string().email("E-mail inválido").optional().nullable(),
+  financeiro: z.boolean().default(false),
+  pedagogico: z.boolean().default(false),
+  autorizado_retirar: z.boolean().default(false),
+  observacoes: z.string().max(500).optional().nullable(),
+});
+export type ResponsavelInput = z.infer<typeof responsavelSchema>;
+
+// --- Card (criar) ---
+export const criarCardSchema = z
+  .object({
+    quadro_id: z.string().uuid("Quadro inválido"),
+    coluna_id: z.string().uuid("Coluna inválida"),
+    titulo: z.string().min(1, "Nome do interessado obrigatório").max(200),
+    origem: z.enum(ORIGENS_LEAD).optional().nullable(),
+    status_lead: z.enum(STATUS_LEAD).default("novo"),
+    assigned_to: z.string().uuid().optional().nullable(),
+    lead: leadSchema,
+    responsaveis: z
+      .array(responsavelSchema)
+      .min(1, "Ao menos um responsável é obrigatório"),
+  });
+export type CriarCardInput = z.infer<typeof criarCardSchema>;
+
+// --- Card (editar campos do card) ---
+export const editarCardSchema = z.object({
+  titulo: z.string().min(1).max(200).optional(),
+  origem: z.enum(ORIGENS_LEAD).optional().nullable(),
+  status_lead: z.enum(STATUS_LEAD).optional(),
+  assigned_to: z.string().uuid().optional().nullable(),
+  motivo_perda: z.string().max(500).optional().nullable(),
+});
+export type EditarCardInput = z.infer<typeof editarCardSchema>;
+
+// --- Mover card ---
+export const moverCardSchema = z.object({
+  card_id: z.string().uuid(),
+  para_coluna_id: z.string().uuid(),
+  nova_ordem: z.number(),
+  observacao: z.string().max(500).optional().nullable(),
+});
+export type MoverCardInput = z.infer<typeof moverCardSchema>;
+
+// --- Nota (atividade) ---
+export const notaSchema = z.object({
+  card_id: z.string().uuid(),
+  descricao: z.string().min(1, "Nota não pode ser vazia").max(2000),
+  tipo: z.enum(TIPOS_ATIVIDADE).default("nota"),
+  anexo_url: z.string().url().optional().nullable(),
+});
+export type NotaInput = z.infer<typeof notaSchema>;
+
+// ─── MVP2 ─────────────────────────────────────────────────────────────────────
+
+export const STATUS_VAGA = [
+  "aguardando",
+  "disponivel",
+  "responsavel_contactado",
+  "aguardando_resposta",
+  "convertido",
+  "desistiu",
+  "sem_retorno",
+] as const;
+export type StatusVaga = (typeof STATUS_VAGA)[number];
+
+export const SITUACAO_ESCOLAR = [
+  "regular",
+  "transferencia",
+  "abandono",
+  "conclusao",
+] as const;
+export type SituacaoEscolar = (typeof SITUACAO_ESCOLAR)[number];
+
+export const TIPOS_QUADRO = ["captacao", "rematricula", "reserva"] as const;
+export type TipoQuadro = (typeof TIPOS_QUADRO)[number];
+
+export const COR_COLUNAS = [
+  "color-pipeline-novo",
+  "color-pipeline-contato",
+  "color-pipeline-aguardando",
+  "color-pipeline-entrevista",
+  "color-pipeline-reserva",
+  "color-pipeline-analise",
+  "color-pipeline-convertido",
+  "color-pipeline-perdido",
+] as const;
+export type CorColuna = (typeof COR_COLUNAS)[number];
+
+// --- Reserva ---
+export const reservaSchema = z.object({
+  serie_id: z.string().uuid().optional().nullable(),
+  turma_id: z.string().uuid().optional().nullable(),
+  prioridade: z.number().int().min(0).default(0),
+  status_vaga: z.enum(STATUS_VAGA).default("aguardando"),
+  data_entrada_reserva: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional().nullable(),
+  previsao_disponibilidade: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional().nullable(),
+  interesse_confirmado: z.boolean().default(false),
+  observacoes_secretaria: z.string().max(1000).optional().nullable(),
+});
+export type ReservaInput = z.infer<typeof reservaSchema>;
+
+// --- Dados educacionais (extensão do lead) ---
+export const dadosEducacionaisSchema = z.object({
+  escola_anterior: z.string().max(200).optional().nullable(),
+  motivo_transferencia: z.string().max(500).optional().nullable(),
+  situacao_escolar: z.enum(SITUACAO_ESCOLAR).optional().nullable(),
+  observacoes_pedagogicas: z.string().max(1000).optional().nullable(),
+  documentos_pendentes: z.array(z.string()).optional().nullable(),
+});
+export type DadosEducacionaisInput = z.infer<typeof dadosEducacionaisSchema>;
+
+// --- Quadro (CRUD admin) ---
+export const quadroSchema = z.object({
+  nome: z.string().min(1, "Nome obrigatório").max(100),
+  descricao: z.string().max(500).optional().nullable(),
+  tipo: z.enum(TIPOS_QUADRO).default("captacao"),
+  ordem: z.number().int().min(0).default(0),
+  ativo: z.boolean().default(true),
+});
+export type QuadroInput = z.infer<typeof quadroSchema>;
+
+// --- Coluna admin (CRUD) ---
+export const colunaAdminSchema = z.object({
+  nome: z.string().min(1, "Nome obrigatório").max(100),
+  cor: z.enum(COR_COLUNAS).optional().nullable(),
+  ordem: z.number().int().min(0).default(0),
+  prazo_max_dias: z.number().int().min(1).optional().nullable(),
+  etapa_final: z.boolean().default(false),
+});
+export type ColunaAdminInput = z.infer<typeof colunaAdminSchema>;
+
+// ─── MVP3 ─────────────────────────────────────────────────────────────────────
+
+export const FONTES_WPP = [
+  "lead.nome",
+  "lead.responsavel.nome",
+  "lead.responsavel.whatsapp",
+  "escola.nome",
+  "hoje",
+  "campo_livre",
+] as const;
+export type FonteWpp = (typeof FONTES_WPP)[number];
+
+export const FONTES_WPP_LABEL: Record<FonteWpp, string> = {
+  "lead.nome": "Nome do lead",
+  "lead.responsavel.nome": "Nome do responsável",
+  "lead.responsavel.whatsapp": "WhatsApp do responsável",
+  "escola.nome": "Nome da escola",
+  "hoje": "Data de hoje",
+  "campo_livre": "Campo livre (usuário preenche)",
+};
+
+// --- Template WhatsApp ---
+export const templateWppSchema = z.object({
+  nome_template: z.string().min(1, "Nome do template obrigatório").max(100),
+  descricao: z.string().min(1, "Descrição obrigatória").max(200),
+  variaveis_count: z.number().int().min(0).max(10).default(0),
+  variaveis_fontes: z.array(z.enum(FONTES_WPP)).default([]),
+  ativo: z.boolean().default(true),
+});
+export type TemplateWppInput = z.infer<typeof templateWppSchema>;
+
+// --- Tarefa ---
+export const tarefaSchema = z.object({
+  titulo: z.string().min(1, "Título obrigatório").max(200),
+  descricao: z.string().max(1000).optional().nullable(),
+  due_at: z.string().datetime({ offset: true }).optional().nullable(),
+  assigned_to: z.string().uuid().optional().nullable(),
+});
+export type TarefaInput = z.infer<typeof tarefaSchema>;
