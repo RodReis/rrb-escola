@@ -48,7 +48,7 @@ function mapDbError(
   error: { message?: string; code?: string; details?: string; hint?: string } | null,
   acao: string,
 ): string {
-  if (!error) return `Erro ao ${acao}. Tente novamente ou contate o suporte.`;
+  if (!error) return "Erro interno. Tente novamente.";
   const haystack = [error.message, error.details, error.hint].join(" ").toLowerCase();
   if (
     haystack.includes("schema cache") ||
@@ -59,12 +59,12 @@ function mapDbError(
     error.code === "PGRST200" ||
     error.code === "PGRST301"
   ) {
-    return "As tabelas do pipeline ainda não foram criadas. Execute as migrações do banco (supabase db push) e tente novamente.";
+    return "Tabelas do pipeline nao foram criadas. Rode: supabase db push";
   }
-  if (error.code === "23505") return "Já existe um registro com esses dados.";
-  if (error.code === "23503") return "Referência inválida: verifique os dados informados.";
-  if (error.code === "42501") return "Sem permissão no banco de dados.";
-  return `Erro ao ${acao}. Tente novamente ou contate o suporte.`;
+  if (error.code === "23505") return "Registro duplicado.";
+  if (error.code === "23503") return "Referencia invalida nos dados.";
+  if (error.code === "42501") return "Sem permissao no banco.";
+  return "Erro interno. Tente novamente.";
 }
 
 async function getPipelineCtx() {
