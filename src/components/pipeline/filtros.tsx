@@ -25,7 +25,7 @@ export function PipelineFiltros({ filtros, onChange, colunas, usuarios }: Props)
   }
 
   return (
-    <div className="flex flex-wrap items-center gap-2">
+    <div className="flex flex-wrap items-center gap-2 sm:justify-end">
       {/* Busca por nome */}
       <div className="relative">
         <Search
@@ -45,7 +45,7 @@ export function PipelineFiltros({ filtros, onChange, colunas, usuarios }: Props)
       <select
         value={filtros.colunaId}
         onChange={(e) => set("colunaId", e.target.value)}
-        className="h-8 rounded-md border border-[rgb(var(--color-line))] bg-[rgb(var(--color-surface))] px-2 text-sm text-[rgb(var(--color-ink))] focus:outline-none focus:ring-1 focus:ring-[rgb(var(--color-brand)/0.4)]"
+        className="h-8 w-40 rounded-md border border-[rgb(var(--color-line))] bg-[rgb(var(--color-surface))] px-2 text-sm text-[rgb(var(--color-ink))] focus:outline-none focus:ring-1 focus:ring-[rgb(var(--color-brand)/0.4)]"
         aria-label="Filtrar por coluna"
       >
         <option value="">Todas as colunas</option>
@@ -59,7 +59,7 @@ export function PipelineFiltros({ filtros, onChange, colunas, usuarios }: Props)
         <select
           value={filtros.assignedTo}
           onChange={(e) => set("assignedTo", e.target.value)}
-          className="h-8 rounded-md border border-[rgb(var(--color-line))] bg-[rgb(var(--color-surface))] px-2 text-sm text-[rgb(var(--color-ink))] focus:outline-none focus:ring-1 focus:ring-[rgb(var(--color-brand)/0.4)]"
+          className="h-8 w-44 rounded-md border border-[rgb(var(--color-line))] bg-[rgb(var(--color-surface))] px-2 text-sm text-[rgb(var(--color-ink))] focus:outline-none focus:ring-1 focus:ring-[rgb(var(--color-brand)/0.4)]"
           aria-label="Filtrar por responsável"
         >
           <option value="">Todos os responsáveis</option>
