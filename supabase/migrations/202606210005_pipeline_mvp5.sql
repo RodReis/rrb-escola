@@ -3,8 +3,8 @@
 
 -- ─── 1) Módulo RBAC pipeline_sensivel ────────────────────────────────────────
 
-insert into modulos (codigo, nome, descricao)
-values ('pipeline_sensivel', 'Pipeline Sensível', 'Anamnese e dados pedagógicos sensíveis do lead')
+insert into modulos (codigo, grupo, nome, ordem)
+values ('pipeline_sensivel', 'secretaria', 'Pipeline / Dados Sensiveis', 17)
 on conflict (codigo) do nothing;
 
 insert into role_permissoes (role_codigo, modulo_codigo, pode_ler, pode_criar, pode_editar, pode_deletar)
