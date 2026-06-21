@@ -1580,7 +1580,8 @@ export async function salvarEtiquetaAction(
   etiqueta_cor: string | null,
   etiqueta_label: string | null,
 ): Promise<ActionResult> {
-  const { escola_id } = await requirePermission("pipeline", "edit");
+  const session = await requirePermission("pipeline", "edit");
+  const escola_id = session.profile.escola_id;
   const supabase = await createServerClient();
   const { error } = await supabase
     .from("pipeline_card")
