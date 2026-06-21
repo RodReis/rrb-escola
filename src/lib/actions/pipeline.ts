@@ -13,7 +13,10 @@ import {
   colunaAdminSchema,
   templateWppSchema,
   tarefaSchema,
+  automacaoSchema,
   FONTES_WPP,
+  AUTOMACAO_DEDUPE,
+  AUTOMACAO_GATILHO,
   type CriarCardInput,
   type EditarCardInput,
   type MoverCardInput,
@@ -24,7 +27,10 @@ import {
   type TemplateWppInput,
   type TarefaInput,
   type FonteWpp,
+  type AutomacaoInput,
+  type TipoAutomacao,
 } from "@/lib/validation/pipeline";
+import { createAdminClient } from "@/lib/supabase/admin";
 import { enviarWhatsApp } from "@/lib/whatsapp/send";
 import { normalizarTelefone } from "@/lib/whatsapp/telefone";
 
@@ -288,6 +294,7 @@ export async function excluirCardAction(card_id: string): Promise<ActionResult> 
 
 export async function moverCardAction(
   input: MoverCardInput,
+  options?: { triggered_by_automation?: boolean; campo_valor?: string | null },
 ): Promise<ActionResult> {
   let ctx: Awaited<ReturnType<typeof getPipelineCtx>>;
   try {
@@ -305,6 +312,20 @@ export async function moverCardAction(
   const { card_id, para_coluna_id, nova_ordem, observacao } = parsed.data;
 
   const supabase = await createServerClient();
+
+  // Verifica campo obrigatório da coluna de destino
+  const { data: colunaDestino } = await supabase
+    .from("pipeline_coluna")
+    .select("campo_obrigatorio")
+    .eq("id", para_coluna_id)
+    .single();
+
+  if (colunaDestino?.campo_obrigatorio && !options?.campo_valor) {
+    return {
+      ok: false,
+      error: `Campo obrigatório ao entrar nesta coluna: ${colunaDestino.campo_obrigatorio}`,
+    };
+  }
 
   const { data: cardAtual, error: fetchErr } = await supabase
     .from("pipeline_card")
@@ -346,6 +367,11 @@ export async function moverCardAction(
       .update({ ultimo_contato_at: new Date().toISOString() })
       .eq("id", card_id)
       .eq("escola_id", escola_id);
+
+    // Dispara automações de evento (não reavaliar se veio de uma automação — anti-loop)
+    if (!options?.triggered_by_automation) {
+      void avaliarAutomacoesEvento(supabase, card_id, para_coluna_id, escola_id);
+    }
   }
 
   revalidatePath(PATH);
@@ -1376,4 +1402,333 @@ export async function checkTarefasVencidasAction(): Promise<void> {
       });
     }
   }
+}
+
+// ─── MVP4: Automações ─────────────────────────────────────────────────────────
+
+export type Automacao = {
+  id: string;
+  escola_id: string;
+  quadro_id: string | null;
+  coluna_id: string | null;
+  tipo: TipoAutomacao;
+  ativo: boolean;
+  params: Record<string, unknown>;
+  created_at: string;
+};
+
+export async function getAutomacoesAdmin(
+  quadro_id?: string,
+): Promise<ActionResult<Automacao[]>> {
+  try {
+    await getAdminCtx();
+  } catch {
+    return { ok: false, error: "Sem permissão" };
+  }
+  const supabase = await createServerClient();
+  const { escola_id } = await getAdminCtx();
+
+  let query = supabase
+    .from("pipeline_automacao")
+    .select("id, escola_id, quadro_id, coluna_id, tipo, ativo, params, created_at")
+    .eq("escola_id", escola_id)
+    .order("created_at");
+
+  if (quadro_id) query = query.eq("quadro_id", quadro_id);
+
+  const { data, error } = await query;
+  if (error) return { ok: false, error: error.message };
+  return { ok: true, data: (data ?? []) as Automacao[] };
+}
+
+export async function criarAutomacaoAction(
+  input: AutomacaoInput,
+): Promise<ActionResult<undefined>> {
+  let ctx: Awaited<ReturnType<typeof getAdminCtx>>;
+  try {
+    ctx = await getAdminCtx();
+  } catch {
+    return { ok: false, error: "Sem permissão" };
+  }
+
+  const parsed = automacaoSchema.safeParse(input);
+  if (!parsed.success) {
+    return { ok: false, error: parsed.error.issues[0]?.message ?? "Dados inválidos" };
+  }
+
+  const supabase = await createServerClient();
+  const { error } = await supabase.from("pipeline_automacao").insert({
+    escola_id: ctx.escola_id,
+    quadro_id: parsed.data.quadro_id ?? null,
+    tipo: parsed.data.tipo,
+    ativo: parsed.data.ativo,
+    params: parsed.data.params,
+  });
+
+  if (error) return { ok: false, error: error.message };
+  revalidatePath("/pipeline/config");
+  return { ok: true, data: undefined };
+}
+
+export async function editarAutomacaoAction(
+  id: string,
+  input: AutomacaoInput,
+): Promise<ActionResult<undefined>> {
+  let ctx: Awaited<ReturnType<typeof getAdminCtx>>;
+  try {
+    ctx = await getAdminCtx();
+  } catch {
+    return { ok: false, error: "Sem permissão" };
+  }
+
+  const parsed = automacaoSchema.safeParse(input);
+  if (!parsed.success) {
+    return { ok: false, error: parsed.error.issues[0]?.message ?? "Dados inválidos" };
+  }
+
+  const supabase = await createServerClient();
+  const { error } = await supabase
+    .from("pipeline_automacao")
+    .update({
+      quadro_id: parsed.data.quadro_id ?? null,
+      tipo: parsed.data.tipo,
+      ativo: parsed.data.ativo,
+      params: parsed.data.params,
+      updated_at: new Date().toISOString(),
+    })
+    .eq("id", id)
+    .eq("escola_id", ctx.escola_id);
+
+  if (error) return { ok: false, error: error.message };
+  revalidatePath("/pipeline/config");
+  return { ok: true, data: undefined };
+}
+
+export async function toggleAutomacaoAction(
+  id: string,
+  ativo: boolean,
+): Promise<ActionResult<undefined>> {
+  let ctx: Awaited<ReturnType<typeof getAdminCtx>>;
+  try {
+    ctx = await getAdminCtx();
+  } catch {
+    return { ok: false, error: "Sem permissão" };
+  }
+
+  const supabase = await createServerClient();
+  const { error } = await supabase
+    .from("pipeline_automacao")
+    .update({ ativo, updated_at: new Date().toISOString() })
+    .eq("id", id)
+    .eq("escola_id", ctx.escola_id);
+
+  if (error) return { ok: false, error: error.message };
+  revalidatePath("/pipeline/config");
+  return { ok: true, data: undefined };
+}
+
+export async function deletarAutomacaoAction(
+  id: string,
+): Promise<ActionResult<undefined>> {
+  let ctx: Awaited<ReturnType<typeof getAdminCtx>>;
+  try {
+    ctx = await getAdminCtx();
+  } catch {
+    return { ok: false, error: "Sem permissão" };
+  }
+
+  const supabase = await createServerClient();
+  const { error } = await supabase
+    .from("pipeline_automacao")
+    .delete()
+    .eq("id", id)
+    .eq("escola_id", ctx.escola_id);
+
+  if (error) return { ok: false, error: error.message };
+  revalidatePath("/pipeline/config");
+  return { ok: true, data: undefined };
+}
+
+// ─── avaliarAutomacoesEvento (chamada interna — não exportada) ────────────────
+
+type SupabaseClient = Awaited<ReturnType<typeof createServerClient>>;
+
+async function avaliarAutomacoesEvento(
+  supabase: SupabaseClient,
+  card_id: string,
+  para_coluna_id: string,
+  escola_id: string,
+): Promise<void> {
+  // Busca card para saber quadro_id e dados do lead para resolver variáveis
+  const { data: card } = await supabase
+    .from("pipeline_card")
+    .select(`
+      id, titulo, quadro_id, escola_id, status_lead,
+      pipeline_lead(nome, pipeline_responsavel(nome, whatsapp))
+    `)
+    .eq("id", card_id)
+    .single();
+
+  if (!card) return;
+
+  // Busca coluna destino para checar etapa_final
+  const { data: coluna } = await supabase
+    .from("pipeline_coluna")
+    .select("id, etapa_final")
+    .eq("id", para_coluna_id)
+    .single();
+
+  // Tipos de gatilho de evento
+  const tiposEvento = Object.entries(AUTOMACAO_GATILHO)
+    .filter(([, g]) => g === "evento")
+    .map(([t]) => t) as TipoAutomacao[];
+
+  const { data: automacoes } = await supabase
+    .from("pipeline_automacao")
+    .select("id, tipo, params, coluna_id")
+    .eq("escola_id", escola_id)
+    .eq("ativo", true)
+    .in("tipo", tiposEvento);
+
+  if (!automacoes?.length) return;
+
+  const acoes: Promise<void>[] = [];
+
+  for (const auto of automacoes) {
+    const tipo = auto.tipo as TipoAutomacao;
+    const params = auto.params as Record<string, unknown>;
+    const dedupe = AUTOMACAO_DEDUPE[tipo];
+
+    // Filtra por coluna/etapa relevante
+    if (
+      tipo === "coluna_entrada_envia_template" ||
+      tipo === "coluna_entrada_cria_tarefa" ||
+      tipo === "coluna_entrada_solicita_dado" ||
+      tipo === "coluna_entrada_muda_status"
+    ) {
+      if (params.coluna_id !== para_coluna_id) continue;
+    } else if (tipo === "entrada_etapa_final_boas_vindas") {
+      if (!coluna?.etapa_final) continue;
+    } else if (tipo === "mover_card_condicional") {
+      if (params.para_coluna_id !== para_coluna_id) continue;
+    }
+
+    // Verifica dedupe
+    if (dedupe === "card") {
+      const { count } = await supabase
+        .from("pipeline_automacao_execucao")
+        .select("id", { count: "exact", head: true })
+        .eq("automacao_id", auto.id)
+        .eq("card_id", card_id)
+        .is("coluna_id", null);
+      if (count && count > 0) continue;
+    } else if (dedupe === "entrada") {
+      const { count } = await supabase
+        .from("pipeline_automacao_execucao")
+        .select("id", { count: "exact", head: true })
+        .eq("automacao_id", auto.id)
+        .eq("card_id", card_id)
+        .eq("coluna_id", para_coluna_id);
+      if (count && count > 0) continue;
+    }
+
+    const colunaCtx = dedupe === "entrada" ? para_coluna_id : null;
+
+    // Executa ação — ações de rede são fire-and-forget (não bloqueiam retorno ao usuário)
+    if (tipo === "coluna_entrada_envia_template" || tipo === "entrada_etapa_final_boas_vindas") {
+      const templateId = params.template_id as string;
+      if (!templateId) continue;
+      acoes.push(
+        enviarWhatsappCardAction(card_id, templateId, [])
+          .then(async (r) => {
+            await supabase.from("pipeline_automacao_execucao").insert({
+              escola_id,
+              automacao_id: auto.id,
+              card_id,
+              coluna_id: colunaCtx,
+              resultado: r.ok ? "ok" : "erro",
+              detalhe: r.ok ? null : r.error,
+            });
+          })
+          .catch(() => undefined),
+      );
+    } else if (tipo === "coluna_entrada_cria_tarefa") {
+      const titulo = params.titulo as string;
+      if (!titulo) continue;
+      const dueAt = params.due_em_dias
+        ? new Date(Date.now() + (params.due_em_dias as number) * 86_400_000).toISOString()
+        : undefined;
+      acoes.push(
+        criarTarefaAction(card_id, {
+          titulo,
+          assigned_to: (params.assigned_to as string) ?? null,
+          due_at: dueAt ?? null,
+        })
+          .then(async (r) => {
+            await supabase.from("pipeline_automacao_execucao").insert({
+              escola_id,
+              automacao_id: auto.id,
+              card_id,
+              coluna_id: colunaCtx,
+              resultado: r.ok ? "ok" : "erro",
+              detalhe: r.ok ? null : r.error,
+            });
+          })
+          .catch(() => undefined),
+      );
+    } else if (tipo === "coluna_entrada_muda_status") {
+      const statusDestino = params.status_destino as string;
+      if (!statusDestino) continue;
+      acoes.push(
+        Promise.resolve(
+          supabase
+            .from("pipeline_card")
+            .update({ status_lead: statusDestino })
+            .eq("id", card_id)
+            .eq("escola_id", escola_id),
+        )
+          .then(async (r) => {
+            await supabase.from("pipeline_automacao_execucao").insert({
+              escola_id,
+              automacao_id: auto.id,
+              card_id,
+              coluna_id: colunaCtx,
+              resultado: r.error ? "erro" : "ok",
+              detalhe: r.error?.message ?? null,
+            });
+          })
+          .catch(() => undefined),
+      );
+    } else if (tipo === "mover_card_condicional") {
+      const paraColuna = params.para_coluna_id as string;
+      if (!paraColuna) continue;
+      // Calcula nova ordem como última posição
+      const { data: ultimoCard } = await supabase
+        .from("pipeline_card")
+        .select("ordem")
+        .eq("coluna_id", paraColuna)
+        .eq("escola_id", escola_id)
+        .order("ordem", { ascending: false })
+        .limit(1)
+        .maybeSingle();
+      const novaOrdem = ((ultimoCard?.ordem as number) ?? 0) + 1000;
+      acoes.push(
+        moverCardAction({ card_id, para_coluna_id: paraColuna, nova_ordem: novaOrdem }, { triggered_by_automation: true })
+          .then(async (r) => {
+            await supabase.from("pipeline_automacao_execucao").insert({
+              escola_id,
+              automacao_id: auto.id,
+              card_id,
+              coluna_id: colunaCtx,
+              resultado: r.ok ? "ok" : "erro",
+              detalhe: r.ok ? null : r.error,
+            });
+          })
+          .catch(() => undefined),
+      );
+    }
+  }
+
+  // Fire-and-forget — não esperamos as ações de rede para retornar ao usuário
+  void Promise.allSettled(acoes);
 }

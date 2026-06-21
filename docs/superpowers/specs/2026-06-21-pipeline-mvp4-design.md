@@ -56,7 +56,7 @@ Notas:
 | coluna_id | uuid null → pipeline_coluna | quando o tipo é específico de coluna |
 | tipo | text not null | um valor do catálogo (§2) |
 | ativo | boolean not null default true | toggle |
-| params | jsonb not null default '{}' | parâmetros tipados por `tipo` |
+| params | jsonb not null default '{}' | parâmetros tipados por `tipo` — ver §3.3 |
 | created_at / updated_at | timestamptz | |
 
 Índice: `(escola_id, quadro_id, ativo)`.
@@ -68,14 +68,68 @@ Notas:
 | escola_id | uuid not null | |
 | automacao_id | uuid not null → pipeline_automacao (cascade) | |
 | card_id | uuid not null → pipeline_card (cascade) | |
+| coluna_id | uuid null | contexto de entrada de coluna (para dedupe por entrada) |
 | executed_at | timestamptz not null default now() | |
 | resultado | text not null | `ok` / `erro` / `ignorado` |
 | detalhe | text | mensagem/erro |
 
-**Dedupe (crítico para o job diário):** índice único parcial garantindo que uma automação de
-tempo não dispare a mesma ação repetidamente para o mesmo card —
-`unique (automacao_id, card_id)` para automações de tempo "uma vez por card" (ex.: criar tarefa
-de retorno só uma vez). Para automações que podem repetir, o tipo define a política.
+**Políticas de dedupe por tipo** (definidas no §2 — coluna `coluna_id` compõe o contexto quando relevante):
+
+| tipo | política | índice único |
+|---|---|---|
+| `card_parado_cria_tarefa` | uma_vez por card | `unique (automacao_id, card_id)` |
+| `coluna_entrada_envia_template` | uma_vez por entrada na coluna | `unique (automacao_id, card_id, coluna_id)` |
+| `coluna_entrada_cria_tarefa` | uma_vez por entrada na coluna | `unique (automacao_id, card_id, coluna_id)` |
+| `coluna_entrada_solicita_dado` | sem dedupe (validação UI, não grava execução) | — |
+| `coluna_entrada_muda_status` | sem dedupe (idempotente) | — |
+| `entrada_etapa_final_boas_vindas` | uma_vez por card | `unique (automacao_id, card_id)` |
+| `mover_card_condicional` | uma_vez por entrada na coluna | `unique (automacao_id, card_id, coluna_id)` |
+
+Os dois índices únicos necessários:
+
+```sql
+-- uma_vez por card
+create unique index pipeline_exec_card_uniq
+  on pipeline_automacao_execucao(automacao_id, card_id)
+  where coluna_id is null;
+
+-- uma_vez por entrada de coluna
+create unique index pipeline_exec_coluna_uniq
+  on pipeline_automacao_execucao(automacao_id, card_id, coluna_id)
+  where coluna_id is not null;
+```
+
+### 3.3 Shape de `params` por tipo
+
+```typescript
+// card_parado_cria_tarefa
+// (usa coluna.prazo_max_dias se dias não informado; mínimo efetivo: 2)
+{ dias?: number, titulo: string, assigned_to?: string /* uuid */ }
+
+// coluna_entrada_envia_template
+// (template_id referencia pipeline_template_whatsapp — já tem nome_template e fontes)
+{ coluna_id: string, template_id: string, variaveis_fontes?: FonteWpp[] }
+
+// coluna_entrada_cria_tarefa
+{ coluna_id: string, titulo: string, due_em_dias?: number, assigned_to?: string }
+
+// coluna_entrada_solicita_dado
+// (validação UI/action — não grava em pipeline_automacao_execucao)
+{ coluna_id: string, campo: string, label: string, obrigatorio: boolean }
+
+// coluna_entrada_muda_status
+{ coluna_id: string, status_destino: StatusLead }
+
+// entrada_etapa_final_boas_vindas
+// (coluna de etapa final identificada via pipeline_coluna.etapa_final = true)
+{ template_id: string }
+
+// mover_card_condicional
+{ de_coluna_id: string, para_coluna_id: string }
+```
+
+**Nota sobre `card_parado_cria_tarefa`:** granularidade é diária (job 07:00). O mínimo efetivo
+para `dias` é 2 — um card que para hoje só será detectado no run do dia seguinte.
 
 ## 4. Execução
 
@@ -84,6 +138,17 @@ Na Server Action `moverCard` (e em criação/edição de card quando aplicável)
 movimento, avaliar as automações `ativo=true` cujo gatilho casa com a transição
 (`para_coluna_id`), na ordem: validações de UI (`solicita_dado`) → ações. Cada ação executada
 grava `pipeline_automacao_execucao` + `pipeline_card_atividade` (`tipo='sistema'`).
+
+**Execução das ações de rede (WhatsApp, notificações):** disparar com `Promise.allSettled` sem
+bloquear o retorno ao usuário — o resultado chega de forma assíncrona e é gravado em
+`pipeline_automacao_execucao`. Isso evita que latência de rede (envio de template) atrase o
+feedback de drag-and-drop. Ações de banco (criar tarefa, mudar status, mover card) podem ser
+aguardadas diretamente pois são rápidas.
+
+**Anti-loop:** automações de evento disparadas por uma ação de automação (ex.: `mover_card_condicional`
+move um card que recai em outra coluna com automação) **não reaprovocam** novas automações de evento.
+A `moverCard` interna recebe `triggered_by_automation: true` e pula a avaliação de gatilhos.
+Profundidade máxima: 1.
 
 ### Gatilhos de tempo (job diário)
 Nova função `jobPipelineAutomacoes(hoje)` (padrão de `folha-jobs.ts`), chamada por

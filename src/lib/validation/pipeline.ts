@@ -223,3 +223,113 @@ export const tarefaSchema = z.object({
   assigned_to: z.string().uuid().optional().nullable(),
 });
 export type TarefaInput = z.infer<typeof tarefaSchema>;
+
+// ─── MVP4 ─────────────────────────────────────────────────────────────────────
+
+export const TIPOS_AUTOMACAO = [
+  "card_parado_cria_tarefa",
+  "coluna_entrada_envia_template",
+  "coluna_entrada_cria_tarefa",
+  "coluna_entrada_solicita_dado",
+  "coluna_entrada_muda_status",
+  "entrada_etapa_final_boas_vindas",
+  "mover_card_condicional",
+] as const;
+export type TipoAutomacao = (typeof TIPOS_AUTOMACAO)[number];
+
+export const AUTOMACAO_GATILHO: Record<TipoAutomacao, "evento" | "tempo"> = {
+  card_parado_cria_tarefa:         "tempo",
+  coluna_entrada_envia_template:   "evento",
+  coluna_entrada_cria_tarefa:      "evento",
+  coluna_entrada_solicita_dado:    "evento",
+  coluna_entrada_muda_status:      "evento",
+  entrada_etapa_final_boas_vindas: "evento",
+  mover_card_condicional:          "evento",
+};
+
+export const AUTOMACAO_DEDUPE: Record<TipoAutomacao, "card" | "entrada" | "nenhum"> = {
+  card_parado_cria_tarefa:         "card",
+  coluna_entrada_envia_template:   "entrada",
+  coluna_entrada_cria_tarefa:      "entrada",
+  coluna_entrada_solicita_dado:    "nenhum",
+  coluna_entrada_muda_status:      "nenhum",
+  entrada_etapa_final_boas_vindas: "card",
+  mover_card_condicional:          "entrada",
+};
+
+export const AUTOMACAO_LABEL: Record<TipoAutomacao, string> = {
+  card_parado_cria_tarefa:         "Card parado → Criar tarefa",
+  coluna_entrada_envia_template:   "Ao entrar na coluna → Enviar template WhatsApp",
+  coluna_entrada_cria_tarefa:      "Ao entrar na coluna → Criar tarefa",
+  coluna_entrada_solicita_dado:    "Ao entrar na coluna → Solicitar campo",
+  coluna_entrada_muda_status:      "Ao entrar na coluna → Mudar status do lead",
+  entrada_etapa_final_boas_vindas: "Ao entrar na etapa final → Enviar boas-vindas",
+  mover_card_condicional:          "Mover card condicional",
+};
+
+const paramsCardParado = z.object({
+  dias: z.number().int().min(2).optional(),
+  titulo: z.string().min(1).max(200),
+  assigned_to: z.string().uuid().optional(),
+});
+
+const paramsColunaEnviaTemplate = z.object({
+  coluna_id: z.string().uuid(),
+  template_id: z.string().uuid(),
+  variaveis_fontes: z.array(z.enum(FONTES_WPP)).optional(),
+});
+
+const paramsColunaGeraTarefa = z.object({
+  coluna_id: z.string().uuid(),
+  titulo: z.string().min(1).max(200),
+  due_em_dias: z.number().int().min(1).optional(),
+  assigned_to: z.string().uuid().optional(),
+});
+
+const paramsColunaStatusLead = z.object({
+  coluna_id: z.string().uuid(),
+  status_destino: z.enum(STATUS_LEAD),
+});
+
+const paramsBoasVindas = z.object({
+  template_id: z.string().uuid(),
+});
+
+const paramsMoverCondicional = z.object({
+  de_coluna_id: z.string().uuid(),
+  para_coluna_id: z.string().uuid(),
+});
+
+const paramsColunasolicitaDado = z.object({
+  coluna_id: z.string().uuid(),
+  campo: z.string().min(1).max(100),
+  label: z.string().min(1).max(200),
+  obrigatorio: z.boolean().default(true),
+});
+
+export const automacaoParamsSchema = z.discriminatedUnion("tipo", [
+  z.object({ tipo: z.literal("card_parado_cria_tarefa"), ...paramsCardParado.shape }),
+  z.object({ tipo: z.literal("coluna_entrada_envia_template"), ...paramsColunaEnviaTemplate.shape }),
+  z.object({ tipo: z.literal("coluna_entrada_cria_tarefa"), ...paramsColunaGeraTarefa.shape }),
+  z.object({ tipo: z.literal("coluna_entrada_solicita_dado"), ...paramsColunasolicitaDado.shape }),
+  z.object({ tipo: z.literal("coluna_entrada_muda_status"), ...paramsColunaStatusLead.shape }),
+  z.object({ tipo: z.literal("entrada_etapa_final_boas_vindas"), ...paramsBoasVindas.shape }),
+  z.object({ tipo: z.literal("mover_card_condicional"), ...paramsMoverCondicional.shape }),
+]);
+
+export const automacaoSchema = z.object({
+  quadro_id: z.string().uuid().optional().nullable(),
+  tipo: z.enum(TIPOS_AUTOMACAO),
+  ativo: z.boolean().default(true),
+  params: z.record(z.unknown()),
+});
+export type AutomacaoInput = z.infer<typeof automacaoSchema>;
+
+// --- Mover card (MVP4: campo_valor para coluna com campo_obrigatorio) ---
+export const moverCardComCampoSchema = z.object({
+  card_id: z.string().uuid(),
+  para_coluna_id: z.string().uuid(),
+  nova_ordem: z.number(),
+  observacao: z.string().max(500).optional().nullable(),
+  campo_valor: z.string().max(500).optional().nullable(),
+});
