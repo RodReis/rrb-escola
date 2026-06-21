@@ -333,3 +333,51 @@ export const moverCardComCampoSchema = z.object({
   observacao: z.string().max(500).optional().nullable(),
   campo_valor: z.string().max(500).optional().nullable(),
 });
+
+// ─── MVP5 ─────────────────────────────────────────────────────────────────────
+
+export const STATUS_ANAMNESE = [
+  "nao_iniciada",
+  "enviada",
+  "pendente",
+  "em_analise",
+  "concluida",
+  "requer_atencao",
+] as const;
+export type StatusAnamnese = (typeof STATUS_ANAMNESE)[number];
+
+// Transições válidas de status no MVP5 (auto-preenchimento fora do escopo)
+export const TRANSICOES_STATUS_ANAMNESE: Partial<Record<StatusAnamnese, StatusAnamnese[]>> = {
+  em_analise:      ["concluida", "requer_atencao"],
+  concluida:       ["requer_atencao"],
+  requer_atencao:  ["em_analise"],
+};
+
+export const salvarAnamneseSchema = z.object({
+  card_id: z.string().uuid(),
+  consentimento_em: z.string().datetime({ offset: true }),
+  consentimento_por: z.string().uuid(),
+  termo_versao: z.string().default("v1"),
+  necessidade_especial: z.boolean().optional(),
+  necessidade_especial_descricao: z.string().max(2000).optional().nullable(),
+  alergias: z.string().max(2000).optional().nullable(),
+  medicamentos_continuos: z.string().max(2000).optional().nullable(),
+  restricoes_alimentares: z.string().max(2000).optional().nullable(),
+  acomp_psicologico: z.boolean().optional(),
+  acomp_psicologico_descricao: z.string().max(1000).optional().nullable(),
+  acomp_fonoaudiologico: z.boolean().optional(),
+  acomp_fonoaudiologico_descricao: z.string().max(1000).optional().nullable(),
+  acomp_psicopedagogico: z.boolean().optional(),
+  acomp_psicopedagogico_descricao: z.string().max(1000).optional().nullable(),
+  historico_desenvolvimento: z.string().max(3000).optional().nullable(),
+  comportamento_social: z.string().max(3000).optional().nullable(),
+  rotina_familiar: z.string().max(3000).optional().nullable(),
+  observacoes_responsaveis: z.string().max(3000).optional().nullable(),
+  observacoes_coordenacao: z.string().max(3000).optional().nullable(),
+});
+export type SalvarAnamneseInput = z.infer<typeof salvarAnamneseSchema>;
+
+export const mudarStatusAnamneseSchema = z.object({
+  card_id: z.string().uuid(),
+  novo_status: z.enum(["em_analise", "concluida", "requer_atencao"]),
+});

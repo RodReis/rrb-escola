@@ -22,12 +22,14 @@ import { ReservaSection } from "./reserva-section";
 import { DadosEducacionaisSection } from "./dados-educacionais-section";
 import { WhatsappSection } from "./whatsapp-section";
 import { TarefasSection } from "./tarefas-section";
+import { AnamneseSection } from "./anamnese-section";
 import { cn } from "@/lib/utils";
 
 type Props = {
   cardId: string | null;
   onClose: () => void;
   onDeleted: (id: string) => void;
+  podeVerAnamnese?: boolean;
 };
 
 type CardDetalhe = Awaited<ReturnType<typeof getCardDetalhe>>;
@@ -43,7 +45,7 @@ function formatDate(iso: string) {
   });
 }
 
-export function CardModal({ cardId, onClose, onDeleted }: Props) {
+export function CardModal({ cardId, onClose, onDeleted, podeVerAnamnese = false }: Props) {
   const [detalhe, setDetalhe] = useState<CardDetalhe | null>(null);
   const [timeline, setTimeline] = useState<Timeline | null>(null);
   const [templates, setTemplates] = useState<TemplateWpp[]>([]);
@@ -349,6 +351,11 @@ export function CardModal({ cardId, onClose, onDeleted }: Props) {
                 }}
               />
             </section>
+          )}
+
+          {/* Anamnese */}
+          {cardId && (
+            <AnamneseSection cardId={cardId} podeAcessar={podeVerAnamnese} />
           )}
 
           {/* Edição rápida */}
