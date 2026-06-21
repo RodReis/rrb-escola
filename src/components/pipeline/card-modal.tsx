@@ -13,11 +13,12 @@ import {
   getTemplatesWhatsapp,
   getTarefasCard,
   getUsuariosDaEscola,
+  salvarEtiquetaAction,
   type TemplateWpp,
   type Tarefa,
 } from "@/lib/actions/pipeline";
 import { STATUS_LEAD, ORIGENS_LEAD } from "@/lib/validation/pipeline";
-import { STATUS_LEAD_LABEL, ORIGEM_LABEL } from "./types";
+import { STATUS_LEAD_LABEL, ORIGEM_LABEL, ETIQUETA_CORES, type EtiquetaCor } from "./types";
 import { ReservaSection } from "./reserva-section";
 import { DadosEducacionaisSection } from "./dados-educacionais-section";
 import { WhatsappSection } from "./whatsapp-section";
@@ -56,6 +57,9 @@ export function CardModal({ cardId, onClose, onDeleted, podeVerAnamnese = false 
   const [erroNota, setErroNota] = useState<string | null>(null);
   const [editando, setEditando] = useState(false);
   const [camposEdit, setCamposEdit] = useState({ status_lead: "", origem: "", motivo_perda: "" });
+  const [etiquetaCor, setEtiquetaCor] = useState<EtiquetaCor | null>(null);
+  const [etiquetaLabel, setEtiquetaLabel] = useState<string>("");
+  const [etiquetaPickerAberto, setEtiquetaPickerAberto] = useState(false);
 
   useEffect(() => {
     if (!cardId) return;
@@ -84,6 +88,8 @@ export function CardModal({ cardId, onClose, onDeleted, podeVerAnamnese = false 
           origem: d.data.card.origem ?? "",
           motivo_perda: d.data.card.motivo_perda ?? "",
         });
+        setEtiquetaCor((d.data.card.etiqueta_cor as EtiquetaCor | null) ?? null);
+        setEtiquetaLabel(d.data.card.etiqueta_label ?? "");
       }
     });
   }, [cardId]);
@@ -225,6 +231,79 @@ export function CardModal({ cardId, onClose, onDeleted, podeVerAnamnese = false 
             <X size={14} />
           </button>
         </div>
+
+        {/* Picker de etiqueta */}
+        {card && (
+          <div className="border-b border-[rgb(var(--color-line))] px-5 py-2.5 flex items-center gap-2">
+            <button
+              type="button"
+              onClick={() => setEtiquetaPickerAberto((v) => !v)}
+              className="flex items-center gap-1.5 rounded-md px-2 py-1 text-xs text-[rgb(var(--color-ink)/0.55)] hover:bg-[rgb(var(--color-muted))] hover:text-[rgb(var(--color-ink))] transition-colors"
+            >
+              {etiquetaCor ? (
+                <>
+                  <span
+                    className="h-3 w-3 rounded-full shrink-0"
+                    style={{ backgroundColor: ETIQUETA_CORES.find((e) => e.valor === etiquetaCor)?.bg }}
+                  />
+                  <span>{etiquetaLabel || ETIQUETA_CORES.find((e) => e.valor === etiquetaCor)?.label}</span>
+                </>
+              ) : (
+                <span>+ Etiqueta</span>
+              )}
+            </button>
+
+            {etiquetaPickerAberto && (
+              <div className="flex items-center gap-2 flex-wrap">
+                {ETIQUETA_CORES.map((e) => (
+                  <button
+                    key={e.valor}
+                    type="button"
+                    title={e.label}
+                    onClick={() => {
+                      const nova = etiquetaCor === e.valor ? null : e.valor;
+                      setEtiquetaCor(nova);
+                      if (!nova) setEtiquetaLabel("");
+                      startTransition(async () => {
+                        await salvarEtiquetaAction(card.id, nova, nova ? (etiquetaLabel || null) : null);
+                      });
+                    }}
+                    className="h-5 w-5 rounded-full border-2 transition-transform hover:scale-110"
+                    style={{
+                      backgroundColor: e.bg,
+                      borderColor: etiquetaCor === e.valor ? e.bg : 'transparent',
+                      outline: etiquetaCor === e.valor ? `2px solid ${e.bg}` : 'none',
+                      outlineOffset: '2px',
+                    }}
+                  />
+                ))}
+                {etiquetaCor && (
+                  <input
+                    type="text"
+                    value={etiquetaLabel}
+                    onChange={(e) => setEtiquetaLabel(e.target.value)}
+                    onBlur={() => {
+                      if (!cardId) return;
+                      startTransition(async () => {
+                        await salvarEtiquetaAction(cardId, etiquetaCor, etiquetaLabel || null);
+                      });
+                    }}
+                    placeholder="Rótulo (ex: Aluno OK)"
+                    maxLength={40}
+                    className="h-6 rounded border border-[rgb(var(--color-line))] bg-[rgb(var(--color-surface))] px-2 text-xs text-[rgb(var(--color-ink))] focus:outline-none focus:ring-1 focus:ring-[rgb(var(--color-brand)/0.4)] w-36"
+                  />
+                )}
+                <button
+                  type="button"
+                  onClick={() => setEtiquetaPickerAberto(false)}
+                  className="text-xs text-[rgb(var(--color-ink)/0.4)] hover:text-[rgb(var(--color-ink))]"
+                >
+                  ✕
+                </button>
+              </div>
+            )}
+          </div>
+        )}
 
         {/* Corpo com scroll */}
         <div className="flex-1 overflow-y-auto px-5 py-4 space-y-5">

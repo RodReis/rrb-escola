@@ -5,7 +5,7 @@ import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import { cn } from "@/lib/utils";
 import type { PipelineCardResumo } from "./types";
-import { STATUS_LEAD_LABEL, ORIGEM_LABEL } from "./types";
+import { STATUS_LEAD_LABEL, ORIGEM_LABEL, ETIQUETA_CORES } from "./types";
 
 type Props = {
   card: PipelineCardResumo;
@@ -79,10 +79,17 @@ function PipelineCardInner({ card, corBorda, onOpen }: Props) {
   const dataRef = card.ultimo_contato_at ?? card.created_at;
   const dataStr = formatDataRelativa(dataRef);
 
+  const etiqueta = card.etiqueta_cor
+    ? ETIQUETA_CORES.find((e) => e.valor === card.etiqueta_cor) ?? null
+    : null;
+
   return (
     <div
       ref={setNodeRef}
-      style={style}
+      style={{
+        ...style,
+        ...(etiqueta ? { backgroundColor: etiqueta.fundo, borderColor: etiqueta.borda } : {}),
+      }}
       {...attributes}
       {...listeners}
       onClick={() => onOpen(card.id)}
@@ -90,7 +97,7 @@ function PipelineCardInner({ card, corBorda, onOpen }: Props) {
         // base
         "group relative select-none cursor-grab touch-none",
         "rounded-xl border border-[rgb(var(--color-line))]",
-        "bg-[rgb(var(--color-surface))]",
+        !etiqueta && "bg-[rgb(var(--color-surface))]",
         // sombra e lift no hover
         "shadow-[0_1px_3px_rgba(0,0,0,.06),0_1px_2px_rgba(0,0,0,.04)]",
         "hover:shadow-[0_4px_12px_rgba(0,0,0,.1),0_2px_4px_rgba(0,0,0,.06)]",
@@ -100,7 +107,7 @@ function PipelineCardInner({ card, corBorda, onOpen }: Props) {
         isDragging && "opacity-40 shadow-2xl scale-[1.02] cursor-grabbing",
         // borda superior colorida
         "border-t-2",
-        corBorda,
+        !etiqueta && corBorda,
       )}
     >
       <div className="p-3">
@@ -144,8 +151,21 @@ function PipelineCardInner({ card, corBorda, onOpen }: Props) {
           </div>
         </div>
 
+        {/* Badge etiqueta */}
+        {etiqueta && (
+          <div className="mt-2 flex items-center gap-1">
+            <span
+              className="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-semibold"
+              style={{ backgroundColor: etiqueta.bg + '22', color: etiqueta.bg }}
+            >
+              <span className="h-1.5 w-1.5 rounded-full" style={{ backgroundColor: etiqueta.bg }} />
+              {card.etiqueta_label || etiqueta.label}
+            </span>
+          </div>
+        )}
+
         {/* Badges de status e origem */}
-        <div className="mt-2.5 flex flex-wrap items-center gap-1">
+        <div className="mt-2 flex flex-wrap items-center gap-1">
           {card.status_lead !== "novo" && (
             <span className={cn(
               "inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-semibold",

@@ -116,6 +116,7 @@ export async function getPipelineBoard(quadro_id: string) {
       .select(`
         id, coluna_id, ordem, titulo, origem, status_lead,
         assigned_to, ultimo_contato_at, created_at,
+        etiqueta_cor, etiqueta_label,
         pipeline_lead(nome, data_nascimento)
       `)
       .eq("quadro_id", quadro_id)
@@ -1569,6 +1570,24 @@ export async function deletarAutomacaoAction(
 
   if (error) return { ok: false, error: error.message };
   revalidatePath("/pipeline/config");
+  return { ok: true, data: undefined };
+}
+
+// ─── Etiqueta visual do card ──────────────────────────────────────────────────
+
+export async function salvarEtiquetaAction(
+  card_id: string,
+  etiqueta_cor: string | null,
+  etiqueta_label: string | null,
+): Promise<ActionResult> {
+  const { escola_id } = await requirePermission("pipeline", "edit");
+  const supabase = await createServerClient();
+  const { error } = await supabase
+    .from("pipeline_card")
+    .update({ etiqueta_cor, etiqueta_label })
+    .eq("id", card_id)
+    .eq("escola_id", escola_id);
+  if (error) return { ok: false, error: mapDbError(error, "salvarEtiqueta") };
   return { ok: true, data: undefined };
 }
 

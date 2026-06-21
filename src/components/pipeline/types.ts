@@ -6,6 +6,18 @@ export type PipelineColuna = {
   etapa_final: boolean;
 };
 
+export type EtiquetaCor = 'verde' | 'azul' | 'amarelo' | 'vermelho' | 'roxo' | 'laranja' | 'cinza';
+
+export const ETIQUETA_CORES: { valor: EtiquetaCor; label: string; bg: string; fundo: string; borda: string }[] = [
+  { valor: 'verde',    label: 'Verde',    bg: '#22c55e', fundo: 'rgba(34,197,94,0.09)',   borda: 'rgba(34,197,94,0.3)'   },
+  { valor: 'azul',     label: 'Azul',     bg: '#3b82f6', fundo: 'rgba(59,130,246,0.09)',  borda: 'rgba(59,130,246,0.3)'  },
+  { valor: 'amarelo',  label: 'Amarelo',  bg: '#eab308', fundo: 'rgba(234,179,8,0.09)',   borda: 'rgba(234,179,8,0.3)'   },
+  { valor: 'vermelho', label: 'Vermelho', bg: '#ef4444', fundo: 'rgba(239,68,68,0.09)',   borda: 'rgba(239,68,68,0.3)'   },
+  { valor: 'roxo',     label: 'Roxo',     bg: '#a855f7', fundo: 'rgba(168,85,247,0.09)',  borda: 'rgba(168,85,247,0.3)'  },
+  { valor: 'laranja',  label: 'Laranja',  bg: '#f97316', fundo: 'rgba(249,115,22,0.09)',  borda: 'rgba(249,115,22,0.3)'  },
+  { valor: 'cinza',    label: 'Cinza',    bg: '#6b7280', fundo: 'rgba(107,114,128,0.09)', borda: 'rgba(107,114,128,0.3)' },
+];
+
 export type PipelineCardResumo = {
   id: string;
   coluna_id: string;
@@ -17,6 +29,8 @@ export type PipelineCardResumo = {
   ultimo_contato_at: string | null;
   created_at: string;
   sem_resposta: boolean;
+  etiqueta_cor: EtiquetaCor | null;
+  etiqueta_label: string | null;
   pipeline_lead: { nome: string; data_nascimento: string | null } | null;
 };
 
