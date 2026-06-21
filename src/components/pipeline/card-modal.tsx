@@ -261,18 +261,18 @@ export function CardModal({ cardId, onClose, onDeleted, podeVerAnamnese = false 
                     type="button"
                     title={e.label}
                     onClick={() => {
-                      const nova = etiquetaCor === e.valor ? null : e.valor;
+                      const nova: EtiquetaCor | null = etiquetaCor === e.valor ? null : e.valor;
                       setEtiquetaCor(nova);
+                      const labelAtual = nova ? etiquetaLabel : "";
                       if (!nova) setEtiquetaLabel("");
                       startTransition(async () => {
-                        await salvarEtiquetaAction(card.id, nova, nova ? (etiquetaLabel || null) : null);
+                        await salvarEtiquetaAction(card.id, nova, nova ? (labelAtual || null) : null);
                       });
                     }}
-                    className="h-5 w-5 rounded-full border-2 transition-transform hover:scale-110"
+                    className="h-5 w-5 rounded-full transition-transform hover:scale-110"
                     style={{
                       backgroundColor: e.bg,
-                      borderColor: etiquetaCor === e.valor ? e.bg : 'transparent',
-                      outline: etiquetaCor === e.valor ? `2px solid ${e.bg}` : 'none',
+                      outline: etiquetaCor === e.valor ? `3px solid ${e.bg}` : '2px solid transparent',
                       outlineOffset: '2px',
                     }}
                   />
@@ -282,8 +282,16 @@ export function CardModal({ cardId, onClose, onDeleted, podeVerAnamnese = false 
                     type="text"
                     value={etiquetaLabel}
                     onChange={(e) => setEtiquetaLabel(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter" && cardId) {
+                        startTransition(async () => {
+                          await salvarEtiquetaAction(cardId, etiquetaCor, etiquetaLabel || null);
+                        });
+                        setEtiquetaPickerAberto(false);
+                      }
+                    }}
                     onBlur={() => {
-                      if (!cardId) return;
+                      if (!cardId || !etiquetaCor) return;
                       startTransition(async () => {
                         await salvarEtiquetaAction(cardId, etiquetaCor, etiquetaLabel || null);
                       });

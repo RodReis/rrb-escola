@@ -511,7 +511,7 @@ export async function getCardDetalhe(card_id: string) {
   const [cardRes, leadRes, respRes, reservaRes] = await Promise.all([
     supabase
       .from("pipeline_card")
-      .select("id, titulo, origem, status_lead, assigned_to, ultimo_contato_at, motivo_perda, created_at, coluna_id, aluno_id")
+      .select("id, titulo, origem, status_lead, assigned_to, ultimo_contato_at, motivo_perda, created_at, coluna_id, aluno_id, etiqueta_cor, etiqueta_label")
       .eq("id", card_id)
       .eq("escola_id", escola_id)
       .single(),
@@ -1588,6 +1588,7 @@ export async function salvarEtiquetaAction(
     .eq("id", card_id)
     .eq("escola_id", escola_id);
   if (error) return { ok: false, error: mapDbError(error, "salvarEtiqueta") };
+  revalidatePath(PATH);
   return { ok: true, data: undefined };
 }
 
