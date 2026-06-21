@@ -30,6 +30,7 @@ type Props = {
   cardId: string | null;
   onClose: () => void;
   onDeleted: (id: string) => void;
+  onUpdated?: () => void;
   podeVerAnamnese?: boolean;
 };
 
@@ -46,7 +47,7 @@ function formatDate(iso: string) {
   });
 }
 
-export function CardModal({ cardId, onClose, onDeleted, podeVerAnamnese = false }: Props) {
+export function CardModal({ cardId, onClose, onDeleted, onUpdated, podeVerAnamnese = false }: Props) {
   const [detalhe, setDetalhe] = useState<CardDetalhe | null>(null);
   const [timeline, setTimeline] = useState<Timeline | null>(null);
   const [templates, setTemplates] = useState<TemplateWpp[]>([]);
@@ -60,6 +61,7 @@ export function CardModal({ cardId, onClose, onDeleted, podeVerAnamnese = false 
   const [etiquetaCor, setEtiquetaCor] = useState<EtiquetaCor | null>(null);
   const [etiquetaLabel, setEtiquetaLabel] = useState<string>("");
   const [etiquetaPickerAberto, setEtiquetaPickerAberto] = useState(false);
+  const [etiquetaAlterada, setEtiquetaAlterada] = useState(false);
 
   useEffect(() => {
     if (!cardId) return;
@@ -94,13 +96,19 @@ export function CardModal({ cardId, onClose, onDeleted, podeVerAnamnese = false 
     });
   }, [cardId]);
 
+  function fechar() {
+    if (etiquetaAlterada) onUpdated?.();
+    onClose();
+  }
+
   useEffect(() => {
     function onKey(e: KeyboardEvent) {
-      if (e.key === "Escape") onClose();
+      if (e.key === "Escape") fechar();
     }
     document.addEventListener("keydown", onKey);
     return () => document.removeEventListener("keydown", onKey);
-  }, [onClose]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [etiquetaAlterada]);
 
   function handleSubmitNota(e: React.FormEvent) {
     e.preventDefault();
@@ -198,7 +206,7 @@ export function CardModal({ cardId, onClose, onDeleted, podeVerAnamnese = false 
     <div
       className="fixed inset-0 z-[9999] flex items-start justify-end p-4 sm:p-6"
       onMouseDown={(e) => {
-        if (e.target === e.currentTarget) onClose();
+        if (e.target === e.currentTarget) fechar();
       }}
     >
       <div className="absolute inset-0 bg-ink/20 backdrop-blur-[1px]" />
@@ -224,7 +232,7 @@ export function CardModal({ cardId, onClose, onDeleted, podeVerAnamnese = false 
           </div>
           <button
             type="button"
-            onClick={onClose}
+            onClick={fechar}
             className="flex h-7 w-7 shrink-0 items-center justify-center rounded-md text-[rgb(var(--color-ink)/0.4)] hover:bg-[rgb(var(--color-muted))] hover:text-[rgb(var(--color-ink))]"
             aria-label="Fechar"
           >
@@ -266,7 +274,8 @@ export function CardModal({ cardId, onClose, onDeleted, podeVerAnamnese = false 
                       const labelAtual = nova ? etiquetaLabel : "";
                       if (!nova) setEtiquetaLabel("");
                       startTransition(async () => {
-                        await salvarEtiquetaAction(card.id, nova, nova ? (labelAtual || null) : null);
+                        const r = await salvarEtiquetaAction(card.id, nova, nova ? (labelAtual || null) : null);
+                        if (r.ok) setEtiquetaAlterada(true);
                       });
                     }}
                     className="h-5 w-5 rounded-full transition-transform hover:scale-110"
@@ -285,7 +294,8 @@ export function CardModal({ cardId, onClose, onDeleted, podeVerAnamnese = false 
                     onKeyDown={(e) => {
                       if (e.key === "Enter" && cardId) {
                         startTransition(async () => {
-                          await salvarEtiquetaAction(cardId, etiquetaCor, etiquetaLabel || null);
+                          const r = await salvarEtiquetaAction(cardId, etiquetaCor, etiquetaLabel || null);
+                          if (r.ok) setEtiquetaAlterada(true);
                         });
                         setEtiquetaPickerAberto(false);
                       }
@@ -293,7 +303,8 @@ export function CardModal({ cardId, onClose, onDeleted, podeVerAnamnese = false 
                     onBlur={() => {
                       if (!cardId || !etiquetaCor) return;
                       startTransition(async () => {
-                        await salvarEtiquetaAction(cardId, etiquetaCor, etiquetaLabel || null);
+                        const r = await salvarEtiquetaAction(cardId, etiquetaCor, etiquetaLabel || null);
+                        if (r.ok) setEtiquetaAlterada(true);
                       });
                     }}
                     placeholder="Rótulo (ex: Aluno OK)"

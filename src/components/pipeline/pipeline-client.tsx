@@ -76,6 +76,8 @@ export function PipelineClient({ data, usuarios, escolaId }: Props) {
             assigned_to: raw.assigned_to as string | null,
             ultimo_contato_at: raw.ultimo_contato_at as string | null,
             created_at: raw.created_at as string,
+            etiqueta_cor: (raw.etiqueta_cor as PipelineCardResumo["etiqueta_cor"]) ?? null,
+            etiqueta_label: (raw.etiqueta_label as string | null) ?? null,
           };
 
           setBoardData((prev) => ({
@@ -139,6 +141,7 @@ export function PipelineClient({ data, usuarios, escolaId }: Props) {
         cardId={openCardId}
         onClose={() => setOpenCardId(null)}
         onDeleted={handleCardDeleted}
+        onUpdated={() => router.refresh()}
       />
 
       {/* Modal criar */}
