@@ -6,7 +6,7 @@ cinco specs de MVP, as decisões transversais e o que ficou fora.
 ## Specs (ordem de implementação)
 
 | MVP | Arquivo | Entrega |
-|---|---|---|
+| --- | --- | --- |
 | 1 | [`...pipeline-mvp1-design.md`](./2026-06-21-pipeline-mvp1-design.md) | Kanban básico: quadro/coluna/card, drag-and-drop, lead + responsável, notas, histórico, filtros, realtime |
 | 2 | [`...pipeline-mvp2-design.md`](./2026-06-21-pipeline-mvp2-design.md) | Dados educacionais, reserva com vaga real, **promoção lead→aluno/matrícula**, RBAC ampliado, CRUD de quadros |
 | 3 | [`...pipeline-mvp3-design.md`](./2026-06-21-pipeline-mvp3-design.md) | WhatsApp por template, tarefas, atribuição, "card sem resposta" |
@@ -43,19 +43,37 @@ cinco specs de MVP, as decisões transversais e o que ficou fora.
 - MVP5: `pipeline_anamnese`, `pipeline_anamnese_arquivo`, `pipeline_acesso_log`; módulo
   `pipeline_sensivel`.
 
-## Estado atual
+## Estado atual (2026-06-21)
 
-- **MVP1 em codificação pelo Claude Code**: migration `202606210001_pipeline_mvp1.sql`, actions
-  (`src/lib/actions/pipeline.ts`), validação (`src/lib/validation/pipeline.ts`) e componentes
-  (`src/components/pipeline/*`) já existem; falta a rota `src/app/(app)/pipeline`.
-- MVP2–MVP5: especificados, aguardando implementação.
+Todos os MVPs implementados, typecheck + build verdes, commitados em `main`.
+
+| MVP | Branch/commit | Migration | Status |
+| --- | --- | --- | --- |
+| 1 | `202606210001_pipeline_mvp1.sql` | `202606210001` | ✅ produção (aplicar db push) |
+| 2 | `202606210002_pipeline_mvp2.sql` | `202606210002` | ✅ produção (aplicar db push) |
+| 3 | `202606210003_pipeline_mvp3.sql` | `202606210003` | ✅ produção (aplicar db push) |
+| 4 | `202606210004_pipeline_mvp4.sql` | `202606210004` | ✅ produção (aplicar db push) |
+| 5 | `202606210005_pipeline_mvp5.sql` | `202606210005` | ✅ produção (aplicar db push) |
+
+### Passos manuais pós-deploy
+
+1. `supabase db push` — aplica as 5 migrations em ordem
+2. Criar bucket **`pipeline-anamnese`** (privado) no painel Supabase Storage (MVP5)
+3. Passar prop `podeVerAnamnese` para `<CardModal>` na página do pipeline, com base
+   na sessão do usuário (`can(session.permissions, 'pipeline_sensivel', 'read')`)
+4. Adicionar link "Indicadores" na nav do pipeline em `topbar.tsx` → `/pipeline/indicadores`
+
+### Planos de implementação
+
+- [`plans/2026-06-21-pipeline-mvp4-plan.md`](../plans/2026-06-21-pipeline-mvp4-plan.md)
+- [`plans/2026-06-21-pipeline-mvp5-plan.md`](../plans/2026-06-21-pipeline-mvp5-plan.md)
 
 ## Pendências herdadas (rastreadas nas specs)
 
-- **N1** tokens `color-pipeline-*` no Tailwind/DS (MVP1 §12).
-- **N2** enforcement por `role_permissoes` — resolvido no MVP2.
-- **N3** rota `/pipeline` (fechamento do MVP1).
-- **N4** `DEFAULT_SCHOOL_ID` — promoção usa `escola_id` do card (MVP2).
+- **N1** tokens `color-pipeline-*` no Tailwind/DS (MVP1 §12) — cosmético, baixa prioridade.
+- ~~N2 enforcement por role_permissoes~~ — resolvido no MVP2.
+- ~~N3 rota /pipeline~~ — resolvido no MVP1.
+- ~~N4 DEFAULT_SCHOOL_ID~~ — resolvido no MVP2.
 
 ## Fora dos 5 MVPs (candidatos a uma Fase 6)
 
