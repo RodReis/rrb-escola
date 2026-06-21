@@ -35,6 +35,14 @@ export function CriarCardModal({ quadroId, colunaId, onClose, onCreated }: Props
     setForm((p) => ({ ...p, [field]: value }));
   }
 
+  function maskPhone(v: string) {
+    const d = v.replace(/\D/g, "").slice(0, 11);
+    if (d.length <= 2) return d.length ? `(${d}` : "";
+    if (d.length <= 6) return `(${d.slice(0, 2)}) ${d.slice(2)}`;
+    if (d.length <= 10) return `(${d.slice(0, 2)}) ${d.slice(2, 6)}-${d.slice(6)}`;
+    return `(${d.slice(0, 2)}) ${d.slice(2, 7)}-${d.slice(7)}`;
+  }
+
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setErro(null);
@@ -204,7 +212,7 @@ export function CriarCardModal({ quadroId, colunaId, onClose, onCreated }: Props
                   <input
                     type="tel"
                     value={form.resp_whatsapp}
-                    onChange={(e) => set("resp_whatsapp", e.target.value)}
+                    onChange={(e) => set("resp_whatsapp", maskPhone(e.target.value))}
                     className="input-ds"
                     placeholder="(11) 99999-9999"
                   />

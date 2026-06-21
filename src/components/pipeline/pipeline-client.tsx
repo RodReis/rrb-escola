@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
+import { useRouter } from "next/navigation";
 import { createBrowserSupabase } from "@/lib/supabase/browser";
 import { checkTarefasVencidasAction } from "@/lib/actions/pipeline";
 import { PipelineBoard } from "./board";
@@ -24,6 +25,7 @@ type RealtimePayload = {
 };
 
 export function PipelineClient({ data, usuarios, escolaId }: Props) {
+  const router = useRouter();
   const [openCardId, setOpenCardId] = useState<string | null>(null);
   const [criarColunaId, setCriarColunaId] = useState<string | null>(null);
   const [filtros, setFiltros] = useState<FiltrosPipeline>({
@@ -101,8 +103,8 @@ export function PipelineClient({ data, usuarios, escolaId }: Props) {
   }, []);
 
   const handleCardCreated = useCallback(() => {
-    // Realtime vai propagar o novo card; não precisamos refetch
-  }, []);
+    router.refresh();
+  }, [router]);
 
   return (
     <>
