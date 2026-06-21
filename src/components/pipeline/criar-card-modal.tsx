@@ -24,6 +24,7 @@ export function CriarCardModal({ quadroId, colunaId, onClose, onCreated }: Props
     lead_nome: "",
     lead_nascimento: "",
     lead_serie: "",
+    lead_escola_anterior: "",
     resp_nome: "",
     resp_parentesco: "",
     resp_whatsapp: "",
@@ -58,6 +59,7 @@ export function CriarCardModal({ quadroId, colunaId, onClose, onCreated }: Props
           nome: form.lead_nome.trim(),
           data_nascimento: form.lead_nascimento || null,
           serie_interesse: form.lead_serie.trim() || null,
+          escola_anterior: form.lead_escola_anterior.trim() || null,
         },
         responsaveis: [
           {
@@ -150,6 +152,19 @@ export function CriarCardModal({ quadroId, colunaId, onClose, onCreated }: Props
                     placeholder="Ex: 1º Ano EF"
                   />
                 </div>
+              </div>
+              <div>
+                <label className="block text-xs text-[rgb(var(--color-ink)/0.6)] mb-1">
+                  Escola atual ou do ano passado
+                </label>
+                <input
+                  type="text"
+                  value={form.lead_escola_anterior}
+                  onChange={(e) => set("lead_escola_anterior", e.target.value)}
+                  className="input-ds"
+                  placeholder="Nome da escola"
+                  maxLength={200}
+                />
               </div>
             </div>
           </section>
