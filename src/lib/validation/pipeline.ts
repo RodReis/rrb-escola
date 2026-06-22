@@ -42,6 +42,7 @@ export const leadSchema = z.object({
   serie_interesse: z.string().max(60).optional().nullable(),
   turno: z.string().max(30).optional().nullable(),
   ano_letivo: z.number().int().min(2000).max(2100).optional().nullable(),
+  escola_anterior: z.string().max(200).optional().nullable(),
 });
 export type LeadInput = z.infer<typeof leadSchema>;
 
@@ -356,7 +357,7 @@ export const TRANSICOES_STATUS_ANAMNESE: Partial<Record<StatusAnamnese, StatusAn
 export const salvarAnamneseSchema = z.object({
   card_id: z.string().uuid(),
   consentimento_em: z.string().datetime({ offset: true }),
-  consentimento_por: z.string().uuid(),
+  // consentimento_por é definido server-side (session.profile.id); não aceito do cliente.
   termo_versao: z.string().default("v1"),
   necessidade_especial: z.boolean().optional(),
   necessidade_especial_descricao: z.string().max(2000).optional().nullable(),

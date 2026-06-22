@@ -170,6 +170,11 @@ begin
   end if;
   v_escola_id := v_card.escola_id;
 
+  -- 1b) Guard cross-tenant: card deve pertencer à escola do usuário chamador
+  if v_escola_id is distinct from (select escola_id from current_perfil()) then
+    return jsonb_build_object('ok', false, 'error', 'Card não pertence à sua escola');
+  end if;
+
   -- 2) Idempotência: já convertido
   if v_card.aluno_id is not null then
     return jsonb_build_object('ok', true, 'data', jsonb_build_object('matricula_codigo', null));

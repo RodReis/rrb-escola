@@ -132,7 +132,6 @@ export function AnamneseSection({ cardId, podeAcessar }: Props) {
     const res = await salvarAnamnese({
       card_id: cardId,
       consentimento_em: new Date(consentimentoEm).toISOString(),
-      consentimento_por: "", // será preenchido pela action com o usuário logado
       termo_versao: "v1",
     });
     if (!res.ok) { setErroSalvar(res.error); return; }
@@ -153,7 +152,6 @@ export function AnamneseSection({ cardId, podeAcessar }: Props) {
     const res = await salvarAnamnese({
       card_id: cardId,
       consentimento_em: anamnese.consentimento_em,
-      consentimento_por: anamnese.consentimento_por ?? "",
       termo_versao: anamnese.termo_versao ?? "v1",
       ...form,
     });

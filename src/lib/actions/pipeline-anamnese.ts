@@ -153,7 +153,8 @@ export async function salvarAnamnese(
     escola_id: session.profile.escola_id,
     card_id: data.card_id,
     consentimento_em: data.consentimento_em,
-    consentimento_por: data.consentimento_por,
+    // Atribuição de consentimento sempre = usuário logado (nunca confiar no cliente)
+    consentimento_por: session.profile.id,
     termo_versao: data.termo_versao,
     ...(statusNovo ? { status: statusNovo } : {}),
     necessidade_especial: data.necessidade_especial,

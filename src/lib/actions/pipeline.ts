@@ -49,22 +49,29 @@ function mapDbError(
   acao: string,
 ): string {
   if (!error) return "Erro interno. Tente novamente.";
-  const haystack = [error.message, error.details, error.hint].join(" ").toLowerCase();
-  if (
-    haystack.includes("schema cache") ||
-    haystack.includes("does not exist") ||
-    haystack.includes("relation") ||
-    haystack.includes("table") ||
-    error.code === "42P01" ||
-    error.code === "PGRST200" ||
-    error.code === "PGRST301"
-  ) {
+
+  // Log do erro real no servidor para diagnóstico (não mascarar na origem).
+  console.error(`[Pipeline] Erro em ${acao}:`, {
+    code: error.code,
+    message: error.message,
+    details: error.details,
+    hint: error.hint,
+  });
+
+  // Apenas o caso genuíno de tabela ausente (42P01) sugere rodar a migration.
+  // PGRST200/PGRST301 são relacionamento/embed não encontrado no schema cache —
+  // não significam tabela faltando; expomos a mensagem real.
+  if (error.code === "42P01") {
     return "Tabelas do pipeline nao foram criadas. Rode: supabase db push";
+  }
+  if (error.code === "PGRST200" || error.code === "PGRST204") {
+    return "Relacionamento/coluna não encontrado no schema cache do banco. Recarregue o schema (NOTIFY pgrst) ou verifique a migration.";
   }
   if (error.code === "23505") return "Registro duplicado.";
   if (error.code === "23503") return "Referencia invalida nos dados.";
   if (error.code === "42501") return "Sem permissao no banco.";
-  return "Erro interno. Tente novamente.";
+  // Demais erros: expor a mensagem real em vez de "Erro interno" genérico.
+  return error.message ? `Erro: ${error.message}` : "Erro interno. Tente novamente.";
 }
 
 async function getPipelineCtx() {
@@ -337,14 +344,20 @@ export async function moverCardAction(
 
   const supabase = await createServerClient();
 
-  // Verifica campo obrigatório da coluna de destino
+  // Verifica campo obrigatório da coluna de destino (escola_id evita IDOR cross-tenant)
   const { data: colunaDestino } = await supabase
     .from("pipeline_coluna")
     .select("campo_obrigatorio")
     .eq("id", para_coluna_id)
-    .single();
+    .eq("escola_id", escola_id)
+    .maybeSingle();
 
-  if (colunaDestino?.campo_obrigatorio && !options?.campo_valor) {
+  // Coluna inexistente ou de outra escola: rejeita em vez de prosseguir e burlar o guard
+  if (!colunaDestino) {
+    return { ok: false, error: "Coluna de destino inválida" };
+  }
+
+  if (colunaDestino.campo_obrigatorio && !options?.campo_valor) {
     return {
       ok: false,
       error: `Campo obrigatório ao entrar nesta coluna: ${colunaDestino.campo_obrigatorio}`,
@@ -712,15 +725,27 @@ export async function promoverCardAction(
   card_id: string,
 ): Promise<ActionResult<{ matricula_codigo: string }>> {
   let usuario_id: string;
+  let escola_id: string;
   try {
     const ctx = await getAdminCtx();
     await requirePermission("pipeline_admin", "create");
     usuario_id = ctx.usuario_id;
+    escola_id = ctx.escola_id;
   } catch {
     return { ok: false, error: "Sem permissão para promover" };
   }
 
   const supabase = await createServerClient();
+
+  // Guard cross-tenant: card precisa pertencer à escola do usuário antes do RPC SECURITY DEFINER
+  const { data: cardEscola } = await supabase
+    .from("pipeline_card")
+    .select("id")
+    .eq("id", card_id)
+    .eq("escola_id", escola_id)
+    .maybeSingle();
+  if (!cardEscola) return { ok: false, error: "Card não encontrado" };
+
   const { data, error } = await supabase
     .rpc("pipeline_promover_card", {
       p_card_id: card_id,
@@ -1580,7 +1605,7 @@ export async function salvarEtiquetaAction(
   etiqueta_cor: string | null,
   etiqueta_label: string | null,
 ): Promise<ActionResult> {
-  const session = await requirePermission("pipeline", "edit");
+  const session = await requirePermission("pipeline", "update");
   const escola_id = session.profile.escola_id;
   const supabase = await createServerClient();
   const { error } = await supabase
@@ -1603,6 +1628,11 @@ async function avaliarAutomacoesEvento(
   para_coluna_id: string,
   escola_id: string,
 ): Promise<void> {
+  // pipeline_automacao_execucao só concede SELECT a authenticated; INSERT exige admin
+  // (mesmo padrão do job em pipeline-jobs.ts). Sem isso o dedupe nunca grava e a
+  // automação dispara repetidamente.
+  const execDb = createAdminClient();
+
   // Busca card para saber quadro_id e dados do lead para resolver variáveis
   const { data: card } = await supabase
     .from("pipeline_card")
@@ -1657,9 +1687,10 @@ async function avaliarAutomacoesEvento(
       if (params.para_coluna_id !== para_coluna_id) continue;
     }
 
-    // Verifica dedupe
+    // Verifica dedupe (via execDb: policy de SELECT exige pipeline_admin, que nem
+    // todo usuário que move card possui — admin garante leitura consistente)
     if (dedupe === "card") {
-      const { count } = await supabase
+      const { count } = await execDb
         .from("pipeline_automacao_execucao")
         .select("id", { count: "exact", head: true })
         .eq("automacao_id", auto.id)
@@ -1667,7 +1698,7 @@ async function avaliarAutomacoesEvento(
         .is("coluna_id", null);
       if (count && count > 0) continue;
     } else if (dedupe === "entrada") {
-      const { count } = await supabase
+      const { count } = await execDb
         .from("pipeline_automacao_execucao")
         .select("id", { count: "exact", head: true })
         .eq("automacao_id", auto.id)
@@ -1685,7 +1716,7 @@ async function avaliarAutomacoesEvento(
       acoes.push(
         enviarWhatsappCardAction(card_id, templateId, [])
           .then(async (r) => {
-            await supabase.from("pipeline_automacao_execucao").insert({
+            await execDb.from("pipeline_automacao_execucao").insert({
               escola_id,
               automacao_id: auto.id,
               card_id,
@@ -1709,7 +1740,7 @@ async function avaliarAutomacoesEvento(
           due_at: dueAt ?? null,
         })
           .then(async (r) => {
-            await supabase.from("pipeline_automacao_execucao").insert({
+            await execDb.from("pipeline_automacao_execucao").insert({
               escola_id,
               automacao_id: auto.id,
               card_id,
@@ -1732,7 +1763,7 @@ async function avaliarAutomacoesEvento(
             .eq("escola_id", escola_id),
         )
           .then(async (r) => {
-            await supabase.from("pipeline_automacao_execucao").insert({
+            await execDb.from("pipeline_automacao_execucao").insert({
               escola_id,
               automacao_id: auto.id,
               card_id,
@@ -1759,7 +1790,7 @@ async function avaliarAutomacoesEvento(
       acoes.push(
         moverCardAction({ card_id, para_coluna_id: paraColuna, nova_ordem: novaOrdem }, { triggered_by_automation: true })
           .then(async (r) => {
-            await supabase.from("pipeline_automacao_execucao").insert({
+            await execDb.from("pipeline_automacao_execucao").insert({
               escola_id,
               automacao_id: auto.id,
               card_id,
