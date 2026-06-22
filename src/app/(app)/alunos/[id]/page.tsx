@@ -1,6 +1,7 @@
 import { ArrowLeft, FileText, Pencil } from "lucide-react";
 import { ReenrollButton } from "@/components/students/reenroll-button";
 import { StudentStatementSection } from "@/components/finance/student-statement-section";
+import { AnamneseAlunoSection } from "@/components/students/anamnese-aluno-section";
 import { StudentHeaderActions } from "@/components/students/student-header-actions";
 import { StudentSheetView } from "@/components/students/student-sheet";
 import { ButtonLink } from "@/components/ui/button";
@@ -54,6 +55,7 @@ export default async function StudentPage({ params, searchParams }: { params: { 
       </header>
       <StudentSheetView student={student} fotoSrc={fotoSrc} geradoEm={new Date()} />
       <StudentStatementSection alunoId={params.id} searchParams={searchParams} />
+      <AnamneseAlunoSection alunoId={params.id} />
     </div>
   );
 }
