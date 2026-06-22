@@ -3,51 +3,79 @@
 import { useState, useTransition } from "react";
 import Link from "next/link";
 import {
-  AlertCircle, BarChart3, Building2, Cake, CalendarCheck,
-  ClipboardCheck, ClipboardList, CreditCard, DoorOpen, FileText,
-  GraduationCap, HandHeart, Inbox, Layers3, Network, Pencil,
-  Plus, Receipt, ReceiptText, School, ShieldCheck, SlidersHorizontal,
-  Tags, UserCheck, UsersRound, Webhook, FileBarChart, X,
+  AlertCircle, BarChart3, BellRing, Building2, Cake, CalendarCheck,
+  CalendarDays, CalendarHeart, ClipboardCheck, ClipboardList,
+  CreditCard, DoorOpen, FileText, GraduationCap, HandHeart, Inbox,
+  Kanban, Layers3, Megaphone, Network, Pencil, Plus, Receipt, ReceiptText,
+  School, Settings2, ShieldCheck, SlidersHorizontal, Tags, UserCheck,
+  UsersRound, Wallet, Webhook, X,
   type LucideIcon,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { saveQuickLinksAction } from "@/lib/actions/quick-links";
 
+const MAX_LINKS = 12;
+
 type RouteItem = { href: string; label: string; group: string; Icon: LucideIcon };
 
+// Espelha os itens do menu (topbar.tsx). Manter sincronizado ao adicionar módulos.
 const ALL_ROUTES: RouteItem[] = [
-  { href: "/alunos",                    label: "Alunos",               group: "Secretaria",   Icon: UsersRound },
-  { href: "/bolsistas",                 label: "Bolsistas",            group: "Secretaria",   Icon: HandHeart },
-  { href: "/matriculas",                label: "Matrículas",           group: "Secretaria",   Icon: FileText },
-  { href: "/series",                    label: "Séries",               group: "Secretaria",   Icon: Layers3 },
-  { href: "/turmas",                    label: "Turmas",               group: "Secretaria",   Icon: GraduationCap },
-  { href: "/disciplinas",               label: "Disciplinas",          group: "Secretaria",   Icon: ClipboardList },
-  { href: "/avaliacoes",                label: "Avaliações",           group: "Secretaria",   Icon: ClipboardCheck },
-  { href: "/professores/atribuicoes",   label: "Atribuições",          group: "Secretaria",   Icon: UserCheck },
-  { href: "/frequencias",               label: "Frequência",           group: "Secretaria",   Icon: CalendarCheck },
-  { href: "/portaria",                  label: "Portaria",             group: "Secretaria",   Icon: DoorOpen },
-  { href: "/mural/aniversariantes",     label: "Mural aniversários",   group: "Secretaria",   Icon: Cake },
-  { href: "/organograma",               label: "Organograma",          group: "Secretaria",   Icon: Network },
-  { href: "/importacoes",               label: "Importações",          group: "Secretaria",   Icon: Inbox },
-  { href: "/financeiro",                label: "Financeiro",           group: "Financeiro",   Icon: BarChart3 },
-  { href: "/despesas",                  label: "Despesas",             group: "Financeiro",   Icon: Receipt },
-  { href: "/valores-praticados",        label: "Valores praticados",   group: "Financeiro",   Icon: ReceiptText },
-  { href: "/planos",                    label: "Planos",               group: "Financeiro",   Icon: CreditCard },
-  { href: "/rh/empresas",              label: "Empresas",             group: "RH",           Icon: Building2 },
-  { href: "/rh/funcionarios",          label: "Funcionários",         group: "RH",           Icon: UsersRound },
-  { href: "/rh/brackets",              label: "Brackets",             group: "RH",           Icon: SlidersHorizontal },
-  { href: "/rh/documentos",            label: "Documentos RH",        group: "RH",           Icon: FileText },
-  { href: "/relatorios/alunos",        label: "Rel. Alunos",          group: "Relatórios",   Icon: UsersRound },
-  { href: "/relatorios/frequencia",    label: "Rel. Frequência",      group: "Relatórios",   Icon: CalendarCheck },
-  { href: "/relatorios/inadimplencia", label: "Inadimplência",        group: "Relatórios",   Icon: AlertCircle },
-  { href: "/configuracoes/escola",     label: "Dados da escola",      group: "Configurações", Icon: School },
-  { href: "/usuarios",                 label: "Usuários",             group: "Configurações", Icon: UsersRound },
-  { href: "/configuracoes/perfis",     label: "Perfis e Permissões",  group: "Configurações", Icon: ShieldCheck },
-  { href: "/configuracoes/webhook",    label: "Webhook",              group: "Configurações", Icon: Webhook },
-  { href: "/despesas/categorias",      label: "Categorias despesa",   group: "Configurações", Icon: Tags },
+  // ── Secretaria ──
+  { href: "/alunos",                       label: "Alunos",                group: "Secretaria",    Icon: UsersRound },
+  { href: "/matriculas",                   label: "Matrículas",            group: "Secretaria",    Icon: FileText },
+  { href: "/bolsistas",                    label: "Bolsistas",             group: "Secretaria",    Icon: HandHeart },
+  { href: "/avaliacoes",                   label: "Avaliações",            group: "Secretaria",    Icon: ClipboardCheck },
+  { href: "/frequencias",                  label: "Frequência",            group: "Secretaria",    Icon: CalendarCheck },
+  { href: "/mural/aniversariantes",        label: "Mural aniversários",    group: "Secretaria",    Icon: Cake },
+  { href: "/series",                       label: "Séries",                group: "Secretaria",    Icon: Layers3 },
+  { href: "/turmas",                       label: "Turmas",                group: "Secretaria",    Icon: GraduationCap },
+  { href: "/disciplinas",                  label: "Disciplinas",           group: "Secretaria",    Icon: ClipboardList },
+  { href: "/professores/atribuicoes",      label: "Atribuições",           group: "Secretaria",    Icon: UserCheck },
+  { href: "/pipeline",                     label: "Pipeline",              group: "Secretaria",    Icon: Kanban },
+  { href: "/pipeline/config",              label: "Configurar quadros",    group: "Secretaria",    Icon: Settings2 },
+  { href: "/portaria",                     label: "Portaria",              group: "Secretaria",    Icon: DoorOpen },
+  { href: "/organograma",                  label: "Organograma",           group: "Secretaria",    Icon: Network },
+  { href: "/calendario",                   label: "Calendário Letivo",     group: "Secretaria",    Icon: CalendarDays },
+  { href: "/eventos",                      label: "Eventos",               group: "Secretaria",    Icon: CalendarHeart },
+  { href: "/importacoes",                  label: "Importações",           group: "Secretaria",    Icon: Inbox },
+
+  // ── Comercial ──
+  { href: "/comercial/produtos",           label: "Produtos",              group: "Comercial",     Icon: Tags },
+  { href: "/comercial/vendas",             label: "Vendas",                group: "Comercial",     Icon: Receipt },
+  { href: "/comercial/estoque",            label: "Estoque",               group: "Comercial",     Icon: Layers3 },
+
+  // ── Financeiro ──
+  { href: "/financeiro",                   label: "Financeiro",            group: "Financeiro",    Icon: BarChart3 },
+  { href: "/financeiro/lancamentos",       label: "Livro-Razão",           group: "Financeiro",    Icon: ReceiptText },
+  { href: "/financeiro/contratos",         label: "Contratos de Receita",  group: "Financeiro",    Icon: FileText },
+  { href: "/valores-praticados",           label: "Valores praticados",    group: "Financeiro",    Icon: ReceiptText },
+  { href: "/planos",                       label: "Planos",                group: "Financeiro",    Icon: CreditCard },
+  { href: "/rh/folha-v2",                  label: "Folha",                 group: "Financeiro",    Icon: Wallet },
+
+  // ── RH ──
+  { href: "/rh/empresas",                  label: "Empresas",              group: "RH",            Icon: Building2 },
+  { href: "/rh/funcionarios",              label: "Funcionários",          group: "RH",            Icon: UsersRound },
+  { href: "/rh/brackets",                  label: "Brackets",              group: "RH",            Icon: SlidersHorizontal },
+  { href: "/rh/documentos",                label: "Documentos RH",         group: "RH",            Icon: FileText },
+  { href: "/comunicados",                  label: "Comunicados",           group: "RH",            Icon: Megaphone },
+  { href: "/configuracoes/lembretes",      label: "Lembretes",             group: "RH",            Icon: BellRing },
+
+  // ── Relatórios ──
+  { href: "/relatorios/alunos",            label: "Rel. Alunos",           group: "Relatórios",    Icon: UsersRound },
+  { href: "/relatorios/frequencia",        label: "Rel. Frequência",       group: "Relatórios",    Icon: CalendarCheck },
+  { href: "/relatorios/inadimplencia",     label: "Inadimplência",         group: "Relatórios",    Icon: AlertCircle },
+  { href: "/relatorios/comercial",         label: "Rel. Comercial",        group: "Relatórios",    Icon: BarChart3 },
+  { href: "/relatorios/dre",               label: "DRE / Resultado",       group: "Relatórios",    Icon: BarChart3 },
+
+  // ── Configurações ──
+  { href: "/configuracoes/escola",         label: "Dados da escola",       group: "Configurações", Icon: School },
+  { href: "/usuarios",                     label: "Usuários",              group: "Configurações", Icon: UsersRound },
+  { href: "/configuracoes/perfis",         label: "Perfis e Permissões",   group: "Configurações", Icon: ShieldCheck },
+  { href: "/configuracoes/webhook",        label: "Webhook",               group: "Configurações", Icon: Webhook },
+  { href: "/financeiro/lancamentos/categorias", label: "Categorias financeiras", group: "Configurações", Icon: Tags },
 ];
 
-const GROUPS = ["Secretaria", "Financeiro", "RH", "Relatórios", "Configurações"];
+const GROUPS = ["Secretaria", "Comercial", "Financeiro", "RH", "Relatórios", "Configurações"];
 
 function QuickLinkCard({ route }: { route: RouteItem }) {
   const { Icon, label, href } = route;
@@ -83,7 +111,7 @@ function EditModal({
     setSelected((prev) =>
       prev.includes(href)
         ? prev.filter((h) => h !== href)
-        : prev.length < 5
+        : prev.length < MAX_LINKS
         ? [...prev, href]
         : prev
     );
@@ -98,7 +126,7 @@ function EditModal({
         <div className="flex items-center justify-between border-b border-line px-5 py-4">
           <div>
             <h2 className="text-[14px] font-bold text-ink">Acesso rápido</h2>
-            <p className="text-[12px] text-ink/55 mt-0.5">Selecione até 5 atalhos ({selected.length}/5)</p>
+            <p className="text-[12px] text-ink/55 mt-0.5">Selecione até {MAX_LINKS} atalhos ({selected.length}/{MAX_LINKS})</p>
           </div>
           <button type="button" onClick={onClose} className="rounded-[7px] p-1.5 text-ink/40 hover:bg-muted hover:text-ink">
             <X size={15} />
@@ -116,7 +144,7 @@ function EditModal({
                   {routes.map((route) => {
                     const { Icon } = route;
                     const active = selected.includes(route.href);
-                    const disabled = !active && selected.length >= 5;
+                    const disabled = !active && selected.length >= MAX_LINKS;
                     return (
                       <button
                         key={route.href}

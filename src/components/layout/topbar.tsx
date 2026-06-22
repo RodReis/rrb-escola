@@ -54,6 +54,15 @@ const SECRETARIA_ITEMS: DropdownItem[] = [
       { href: "/professores/atribuicoes", label: "Atribuições", iconName: "UserCheck" },
     ],
   },
+  {
+    href: "/pipeline",
+    label: "Pipeline",
+    iconName: "Kanban",
+    children: [
+      { href: "/pipeline", label: "Kanban", iconName: "Kanban" },
+      { href: "/pipeline/config", label: "Configurar quadros", iconName: "Settings2" },
+    ],
+  },
   { href: "/portaria", label: "Portaria", iconName: "DoorOpen" },
   { href: "/organograma", label: "Organograma", iconName: "Network" },
   { href: "/calendario", label: "Calendário Letivo", iconName: "CalendarDays" },

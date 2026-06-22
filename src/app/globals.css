@@ -17,6 +17,16 @@ html[data-theme="light"] {
   --color-warning: 201 130 26;
   --color-success: 22 145 90;
 
+  /* ---- Pipeline Kanban column colors ---- */
+  --color-pipeline-novo:        58 95 224;   /* azul brand — Novo Lead */
+  --color-pipeline-contato:     46 91 230;   /* azul primário — Primeiro Contato */
+  --color-pipeline-aguardando:  201 130 26;  /* âmbar — Aguardando Retorno */
+  --color-pipeline-entrevista:  192 100 20;  /* laranja-âmbar — Entrevista */
+  --color-pipeline-reserva:     128 72 236;  /* violeta — Cadastro de Reserva */
+  --color-pipeline-analise:     18 163 154;  /* teal — Em Análise */
+  --color-pipeline-convertido:  22 145 90;   /* verde success — Matrícula Confirmada */
+  --color-pipeline-perdido:     218 46 57;   /* vermelho danger — Perdido */
+
   --brand-700: #1B36A6;
   --brand-600: #2348C9;
   --brand-500: #3A5FE0;
@@ -97,6 +107,16 @@ html[data-theme="dark"] {
   --color-warning: 224 169 62;
   --color-success: 47 182 120;
 
+  /* ---- Pipeline Kanban column colors (dark) ---- */
+  --color-pipeline-novo:        94 128 245;  /* azul brand claro */
+  --color-pipeline-contato:     110 139 240; /* azul primary claro */
+  --color-pipeline-aguardando:  224 169 62;  /* âmbar claro */
+  --color-pipeline-entrevista:  230 140 50;  /* laranja-âmbar claro */
+  --color-pipeline-reserva:     160 108 255; /* violeta claro */
+  --color-pipeline-analise:     43 194 184;  /* teal claro */
+  --color-pipeline-convertido:  47 182 120;  /* verde success claro */
+  --color-pipeline-perdido:     255 92 102;  /* vermelho danger claro */
+
   --brand-600: #4E72F0;
   --brand-500: #5E80F5;
   --brand-glow: #6E8BFF;
@@ -161,6 +181,7 @@ html[data-theme="dark"] {
 body {
   margin: 0;
   min-height: 100vh;
+  overflow-x: clip;
   background: var(--bg);
   color: var(--text);
   font-family: var(--font-sans, ui-sans-serif, system-ui, sans-serif);
@@ -879,6 +900,10 @@ textarea {
   border: 3px solid transparent;
   background-clip: padding-box;
 }
+
+/* Pipeline board — scrollbar oculta, scroll via sombras e drag */
+.pipeline-scroll { scrollbar-width: none; -ms-overflow-style: none; }
+.pipeline-scroll::-webkit-scrollbar { display: none; }
 
 /* ===================== Animações (§11) ===================== */
 @keyframes rbGrow { from { transform: scaleY(0); opacity: 0; } to { transform: scaleY(1); opacity: 1; } }

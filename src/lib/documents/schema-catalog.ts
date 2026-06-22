@@ -195,3 +195,104 @@ export function inferDefaultMapping(placeholder: string): Mapping {
   // Fallback total: nome do aluno
   return { ...FALLBACK_DEFAULT, placeholder };
 }
+
+// ---------------------------------------------------------------------------
+// Phase 2 additions — TemplateCatalog, TEMPLATE_META, types for Phase 3 usage
+// ---------------------------------------------------------------------------
+
+/**
+ * Catalog of the 6 hardcoded template categories this system supports.
+ * Used by Phase 3 server actions and UI to reference known template kinds.
+ */
+export enum TemplateCatalog {
+  DeclaracaoFrequencia = "declaracao_frequencia",
+  DeclaracaoMatricula  = "declaracao_matricula",
+  TermoResponsabilidade = "termo_responsabilidade",
+  TermoAutorizacao = "termo_autorizacao",
+  ContratoServicos = "contrato_servicos",
+  FichaCadastral = "ficha_cadastral",
+}
+
+export type TemplateCategoria = "declaracao" | "termo" | "contrato" | "outro";
+
+export type TemplateMetadata = {
+  id: TemplateCatalog;
+  nome: string;
+  categoria: TemplateCategoria;
+  description: string;
+};
+
+/**
+ * Metadata map for the 6 catalog entries.
+ * Keyed by TemplateCatalog value.
+ */
+export const TEMPLATE_META: Record<TemplateCatalog, TemplateMetadata> = {
+  [TemplateCatalog.DeclaracaoFrequencia]: {
+    id: TemplateCatalog.DeclaracaoFrequencia,
+    nome: "Declaração de Frequência",
+    categoria: "declaracao",
+    description: "Certifica a frequência do aluno no período letivo.",
+  },
+  [TemplateCatalog.DeclaracaoMatricula]: {
+    id: TemplateCatalog.DeclaracaoMatricula,
+    nome: "Declaração de Matrícula",
+    categoria: "declaracao",
+    description: "Confirma o vínculo ativo do aluno com a instituição.",
+  },
+  [TemplateCatalog.TermoResponsabilidade]: {
+    id: TemplateCatalog.TermoResponsabilidade,
+    nome: "Termo de Responsabilidade",
+    categoria: "termo",
+    description: "Formaliza a responsabilidade do responsável pelo aluno.",
+  },
+  [TemplateCatalog.TermoAutorizacao]: {
+    id: TemplateCatalog.TermoAutorizacao,
+    nome: "Termo de Autorização",
+    categoria: "termo",
+    description: "Autorização para atividades fora do ambiente escolar.",
+  },
+  [TemplateCatalog.ContratoServicos]: {
+    id: TemplateCatalog.ContratoServicos,
+    nome: "Contrato de Serviços",
+    categoria: "contrato",
+    description: "Contrato de prestação de serviços educacionais.",
+  },
+  [TemplateCatalog.FichaCadastral]: {
+    id: TemplateCatalog.FichaCadastral,
+    nome: "Ficha Cadastral",
+    categoria: "outro",
+    description: "Registro completo de dados do aluno e responsáveis.",
+  },
+};
+
+/**
+ * Type alias for AllowedFilter, exported under the spec name for Phase 3.
+ */
+export type FilterRule = AllowedFilter;
+
+/**
+ * Typed representation of the ALLOWED_TABLES structure.
+ */
+export type AllowlistSchema = {
+  tables: typeof ALLOWED_TABLES;
+  computedFns: typeof COMPUTED_FNS;
+};
+
+/**
+ * Validates whether a table/column combination is allowed,
+ * and optionally whether a filter is valid for that table.
+ *
+ * @returns true if the combination is permitted by the allowlist.
+ */
+export function validateTableAccess(
+  table: string,
+  column: string,
+  filter?: string | null,
+): boolean {
+  if (!isAllowedTable(table)) return false;
+  if (!isAllowedColumn(table, column)) return false;
+  if (filter != null && filter !== "") {
+    if (!isAllowedFilter(table, filter)) return false;
+  }
+  return true;
+}

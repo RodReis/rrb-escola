@@ -2,6 +2,7 @@
 
 import { Search } from "lucide-react";
 import type { PipelineColuna } from "./types";
+import { FilterDropdown } from "./filter-dropdown";
 
 export type FiltrosPipeline = {
   nome: string;
@@ -24,65 +25,65 @@ export function PipelineFiltros({ filtros, onChange, colunas, usuarios }: Props)
     onChange({ ...filtros, [field]: value });
   }
 
+  const colunaOptions = [
+    { value: "", label: "Todas as colunas" },
+    ...colunas.map((c) => ({ value: c.id, label: c.nome })),
+  ];
+  const usuarioOptions = [
+    { value: "", label: "Todos os responsáveis" },
+    ...usuarios.map((u) => ({ value: u.id, label: u.nome })),
+  ];
+
   return (
-    <div className="flex flex-wrap items-center gap-2 sm:justify-end">
-      {/* Busca por nome */}
+    <div className="flex items-center gap-2 flex-wrap justify-end">
+      {/* Busca */}
       <div className="relative">
-        <Search
-          size={13}
-          className="pointer-events-none absolute left-2.5 top-1/2 -translate-y-1/2 text-[rgb(var(--color-ink)/0.35)]"
-        />
+        <Search size={13} className="pointer-events-none absolute left-2.5 top-1/2 -translate-y-1/2 text-[rgb(var(--color-ink)/0.35)]" />
         <input
           type="text"
           value={filtros.nome}
           onChange={(e) => set("nome", e.target.value)}
           placeholder="Buscar por nome…"
-          className="h-8 rounded-md border border-[rgb(var(--color-line))] bg-[rgb(var(--color-surface))] pl-7 pr-3 text-sm text-[rgb(var(--color-ink))] placeholder:text-[rgb(var(--color-ink)/0.35)] focus:outline-none focus:ring-1 focus:ring-[rgb(var(--color-brand)/0.4)] w-48"
+          className="h-8 w-44 rounded-md border border-[rgb(var(--color-line))] bg-[rgb(var(--color-surface))] pl-7 pr-3 text-sm text-[rgb(var(--color-ink))] placeholder:text-[rgb(var(--color-ink)/0.35)] focus:outline-none focus:ring-1 focus:ring-[rgb(var(--color-brand)/0.4)]"
         />
       </div>
 
-      {/* Filtro por coluna */}
-      <select
+      {/* Coluna */}
+      <FilterDropdown
         value={filtros.colunaId}
-        onChange={(e) => set("colunaId", e.target.value)}
-        className="h-8 w-44 rounded-md border border-[rgb(var(--color-line))] bg-[rgb(var(--color-surface))] pl-2 pr-6 text-sm text-[rgb(var(--color-ink))] focus:outline-none focus:ring-1 focus:ring-[rgb(var(--color-brand)/0.4)]"
-        aria-label="Filtrar por coluna"
-      >
-        <option value="">Todas as colunas</option>
-        {colunas.map((c) => (
-          <option key={c.id} value={c.id}>{c.nome}</option>
-        ))}
-      </select>
+        options={colunaOptions}
+        onChange={(v) => set("colunaId", v)}
+        placeholder="Todas as colunas"
+        ariaLabel="Filtrar por coluna"
+        width={170}
+      />
 
-      {/* Filtro por responsável */}
+      {/* Responsável */}
       {usuarios.length > 0 && (
-        <select
+        <FilterDropdown
           value={filtros.assignedTo}
-          onChange={(e) => set("assignedTo", e.target.value)}
-          className="h-8 w-52 rounded-md border border-[rgb(var(--color-line))] bg-[rgb(var(--color-surface))] pl-2 pr-6 text-sm text-[rgb(var(--color-ink))] focus:outline-none focus:ring-1 focus:ring-[rgb(var(--color-brand)/0.4)]"
-          aria-label="Filtrar por responsável"
-        >
-          <option value="">Todos os responsáveis</option>
-          {usuarios.map((u) => (
-            <option key={u.id} value={u.id}>{u.nome}</option>
-          ))}
-        </select>
+          options={usuarioOptions}
+          onChange={(v) => set("assignedTo", v)}
+          placeholder="Todos os responsáveis"
+          ariaLabel="Filtrar por responsável"
+          width={195}
+        />
       )}
 
-      {/* Toggle sem resposta */}
+      {/* Sem resposta */}
       <button
         type="button"
         onClick={() => set("semResposta", !filtros.semResposta)}
-        className={`h-8 rounded-md border px-3 text-xs transition-colors ${
+        className={`h-8 rounded-md border px-3 text-xs transition-colors whitespace-nowrap ${
           filtros.semResposta
             ? "border-[rgb(var(--color-danger))] bg-[rgb(var(--color-danger)/0.08)] text-[rgb(var(--color-danger))]"
             : "border-[rgb(var(--color-line))] text-[rgb(var(--color-ink)/0.5)] hover:bg-[rgb(var(--color-muted))]"
         }`}
       >
-        ● Sem resposta
+        Sem resposta
       </button>
 
-      {/* Limpar filtros */}
+      {/* Limpar */}
       {(filtros.nome || filtros.colunaId || filtros.assignedTo || filtros.semResposta) && (
         <button
           type="button"

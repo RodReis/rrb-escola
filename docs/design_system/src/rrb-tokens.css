@@ -1,0 +1,266 @@
+/* ============================================================
+   RRB ESCOLA — Design System tokens
+   Colorful, modern, light + dark. No serif brand identity.
+   Theme switches via [data-theme="light" | "dark"] on <html>.
+   ============================================================ */
+
+:root {
+  /* ---- Brand ---- */
+  --brand-700: #1B36A6;
+  --brand-600: #2348C9;   /* primary royal blue */
+  --brand-500: #3A5FE0;
+  --brand-400: #6E8BF0;
+  --brand-glow: #5B7BFF;
+
+  --red-600: #D8242E;     /* secondary accent (flag) */
+  --red-500: #EF4452;
+
+  /* ---- Colorful hue channels (used for KPI cards, tags, charts) ---- */
+  --c-blue:   #2E5BE6;
+  --c-coral:  #ED4451;
+  --c-amber:  #E0A12B;
+  --c-green:  #18A05E;
+  --c-violet: #8048EC;
+  --c-teal:   #12A39A;
+  --c-pink:   #E84393;
+
+  /* ---- Status ---- */
+  --ok:    #16915A;
+  --warn:  #C9821A;
+  --bad:   #DA2E39;
+  --info:  var(--brand-600);
+
+  /* ---- Type ---- */
+  --font-display: 'Bricolage Grotesque', 'Geist', system-ui, sans-serif;
+  --font-body: 'Geist', ui-sans-serif, system-ui, -apple-system, sans-serif;
+  --font-mono: 'Geist Mono', ui-monospace, 'SF Mono', Menlo, monospace;
+
+  /* ---- Radii ---- */
+  --r-xs: 5px;
+  --r-sm: 8px;
+  --r-md: 11px;
+  --r-lg: 16px;
+  --r-xl: 22px;
+  --r-pill: 999px;
+
+  /* ---- Motion ---- */
+  --ease: cubic-bezier(.22,.68,.32,1);
+  --ease-out: cubic-bezier(.16,1,.3,1);
+  --spring: cubic-bezier(.34,1.56,.64,1);
+}
+
+/* ============ LIGHT (default) ============ */
+:root,
+[data-theme="light"] {
+  color-scheme: light;
+  --bg:        #F4F6FC;
+  --bg-grad-a: #EEF2FE;
+  --bg-grad-b: #F7F4FB;
+  --surface:   #FFFFFF;
+  --surface-2: #F7F8FD;
+  --surface-3: #EFF2FA;
+  --border:    #E5E8F2;
+  --border-soft: #EEF0F8;
+  --border-strong: #D2D7E6;
+
+  --text:       #0D1428;
+  --text-2:     #2A3450;
+  --text-soft:  #46506B;
+  --text-muted: #6B7590;
+  --text-faint: #9AA2B8;
+
+  --shadow-xs: 0 1px 2px rgba(16,24,48,.06);
+  --shadow-sm: 0 2px 6px rgba(16,24,48,.07), 0 1px 2px rgba(16,24,48,.05);
+  --shadow-md: 0 8px 22px -8px rgba(16,24,48,.16), 0 2px 6px -2px rgba(16,24,48,.08);
+  --shadow-lg: 0 28px 60px -22px rgba(16,24,48,.28), 0 8px 18px -10px rgba(16,24,48,.12);
+  --shadow-brand: 0 16px 40px -14px rgba(35,72,201,.45);
+
+  --tint-strength: 9%;
+  --tint-border: 22%;
+  --on-tint: 38%;  /* mix toward text for readable label on tint */
+}
+
+/* ============ DARK ============ */
+[data-theme="dark"] {
+  color-scheme: dark;
+  --bg:        #080B16;
+  --bg-grad-a: #0C1124;
+  --bg-grad-b: #120E22;
+  --surface:   #121726;
+  --surface-2: #0E1320;
+  --surface-3: #1A2133;
+  --border:    #242B3D;
+  --border-soft: #1C2233;
+  --border-strong: #333B52;
+
+  --text:       #EEF1FA;
+  --text-2:     #D3D9E8;
+  --text-soft:  #B3BCD2;
+  --text-muted: #8B96B0;
+  --text-faint: #5E6880;
+
+  --brand-600: #4E72F0;
+  --brand-500: #5E80F5;
+  --brand-glow: #6E8BFF;
+
+  --c-blue:   #5E80F5;
+  --c-coral:  #FF6470;
+  --c-amber:  #F0B847;
+  --c-green:  #2FC07C;
+  --c-violet: #A06CFF;
+  --c-teal:   #2BC2B8;
+  --c-pink:   #FF6BB0;
+
+  --ok:   #2FB678;
+  --warn: #E0A93E;
+  --bad:  #FF5C66;
+
+  --shadow-xs: 0 1px 2px rgba(0,0,0,.4);
+  --shadow-sm: 0 2px 8px rgba(0,0,0,.45), 0 1px 2px rgba(0,0,0,.4);
+  --shadow-md: 0 10px 26px -8px rgba(0,0,0,.6), 0 2px 8px -2px rgba(0,0,0,.5);
+  --shadow-lg: 0 30px 64px -20px rgba(0,0,0,.7), 0 10px 22px -10px rgba(0,0,0,.55);
+  --shadow-brand: 0 18px 46px -14px rgba(78,114,240,.55);
+
+  --tint-strength: 16%;
+  --tint-border: 32%;
+  --on-tint: 78%;
+}
+
+/* ============ tint helpers (theme-adaptive) ============ */
+/* bg tint for a given hue var, e.g. background: var(--tint-blue) */
+:root {
+  --tint-blue:   color-mix(in oklab, var(--c-blue)   var(--tint-strength), var(--surface));
+  --tint-coral:  color-mix(in oklab, var(--c-coral)  var(--tint-strength), var(--surface));
+  --tint-amber:  color-mix(in oklab, var(--c-amber)  var(--tint-strength), var(--surface));
+  --tint-green:  color-mix(in oklab, var(--c-green)  var(--tint-strength), var(--surface));
+  --tint-violet: color-mix(in oklab, var(--c-violet) var(--tint-strength), var(--surface));
+  --tint-teal:   color-mix(in oklab, var(--c-teal)   var(--tint-strength), var(--surface));
+  --tint-pink:   color-mix(in oklab, var(--c-pink)   var(--tint-strength), var(--surface));
+}
+
+* { box-sizing: border-box; }
+html, body { margin: 0; padding: 0; }
+body {
+  font-family: var(--font-body);
+  color: var(--text);
+  background: var(--bg);
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+  font-feature-settings: 'ss01';
+}
+
+/* ===================== Typography utilities ===================== */
+.rb-display { font-family: var(--font-display); font-weight: 600; letter-spacing: -0.02em; line-height: 1.05; }
+.rb-mono { font-family: var(--font-mono); font-variant-numeric: tabular-nums; }
+.rb-num { font-variant-numeric: tabular-nums; }
+.rb-eyebrow {
+  font-family: var(--font-mono);
+  font-size: 10.5px; letter-spacing: 0.16em; text-transform: uppercase;
+  color: var(--brand-600); font-weight: 600;
+}
+
+/* ===================== Buttons ===================== */
+.rb-btn {
+  --b-h: 38px;
+  display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+  height: var(--b-h); padding: 0 16px;
+  border-radius: var(--r-sm);
+  font-family: var(--font-body); font-weight: 550; font-size: 13.5px;
+  letter-spacing: -0.006em; cursor: pointer; white-space: nowrap;
+  border: 1px solid transparent;
+  transition: transform .16s var(--ease), box-shadow .2s var(--ease), background .16s var(--ease), border-color .16s var(--ease), color .16s var(--ease);
+  text-decoration: none; user-select: none;
+}
+.rb-btn:active { transform: translateY(1px) scale(.99); }
+.rb-btn.sm { --b-h: 32px; font-size: 12.5px; padding: 0 12px; border-radius: var(--r-xs); }
+.rb-btn.lg { --b-h: 46px; font-size: 14.5px; padding: 0 22px; border-radius: var(--r-md); }
+
+.rb-btn-primary {
+  background: linear-gradient(180deg, var(--brand-500), var(--brand-600));
+  color: #fff;
+  box-shadow: 0 1px 0 rgba(255,255,255,.22) inset, var(--shadow-brand);
+}
+.rb-btn-primary:hover { transform: translateY(-1px); box-shadow: 0 1px 0 rgba(255,255,255,.25) inset, 0 22px 50px -16px rgba(35,72,201,.6); }
+
+.rb-btn-ghost { background: var(--surface); color: var(--text); border-color: var(--border-strong); box-shadow: var(--shadow-xs); }
+.rb-btn-ghost:hover { background: var(--surface-2); border-color: var(--text-faint); }
+
+.rb-btn-soft { background: color-mix(in oklab, var(--brand-600) 12%, var(--surface)); color: var(--brand-600); }
+.rb-btn-soft:hover { background: color-mix(in oklab, var(--brand-600) 18%, var(--surface)); }
+
+.rb-btn-danger { background: var(--bad); color: #fff; }
+.rb-btn-danger:hover { filter: brightness(1.05); transform: translateY(-1px); }
+
+.rb-btn-ghost.icon, .rb-btn-soft.icon { padding: 0; width: var(--b-h); }
+.rb-btn:disabled { opacity: .5; cursor: not-allowed; transform: none; }
+
+/* ===================== Cards ===================== */
+.rb-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--r-lg);
+  box-shadow: var(--shadow-sm);
+}
+
+/* ===================== Inputs ===================== */
+.rb-field { display: flex; flex-direction: column; gap: 7px; }
+.rb-label { font-size: 12.5px; font-weight: 550; color: var(--text-soft); letter-spacing: -0.005em; }
+.rb-input {
+  height: 44px; padding: 0 14px;
+  background: var(--surface);
+  border: 1.5px solid var(--border-strong);
+  border-radius: var(--r-sm);
+  font-family: var(--font-body); font-size: 14px; color: var(--text);
+  transition: border-color .16s var(--ease), box-shadow .16s var(--ease), background .16s var(--ease);
+  width: 100%;
+}
+.rb-input::placeholder { color: var(--text-faint); }
+.rb-input:focus {
+  outline: none;
+  border-color: var(--brand-500);
+  box-shadow: 0 0 0 4px color-mix(in oklab, var(--brand-500) 18%, transparent);
+  background: var(--surface);
+}
+.rb-input.has-icon { padding-left: 42px; }
+
+/* ===================== Pills / Badges / Tags ===================== */
+.rb-pill {
+  display: inline-flex; align-items: center; gap: 6px;
+  height: 23px; padding: 0 10px;
+  border-radius: var(--r-pill);
+  font-size: 11.5px; font-weight: 600; letter-spacing: -0.005em; white-space: nowrap;
+}
+.rb-pill .dot { width: 6px; height: 6px; border-radius: 50%; flex-shrink: 0; }
+.rb-pill-ok    { background: var(--tint-green);  color: color-mix(in oklab, var(--ok)   var(--on-tint), var(--text)); }
+.rb-pill-ok    .dot { background: var(--ok); }
+.rb-pill-warn  { background: var(--tint-amber);  color: color-mix(in oklab, var(--warn) var(--on-tint), var(--text)); }
+.rb-pill-warn  .dot { background: var(--warn); }
+.rb-pill-bad   { background: var(--tint-coral);  color: color-mix(in oklab, var(--bad)  var(--on-tint), var(--text)); }
+.rb-pill-bad   .dot { background: var(--bad); }
+.rb-pill-info  { background: var(--tint-blue);   color: color-mix(in oklab, var(--c-blue) var(--on-tint), var(--text)); }
+.rb-pill-info  .dot { background: var(--c-blue); }
+.rb-pill-neutral { background: var(--surface-3); color: var(--text-soft); }
+.rb-pill-neutral .dot { background: var(--text-faint); }
+
+/* Outline tag */
+.rb-tag {
+  display: inline-flex; align-items: center; gap: 5px;
+  height: 24px; padding: 0 9px; border-radius: var(--r-xs);
+  font-size: 11.5px; font-weight: 550;
+  border: 1px solid var(--border-strong); color: var(--text-soft);
+  background: var(--surface);
+}
+
+/* ===================== Scrollbars ===================== */
+.rb-scroll::-webkit-scrollbar { width: 10px; height: 10px; }
+.rb-scroll::-webkit-scrollbar-thumb { background: color-mix(in oklab, var(--text-faint) 50%, transparent); border-radius: 6px; border: 3px solid transparent; background-clip: padding-box; }
+.rb-scroll::-webkit-scrollbar-thumb:hover { background: var(--text-faint); border: 3px solid transparent; background-clip: padding-box; }
+
+input:focus, button:focus { outline: none; }
+button { font-family: inherit; }
+a { color: inherit; }
+
+/* reduce-motion */
+@media (prefers-reduced-motion: reduce) {
+  * { animation-duration: .001ms !important; transition-duration: .001ms !important; }
+}

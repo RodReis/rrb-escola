@@ -1,14 +1,16 @@
 "use client";
 
-import { useState, useCallback, useRef } from "react";
+import { useState, useCallback, useRef, type RefObject } from "react";
 import {
   DndContext,
   DragOverlay,
-  PointerSensor,
+  MouseSensor,
+  TouchSensor,
   KeyboardSensor,
   useSensor,
   useSensors,
   closestCorners,
+  MeasuringStrategy,
   type DragStartEvent,
   type DragOverEvent,
   type DragEndEvent,
@@ -26,16 +28,18 @@ type Props = {
   filtros: { nome: string; colunaId: string; assignedTo: string; semResposta: boolean };
   onOpenCard: (id: string) => void;
   onNovoCard: (colunaId: string) => void;
+  scrollRef?: RefObject<HTMLDivElement>;
 };
 
-export function PipelineBoard({ data, filtros, onOpenCard, onNovoCard }: Props) {
+export function PipelineBoard({ data, filtros, onOpenCard, onNovoCard, scrollRef }: Props) {
   const [cards, setCards] = useState<PipelineCardResumo[]>(data.cards);
   // Evita processar eventos do Realtime enquanto o usuário draga
   const isDraggingRef = useRef(false);
   const [activeCard, setActiveCard] = useState<PipelineCardResumo | null>(null);
 
   const sensors = useSensors(
-    useSensor(PointerSensor, { activationConstraint: { distance: 8 } }),
+    useSensor(MouseSensor, { activationConstraint: { distance: 8 } }),
+    useSensor(TouchSensor, { activationConstraint: { delay: 250, tolerance: 5 } }),
     useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates }),
   );
 
@@ -151,27 +155,29 @@ export function PipelineBoard({ data, filtros, onOpenCard, onNovoCard }: Props) 
     <DndContext
       sensors={sensors}
       collisionDetection={closestCorners}
+      measuring={{ droppable: { strategy: MeasuringStrategy.Always } }}
       onDragStart={handleDragStart}
       onDragOver={handleDragOver}
       onDragEnd={handleDragEnd}
     >
-      <div className="flex gap-4 overflow-x-auto pb-4 pt-2 snap-x">
-        {data.colunas.map((coluna) => {
-          const cardsColuna = cardsFiltrados
-            .filter((c) => c.coluna_id === coluna.id)
-            .sort((a, b) => a.ordem - b.ordem);
+      <div ref={scrollRef} className="overflow-x-auto pipeline-scroll pb-2">
+        <div className="flex gap-4 pt-2" style={{ minWidth: "max-content" }}>
+          {data.colunas.map((coluna) => {
+            const cardsColuna = cardsFiltrados
+              .filter((c) => c.coluna_id === coluna.id)
+              .sort((a, b) => a.ordem - b.ordem);
 
-          return (
-            <div key={coluna.id} className="snap-start">
+            return (
               <PipelineColumn
+                key={coluna.id}
                 coluna={coluna}
                 cards={cardsColuna}
                 onOpenCard={onOpenCard}
                 onNovoCard={onNovoCard}
               />
-            </div>
-          );
-        })}
+            );
+          })}
+        </div>
       </div>
 
       <DragOverlay dropAnimation={{ duration: 200, easing: "cubic-bezier(.16,1,.3,1)" }}>
