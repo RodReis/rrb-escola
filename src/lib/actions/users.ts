@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { requirePermission } from "@/lib/auth/session";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { gravarEventoAuth } from "@/lib/auth/audit";
 import { setUserCreatedFlash } from "@/lib/actions/user-flash";
 import { formText } from "@/lib/utils";
 import {
@@ -113,6 +114,16 @@ export async function deactivateUserAction(formData: FormData) {
     .eq("id", perfilId);
   if (error) redirect("/usuarios?erro=desativar");
 
+  await gravarEventoAuth({
+    escola_id: session.profile.escola_id,
+    user_id: session.profile.user_id,
+    email: session.profile.email,
+    evento: "dado_excluido",
+    recurso: "perfis",
+    recurso_id: perfilId,
+    detalhe: "usuário desativado",
+  });
+
   revalidatePath("/usuarios");
   redirect("/usuarios?desativado=1");
 }
@@ -134,7 +145,7 @@ export async function reactivateUserAction(formData: FormData) {
 }
 
 export async function resetPasswordAction(formData: FormData) {
-  await requirePermission("usuarios", "update");
+  const session = await requirePermission("usuarios", "update");
   const perfilId = formText(formData, "perfilId");
   if (!perfilId) redirect("/usuarios?erro=id");
 
@@ -149,6 +160,16 @@ export async function resetPasswordAction(formData: FormData) {
   const password = generatePassword();
   const { error } = await admin.auth.admin.updateUserById(perfil.user_id, { password });
   if (error) redirect(`/usuarios?erro=${encodeURIComponent(error.message)}`);
+
+  await gravarEventoAuth({
+    escola_id: session.profile.escola_id,
+    user_id: perfil.user_id,
+    email: perfil.email,
+    evento: "senha_alterada",
+    recurso: "perfis",
+    recurso_id: perfilId,
+    detalhe: `redefinida por ${session.profile.email}`,
+  });
 
   const { data: perfilFull } = await admin
     .from("perfis")

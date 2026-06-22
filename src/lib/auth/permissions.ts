@@ -38,6 +38,9 @@ export const MODULOS = {
   "comercial.produtos": { grupo: "secretaria", nome: "Produtos" },
   "comercial.vendas": { grupo: "secretaria", nome: "Vendas" },
   "comercial.estoque": { grupo: "secretaria", nome: "Estoque" },
+  pipeline: { grupo: "secretaria", nome: "Pipeline / Captação" },
+  pipeline_admin: { grupo: "secretaria", nome: "Pipeline / Admin" },
+  pipeline_sensivel: { grupo: "secretaria", nome: "Pipeline / Dados Sensíveis" },
   // financeiro
   "financeiro.cobrancas": { grupo: "financeiro", nome: "Cobranças & Pagamentos" },
   "financeiro.lancamentos": { grupo: "financeiro", nome: "Livro-Razão" },
@@ -140,4 +143,6 @@ export const ROTA_PARA_MODULO: Record<string, ModuloCodigo> = {
   "/configuracoes/perfis": "configuracoes.perfis",
   "/configuracoes/lembretes": "financeiro.cobrancas",
   "/despesas/categorias": "despesas",
+  "/pipeline": "pipeline",
+  "/pipeline/config": "pipeline_admin",
 };
