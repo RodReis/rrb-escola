@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useTransition } from "react";
-import { ChevronDown, ChevronUp, Paperclip, Trash2, Upload, AlertTriangle, CheckCircle, RotateCcw, Clock } from "lucide-react";
+import { ChevronDown, ChevronUp, Paperclip, Trash2, Upload, AlertTriangle, CheckCircle, RotateCcw, Clock, FileDown } from "lucide-react";
 import {
   getAnamnese,
   salvarAnamnese,
@@ -14,6 +14,8 @@ import {
 } from "@/lib/actions/pipeline-anamnese";
 import type { StatusAnamnese } from "@/lib/validation/pipeline";
 import { cn } from "@/lib/utils";
+import { exportarAnamneseDocxAction } from "@/lib/actions/anamnese-export";
+import { downloadBase64Docx } from "@/lib/documents/download-client";
 import {
   AnamneseFields,
   emptyAnamneseForm,
@@ -130,6 +132,19 @@ export function AnamneseSection({ cardId, podeAcessar }: Props) {
     if (!res.ok) { setErroSalvar(res.error); return; }
     const reload = await getAnamnese(cardId);
     if (reload.ok) setAnamnese(reload.data.anamnese);
+  }
+
+  const [exportando, setExportando] = useState(false);
+  async function handleExportarDocx() {
+    setExportando(true);
+    setErroSalvar(null);
+    try {
+      const res = await exportarAnamneseDocxAction({ cardId });
+      if (!res.success) { setErroSalvar(res.error); return; }
+      downloadBase64Docx(res.base64, res.nomeArquivo);
+    } finally {
+      setExportando(false);
+    }
   }
 
   async function handleUpload(e: React.ChangeEvent<HTMLInputElement>) {
@@ -267,12 +282,23 @@ export function AnamneseSection({ cardId, podeAcessar }: Props) {
                 </div>
               ) : (
                 <>
-                  <p className="text-xs text-[rgb(var(--color-ink)/0.45)]">
-                    <Clock size={11} className="inline mr-1" />
-                    Consentimento em{" "}
-                    {new Date(anamnese.consentimento_em).toLocaleDateString("pt-BR")}
-                    {" · "} Termo {anamnese.termo_versao ?? "v1"}
-                  </p>
+                  <div className="flex items-center justify-between gap-2">
+                    <p className="text-xs text-[rgb(var(--color-ink)/0.45)]">
+                      <Clock size={11} className="inline mr-1" />
+                      Consentimento em{" "}
+                      {new Date(anamnese.consentimento_em).toLocaleDateString("pt-BR")}
+                      {" · "} Termo {anamnese.termo_versao ?? "v1"}
+                    </p>
+                    <button
+                      type="button"
+                      onClick={handleExportarDocx}
+                      disabled={exportando}
+                      className="flex shrink-0 items-center gap-1 rounded border border-[rgb(var(--color-line))] px-2 py-0.5 text-xs text-[rgb(var(--color-ink)/0.7)] hover:text-[rgb(var(--color-brand))] hover:border-[rgb(var(--color-brand)/0.4)] disabled:opacity-50"
+                    >
+                      <FileDown size={12} />
+                      {exportando ? "Gerando…" : "Exportar DOCX"}
+                    </button>
+                  </div>
 
                   {/* Formulário de anamnese (campos compartilhados) */}
                   <AnamneseFields form={form} onChange={setField} />
