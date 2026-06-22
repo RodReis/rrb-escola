@@ -10,13 +10,12 @@
     "test": "vitest run",
     "typecheck": "tsc --noEmit",
     "seed:auth": "node scripts/seed-admin.mjs",
-    "test:scripts": "node --test scripts/tests/*.test.mjs",
-    "reconcile:matriculas:2026": "node scripts/reconcile_matriculas_2026.mjs",
-    "reconcile:matriculas:2026:apply": "node scripts/reconcile_matriculas_2026.mjs --apply",
-    "reset:matriculas:2026": "node scripts/reset_matriculas_2026.mjs",
-    "reset:matriculas:2026:apply": "node scripts/reset_matriculas_2026.mjs --apply --i-have-backup"
+    "test:scripts": "node --test scripts/tests/*.test.mjs"
   },
   "dependencies": {
+    "@dnd-kit/core": "^6.3.1",
+    "@dnd-kit/sortable": "^10.0.0",
+    "@dnd-kit/utilities": "^3.2.2",
     "@supabase/ssr": "^0.10.3",
     "@supabase/supabase-js": "^2.43.4",
     "@vladmandic/face-api": "^1.7.15",
