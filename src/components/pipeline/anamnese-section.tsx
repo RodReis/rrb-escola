@@ -14,6 +14,12 @@ import {
 } from "@/lib/actions/pipeline-anamnese";
 import type { StatusAnamnese } from "@/lib/validation/pipeline";
 import { cn } from "@/lib/utils";
+import {
+  AnamneseFields,
+  emptyAnamneseForm,
+  anamneseToForm,
+  type AnamneseFormState,
+} from "./anamnese-fields";
 
 type Props = {
   cardId: string;
@@ -38,32 +44,6 @@ const STATUS_COLOR: Record<StatusAnamnese, string> = {
   requer_atencao: "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-300",
 };
 
-type FormState = Omit<Anamnese,
-  "id" | "card_id" | "aluno_id" | "status" | "created_at" | "updated_at"
-  | "consentimento_em" | "consentimento_por" | "termo_versao"
->;
-
-function emptyForm(): FormState {
-  return {
-    necessidade_especial: false,
-    necessidade_especial_descricao: null,
-    alergias: null,
-    medicamentos_continuos: null,
-    restricoes_alimentares: null,
-    acomp_psicologico: false,
-    acomp_psicologico_descricao: null,
-    acomp_fonoaudiologico: false,
-    acomp_fonoaudiologico_descricao: null,
-    acomp_psicopedagogico: false,
-    acomp_psicopedagogico_descricao: null,
-    historico_desenvolvimento: null,
-    comportamento_social: null,
-    rotina_familiar: null,
-    observacoes_responsaveis: null,
-    observacoes_coordenacao: null,
-  };
-}
-
 export function AnamneseSection({ cardId, podeAcessar }: Props) {
   const [aberta, setAberta] = useState(false);
   const [carregou, setCarregou] = useState(false);
@@ -78,11 +58,11 @@ export function AnamneseSection({ cardId, podeAcessar }: Props) {
   );
 
   // Form principal
-  const [form, setForm] = useState<FormState>(emptyForm());
+  const [form, setForm] = useState<AnamneseFormState>(emptyAnamneseForm());
   const [erroSalvar, setErroSalvar] = useState<string | null>(null);
   const [savedOk, setSavedOk] = useState(false);
 
-  function setField<K extends keyof FormState>(key: K, val: FormState[K]) {
+  function setField<K extends keyof AnamneseFormState>(key: K, val: AnamneseFormState[K]) {
     setForm((prev) => ({ ...prev, [key]: val }));
     setSavedOk(false);
   }
@@ -98,24 +78,7 @@ export function AnamneseSection({ cardId, podeAcessar }: Props) {
       setArquivos(res.data.arquivos);
       if (res.data.anamnese) {
         const a = res.data.anamnese;
-        setForm({
-          necessidade_especial: a.necessidade_especial,
-          necessidade_especial_descricao: a.necessidade_especial_descricao,
-          alergias: a.alergias,
-          medicamentos_continuos: a.medicamentos_continuos,
-          restricoes_alimentares: a.restricoes_alimentares,
-          acomp_psicologico: a.acomp_psicologico,
-          acomp_psicologico_descricao: a.acomp_psicologico_descricao,
-          acomp_fonoaudiologico: a.acomp_fonoaudiologico,
-          acomp_fonoaudiologico_descricao: a.acomp_fonoaudiologico_descricao,
-          acomp_psicopedagogico: a.acomp_psicopedagogico,
-          acomp_psicopedagogico_descricao: a.acomp_psicopedagogico_descricao,
-          historico_desenvolvimento: a.historico_desenvolvimento,
-          comportamento_social: a.comportamento_social,
-          rotina_familiar: a.rotina_familiar,
-          observacoes_responsaveis: a.observacoes_responsaveis,
-          observacoes_coordenacao: a.observacoes_coordenacao,
-        });
+        setForm(anamneseToForm(a));
         if (a.consentimento_em) {
           setConsentimentoEm(a.consentimento_em.slice(0, 16));
         }
@@ -311,47 +274,8 @@ export function AnamneseSection({ cardId, podeAcessar }: Props) {
                     {" · "} Termo {anamnese.termo_versao ?? "v1"}
                   </p>
 
-                  {/* Formulário de anamnese */}
-                  <div className="space-y-3">
-                    {/* Saúde */}
-                    <p className="text-xs font-semibold text-[rgb(var(--color-ink)/0.5)] uppercase tracking-wide">Saúde</p>
-                    <Textarea label="Alergias" value={form.alergias} onChange={(v) => setField("alergias", v)} />
-                    <Textarea label="Medicamentos contínuos" value={form.medicamentos_continuos} onChange={(v) => setField("medicamentos_continuos", v)} />
-                    <Textarea label="Restrições alimentares" value={form.restricoes_alimentares} onChange={(v) => setField("restricoes_alimentares", v)} />
-
-                    {/* Necessidade especial */}
-                    <p className="text-xs font-semibold text-[rgb(var(--color-ink)/0.5)] uppercase tracking-wide">Necessidades especiais</p>
-                    <Toggle label="Aluno atípico / necessidade especial" value={form.necessidade_especial ?? false} onChange={(v) => setField("necessidade_especial", v)} />
-                    {form.necessidade_especial && (
-                      <Textarea label="Descrição" value={form.necessidade_especial_descricao} onChange={(v) => setField("necessidade_especial_descricao", v)} />
-                    )}
-
-                    {/* Acompanhamentos */}
-                    <p className="text-xs font-semibold text-[rgb(var(--color-ink)/0.5)] uppercase tracking-wide">Acompanhamentos</p>
-                    <Toggle label="Acompanhamento psicológico" value={form.acomp_psicologico ?? false} onChange={(v) => setField("acomp_psicologico", v)} />
-                    {form.acomp_psicologico && (
-                      <Textarea label="Detalhes" value={form.acomp_psicologico_descricao} onChange={(v) => setField("acomp_psicologico_descricao", v)} />
-                    )}
-                    <Toggle label="Acompanhamento fonoaudiológico" value={form.acomp_fonoaudiologico ?? false} onChange={(v) => setField("acomp_fonoaudiologico", v)} />
-                    {form.acomp_fonoaudiologico && (
-                      <Textarea label="Detalhes" value={form.acomp_fonoaudiologico_descricao} onChange={(v) => setField("acomp_fonoaudiologico_descricao", v)} />
-                    )}
-                    <Toggle label="Acompanhamento psicopedagógico" value={form.acomp_psicopedagogico ?? false} onChange={(v) => setField("acomp_psicopedagogico", v)} />
-                    {form.acomp_psicopedagogico && (
-                      <Textarea label="Detalhes" value={form.acomp_psicopedagogico_descricao} onChange={(v) => setField("acomp_psicopedagogico_descricao", v)} />
-                    )}
-
-                    {/* Desenvolvimento */}
-                    <p className="text-xs font-semibold text-[rgb(var(--color-ink)/0.5)] uppercase tracking-wide">Desenvolvimento</p>
-                    <Textarea label="Histórico de desenvolvimento" value={form.historico_desenvolvimento} onChange={(v) => setField("historico_desenvolvimento", v)} rows={3} />
-                    <Textarea label="Comportamento social" value={form.comportamento_social} onChange={(v) => setField("comportamento_social", v)} rows={3} />
-                    <Textarea label="Rotina familiar" value={form.rotina_familiar} onChange={(v) => setField("rotina_familiar", v)} rows={3} />
-
-                    {/* Observações */}
-                    <p className="text-xs font-semibold text-[rgb(var(--color-ink)/0.5)] uppercase tracking-wide">Observações</p>
-                    <Textarea label="Obs. dos responsáveis" value={form.observacoes_responsaveis} onChange={(v) => setField("observacoes_responsaveis", v)} rows={3} />
-                    <Textarea label="Obs. da coordenação" value={form.observacoes_coordenacao} onChange={(v) => setField("observacoes_coordenacao", v)} rows={3} />
-                  </div>
+                  {/* Formulário de anamnese (campos compartilhados) */}
+                  <AnamneseFields form={form} onChange={setField} />
 
                   {erroSalvar && (
                     <p className="text-xs text-[rgb(var(--color-danger))]">{erroSalvar}</p>
@@ -409,51 +333,5 @@ export function AnamneseSection({ cardId, podeAcessar }: Props) {
         </div>
       )}
     </section>
-  );
-}
-
-function Textarea({
-  label,
-  value,
-  onChange,
-  rows = 2,
-}: {
-  label: string;
-  value: string | null | undefined;
-  onChange: (v: string | null) => void;
-  rows?: number;
-}) {
-  return (
-    <div>
-      <label className="block text-xs text-[rgb(var(--color-ink)/0.55)] mb-0.5">{label}</label>
-      <textarea
-        rows={rows}
-        value={value ?? ""}
-        onChange={(e) => onChange(e.target.value || null)}
-        className="w-full rounded-md border border-[rgb(var(--color-line))] bg-[rgb(var(--color-surface))] px-2 py-1 text-xs text-[rgb(var(--color-ink))] placeholder:text-[rgb(var(--color-ink)/0.3)] focus:outline-none focus:ring-1 focus:ring-[rgb(var(--color-brand)/0.4)] resize-none"
-      />
-    </div>
-  );
-}
-
-function Toggle({
-  label,
-  value,
-  onChange,
-}: {
-  label: string;
-  value: boolean;
-  onChange: (v: boolean) => void;
-}) {
-  return (
-    <label className="flex items-center gap-2 cursor-pointer select-none">
-      <input
-        type="checkbox"
-        checked={value}
-        onChange={(e) => onChange(e.target.checked)}
-        className="h-3.5 w-3.5 accent-[rgb(var(--color-brand))]"
-      />
-      <span className="text-xs text-[rgb(var(--color-ink)/0.75)]">{label}</span>
-    </label>
   );
 }

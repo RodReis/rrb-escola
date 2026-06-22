@@ -42,6 +42,50 @@ export type Anamnese = {
   rotina_familiar: string | null;
   observacoes_responsaveis: string | null;
   observacoes_coordenacao: string | null;
+  // ─── Anamnese PDF completo (FICHA FUND 1) ─────────────────────────────────
+  como_soube_escola: string | null;
+  turno: string | null;
+  data_visita: string | null;
+  crianca_compareceu: boolean | null;
+  pais_estado_civil: string | null;
+  crianca_vive_com: string | null;
+  gestacao: string | null;
+  saude_mae_gravidez: string | null;
+  parto: string | null;
+  amamentou: string | null;
+  mamadeira: string | null;
+  tem_irmaos: boolean | null;
+  posicao_familiar: string | null;
+  filho_adotivo: boolean | null;
+  ciente_adocao: boolean | null;
+  desenvolvimento_motor: string | null;
+  atraso_fala: string | null;
+  troca_fonemas: string | null;
+  dificuldade_visao_locomocao: string | null;
+  fatos_desenvolvimento: string | null;
+  controle_esfincter: string | null;
+  enurese_noturna: string | null;
+  perturbacoes_sono_dev: string | null;
+  habitos_especiais: string | null;
+  atende_intervencoes: string | null;
+  choro_facil: string | null;
+  recusa_auxilio: string | null;
+  resistencia_toque: string | null;
+  escola_anterior: string | null;
+  faz_amigos: string | null;
+  adapta_meio: boolean | null;
+  companheiros_brincadeira: string | null;
+  distracoes_preferidas: string | null;
+  atitudes_sociais: string | null;
+  emocional: string | null;
+  sono: string | null;
+  problemas_neurologicos: string | null;
+  acompanhamento_medico: string | null;
+  reacao_contrariada: string | null;
+  intolerancia_frustracao: boolean | null;
+  uso_internet: string | null;
+  orientacao_internet: string | null;
+  outras_informacoes: string | null;
   consentimento_em: string | null;
   consentimento_por: string | null;
   termo_versao: string | null;
@@ -121,6 +165,39 @@ export async function getAnamnese(
   };
 }
 
+export async function getAnamnesePorAluno(
+  aluno_id: string,
+): Promise<ActionResult<{ anamnese: Anamnese | null }>> {
+  let session: Awaited<ReturnType<typeof requirePermission>>;
+  try {
+    session = await requirePermission("pipeline_sensivel", "read");
+  } catch {
+    return { ok: false, error: "Sem permissão para acessar dados sensíveis" };
+  }
+
+  const supabase = await createServerClient();
+
+  const { data: anamnese } = await supabase
+    .from("pipeline_anamnese")
+    .select("*")
+    .eq("aluno_id", aluno_id)
+    .eq("escola_id", session.profile.escola_id)
+    .maybeSingle();
+
+  // Grava log de leitura usando o card_id da própria anamnese (a função exige card_id)
+  if (anamnese?.card_id) {
+    void gravarLog(
+      session.profile.escola_id,
+      session.profile.id,
+      anamnese.card_id as string,
+      "anamnese",
+      "read",
+    );
+  }
+
+  return { ok: true, data: { anamnese: (anamnese as Anamnese | null) ?? null } };
+}
+
 export async function salvarAnamnese(
   input: SalvarAnamneseInput,
 ): Promise<ActionResult> {
@@ -173,6 +250,50 @@ export async function salvarAnamnese(
     rotina_familiar: data.rotina_familiar,
     observacoes_responsaveis: data.observacoes_responsaveis,
     observacoes_coordenacao: data.observacoes_coordenacao,
+    // ─── Anamnese PDF completo (FICHA FUND 1) ───────────────────────────────
+    como_soube_escola: data.como_soube_escola,
+    turno: data.turno,
+    data_visita: data.data_visita,
+    crianca_compareceu: data.crianca_compareceu,
+    pais_estado_civil: data.pais_estado_civil,
+    crianca_vive_com: data.crianca_vive_com,
+    gestacao: data.gestacao,
+    saude_mae_gravidez: data.saude_mae_gravidez,
+    parto: data.parto,
+    amamentou: data.amamentou,
+    mamadeira: data.mamadeira,
+    tem_irmaos: data.tem_irmaos,
+    posicao_familiar: data.posicao_familiar,
+    filho_adotivo: data.filho_adotivo,
+    ciente_adocao: data.ciente_adocao,
+    desenvolvimento_motor: data.desenvolvimento_motor,
+    atraso_fala: data.atraso_fala,
+    troca_fonemas: data.troca_fonemas,
+    dificuldade_visao_locomocao: data.dificuldade_visao_locomocao,
+    fatos_desenvolvimento: data.fatos_desenvolvimento,
+    controle_esfincter: data.controle_esfincter,
+    enurese_noturna: data.enurese_noturna,
+    perturbacoes_sono_dev: data.perturbacoes_sono_dev,
+    habitos_especiais: data.habitos_especiais,
+    atende_intervencoes: data.atende_intervencoes,
+    choro_facil: data.choro_facil,
+    recusa_auxilio: data.recusa_auxilio,
+    resistencia_toque: data.resistencia_toque,
+    escola_anterior: data.escola_anterior,
+    faz_amigos: data.faz_amigos,
+    adapta_meio: data.adapta_meio,
+    companheiros_brincadeira: data.companheiros_brincadeira,
+    distracoes_preferidas: data.distracoes_preferidas,
+    atitudes_sociais: data.atitudes_sociais,
+    emocional: data.emocional,
+    sono: data.sono,
+    problemas_neurologicos: data.problemas_neurologicos,
+    acompanhamento_medico: data.acompanhamento_medico,
+    reacao_contrariada: data.reacao_contrariada,
+    intolerancia_frustracao: data.intolerancia_frustracao,
+    uso_internet: data.uso_internet,
+    orientacao_internet: data.orientacao_internet,
+    outras_informacoes: data.outras_informacoes,
     updated_at: new Date().toISOString(),
   };
 

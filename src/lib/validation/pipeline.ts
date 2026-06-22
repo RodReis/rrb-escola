@@ -375,6 +375,59 @@ export const salvarAnamneseSchema = z.object({
   rotina_familiar: z.string().max(3000).optional().nullable(),
   observacoes_responsaveis: z.string().max(3000).optional().nullable(),
   observacoes_coordenacao: z.string().max(3000).optional().nullable(),
+
+  // ─── Anamnese PDF completo (FICHA FUND 1) ─────────────────────────────────
+  // Identificação / entrevista
+  como_soube_escola: z.string().max(500).optional().nullable(),
+  turno: z.string().max(30).optional().nullable(),
+  data_visita: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional().nullable(),
+  crianca_compareceu: z.boolean().optional().nullable(),
+  // Família
+  pais_estado_civil: z.string().max(40).optional().nullable(),
+  crianca_vive_com: z.string().max(500).optional().nullable(),
+  // Gestação / parto
+  gestacao: z.string().max(40).optional().nullable(),
+  saude_mae_gravidez: z.string().max(2000).optional().nullable(),
+  parto: z.string().max(40).optional().nullable(),
+  amamentou: z.string().max(500).optional().nullable(),
+  mamadeira: z.string().max(500).optional().nullable(),
+  // Estrutura familiar
+  tem_irmaos: z.boolean().optional().nullable(),
+  posicao_familiar: z.string().max(40).optional().nullable(),
+  filho_adotivo: z.boolean().optional().nullable(),
+  ciente_adocao: z.boolean().optional().nullable(),
+  // Desenvolvimento
+  desenvolvimento_motor: z.string().max(2000).optional().nullable(),
+  atraso_fala: z.string().max(2000).optional().nullable(),
+  troca_fonemas: z.string().max(2000).optional().nullable(),
+  dificuldade_visao_locomocao: z.string().max(2000).optional().nullable(),
+  fatos_desenvolvimento: z.string().max(2000).optional().nullable(),
+  controle_esfincter: z.string().max(2000).optional().nullable(),
+  enurese_noturna: z.string().max(2000).optional().nullable(),
+  perturbacoes_sono_dev: z.string().max(2000).optional().nullable(),
+  habitos_especiais: z.string().max(2000).optional().nullable(),
+  atende_intervencoes: z.string().max(2000).optional().nullable(),
+  // Comportamento / emocional
+  choro_facil: z.string().max(2000).optional().nullable(),
+  recusa_auxilio: z.string().max(2000).optional().nullable(),
+  resistencia_toque: z.string().max(2000).optional().nullable(),
+  escola_anterior: z.string().max(2000).optional().nullable(),
+  faz_amigos: z.string().max(2000).optional().nullable(),
+  adapta_meio: z.boolean().optional().nullable(),
+  companheiros_brincadeira: z.string().max(500).optional().nullable(),
+  distracoes_preferidas: z.string().max(500).optional().nullable(),
+  atitudes_sociais: z.string().max(500).optional().nullable(), // CSV
+  emocional: z.string().max(500).optional().nullable(),        // CSV
+  sono: z.string().max(500).optional().nullable(),             // CSV
+  // Saúde (complementa)
+  problemas_neurologicos: z.string().max(2000).optional().nullable(),
+  acompanhamento_medico: z.string().max(2000).optional().nullable(),
+  // Reação / internet / fechamento
+  reacao_contrariada: z.string().max(2000).optional().nullable(),
+  intolerancia_frustracao: z.boolean().optional().nullable(),
+  uso_internet: z.string().max(2000).optional().nullable(),
+  orientacao_internet: z.string().max(2000).optional().nullable(),
+  outras_informacoes: z.string().max(3000).optional().nullable(),
 });
 export type SalvarAnamneseInput = z.infer<typeof salvarAnamneseSchema>;
 
