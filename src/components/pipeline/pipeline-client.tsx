@@ -17,6 +17,7 @@ type Props = {
   data: PipelineBoardData;
   usuarios: Usuario[];
   escolaId: string;
+  podeVerAnamnese?: boolean;
 };
 
 type RealtimePayload = {
@@ -25,7 +26,7 @@ type RealtimePayload = {
   old: Record<string, unknown>;
 };
 
-export function PipelineClient({ data, usuarios, escolaId }: Props) {
+export function PipelineClient({ data, usuarios, escolaId, podeVerAnamnese = false }: Props) {
   const router = useRouter();
   const scrollRef = useRef<HTMLDivElement>(null);
   const [shadowLeft, setShadowLeft] = useState(false);
@@ -73,6 +74,12 @@ export function PipelineClient({ data, usuarios, escolaId }: Props) {
     el.scrollBy({ left: dir === "left" ? -440 : 440, behavior: "smooth" });
   }, []);
   const [boardData, setBoardData] = useState<PipelineBoardData>(data);
+
+  // Re-sincroniza com o servidor após router.refresh() (criar/editar/mover card).
+  // Sem isto, o useState acima fica preso no valor inicial e a grid não atualiza.
+  useEffect(() => {
+    setBoardData(data);
+  }, [data]);
 
   // ── Realtime ──────────────────────────────────────────────────────────────
 
@@ -241,6 +248,7 @@ export function PipelineClient({ data, usuarios, escolaId }: Props) {
         onClose={() => setOpenCardId(null)}
         onDeleted={handleCardDeleted}
         onUpdated={() => router.refresh()}
+        podeVerAnamnese={podeVerAnamnese}
       />
 
       {/* Modal criar */}

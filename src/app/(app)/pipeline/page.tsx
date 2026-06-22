@@ -1,5 +1,6 @@
 import { redirect } from "next/navigation";
 import { requireSession } from "@/lib/auth/session";
+import { can } from "@/lib/auth/permissions";
 import { getPipelineBoard, getPrimeiroQuadro, getUsuariosDaEscola } from "@/lib/actions/pipeline";
 import { PipelineClient } from "@/components/pipeline/pipeline-client";
 
@@ -12,6 +13,10 @@ export default async function PipelinePage() {
   if (perfil !== "admin" && perfil !== "secretaria") {
     redirect("/acesso-negado");
   }
+
+  // Acesso a dados sensíveis (anamnese): admin tem bypass; demais via RBAC.
+  const podeVerAnamnese =
+    perfil === "admin" || can(session.permissions, "pipeline_sensivel", "read");
 
   const quadroId = await getPrimeiroQuadro();
   if (!quadroId) {
@@ -45,6 +50,7 @@ export default async function PipelinePage() {
       data={boardResult.data}
       usuarios={usuarios}
       escolaId={session.profile.escola_id}
+      podeVerAnamnese={podeVerAnamnese}
     />
   );
 }

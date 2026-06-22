@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback, useRef, type RefObject } from "react";
+import { useState, useEffect, useCallback, useRef, type RefObject } from "react";
 import {
   DndContext,
   DragOverlay,
@@ -36,6 +36,14 @@ export function PipelineBoard({ data, filtros, onOpenCard, onNovoCard, scrollRef
   // Evita processar eventos do Realtime enquanto o usuário draga
   const isDraggingRef = useRef(false);
   const [activeCard, setActiveCard] = useState<PipelineCardResumo | null>(null);
+
+  // Re-sincroniza com os dados do servidor (criar/editar card, troca de etiqueta,
+  // mover) após router.refresh(). Não sobrescreve durante um drag em andamento —
+  // o handleDragEnd já cuida do estado otimista nesse caso.
+  useEffect(() => {
+    if (isDraggingRef.current) return;
+    setCards(data.cards);
+  }, [data.cards]);
 
   const sensors = useSensors(
     useSensor(MouseSensor, { activationConstraint: { distance: 8 } }),
