@@ -139,6 +139,11 @@ describe("formatAnamneseParaDocx", () => {
     expect(out.RESPONSAVEIS).toBe("Maria Silva, José Silva");
   });
 
+  it("inclui o nome da escola no cabeçalho (ESCOLA), vazio quando ausente", () => {
+    expect(formatAnamneseParaDocx(fakeAnamnese(), ident, "Colégio RRB").ESCOLA).toBe("Colégio RRB");
+    expect(formatAnamneseParaDocx(fakeAnamnese(), ident).ESCOLA).toBe("");
+  });
+
   it("converte boolean e CSV nos campos de resposta", () => {
     const out = formatAnamneseParaDocx(
       fakeAnamnese({ crianca_compareceu: true, atitudes_sociais: "obediente,agressivo" }),

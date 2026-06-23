@@ -55,12 +55,15 @@ export async function exportarAnamneseDocxAction(
   }
 
   // 2) Dados de identificação (caminho card → lead; caminho aluno → alunos)
-  const ident = ref.cardId
-    ? await identViaCard(supabase, ref.cardId, escolaId)
-    : await identViaAluno(supabase, ref.alunoId!, escolaId);
+  const [ident, { data: escola }] = await Promise.all([
+    ref.cardId
+      ? identViaCard(supabase, ref.cardId, escolaId)
+      : identViaAluno(supabase, ref.alunoId!, escolaId),
+    supabase.from("escolas").select("nome").eq("id", escolaId).maybeSingle(),
+  ]);
 
   // 3) Monta variáveis e gera o DOCX
-  const variables = formatAnamneseParaDocx(anamnese as Anamnese, ident);
+  const variables = formatAnamneseParaDocx(anamnese as Anamnese, ident, escola?.nome ?? null);
 
   let buffer: Buffer;
   try {

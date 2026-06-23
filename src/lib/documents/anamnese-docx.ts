@@ -65,11 +65,13 @@ function dataBR(iso: string | null | undefined): string {
 export function formatAnamneseParaDocx(
   a: Anamnese,
   ident: DadosIdentificacao,
+  escolaNome: string | null = null,
 ): Record<string, string> {
   const serieTurma = [ident.serie, ident.turma].filter((x) => x?.trim()).join(" / ");
 
   return {
     // Cabeçalho
+    ESCOLA: txt(escolaNome),
     NOME: txt(ident.nome),
     NASCIMENTO: dataBR(ident.nascimento),
     SERIE_TURMA: serieTurma,
