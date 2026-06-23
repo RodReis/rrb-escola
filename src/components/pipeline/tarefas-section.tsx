@@ -73,14 +73,14 @@ export function TarefasSection({ cardId, tarefas, perfis, onUpdated }: Props) {
     <div className="space-y-3">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
-          <CheckSquare size={15} style={{ color: "rgb(var(--color-brand-600))" }} />
+          <CheckSquare size={15} style={{ color: "rgb(var(--color-brand))" }} />
           <span className="text-sm font-medium" style={{ color: "rgb(var(--color-ink))" }}>
             Tarefas
           </span>
           {abertas.length > 0 && (
             <span
               className="rounded-full px-1.5 py-0.5 text-[10px] font-semibold"
-              style={{ background: "rgb(var(--color-brand-100))", color: "rgb(var(--color-brand-700))" }}
+              style={{ background: "rgb(var(--color-brand)/0.12)", color: "rgb(var(--color-brand))" }}
             >
               {abertas.length}
             </span>
@@ -89,7 +89,7 @@ export function TarefasSection({ cardId, tarefas, perfis, onUpdated }: Props) {
         <button
           onClick={() => setNovaAberta((v) => !v)}
           className="flex items-center gap-1 rounded px-2 py-0.5 text-xs font-medium"
-          style={{ background: "rgb(var(--color-brand-50))", color: "rgb(var(--color-brand-700))" }}
+          style={{ background: "rgb(var(--color-brand)/0.08)", color: "rgb(var(--color-brand))" }}
         >
           <Plus size={12} />
           Nova
@@ -99,7 +99,7 @@ export function TarefasSection({ cardId, tarefas, perfis, onUpdated }: Props) {
       {novaAberta && (
         <div
           className="space-y-2 rounded-md border p-3"
-          style={{ borderColor: "rgb(var(--color-line))", background: "rgb(var(--color-surface-raised))" }}
+          style={{ borderColor: "rgb(var(--color-line))", background: "rgb(var(--color-muted)/0.4)" }}
         >
           <input
             autoFocus
@@ -128,7 +128,7 @@ export function TarefasSection({ cardId, tarefas, perfis, onUpdated }: Props) {
           />
           <div className="grid grid-cols-2 gap-2">
             <div>
-              <label className="text-xs mb-0.5 block" style={{ color: "rgb(var(--color-text-muted))" }}>
+              <label className="text-xs mb-0.5 block" style={{ color: "rgb(var(--color-ink)/0.55)" }}>
                 Vencimento
               </label>
               <input
@@ -144,7 +144,7 @@ export function TarefasSection({ cardId, tarefas, perfis, onUpdated }: Props) {
               />
             </div>
             <div>
-              <label className="text-xs mb-0.5 block" style={{ color: "rgb(var(--color-text-muted))" }}>
+              <label className="text-xs mb-0.5 block" style={{ color: "rgb(var(--color-ink)/0.55)" }}>
                 Responsável
               </label>
               <select
@@ -167,7 +167,7 @@ export function TarefasSection({ cardId, tarefas, perfis, onUpdated }: Props) {
             </div>
           </div>
           {erro && (
-            <p className="text-xs" style={{ color: "rgb(var(--color-danger-600))" }}>
+            <p className="text-xs" style={{ color: "rgb(var(--color-danger))" }}>
               {erro}
             </p>
           )}
@@ -176,14 +176,14 @@ export function TarefasSection({ cardId, tarefas, perfis, onUpdated }: Props) {
               onClick={handleCriar}
               disabled={salvando || !titulo.trim()}
               className="rounded px-3 py-1 text-xs font-medium disabled:opacity-50"
-              style={{ background: "rgb(var(--color-brand-600))", color: "#fff" }}
+              style={{ background: "rgb(var(--color-brand))", color: "#fff" }}
             >
               {salvando ? "Salvando…" : "Salvar"}
             </button>
             <button
               onClick={() => { setNovaAberta(false); setErro(null); }}
               className="rounded px-3 py-1 text-xs"
-              style={{ color: "rgb(var(--color-text-muted))" }}
+              style={{ color: "rgb(var(--color-ink)/0.55)" }}
             >
               Cancelar
             </button>
@@ -207,7 +207,7 @@ export function TarefasSection({ cardId, tarefas, perfis, onUpdated }: Props) {
 
       {concluidas.length > 0 && (
         <div>
-          <p className="text-xs mb-1" style={{ color: "rgb(var(--color-text-muted))" }}>
+          <p className="text-xs mb-1" style={{ color: "rgb(var(--color-ink)/0.55)" }}>
             Concluídas
           </p>
           <ul className="space-y-1">
@@ -215,9 +215,9 @@ export function TarefasSection({ cardId, tarefas, perfis, onUpdated }: Props) {
               <li
                 key={t.id}
                 className="flex items-center gap-2 rounded px-2 py-1 text-xs"
-                style={{ color: "rgb(var(--color-text-muted))", background: "rgb(var(--color-surface-raised))" }}
+                style={{ color: "rgb(var(--color-ink)/0.55)", background: "rgb(var(--color-muted)/0.4)" }}
               >
-                <CheckCircle2 size={12} style={{ color: "rgb(var(--color-success-600))" }} />
+                <CheckCircle2 size={12} style={{ color: "rgb(var(--color-success))" }} />
                 <span className="line-through">{t.titulo}</span>
                 {t.completed_at && (
                   <span className="ml-auto">{formatDate(t.completed_at)}</span>
@@ -229,7 +229,7 @@ export function TarefasSection({ cardId, tarefas, perfis, onUpdated }: Props) {
       )}
 
       {tarefas.length === 0 && !novaAberta && (
-        <p className="text-xs" style={{ color: "rgb(var(--color-text-muted))" }}>
+        <p className="text-xs" style={{ color: "rgb(var(--color-ink)/0.55)" }}>
           Nenhuma tarefa. Clique em "+ Nova" para adicionar.
         </p>
       )}
@@ -252,17 +252,17 @@ function TarefaItem({
     <li
       className="flex items-center gap-2 rounded-md px-2 py-1.5"
       style={{
-        background: vencida ? "rgb(var(--color-danger-50))" : "rgb(var(--color-surface-raised))",
-        borderLeft: vencida ? "3px solid rgb(var(--color-danger-400))" : "3px solid transparent",
+        background: vencida ? "rgb(var(--color-danger)/0.08)" : "rgb(var(--color-muted)/0.4)",
+        borderLeft: vencida ? "3px solid rgb(var(--color-danger)/0.5)" : "3px solid transparent",
       }}
     >
-      <Circle size={12} style={{ color: "rgb(var(--color-text-muted))", flexShrink: 0 }} />
+      <Circle size={12} style={{ color: "rgb(var(--color-ink)/0.55)", flexShrink: 0 }} />
       <div className="flex-1 min-w-0">
         <div className="flex items-center gap-1.5">
           {vencida && (
             <span
               className="text-[10px] font-bold px-1 rounded"
-              style={{ background: "rgb(var(--color-danger-100))", color: "rgb(var(--color-danger-700))" }}
+              style={{ background: "rgb(var(--color-danger)/0.15)", color: "rgb(var(--color-danger))" }}
             >
               VENCIDA
             </span>
@@ -273,12 +273,12 @@ function TarefaItem({
         </div>
         <div className="flex items-center gap-2 mt-0.5">
           {tarefa.due_at && (
-            <span className="text-[10px]" style={{ color: vencida ? "rgb(var(--color-danger-600))" : "rgb(var(--color-text-muted))" }}>
+            <span className="text-[10px]" style={{ color: vencida ? "rgb(var(--color-danger))" : "rgb(var(--color-ink)/0.55)" }}>
               {formatDate(tarefa.due_at)}
             </span>
           )}
           {tarefa.perfil_assigned && (
-            <span className="text-[10px]" style={{ color: "rgb(var(--color-text-muted))" }}>
+            <span className="text-[10px]" style={{ color: "rgb(var(--color-ink)/0.55)" }}>
               {tarefa.perfil_assigned.nome}
             </span>
           )}
@@ -289,7 +289,7 @@ function TarefaItem({
           onClick={onConcluir}
           title="Concluir"
           className="rounded p-0.5 hover:opacity-80"
-          style={{ color: "rgb(var(--color-success-600))" }}
+          style={{ color: "rgb(var(--color-success))" }}
         >
           <CheckCircle2 size={14} />
         </button>
@@ -297,7 +297,7 @@ function TarefaItem({
           onClick={onCancelar}
           title="Cancelar"
           className="rounded p-0.5 hover:opacity-80"
-          style={{ color: "rgb(var(--color-text-muted))" }}
+          style={{ color: "rgb(var(--color-ink)/0.55)" }}
         >
           <XCircle size={14} />
         </button>
