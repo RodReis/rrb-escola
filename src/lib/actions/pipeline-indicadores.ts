@@ -3,7 +3,8 @@
 import { requirePermission } from "@/lib/auth/session";
 import { createServerClient } from "@/lib/supabase/server";
 import type { ActionResult } from "@/lib/actions/pipeline";
-import type { StatusAnamnese } from "@/lib/validation/pipeline";
+import type { StatusAnamnese, StatusLead } from "@/lib/validation/pipeline";
+import { agruparPorStatus } from "./pipeline-indicadores-helpers";
 
 export type IndicadoresPipeline = {
   periodo: 30 | 90 | 180;
@@ -16,6 +17,7 @@ export type IndicadoresPipeline = {
     reservas: number;
     taxa_pct: number;
   };
+  por_status: { status: StatusLead; total: number }[];
   parados: {
     total: number;
     por_coluna: { coluna_id: string; coluna_nome: string; total: number }[];
@@ -55,6 +57,7 @@ export async function getIndicadoresPipeline(
     docPendentesRes,
     anamneseRes,
     motivosPerdaRes,
+    statusLeadRes,
   ] = await Promise.all([
     // Total de leads criados no período
     supabase
@@ -140,7 +143,16 @@ export async function getIndicadoresPipeline(
       .is("deletado_em", null)
       .not("motivo_perda", "is", null)
       .gte("updated_at", desde_iso),
+
+    // Status dos leads criados no período (funil). NÃO usa deletado_em (coluna inexistente).
+    supabase
+      .from("pipeline_card")
+      .select("status_lead")
+      .eq("escola_id", escola_id)
+      .gte("created_at", desde_iso),
   ]);
+
+  const por_status = agruparPorStatus(statusLeadRes.data ?? []);
 
   // Processa parados
   const agora = Date.now();
@@ -225,6 +237,7 @@ export async function getIndicadoresPipeline(
         reservas: reservasRes.count ?? 0,
         taxa_pct: taxaPct,
       },
+      por_status,
       parados: {
         total: totalParados,
         por_coluna: Object.entries(paradosPorColuna).map(([coluna_id, v]) => ({

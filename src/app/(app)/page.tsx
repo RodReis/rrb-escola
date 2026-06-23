@@ -61,6 +61,10 @@ import { RankingTurmasCard } from "@/components/dashboard/ranking-turmas-card";
 import { RealizadoProjetadoCard } from "@/components/dashboard/realizado-projetado-card";
 import { ResumoAlunosCard } from "@/components/dashboard/resumo-alunos-card";
 import { SaudeSistemaCard } from "@/components/dashboard/saude-sistema-card";
+import { PipelineStatusCard } from "@/components/dashboard/pipeline-status-card";
+import { PipelineAtividadeCard } from "@/components/dashboard/pipeline-atividade-card";
+import { getIndicadoresPipeline } from "@/lib/actions/pipeline-indicadores";
+import { getAtividadeRecentePipeline } from "@/lib/data/pipeline-atividade";
 import { TopCategoriasCard } from "@/components/dashboard/top-categorias-card";
 import {
   getEvasao,
@@ -150,6 +154,8 @@ export default async function DashboardPage({
   const showTurmas = has("turmas");
   const showAvaliacoes = has("avaliacoes");
   const showComercial = has("comercial.vendas") || has("comercial.estoque") || has("comercial.produtos");
+  const showPipeline = has("pipeline");
+  const showAnamnesePipeline = has("pipeline_sensivel");
 
   // Tab visibility
   const tabFinanceiroVisible =
@@ -157,7 +163,7 @@ export default async function DashboardPage({
   const showEventos = has("eventos");
   const tabSecretariaVisible =
     showAlunos || showMatriculas || showFrequencias || showTurmas || showEventos;
-  const tabPedagogicoVisible = showAvaliacoes || showFrequencias;
+  const tabPedagogicoVisible = showAvaliacoes || showFrequencias || showPipeline;
   const tabComercialVisible = showComercial;
 
   const tabsVisiveis: DashTab[] = [];
@@ -230,6 +236,8 @@ export default async function DashboardPage({
     feriadosProximos,
     eventosProximos,
     comercialResumo,
+    indicadoresPipeline,
+    atividadePipeline,
   ] = await Promise.all([
     showFinanceiroCobrancas ? getHero(competencia, escolaId) : null,
     showFinanceiroCobrancas ? getRevenueTrend(6, escolaId) : null,
@@ -269,6 +277,8 @@ export default async function DashboardPage({
     showFrequencias ? getFeriadosProximos(escolaId) : null,
     showEventos ? getEventosProximos(escolaId, 5) : null,
     showComercial ? getComercialResumo(competencia, escolaId) : null,
+    showPipeline ? getIndicadoresPipeline(30) : null,
+    showPipeline ? getAtividadeRecentePipeline(escolaId, 5) : null,
   ]);
 
   // slot2 currently is computed but not rendered in the original page (was unused).
@@ -422,6 +432,20 @@ export default async function DashboardPage({
 
       {tabEfetiva === "pedagogico" && (
         <>
+          {showPipeline && indicadoresPipeline?.ok && (
+            <>
+              <SectionHeader title="Captação" subtitle="Funil, conversão e atividade recente do pipeline" />
+              <section className="grid gap-6 sm:grid-cols-2">
+                <PipelineStatusCard data={indicadoresPipeline.data} />
+                <PipelineAtividadeCard
+                  anamneses={indicadoresPipeline.data.anamneses}
+                  atividades={atividadePipeline ?? []}
+                  showAnamnese={showAnamnesePipeline}
+                />
+              </section>
+            </>
+          )}
+
           {showAvaliacoes && pedagogicoOverview && (
             <PedagogicoOverviewSection data={pedagogicoOverview} />
           )}

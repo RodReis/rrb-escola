@@ -64,6 +64,35 @@ export function formatDateExtensoBR(value: Date | string | null | undefined): st
 }
 
 /**
+ * Tempo relativo curto em pt-BR: "agora", "há 5 min", "há 3 h", "há 2 d".
+ * Acima de ~7 dias cai em formatDateBR (data absoluta).
+ * `now` é injetável para testes; por padrão usa o relógio atual.
+ */
+export function tempoRelativoBR(
+  value: Date | string | null | undefined,
+  now: Date = new Date(),
+): string {
+  if (value === null || value === undefined || value === "") return "";
+  const d = value instanceof Date ? value : new Date(value);
+  if (Number.isNaN(d.getTime())) return "";
+
+  const diffMs = now.getTime() - d.getTime();
+  if (diffMs < 0) return "agora";
+
+  const min = Math.floor(diffMs / 60_000);
+  if (min < 1) return "agora";
+  if (min < 60) return `há ${min} min`;
+
+  const horas = Math.floor(min / 60);
+  if (horas < 24) return `há ${horas} h`;
+
+  const dias = Math.floor(horas / 24);
+  if (dias <= 7) return `há ${dias} d`;
+
+  return formatDateBR(d);
+}
+
+/**
  * Retorna apenas a parte yyyy-MM-dd de uma data (para inputs HTML type=date).
  */
 export function toISODate(value: Date | string | null | undefined): string {
