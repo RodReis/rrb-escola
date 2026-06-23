@@ -1,27 +1,20 @@
 "use client";
 
 import { useState, useTransition } from "react";
-import { ChevronDown, ChevronUp, Paperclip, Trash2, Upload, AlertTriangle, CheckCircle, RotateCcw, Clock, FileDown } from "lucide-react";
+import {
+  ChevronDown, ChevronUp, AlertTriangle, CheckCircle, RotateCcw, Clock,
+  FileDown, ClipboardList,
+} from "lucide-react";
 import {
   getAnamnese,
-  salvarAnamnese,
   mudarStatusAnamnese,
-  uploadAnamneseArquivo,
-  getAnamneseArquivoUrl,
-  deletarAnamneseArquivo,
   type Anamnese,
-  type AnamneseArquivo,
 } from "@/lib/actions/pipeline-anamnese";
 import type { StatusAnamnese } from "@/lib/validation/pipeline";
 import { cn } from "@/lib/utils";
 import { exportarAnamneseDocxAction } from "@/lib/actions/anamnese-export";
 import { downloadBase64Docx } from "@/lib/documents/download-client";
-import {
-  AnamneseFields,
-  emptyAnamneseForm,
-  anamneseToForm,
-  type AnamneseFormState,
-} from "./anamnese-fields";
+import { AnamneseModal } from "./anamnese-modal";
 
 type Props = {
   cardId: string;
@@ -50,125 +43,47 @@ export function AnamneseSection({ cardId, podeAcessar }: Props) {
   const [aberta, setAberta] = useState(false);
   const [carregou, setCarregou] = useState(false);
   const [anamnese, setAnamnese] = useState<Anamnese | null>(null);
-  const [arquivos, setArquivos] = useState<AnamneseArquivo[]>([]);
   const [erro, setErro] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
+  const [modalAberto, setModalAberto] = useState(false);
+  const [exportando, setExportando] = useState(false);
+  const [erroAcao, setErroAcao] = useState<string | null>(null);
 
-  // Consentimento
-  const [consentimentoEm, setConsentimentoEm] = useState(
-    new Date().toISOString().slice(0, 16),
-  );
-
-  // Form principal
-  const [form, setForm] = useState<AnamneseFormState>(emptyAnamneseForm());
-  const [erroSalvar, setErroSalvar] = useState<string | null>(null);
-  const [savedOk, setSavedOk] = useState(false);
-
-  function setField<K extends keyof AnamneseFormState>(key: K, val: AnamneseFormState[K]) {
-    setForm((prev) => ({ ...prev, [key]: val }));
-    setSavedOk(false);
-  }
-
-  function abrirSecao() {
-    setAberta(true);
-    if (carregou) return;
+  function carregar() {
     startTransition(async () => {
       const res = await getAnamnese(cardId);
       setCarregou(true);
       if (!res.ok) { setErro(res.error); return; }
       setAnamnese(res.data.anamnese);
-      setArquivos(res.data.arquivos);
-      if (res.data.anamnese) {
-        const a = res.data.anamnese;
-        setForm(anamneseToForm(a));
-        if (a.consentimento_em) {
-          setConsentimentoEm(a.consentimento_em.slice(0, 16));
-        }
-      }
     });
+  }
+
+  function abrirSecao() {
+    setAberta(true);
+    if (!carregou) carregar();
   }
 
   function toggleSecao() {
-    if (!aberta) { abrirSecao(); } else { setAberta(false); }
-  }
-
-  async function handleRegistrarConsentimento() {
-    setErroSalvar(null);
-    const res = await salvarAnamnese({
-      card_id: cardId,
-      consentimento_em: new Date(consentimentoEm).toISOString(),
-      termo_versao: "v1",
-    });
-    if (!res.ok) { setErroSalvar(res.error); return; }
-    // Recarrega
-    const reload = await getAnamnese(cardId);
-    if (reload.ok) {
-      setAnamnese(reload.data.anamnese);
-      setArquivos(reload.data.arquivos);
-    }
-  }
-
-  async function handleSalvar() {
-    if (!anamnese?.consentimento_em) {
-      setErroSalvar("Registre o consentimento LGPD antes de salvar");
-      return;
-    }
-    setErroSalvar(null);
-    const res = await salvarAnamnese({
-      card_id: cardId,
-      consentimento_em: anamnese.consentimento_em,
-      termo_versao: anamnese.termo_versao ?? "v1",
-      ...form,
-    });
-    if (!res.ok) { setErroSalvar(res.error); return; }
-    setSavedOk(true);
-    // Atualiza status local se necessário
-    const reload = await getAnamnese(cardId);
-    if (reload.ok) setAnamnese(reload.data.anamnese);
+    if (!aberta) abrirSecao();
+    else setAberta(false);
   }
 
   async function handleMudarStatus(novo: "em_analise" | "concluida" | "requer_atencao") {
     const res = await mudarStatusAnamnese({ card_id: cardId, novo_status: novo });
-    if (!res.ok) { setErroSalvar(res.error); return; }
-    const reload = await getAnamnese(cardId);
-    if (reload.ok) setAnamnese(reload.data.anamnese);
+    if (!res.ok) { setErroAcao(res.error); return; }
+    carregar();
   }
 
-  const [exportando, setExportando] = useState(false);
   async function handleExportarDocx() {
     setExportando(true);
-    setErroSalvar(null);
+    setErroAcao(null);
     try {
       const res = await exportarAnamneseDocxAction({ cardId });
-      if (!res.success) { setErroSalvar(res.error); return; }
+      if (!res.success) { setErroAcao(res.error); return; }
       downloadBase64Docx(res.base64, res.nomeArquivo);
     } finally {
       setExportando(false);
     }
-  }
-
-  async function handleUpload(e: React.ChangeEvent<HTMLInputElement>) {
-    const file = e.target.files?.[0];
-    if (!file) return;
-    const fd = new FormData();
-    fd.append("file", file);
-    const res = await uploadAnamneseArquivo(cardId, fd);
-    if (!res.ok) { setErroSalvar(res.error); return; }
-    const reload = await getAnamnese(cardId);
-    if (reload.ok) setArquivos(reload.data.arquivos);
-    e.target.value = "";
-  }
-
-  async function handleDownload(arquivo: AnamneseArquivo) {
-    const res = await getAnamneseArquivoUrl(arquivo.id);
-    if (!res.ok) { setErroSalvar(res.error); return; }
-    window.open(res.data.url, "_blank");
-  }
-
-  async function handleDeletarArquivo(id: string) {
-    const res = await deletarAnamneseArquivo(id);
-    if (!res.ok) { setErroSalvar(res.error); return; }
-    setArquivos((prev) => prev.filter((a) => a.id !== id));
   }
 
   const status = anamnese?.status as StatusAnamnese | undefined;
@@ -178,7 +93,7 @@ export function AnamneseSection({ cardId, podeAcessar }: Props) {
       <button
         type="button"
         onClick={toggleSecao}
-        className="flex w-full items-center justify-between mb-2"
+        className="mb-2 flex w-full items-center justify-between"
       >
         <h4 className="text-xs font-semibold uppercase tracking-wide text-[rgb(var(--color-ink)/0.45)]">
           Anamnese
@@ -189,7 +104,7 @@ export function AnamneseSection({ cardId, podeAcessar }: Props) {
       </button>
 
       {aberta && (
-        <div className="space-y-4 text-sm">
+        <div className="space-y-3 text-sm">
           {!podeAcessar && (
             <p className="text-xs text-[rgb(var(--color-ink)/0.5)]">
               Sem acesso a dados sensíveis.
@@ -197,9 +112,7 @@ export function AnamneseSection({ cardId, podeAcessar }: Props) {
           )}
 
           {podeAcessar && isPending && !carregou && (
-            <p className="text-xs text-[rgb(var(--color-ink)/0.4)] animate-pulse">
-              Carregando…
-            </p>
+            <p className="text-xs text-[rgb(var(--color-ink)/0.4)] animate-pulse">Carregando…</p>
           )}
 
           {podeAcessar && carregou && erro && (
@@ -208,9 +121,9 @@ export function AnamneseSection({ cardId, podeAcessar }: Props) {
 
           {podeAcessar && carregou && !erro && (
             <>
-              {/* Badge de status + transições */}
+              {/* Status + transições */}
               {status && status !== "nao_iniciada" && (
-                <div className="flex items-center gap-2 flex-wrap">
+                <div className="flex flex-wrap items-center gap-2">
                   <span className={cn("rounded px-2 py-0.5 text-xs font-medium", STATUS_COLOR[status])}>
                     {STATUS_LABEL[status]}
                   </span>
@@ -219,14 +132,14 @@ export function AnamneseSection({ cardId, podeAcessar }: Props) {
                       <button
                         type="button"
                         onClick={() => handleMudarStatus("concluida")}
-                        className="flex items-center gap-1 rounded px-2 py-0.5 text-xs border border-green-400 text-green-600 hover:bg-green-50 dark:hover:bg-green-900/20"
+                        className="flex items-center gap-1 rounded border border-green-400 px-2 py-0.5 text-xs text-green-600 hover:bg-green-50 dark:hover:bg-green-900/20"
                       >
                         <CheckCircle size={11} /> Concluir
                       </button>
                       <button
                         type="button"
                         onClick={() => handleMudarStatus("requer_atencao")}
-                        className="flex items-center gap-1 rounded px-2 py-0.5 text-xs border border-red-400 text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20"
+                        className="flex items-center gap-1 rounded border border-red-400 px-2 py-0.5 text-xs text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20"
                       >
                         <AlertTriangle size={11} /> Requer atenção
                       </button>
@@ -236,7 +149,7 @@ export function AnamneseSection({ cardId, podeAcessar }: Props) {
                     <button
                       type="button"
                       onClick={() => handleMudarStatus("requer_atencao")}
-                      className="flex items-center gap-1 rounded px-2 py-0.5 text-xs border border-red-400 text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20"
+                      className="flex items-center gap-1 rounded border border-red-400 px-2 py-0.5 text-xs text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20"
                     >
                       <AlertTriangle size={11} /> Requer atenção
                     </button>
@@ -245,7 +158,7 @@ export function AnamneseSection({ cardId, podeAcessar }: Props) {
                     <button
                       type="button"
                       onClick={() => handleMudarStatus("em_analise")}
-                      className="flex items-center gap-1 rounded px-2 py-0.5 text-xs border border-[rgb(var(--color-brand))] text-[rgb(var(--color-brand))] hover:bg-[rgb(var(--color-brand)/0.06)]"
+                      className="flex items-center gap-1 rounded border border-[rgb(var(--color-brand))] px-2 py-0.5 text-xs text-[rgb(var(--color-brand))] hover:bg-[rgb(var(--color-brand)/0.06)]"
                     >
                       <RotateCcw size={11} /> Retomar análise
                     </button>
@@ -253,110 +166,53 @@ export function AnamneseSection({ cardId, podeAcessar }: Props) {
                 </div>
               )}
 
-              {/* Bloco de consentimento LGPD */}
-              {!anamnese?.consentimento_em ? (
-                <div className="rounded-lg border border-[rgb(var(--color-line))] bg-[rgb(var(--color-muted)/0.4)] p-3 space-y-2">
-                  <p className="text-xs font-medium text-[rgb(var(--color-ink))]">
-                    Consentimento LGPD obrigatório
-                  </p>
-                  <p className="text-xs text-[rgb(var(--color-ink)/0.6)]">
-                    Registre o consentimento do responsável antes de preencher a anamnese.
-                  </p>
-                  <div className="flex items-center gap-2">
-                    <label className="text-xs text-[rgb(var(--color-ink)/0.55)]">Data:</label>
-                    <input
-                      type="datetime-local"
-                      value={consentimentoEm}
-                      onChange={(e) => setConsentimentoEm(e.target.value)}
-                      className="rounded border border-[rgb(var(--color-line))] px-2 py-0.5 text-xs bg-[rgb(var(--color-surface))] text-[rgb(var(--color-ink))]"
-                    />
-                  </div>
-                  <button
-                    type="button"
-                    onClick={handleRegistrarConsentimento}
-                    disabled={isPending}
-                    className="rounded-md bg-[rgb(var(--color-brand))] px-3 py-1 text-xs font-semibold text-white hover:opacity-90 disabled:opacity-50"
-                  >
-                    Registrar consentimento e iniciar
-                  </button>
-                </div>
-              ) : (
-                <>
-                  <div className="flex items-center justify-between gap-2">
-                    <p className="text-xs text-[rgb(var(--color-ink)/0.45)]">
-                      <Clock size={11} className="inline mr-1" />
-                      Consentimento em{" "}
-                      {new Date(anamnese.consentimento_em).toLocaleDateString("pt-BR")}
-                      {" · "} Termo {anamnese.termo_versao ?? "v1"}
-                    </p>
-                    <button
-                      type="button"
-                      onClick={handleExportarDocx}
-                      disabled={exportando}
-                      className="flex shrink-0 items-center gap-1 rounded border border-[rgb(var(--color-line))] px-2 py-0.5 text-xs text-[rgb(var(--color-ink)/0.7)] hover:text-[rgb(var(--color-brand))] hover:border-[rgb(var(--color-brand)/0.4)] disabled:opacity-50"
-                    >
-                      <FileDown size={12} />
-                      {exportando ? "Gerando…" : "Exportar DOCX"}
-                    </button>
-                  </div>
-
-                  {/* Formulário de anamnese (campos compartilhados) */}
-                  <AnamneseFields form={form} onChange={setField} />
-
-                  {erroSalvar && (
-                    <p className="text-xs text-[rgb(var(--color-danger))]">{erroSalvar}</p>
-                  )}
-                  {savedOk && (
-                    <p className="text-xs text-green-600 dark:text-green-400">Salvo com sucesso</p>
-                  )}
-
-                  <button
-                    type="button"
-                    onClick={handleSalvar}
-                    disabled={isPending}
-                    className="rounded-md bg-[rgb(var(--color-brand))] px-3 py-1.5 text-xs font-semibold text-white hover:opacity-90 disabled:opacity-50"
-                  >
-                    Salvar anamnese
-                  </button>
-
-                  {/* Anexos */}
-                  <div className="mt-2">
-                    <p className="text-xs font-semibold text-[rgb(var(--color-ink)/0.5)] uppercase tracking-wide mb-1">
-                      Anexos
-                    </p>
-                    {arquivos.length === 0 && (
-                      <p className="text-xs text-[rgb(var(--color-ink)/0.4)]">Nenhum anexo</p>
-                    )}
-                    {arquivos.map((a) => (
-                      <div key={a.id} className="flex items-center justify-between gap-2 py-1">
-                        <button
-                          type="button"
-                          onClick={() => handleDownload(a)}
-                          className="flex items-center gap-1 text-xs text-[rgb(var(--color-brand))] hover:underline truncate max-w-[180px]"
-                        >
-                          <Paperclip size={11} />
-                          {a.nome}
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => handleDeletarArquivo(a.id)}
-                          className="shrink-0 text-[rgb(var(--color-danger)/0.6)] hover:text-[rgb(var(--color-danger))]"
-                        >
-                          <Trash2 size={12} />
-                        </button>
-                      </div>
-                    ))}
-                    <label className="mt-2 flex cursor-pointer items-center gap-1 text-xs text-[rgb(var(--color-ink)/0.55)] hover:text-[rgb(var(--color-brand))]">
-                      <Upload size={12} />
-                      Enviar arquivo (PDF ou imagem, máx 10MB)
-                      <input type="file" className="sr-only" accept=".pdf,image/*" onChange={handleUpload} />
-                    </label>
-                  </div>
-                </>
+              {/* Consentimento (info curta) */}
+              {anamnese?.consentimento_em && (
+                <p className="text-xs text-[rgb(var(--color-ink)/0.45)]">
+                  <Clock size={11} className="mr-1 inline" />
+                  Consentimento em{" "}
+                  {new Date(anamnese.consentimento_em).toLocaleDateString("pt-BR")}
+                  {" · "} Termo {anamnese.termo_versao ?? "v1"}
+                </p>
               )}
+
+              {erroAcao && (
+                <p className="text-xs text-[rgb(var(--color-danger))]">{erroAcao}</p>
+              )}
+
+              {/* Ações: responder (modal) + exportar */}
+              <div className="flex flex-wrap items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => setModalAberto(true)}
+                  className="flex items-center gap-1 rounded-md bg-[rgb(var(--color-brand))] px-3 py-1.5 text-xs font-semibold text-white hover:opacity-90"
+                >
+                  <ClipboardList size={13} />
+                  {anamnese?.consentimento_em ? "Responder anamnese" : "Iniciar anamnese"}
+                </button>
+                {anamnese?.consentimento_em && (
+                  <button
+                    type="button"
+                    onClick={handleExportarDocx}
+                    disabled={exportando}
+                    className="flex items-center gap-1 rounded border border-[rgb(var(--color-line))] px-2 py-1 text-xs text-[rgb(var(--color-ink)/0.7)] hover:border-[rgb(var(--color-brand)/0.4)] hover:text-[rgb(var(--color-brand))] disabled:opacity-50"
+                  >
+                    <FileDown size={12} />
+                    {exportando ? "Gerando…" : "Exportar DOCX"}
+                  </button>
+                )}
+              </div>
             </>
           )}
         </div>
+      )}
+
+      {modalAberto && (
+        <AnamneseModal
+          cardId={cardId}
+          onClose={() => setModalAberto(false)}
+          onSaved={carregar}
+        />
       )}
     </section>
   );
