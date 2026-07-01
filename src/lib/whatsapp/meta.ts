@@ -30,6 +30,16 @@ export function montarComponentsTemplate(
   return components;
 }
 
+export function montarPayloadImagem(
+  telefone: string,
+  imagemUrl: string,
+  legenda?: string,
+): Record<string, unknown> {
+  const image: { link: string; caption?: string } = { link: imagemUrl };
+  if (legenda) image.caption = legenda;
+  return { to: telefone, type: "image", image };
+}
+
 const GRAPH_VERSION = "v21.0";
 
 export type MetaResult =
@@ -128,4 +138,41 @@ export async function sendText({
     type: "text",
     text: { body: mensagem },
   });
+}
+
+// Envia uma imagem por link — só funciona dentro da janela de 24h.
+export async function sendImage({
+  telefone,
+  imagemUrl,
+  legenda,
+}: {
+  telefone: string;
+  imagemUrl: string;
+  legenda?: string;
+}): Promise<MetaResult> {
+  const config = getConfig();
+  if (!config) {
+    return { ok: false, reason: "Meta WhatsApp não configurada" };
+  }
+  return postMessage(config, montarPayloadImagem(telefone, imagemUrl, legenda));
+}
+
+// Resolve a URL temporária de download de uma mídia recebida (media_id do webhook).
+export async function getMediaUrl(
+  mediaId: string,
+): Promise<{ ok: true; url: string } | { ok: false; reason: string }> {
+  const config = getConfig();
+  if (!config) return { ok: false, reason: "Meta WhatsApp não configurada" };
+  try {
+    const res = await fetch(`https://graph.facebook.com/${GRAPH_VERSION}/${mediaId}`, {
+      headers: { Authorization: `Bearer ${config.token}` },
+      signal: AbortSignal.timeout(15000),
+    });
+    if (!res.ok) return { ok: false, reason: `Meta media HTTP ${res.status}` };
+    const json = (await res.json().catch(() => null)) as { url?: string } | null;
+    if (!json?.url) return { ok: false, reason: "URL de mídia ausente" };
+    return { ok: true, url: json.url };
+  } catch (err) {
+    return { ok: false, reason: err instanceof Error ? err.message : "falha media" };
+  }
 }

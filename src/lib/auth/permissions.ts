@@ -10,6 +10,7 @@ export const GRUPOS = [
   "academico",
   "operacional",
   "administracao",
+  "comunicacao",
 ] as const;
 export type Grupo = (typeof GRUPOS)[number];
 
@@ -21,6 +22,7 @@ export const GRUPO_LABEL: Record<Grupo, string> = {
   academico: "Acadêmico",
   operacional: "Operacional",
   administracao: "Administração",
+  comunicacao: "Comunicação",
 };
 
 export const MODULOS = {
@@ -62,6 +64,8 @@ export const MODULOS = {
   professores: { grupo: "academico", nome: "Professores" },
   organograma: { grupo: "academico", nome: "Organograma" },
   calendario: { grupo: "academico", nome: "Calendário Letivo" },
+  // comunicacao
+  whatsapp_inbox: { grupo: "comunicacao", nome: "WhatsApp Inbox" },
   // operacional
   portaria: { grupo: "operacional", nome: "Portaria" },
   relatorios: { grupo: "operacional", nome: "Relatórios" },
@@ -145,4 +149,5 @@ export const ROTA_PARA_MODULO: Record<string, ModuloCodigo> = {
   "/despesas/categorias": "despesas",
   "/pipeline": "pipeline",
   "/pipeline/config": "pipeline_admin",
+  "/whatsapp": "whatsapp_inbox",
 };

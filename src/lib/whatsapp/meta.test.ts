@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { montarComponentsTemplate } from "./meta";
+import { montarComponentsTemplate, montarPayloadImagem } from "./meta";
 
 describe("montarComponentsTemplate", () => {
   it("monta só o body quando não há imagem", () => {
@@ -49,5 +49,23 @@ describe("montarComponentsTemplate", () => {
       "dois",
       "três",
     ]);
+  });
+});
+
+describe("montarPayloadImagem", () => {
+  it("monta payload de imagem com legenda", () => {
+    expect(montarPayloadImagem("5562999998888", "https://x/y.jpg", "oi")).toEqual({
+      to: "5562999998888",
+      type: "image",
+      image: { link: "https://x/y.jpg", caption: "oi" },
+    });
+  });
+
+  it("omite caption quando não há legenda", () => {
+    expect(montarPayloadImagem("5562999998888", "https://x/y.jpg")).toEqual({
+      to: "5562999998888",
+      type: "image",
+      image: { link: "https://x/y.jpg" },
+    });
   });
 });
