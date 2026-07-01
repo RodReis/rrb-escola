@@ -4,7 +4,8 @@ Itens triados na revisão final da branch `feat/whatsapp-inbox` como **aceitáve
 
 ## Segurança / privacidade
 
-- **TTL de URL de mídia recebida (recomendado priorizar).** `src/lib/whatsapp/inbox-receive.ts` gera signed URL da imagem recebida com validade de **1 ano**. Fotos de responsáveis/alunos são sensíveis. Encurtar o TTL e renovar sob demanda (ou servir via rota autenticada).
+- ~~**TTL de URL de mídia recebida.**~~ **RESOLVIDO** (commit `4c3def62`): `midia_url` passou a guardar o **path** do Storage; a leitura (`getMensagensConversa`) gera signed URL curta (1h) sob demanda, em lote, com fallback `null` por mensagem. Não há mais signed URL de longa duração persistida.
+  - **QA pós-deploy:** eventuais imagens gravadas ANTES deste fix (não há em prod hoje — tabela nova) teriam signed URL antiga na coluna; após o deploy caem no fallback `null` (imagem some da thread, sem quebrar).
 
 ## Multi-tenant (só relevante quando houver mais de uma escola)
 
