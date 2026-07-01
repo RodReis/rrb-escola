@@ -52,25 +52,46 @@ export async function processarEventoInbound(
 
   // Casa vínculo (lead + responsável).
   // pipeline_lead não tem coluna telefone; o telefone do lead fica em pipeline_lead_responsavel.
-  // Fazemos join via card_id para obter o pipeline_lead.id associado.
-  // responsaveis_aluno não tem escola_id; buscamos todos e casamos em memória.
-  const [leadRespsRes, respsRes] = await Promise.all([
+  // PostgREST não suporta join entre pipeline_lead_responsavel e pipeline_lead (sem FK direta).
+  // Ambas têm FK para pipeline_card(id) via card_id. Fazemos duas queries e casamos em memória.
+  const [leadRespsRes, leadsRes, respsRes] = await Promise.all([
     supabase
       .from("pipeline_lead_responsavel")
-      .select("card_id, telefone, whatsapp, pipeline_lead!inner(id)")
+      .select("card_id, telefone, whatsapp")
+      .eq("escola_id", DEFAULT_SCHOOL_ID),
+    supabase
+      .from("pipeline_lead")
+      .select("id, card_id")
       .eq("escola_id", DEFAULT_SCHOOL_ID),
     supabase
       .from("responsaveis_aluno")
       .select("id, aluno_id, telefone, celular"),
   ]);
 
+  // Índice de responsáveis por card_id para casamento em memória.
+  const respPorCard = new Map<string, { telefone: string | null; whatsapp: string | null }[]>();
+  for (const resp of (leadRespsRes.data ?? []) as { card_id: string; telefone: string | null; whatsapp: string | null }[]) {
+    const lista = respPorCard.get(resp.card_id) ?? [];
+    lista.push(resp);
+    respPorCard.set(resp.card_id, lista);
+  }
+
   // Constrói lista de leads com { id, telefone } usando whatsapp preferido a telefone.
-  const leads: { id: string; telefone: string | null }[] = (leadRespsRes.data ?? []).map(
-    (r: any) => ({
-      id: r.pipeline_lead?.id ?? "",
-      telefone: r.whatsapp ?? r.telefone ?? null,
-    }),
-  );
+  // Um lead pode ter múltiplos responsáveis; geramos uma entrada por responsável com telefone,
+  // todas com o mesmo lead.id — assim casarConversa consegue casar por qualquer número do responsável.
+  const leads: { id: string; telefone: string | null }[] = [];
+  for (const lead of (leadsRes.data ?? []) as { id: string; card_id: string }[]) {
+    const resps = respPorCard.get(lead.card_id) ?? [];
+    if (resps.length === 0) {
+      // Lead sem responsável: inclui sem telefone (não casará, mas não perde o lead da lista)
+      leads.push({ id: lead.id, telefone: null });
+    } else {
+      for (const resp of resps) {
+        const tel = resp.whatsapp ?? resp.telefone ?? null;
+        leads.push({ id: lead.id, telefone: tel });
+      }
+    }
+  }
 
   const resps = (respsRes.data ?? []).map((r: any) => ({
     id: r.id,
