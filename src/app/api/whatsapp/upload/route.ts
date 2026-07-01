@@ -63,7 +63,7 @@ export async function POST(req: Request) {
       );
     }
 
-    return NextResponse.json({ url: signed.signedUrl });
+    return NextResponse.json({ url: signed.signedUrl, path: storagePath });
   } catch {
     return NextResponse.json({ error: "Erro interno" }, { status: 500 });
   }

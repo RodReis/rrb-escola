@@ -205,9 +205,9 @@ function CaixaEnvio({
         setErro(body.error ?? "Falha no upload");
         return;
       }
-      const { url } = (await upRes.json()) as { url: string };
+      const { url, path } = (await upRes.json()) as { url: string; path: string };
       const legenda = texto.trim() || undefined;
-      const r = await responderImagemAction(conversaId, url, legenda);
+      const r = await responderImagemAction(conversaId, url, path, legenda);
       if (r.ok) {
         setTexto("");
         setUploadFile(null);

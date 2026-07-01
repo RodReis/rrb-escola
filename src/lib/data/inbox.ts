@@ -2,6 +2,9 @@ import "server-only";
 import { requirePermission } from "@/lib/auth/session";
 import { createServerClient } from "@/lib/supabase/server";
 
+const BUCKET = "whatsapp-inbox";
+const SIGNED_URL_EXPIRY = 60 * 60; // 1 hora — suficiente para exibir a thread aberta
+
 export type ConversaResumo = {
   id: string;
   telefone: string;
@@ -56,5 +59,22 @@ export async function getMensagensConversa(conversaId: string): Promise<Mensagem
     .eq("conversa_id", conversaId)
     .order("created_at", { ascending: true });
   if (error) throw new Error(error.message);
-  return (data ?? []) as MensagemThread[];
+  const mensagens = (data ?? []) as MensagemThread[];
+
+  // midia_url guarda o PATH do objeto no Storage (bucket privado). Gera signed URL curta
+  // sob demanda, em lote, para não expor URLs de longa duração no banco.
+  return Promise.all(
+    mensagens.map(async (msg) => {
+      if (msg.tipo !== "imagem" || !msg.midia_url) return msg;
+      try {
+        const { data: signed, error: signErr } = await supabase.storage
+          .from(BUCKET)
+          .createSignedUrl(msg.midia_url, SIGNED_URL_EXPIRY);
+        if (signErr || !signed?.signedUrl) return { ...msg, midia_url: null };
+        return { ...msg, midia_url: signed.signedUrl };
+      } catch {
+        return { ...msg, midia_url: null };
+      }
+    }),
+  );
 }

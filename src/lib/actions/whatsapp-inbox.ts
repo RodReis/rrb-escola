@@ -127,6 +127,7 @@ function validarUrlImagem(imagemUrl: string): boolean {
 export async function responderImagemAction(
   conversaId: string,
   imagemUrl: string,
+  imagemPath: string,
   legenda?: string,
 ): Promise<ActionResult> {
   try {
@@ -140,6 +141,7 @@ export async function responderImagemAction(
       return { ok: false, error: "Janela de 24h fechada — use um template" };
     }
 
+    // A URL assinada (efêmera) vai para a Meta buscar a imagem; o path é o que persiste no banco.
     const r = await sendImage({ telefone: conversa.telefone, imagemUrl, legenda });
 
     await supabase.from("pipeline_conversa_mensagem").insert({
@@ -148,7 +150,7 @@ export async function responderImagemAction(
       direcao: "saida",
       tipo: "imagem",
       texto: legenda ?? null,
-      midia_url: imagemUrl,
+      midia_url: imagemPath,
       status: r.ok ? "enviada" : "falha",
       erro: r.ok ? null : r.reason,
       provider_message_id: r.ok ? (r.providerMessageId || null) : null,

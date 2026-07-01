@@ -9,7 +9,8 @@ const BUCKET = "whatsapp-inbox";
 
 type SupabaseAdmin = { from: (t: string) => any; storage: any };
 
-// Baixa a mídia da Meta, sobe no bucket e devolve a URL assinada (ou null em falha).
+// Baixa a mídia da Meta, sobe no bucket e devolve o PATH do objeto no Storage (ou null em falha).
+// A signed URL é gerada sob demanda na leitura (getMensagensConversa), com validade curta.
 async function baixarMidia(
   supabase: SupabaseAdmin,
   mediaId: string,
@@ -29,8 +30,7 @@ async function baixarMidia(
       upsert: true,
     });
     if (up.error) return null;
-    const signed = await supabase.storage.from(BUCKET).createSignedUrl(path, 60 * 60 * 24 * 365);
-    return signed.data?.signedUrl ?? null;
+    return path;
   } catch {
     return null;
   }
