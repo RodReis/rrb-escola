@@ -18,15 +18,23 @@ const IDIOMA = "pt_BR";
 
 // ─── Helper: valida sessão e busca conversa ───────────────────────────────────
 
-async function ctxConversa(conversaId: string) {
-  const session = await requirePermission("whatsapp_inbox", "read");
+async function ctxConversa(
+  conversaId: string,
+  acao: "read" | "create" | "update" = "read",
+) {
+  const session = await requirePermission("whatsapp_inbox", acao);
   const supabase = await createServerClient();
   const { data, error } = await supabase
     .from("pipeline_conversa")
-    .select("id, telefone, janela_expira_em")
+    .select("id, escola_id, telefone, janela_expira_em")
     .eq("id", conversaId)
+    .eq("escola_id", session.profile.escola_id)
     .single();
   if (error || !data) throw new Error("Conversa não encontrada");
+  // Defesa em profundidade: rejeita mesmo que RLS já proteja
+  if (data.escola_id !== session.profile.escola_id) {
+    throw new Error("Conversa não encontrada");
+  }
   return { session, supabase, conversa: data };
 }
 
@@ -34,7 +42,7 @@ async function ctxConversa(conversaId: string) {
 
 export async function marcarLidaAction(conversaId: string): Promise<ActionResult> {
   try {
-    const { supabase } = await ctxConversa(conversaId);
+    const { supabase } = await ctxConversa(conversaId, "update");
     await supabase
       .from("pipeline_conversa")
       .update({ nao_lidas: 0 })
@@ -56,7 +64,7 @@ export async function responderTextoAction(
     const parsed = z.string().min(1).max(4000).safeParse(texto);
     if (!parsed.success) return { ok: false, error: "Mensagem vazia ou longa demais" };
 
-    const { session, supabase, conversa } = await ctxConversa(conversaId);
+    const { session, supabase, conversa } = await ctxConversa(conversaId, "create");
 
     if (!janelaAberta(conversa.janela_expira_em, new Date())) {
       return { ok: false, error: "Janela de 24h fechada — use um template" };
@@ -93,13 +101,40 @@ export async function responderTextoAction(
 
 // ─── Responder com imagem ─────────────────────────────────────────────────────
 
+// Host de storage permitido derivado de NEXT_PUBLIC_SUPABASE_URL
+function validarUrlImagem(imagemUrl: string): boolean {
+  let parsed: URL;
+  try {
+    parsed = new URL(imagemUrl);
+  } catch {
+    return false;
+  }
+  if (parsed.protocol !== "https:") return false;
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL ?? "";
+  let storageHost: string;
+  try {
+    storageHost = new URL(supabaseUrl).hostname;
+  } catch {
+    storageHost = "";
+  }
+  // Aceita o host exato do Supabase do projeto ou qualquer subdomínio .supabase.co
+  const hostValido =
+    (storageHost !== "" && parsed.hostname === storageHost) ||
+    parsed.hostname.endsWith(".supabase.co");
+  return hostValido;
+}
+
 export async function responderImagemAction(
   conversaId: string,
   imagemUrl: string,
   legenda?: string,
 ): Promise<ActionResult> {
   try {
-    const { session, supabase, conversa } = await ctxConversa(conversaId);
+    if (!validarUrlImagem(imagemUrl)) {
+      return { ok: false, error: "URL de imagem inválida" };
+    }
+
+    const { session, supabase, conversa } = await ctxConversa(conversaId, "create");
 
     if (!janelaAberta(conversa.janela_expira_em, new Date())) {
       return { ok: false, error: "Janela de 24h fechada — use um template" };
@@ -143,7 +178,7 @@ export async function responderTemplateAction(
   variaveis: string[],
 ): Promise<ActionResult> {
   try {
-    const { session, supabase, conversa } = await ctxConversa(conversaId);
+    const { session, supabase, conversa } = await ctxConversa(conversaId, "create");
 
     const tpl = await supabase
       .from("pipeline_template_whatsapp")
@@ -194,7 +229,7 @@ export async function atribuirConversaAction(
   perfilId: string | null,
 ): Promise<ActionResult> {
   try {
-    const { supabase } = await ctxConversa(conversaId);
+    const { supabase } = await ctxConversa(conversaId, "update");
     await supabase
       .from("pipeline_conversa")
       .update({ assigned_to: perfilId })
@@ -210,7 +245,7 @@ export async function atribuirConversaAction(
 
 export async function arquivarConversaAction(conversaId: string): Promise<ActionResult> {
   try {
-    const { supabase } = await ctxConversa(conversaId);
+    const { supabase } = await ctxConversa(conversaId, "update");
     await supabase
       .from("pipeline_conversa")
       .update({ status: "arquivada" })
