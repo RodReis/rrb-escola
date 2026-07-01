@@ -119,6 +119,25 @@ export default async function LoginPage({ searchParams }: { searchParams: { erro
               Entrar <ArrowRight size={17} />
             </button>
           </form>
+
+          <p
+            className="mt-6 border-t pt-4 text-center text-[12px]"
+            style={{ borderColor: "var(--border)", color: "var(--text-muted)" }}
+          >
+            Ao acessar, você concorda com os{" "}
+            <a href="/termos" className="font-semibold underline underline-offset-2" style={{ color: "var(--brand-600)" }}>
+              Termos de Uso
+            </a>{" "}
+            e a{" "}
+            <a
+              href="/privacidade"
+              className="font-semibold underline underline-offset-2"
+              style={{ color: "var(--brand-600)" }}
+            >
+              Política de Privacidade
+            </a>
+            .
+          </p>
         </div>
       </section>
     </main>

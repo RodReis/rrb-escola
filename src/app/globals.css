@@ -966,3 +966,32 @@ textarea {
   margin-bottom: 1px;
 }
 
+
+/* ===================== Páginas legais (Privacidade / Termos) =====================
+   Tipografia de leitura para documentos longos. Só tokens — paridade claro/escuro. */
+.legal-prose { color: var(--text-soft); font-size: 15px; line-height: 1.72; }
+.legal-prose > * + * { margin-top: 0.95rem; }
+.legal-prose h2 {
+  font-family: var(--font-display, var(--font-sans));
+  font-weight: 700; font-size: 20px; letter-spacing: -0.01em; line-height: 1.25;
+  color: var(--text, var(--color-ink)); margin-top: 2.4rem; scroll-margin-top: 5rem;
+}
+.legal-prose h2:first-child { margin-top: 0; }
+.legal-prose h3 {
+  font-family: var(--font-display, var(--font-sans));
+  font-weight: 600; font-size: 15.5px; color: var(--text, var(--color-ink)); margin-top: 1.6rem;
+}
+.legal-prose p, .legal-prose li { color: var(--text-soft); }
+.legal-prose strong { color: var(--text, var(--color-ink)); font-weight: 650; }
+.legal-prose a { color: var(--brand-600); text-decoration: underline; text-underline-offset: 2px; font-weight: 550; }
+.legal-prose a:hover { color: var(--brand-500); }
+.legal-prose ul, .legal-prose ol { padding-left: 1.25rem; }
+.legal-prose ul { list-style: disc; }
+.legal-prose ol { list-style: decimal; }
+.legal-prose li + li { margin-top: 0.4rem; }
+.legal-prose li::marker { color: var(--text-muted); }
+.legal-prose table { width: 100%; border-collapse: collapse; font-size: 13.5px; margin-top: 0.5rem; }
+.legal-prose th, .legal-prose td { border: 1px solid var(--border); padding: 9px 12px; text-align: left; vertical-align: top; }
+.legal-prose thead th { background: var(--surface-2); color: var(--text, var(--color-ink)); font-weight: 650; font-size: 12.5px; }
+.legal-toc a { color: var(--text-muted); text-decoration: none; }
+.legal-toc a:hover { color: var(--brand-600); }
