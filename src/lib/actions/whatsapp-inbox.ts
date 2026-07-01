@@ -5,6 +5,7 @@ import { requirePermission } from "@/lib/auth/session";
 import { createServerClient } from "@/lib/supabase/server";
 import { sendText, sendImage, sendTemplate } from "@/lib/whatsapp/meta";
 import { janelaAberta } from "@/lib/whatsapp/inbox-parser";
+import { validarPathImagem } from "@/lib/actions/whatsapp-inbox-validation";
 
 // ─── Tipo de retorno ──────────────────────────────────────────────────────────
 
@@ -133,6 +134,9 @@ export async function responderImagemAction(
   try {
     if (!validarUrlImagem(imagemUrl)) {
       return { ok: false, error: "URL de imagem inválida" };
+    }
+    if (!validarPathImagem(imagemPath)) {
+      return { ok: false, error: "Caminho de imagem inválido" };
     }
 
     const { session, supabase, conversa } = await ctxConversa(conversaId, "create");
