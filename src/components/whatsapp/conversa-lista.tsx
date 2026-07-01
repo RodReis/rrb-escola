@@ -102,10 +102,14 @@ export function ConversaLista({
               key={f.key}
               type="button"
               onClick={() => onFiltro(f.key)}
-              className="rounded-[var(--r-pill)] px-2.5 py-0.5 text-[11.5px] font-medium transition-colors"
+              className={
+                filtro === f.key
+                  ? "rounded-[var(--r-pill)] px-2.5 py-0.5 text-[11.5px] font-medium transition-colors text-white"
+                  : "rounded-[var(--r-pill)] px-2.5 py-0.5 text-[11.5px] font-medium transition-colors"
+              }
               style={
                 filtro === f.key
-                  ? { background: "var(--brand-600)", color: "#fff" }
+                  ? { background: "var(--brand-600)" }
                   : {
                       background: "var(--surface-3)",
                       color: "var(--text-muted)",

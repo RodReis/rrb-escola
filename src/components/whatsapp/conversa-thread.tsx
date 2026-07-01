@@ -2,6 +2,8 @@
 
 import { useState, useRef, useEffect, useCallback } from "react";
 import type { ConversaResumo, MensagemThread } from "@/lib/data/inbox";
+import type { TemplateWpp } from "@/lib/actions/pipeline";
+import { getTemplatesWhatsapp } from "@/lib/actions/pipeline";
 import { VinculoChip } from "./vinculo-chip";
 import {
   responderTextoAction,
@@ -90,15 +92,23 @@ function TemplateSelector({
 }) {
   const [enviando, setEnviando] = useState(false);
   const [erro, setErro] = useState<string | null>(null);
+  const [templates, setTemplates] = useState<TemplateWpp[]>([]);
+  const [templateId, setTemplateId] = useState("");
+
+  useEffect(() => {
+    void getTemplatesWhatsapp().then((r) => {
+      if (r.ok && r.data) setTemplates(r.data);
+    });
+  }, []);
 
   const enviarTemplate = async () => {
+    if (!templateId) return;
     setEnviando(true);
     setErro(null);
     try {
-      const templateId = prompt("ID do template:");
-      if (!templateId) return;
       const r = await responderTemplateAction(conversaId, templateId, []);
       if (r.ok) {
+        setTemplateId("");
         onEnviado();
       } else {
         setErro(r.error);
@@ -109,16 +119,34 @@ function TemplateSelector({
   };
 
   return (
-    <div className="flex flex-col items-center gap-1">
+    <div className="flex flex-col items-center gap-2 w-full max-w-xs">
       {erro && (
         <span className="text-[11px]" style={{ color: "var(--bad)" }}>
           {erro}
         </span>
       )}
+      <select
+        value={templateId}
+        onChange={(e) => setTemplateId(e.target.value)}
+        disabled={enviando}
+        className="w-full rounded-[var(--r-sm)] border px-2.5 py-1.5 text-[12px] outline-none"
+        style={{
+          borderColor: "var(--border)",
+          background: "var(--surface-2)",
+          color: "var(--text)",
+        }}
+      >
+        <option value="">Selecione um template...</option>
+        {templates.map((t) => (
+          <option key={t.id} value={t.id}>
+            {t.descricao}
+          </option>
+        ))}
+      </select>
       <button
         type="button"
         onClick={() => void enviarTemplate()}
-        disabled={enviando}
+        disabled={enviando || !templateId}
         className="rounded-[var(--r-pill)] px-4 py-1.5 text-[12px] font-semibold text-white transition-opacity disabled:opacity-50"
         style={{ background: "var(--brand-600)" }}
       >
@@ -296,8 +324,8 @@ function CaixaEnvio({
               : () => void enviarTexto()
           }
           disabled={enviando || (!texto.trim() && !uploadFile)}
-          className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full transition-colors disabled:opacity-50"
-          style={{ background: "var(--brand-600)", color: "#fff" }}
+          className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-white transition-colors disabled:opacity-50"
+          style={{ background: "var(--brand-600)" }}
         >
           <Send size={15} />
         </button>
@@ -316,6 +344,8 @@ export function ConversaThread({
   const bottomRef = useRef<HTMLDivElement>(null);
   const [arquivando, setArquivando] = useState(false);
   const [atribuindo, setAtribuindo] = useState(false);
+  const [mostrarFormAtribuir, setMostrarFormAtribuir] = useState(false);
+  const [perfilIdInput, setPerfilIdInput] = useState("");
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -344,13 +374,15 @@ export function ConversaThread({
     setArquivando(false);
   };
 
-  const handleAtribuir = async () => {
+  const handleAtribuirSubmit = async () => {
     if (atribuindo) return;
-    const pid = prompt("ID do perfil (deixe vazio para desatribuir):");
     setAtribuindo(true);
-    await atribuirConversaAction(conversa.id, pid?.trim() ?? null);
-    onAtribuido(pid?.trim() ?? null);
+    const pid = perfilIdInput.trim() || null;
+    await atribuirConversaAction(conversa.id, pid);
+    onAtribuido(pid);
     setAtribuindo(false);
+    setMostrarFormAtribuir(false);
+    setPerfilIdInput("");
   };
 
   return (
@@ -414,11 +446,14 @@ export function ConversaThread({
         <div className="flex items-center gap-1">
           <button
             type="button"
-            onClick={() => void handleAtribuir()}
+            onClick={() => {
+              setMostrarFormAtribuir((v) => !v);
+              setPerfilIdInput("");
+            }}
             disabled={atribuindo}
             title="Atribuir conversa"
             className="flex h-8 w-8 items-center justify-center rounded-[var(--r-sm)] transition-colors"
-            style={{ color: "var(--text-muted)" }}
+            style={{ color: mostrarFormAtribuir ? "var(--brand-600)" : "var(--text-muted)" }}
           >
             <UserCheck size={15} />
           </button>
@@ -434,6 +469,53 @@ export function ConversaThread({
           </button>
         </div>
       </div>
+      {/* Formulário de atribuição inline */}
+      {mostrarFormAtribuir && (
+        <div
+          className="flex shrink-0 items-center gap-2 border-b px-4 py-2"
+          style={{ borderColor: "var(--border)", background: "var(--surface-2)" }}
+        >
+          <span className="shrink-0 text-[12px]" style={{ color: "var(--text-soft)" }}>
+            ID do perfil:
+          </span>
+          <input
+            type="text"
+            value={perfilIdInput}
+            onChange={(e) => setPerfilIdInput(e.target.value)}
+            placeholder="ID ou vazio para desatribuir"
+            className="flex-1 rounded-[var(--r-sm)] border px-2.5 py-1 text-[12px] outline-none"
+            style={{
+              borderColor: "var(--border)",
+              background: "var(--surface)",
+              color: "var(--text)",
+            }}
+            onKeyDown={(e) => {
+              if (e.key === "Enter") void handleAtribuirSubmit();
+              if (e.key === "Escape") {
+                setMostrarFormAtribuir(false);
+                setPerfilIdInput("");
+              }
+            }}
+          />
+          <button
+            type="button"
+            onClick={() => void handleAtribuirSubmit()}
+            disabled={atribuindo}
+            className="rounded-[var(--r-sm)] px-3 py-1 text-[12px] font-semibold text-white disabled:opacity-50"
+            style={{ background: "var(--brand-600)" }}
+          >
+            {atribuindo ? "..." : "Atribuir"}
+          </button>
+          <button
+            type="button"
+            onClick={() => { setMostrarFormAtribuir(false); setPerfilIdInput(""); }}
+            className="rounded-[var(--r-sm)] px-2 py-1 text-[12px]"
+            style={{ color: "var(--text-muted)" }}
+          >
+            <X size={13} />
+          </button>
+        </div>
+      )}
 
       {/* Mensagens */}
       <div
