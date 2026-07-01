@@ -80,7 +80,7 @@ export async function responderTextoAction(
       texto: parsed.data,
       status: r.ok ? "enviada" : "falha",
       erro: r.ok ? null : r.reason,
-      provider_message_id: r.ok ? r.providerMessageId : null,
+      provider_message_id: r.ok ? (r.providerMessageId || null) : null,
       enviada_por: session.profile.id,
     });
 
@@ -151,7 +151,7 @@ export async function responderImagemAction(
       midia_url: imagemUrl,
       status: r.ok ? "enviada" : "falha",
       erro: r.ok ? null : r.reason,
-      provider_message_id: r.ok ? r.providerMessageId : null,
+      provider_message_id: r.ok ? (r.providerMessageId || null) : null,
       enviada_por: session.profile.id,
     });
 
@@ -203,7 +203,7 @@ export async function responderTemplateAction(
       texto: tpl.data.descricao,
       status: r.ok ? "enviada" : "falha",
       erro: r.ok ? null : r.reason,
-      provider_message_id: r.ok ? r.providerMessageId : null,
+      provider_message_id: r.ok ? (r.providerMessageId || null) : null,
       enviada_por: session.profile.id,
     });
 
