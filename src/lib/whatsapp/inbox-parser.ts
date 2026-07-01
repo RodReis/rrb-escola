@@ -1,5 +1,6 @@
 import { createHmac, timingSafeEqual } from "node:crypto";
 import { normalizarTelefone } from "./telefone";
+export { janelaAberta } from "./janela";
 
 export function validarAssinaturaWebhook(
   rawBody: string,
@@ -75,7 +76,3 @@ export function casarConversa(
   return { lead_id: null, aluno_id: null, responsavel_id: null };
 }
 
-export function janelaAberta(janelaExpiraEm: string | null, agora: Date): boolean {
-  if (!janelaExpiraEm) return false;
-  return new Date(janelaExpiraEm).getTime() > agora.getTime();
-}

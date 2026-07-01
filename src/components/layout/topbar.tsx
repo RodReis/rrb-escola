@@ -18,7 +18,8 @@ import { ThemeToggle } from "@/components/ui/theme-toggle";
 import { can, ROTA_PARA_MODULO, type PermissionMap } from "@/lib/auth/permissions";
 
 const primaryItems: Array<{ href: string; label: string; icon: TopbarIconName }> = [
-  { href: "/", label: "Dashboard", icon: "LayoutDashboard" }
+  { href: "/", label: "Dashboard", icon: "LayoutDashboard" },
+  { href: "/whatsapp", label: "WhatsApp", icon: "Inbox" },
 ];
 
 const RELATORIOS_ITEMS: DropdownItem[] = [
