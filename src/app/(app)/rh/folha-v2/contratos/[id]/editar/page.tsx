@@ -95,7 +95,7 @@ export default async function EditarContratoPage({
       ) : null}
 
       <Panel className="p-6">
-        <p className="mb-4 text-xs font-bold uppercase tracking-kicker text-ink/55">Dados do contrato</p>
+        <p className="mb-4 text-xs font-bold uppercase tracking-kicker text-ink/60">Dados do contrato</p>
         <form action={updateContratoAction} className="grid gap-5">
           <input type="hidden" name="id" value={c.id} />
           <input type="hidden" name="funcionario_id" value={c.employees?.id ?? ""} />
@@ -216,7 +216,7 @@ export default async function EditarContratoPage({
       </Panel>
 
       <Card>
-        <p className="mb-4 text-xs font-bold uppercase tracking-kicker text-ink/55">
+        <p className="mb-4 text-xs font-bold uppercase tracking-kicker text-ink/60">
           Verbas contratuais
         </p>
         <p className="mb-4 text-sm text-ink/60">
@@ -237,7 +237,7 @@ export default async function EditarContratoPage({
             <tbody>
               {verbas.length === 0 ? (
                 <tr>
-                  <td colSpan={5} className="py-4 text-center text-sm text-ink/40">
+                  <td colSpan={5} className="py-4 text-center text-sm text-ink/60">
                     Nenhuma verba contratual.
                   </td>
                 </tr>

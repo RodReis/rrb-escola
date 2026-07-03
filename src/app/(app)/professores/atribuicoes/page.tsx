@@ -58,11 +58,11 @@ export default async function AtribuicoesPage() {
         <div className="flex items-center gap-2">
           <UserCheck size={16} className="text-brand" />
           <h3 className="font-bold text-ink">Atribuições atuais</h3>
-          <span className="ml-auto text-xs text-ink/55">{atribuicoes.length} vínculos</span>
+          <span className="ml-auto text-xs text-ink/60">{atribuicoes.length} vínculos</span>
         </div>
 
         {atribuicoes.length === 0 ? (
-          <div className="flex flex-col items-center justify-center gap-2 py-10 text-ink/40">
+          <div className="flex flex-col items-center justify-center gap-2 py-10 text-ink/60">
             <UserCheck size={28} />
             <p className="text-sm font-medium">Nenhuma atribuição cadastrada.</p>
           </div>
@@ -70,7 +70,7 @@ export default async function AtribuicoesPage() {
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead>
-                <tr className="text-[0.66rem] uppercase tracking-kicker text-ink/55">
+                <tr className="text-[0.66rem] uppercase tracking-kicker text-ink/60">
                   <th className="px-2 py-2 text-left">Professor</th>
                   <th className="px-2 py-2 text-left">Disciplina</th>
                   <th className="px-2 py-2 text-left">Série</th>

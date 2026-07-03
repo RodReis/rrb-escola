@@ -76,7 +76,7 @@ export default async function FolhaV2Page({
       ) : null}
 
       <Card>
-        <div className="mb-4 text-xs font-bold uppercase tracking-kicker text-ink/55">
+        <div className="mb-4 text-xs font-bold uppercase tracking-kicker text-ink/60">
           Gerar folha manualmente
         </div>
         <form action={gerarFolhaManualAction} className="flex flex-wrap items-end gap-3">
@@ -97,7 +97,7 @@ export default async function FolhaV2Page({
         </form>
 
         <div className="mt-6 border-t border-line pt-5">
-          <div className="mb-3 text-xs font-bold uppercase tracking-kicker text-ink/55">
+          <div className="mb-3 text-xs font-bold uppercase tracking-kicker text-ink/60">
             Gerar 13º / Férias
           </div>
           <form action={gerarRunEspecialAction} className="flex flex-wrap items-end gap-3">
@@ -144,18 +144,18 @@ export default async function FolhaV2Page({
           <thead>
             <tr>
               {["Competência", "Empresa", "Tipo", "Status"].map((h) => (
-                <th key={h} className="px-4 py-3 text-left text-[0.68rem] font-bold uppercase tracking-kicker text-ink/45">{h}</th>
+                <th key={h} className="px-4 py-3 text-left text-[0.68rem] font-bold uppercase tracking-kicker text-ink/60">{h}</th>
               ))}
-              <th className="px-4 py-3 text-right text-[0.68rem] font-bold uppercase tracking-kicker text-ink/45">Proventos</th>
-              <th className="px-4 py-3 text-right text-[0.68rem] font-bold uppercase tracking-kicker text-ink/45">Líquido</th>
-              <th className="px-4 py-3 text-right text-[0.68rem] font-bold uppercase tracking-kicker text-ink/45">Ações</th>
+              <th className="px-4 py-3 text-right text-[0.68rem] font-bold uppercase tracking-kicker text-ink/60">Proventos</th>
+              <th className="px-4 py-3 text-right text-[0.68rem] font-bold uppercase tracking-kicker text-ink/60">Líquido</th>
+              <th className="px-4 py-3 text-right text-[0.68rem] font-bold uppercase tracking-kicker text-ink/60">Ações</th>
             </tr>
           </thead>
           <tbody>
             {runs.length === 0 ? (
               <tr>
                 <td colSpan={7} className="py-12">
-                  <div className="flex flex-col items-center justify-center gap-2 text-ink/40">
+                  <div className="flex flex-col items-center justify-center gap-2 text-ink/60">
                     <FileText size={28} />
                     <p className="text-sm">Nenhuma folha gerada ainda.</p>
                   </div>
@@ -178,7 +178,7 @@ export default async function FolhaV2Page({
                     {tipoLabel ? (
                       <StatusPill tone={tipoTone ?? "neutral"}>{tipoLabel}</StatusPill>
                     ) : (
-                      <span className="text-xs text-ink/40">Mensal</span>
+                      <span className="text-xs text-ink/60">Mensal</span>
                     )}
                   </td>
                   <td className="px-4 py-2.5">

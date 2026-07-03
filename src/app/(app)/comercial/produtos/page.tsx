@@ -30,7 +30,7 @@ export default async function ProdutosPage() {
 
       {produtos.length === 0 ? (
         <Panel className="p-5">
-          <div className="flex flex-col items-center justify-center gap-2 rounded-ui bg-muted/30 py-12 text-ink/40">
+          <div className="flex flex-col items-center justify-center gap-2 rounded-ui bg-muted/30 py-12 text-ink/60">
             <Package size={28} />
             <p className="text-sm">Nenhum produto cadastrado.</p>
             <ButtonLink href="/comercial/produtos/novo" variant="ghost" className="mt-2">
@@ -50,7 +50,7 @@ export default async function ProdutosPage() {
                     <span className="inline-flex items-center rounded-pill bg-brand/10 px-2 py-0.5 text-xs font-semibold text-brand">estoque</span>
                   )}
                   {!p.ativo && (
-                    <span className="inline-flex items-center rounded-pill bg-muted px-2 py-0.5 text-xs font-semibold text-ink/45">inativo</span>
+                    <span className="inline-flex items-center rounded-pill bg-muted px-2 py-0.5 text-xs font-semibold text-ink/60">inativo</span>
                   )}
                 </div>
                 <Link
@@ -61,11 +61,11 @@ export default async function ProdutosPage() {
                 </Link>
               </div>
               {p.variacoes.length === 0 ? (
-                <p className="text-sm text-ink/45">Sem variações. Adicione na edição.</p>
+                <p className="text-sm text-ink/60">Sem variações. Adicione na edição.</p>
               ) : (
                 <table className="w-full text-sm">
                   <thead>
-                    <tr className="border-b border-line text-left text-[0.66rem] font-bold uppercase tracking-kicker text-ink/55">
+                    <tr className="border-b border-line text-left text-[0.66rem] font-bold uppercase tracking-kicker text-ink/60">
                       <th className="py-1.5 px-2">SKU</th>
                       <th className="py-1.5 px-2">Atributos</th>
                       <th className="py-1.5 px-2 text-right">Preço</th>

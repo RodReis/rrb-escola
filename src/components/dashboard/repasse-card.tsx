@@ -10,7 +10,7 @@ export function RepasseCard({ data }: { data: RepasseData }) {
         <span className="grid h-9 w-9 place-items-center rounded-ui bg-success/15 text-success">
           <Wallet size={16} />
         </span>
-        <p className="text-[0.66rem] font-bold uppercase tracking-kicker text-ink/55">Repasse recebido</p>
+        <p className="text-[0.66rem] font-bold uppercase tracking-kicker text-ink/60">Repasse recebido</p>
       </div>
       <strong className="mt-3 block text-3xl font-bold text-ink">{money.format(data.valor)}</strong>
       <div className="mt-2 flex items-center gap-2">

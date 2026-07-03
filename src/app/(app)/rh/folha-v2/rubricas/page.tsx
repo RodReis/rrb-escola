@@ -74,7 +74,7 @@ export default async function RubricasPage() {
             {rubricas.length === 0 ? (
               <tr>
                 <td colSpan={11} className="py-12">
-                  <div className="flex flex-col items-center gap-2 text-ink/40">
+                  <div className="flex flex-col items-center gap-2 text-ink/60">
                     <Tag size={24} />
                     <p className="text-sm">Nenhuma rubrica cadastrada.</p>
                   </div>

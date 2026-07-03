@@ -115,7 +115,7 @@ export function NotasInlineGrid({
     <div className="overflow-x-auto">
       <table className="w-full text-sm">
         <thead>
-          <tr className="text-[0.66rem] uppercase tracking-kicker text-ink/55">
+          <tr className="text-[0.66rem] uppercase tracking-kicker text-ink/60">
             <th className="px-2 py-2 text-left">Aluno</th>
             <th className="px-2 py-2 text-right w-32">Nota (0 a {valorMaximo})</th>
             <th className="px-2 py-2 text-left w-40">&nbsp;</th>

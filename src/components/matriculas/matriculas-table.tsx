@@ -53,7 +53,7 @@ export function MatriculasTable({ matriculas }: { matriculas: Matricula[] }) {
           {matriculas.length === 0 ? (
             <tr>
               <td colSpan={8} className="py-12">
-                <div className="flex flex-col items-center justify-center gap-2 text-ink/40">
+                <div className="flex flex-col items-center justify-center gap-2 text-ink/60">
                   <Inbox size={28} />
                   <p className="text-sm font-medium">Nenhuma matrícula encontrada.</p>
                 </div>
@@ -81,7 +81,7 @@ export function MatriculasTable({ matriculas }: { matriculas: Matricula[] }) {
                     )}
                     <div className="flex flex-col leading-tight">
                       <span className="font-semibold text-ink group-hover:text-brand">{item.alunos?.nome}</span>
-                      <span className="text-xs text-ink/50">#{item.alunos?.matricula_codigo}</span>
+                      <span className="text-xs text-ink/60">#{item.alunos?.matricula_codigo}</span>
                     </div>
                   </Link>
                 </td>

@@ -90,7 +90,7 @@ export function AlunoRowActions({ alunoId, alunoNome, ativo }: Props) {
         aria-haspopup="true"
         aria-expanded={open}
         aria-label="Mais ações"
-        className="flex h-7 w-7 items-center justify-center rounded-md text-ink/40 transition hover:bg-surface-raised hover:text-ink disabled:opacity-40"
+        className="flex h-7 w-7 items-center justify-center rounded-md text-ink/60 transition hover:bg-muted hover:text-ink disabled:opacity-40"
       >
         <MoreHorizontal size={16} />
       </button>
@@ -98,13 +98,13 @@ export function AlunoRowActions({ alunoId, alunoNome, ativo }: Props) {
       {open && (
         <div
           role="menu"
-          className="absolute right-0 top-full z-50 mt-1 w-52 rounded-lg border border-line bg-white py-1 shadow-soft"
+          className="absolute right-0 top-full z-50 mt-1 w-52 rounded-lg border border-line bg-surface py-1 shadow-soft"
         >
           <a
             href={`/alunos/${alunoId}`}
             role="menuitem"
             onClick={() => setOpen(false)}
-            className="flex items-center gap-2.5 px-3 py-2 text-sm text-ink hover:bg-surface-raised"
+            className="flex items-center gap-2.5 px-3 py-2 text-sm text-ink hover:bg-muted"
           >
             <Eye size={14} className="text-ink/50" />
             Ver ficha
@@ -114,7 +114,7 @@ export function AlunoRowActions({ alunoId, alunoNome, ativo }: Props) {
             href={`/alunos/${alunoId}/editar`}
             role="menuitem"
             onClick={() => setOpen(false)}
-            className="flex items-center gap-2.5 px-3 py-2 text-sm text-ink hover:bg-surface-raised"
+            className="flex items-center gap-2.5 px-3 py-2 text-sm text-ink hover:bg-muted"
           >
             <Pencil size={14} className="text-ink/50" />
             Editar
@@ -126,7 +126,7 @@ export function AlunoRowActions({ alunoId, alunoNome, ativo }: Props) {
             type="button"
             role="menuitem"
             onClick={handleToggle}
-            className="flex w-full items-center gap-2.5 px-3 py-2 text-sm text-ink hover:bg-surface-raised"
+            className="flex w-full items-center gap-2.5 px-3 py-2 text-sm text-ink hover:bg-muted"
           >
             {ativo ? (
               <>

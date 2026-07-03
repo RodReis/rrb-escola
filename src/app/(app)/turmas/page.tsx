@@ -82,7 +82,7 @@ export default async function TurmasPage() {
       <section className="grid gap-3">
         {turmas.length === 0 ? (
           <Panel>
-            <div className="flex flex-col items-center justify-center gap-2 py-10 text-ink/40">
+            <div className="flex flex-col items-center justify-center gap-2 py-10 text-ink/60">
               <GraduationCap size={28} />
               <p className="text-sm font-medium">Nenhuma turma cadastrada.</p>
             </div>

@@ -52,12 +52,12 @@ export function PipelineAtividadeCard({ anamneses, atividades, showAnamnese }: P
         </span>
         <div>
           <h3 className="text-sm font-bold text-ink">Pipeline — Entrevistas &amp; Atividade</h3>
-          <p className="text-[0.66rem] text-ink/55">resumo recente</p>
+          <p className="text-[0.66rem] text-ink/60">resumo recente</p>
         </div>
       </div>
 
       {vazio ? (
-        <div className="mt-6 flex flex-col items-center justify-center gap-2 rounded-ui bg-muted/40 py-10 text-ink/40">
+        <div className="mt-6 flex flex-col items-center justify-center gap-2 rounded-ui bg-muted/40 py-10 text-ink/60">
           <Activity size={24} />
           <p className="text-sm text-center px-3">Sem atividade recente no pipeline.</p>
         </div>
@@ -66,16 +66,16 @@ export function PipelineAtividadeCard({ anamneses, atividades, showAnamnese }: P
           {/* Entrevistas / anamnese — só para quem tem acesso sensível */}
           {showAnamnese && (
             <div className="mt-4">
-              <p className="text-[0.66rem] font-bold uppercase tracking-kicker text-ink/55">
+              <p className="text-[0.66rem] font-bold uppercase tracking-kicker text-ink/60">
                 Entrevistas (anamnese)
               </p>
               {anamneseItens.length === 0 ? (
-                <p className="mt-2 text-xs text-ink/40">Nenhuma anamnese registrada.</p>
+                <p className="mt-2 text-xs text-ink/60">Nenhuma anamnese registrada.</p>
               ) : (
                 <dl className="mt-2 grid grid-cols-2 gap-2 text-xs">
                   {anamneseItens.map((a) => (
                     <div key={a.status} className="rounded-ui bg-muted/40 p-2">
-                      <dt className="text-[0.66rem] uppercase tracking-kicker text-ink/55">
+                      <dt className="text-[0.66rem] uppercase tracking-kicker text-ink/60">
                         {ANAMNESE_LABEL[a.status]}
                       </dt>
                       <dd className="mt-1 font-bold text-ink">{a.total}</dd>
@@ -88,11 +88,11 @@ export function PipelineAtividadeCard({ anamneses, atividades, showAnamnese }: P
 
           {/* Timeline de atividade recente */}
           <div className="mt-5">
-            <p className="text-[0.66rem] font-bold uppercase tracking-kicker text-ink/55">
+            <p className="text-[0.66rem] font-bold uppercase tracking-kicker text-ink/60">
               Atividade recente
             </p>
             {atividades.length === 0 ? (
-              <p className="mt-2 text-xs text-ink/40">Sem atividade recente.</p>
+              <p className="mt-2 text-xs text-ink/60">Sem atividade recente.</p>
             ) : (
               <ul className="mt-2 grid gap-2.5">
                 {atividades.map((a) => {
@@ -104,7 +104,7 @@ export function PipelineAtividadeCard({ anamneses, atividades, showAnamnese }: P
                       </span>
                       <div className="min-w-0 flex-1">
                         <p className="truncate text-ink">{a.descricao || "—"}</p>
-                        <p className="text-[0.66rem] text-ink/45">
+                        <p className="text-[0.66rem] text-ink/60">
                           {a.cardTitulo ? `${a.cardTitulo} · ` : ""}
                           {a.autorNome ?? "—"} · {tempoRelativoBR(a.createdAt)}
                         </p>

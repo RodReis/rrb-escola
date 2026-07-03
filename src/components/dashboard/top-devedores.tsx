@@ -16,20 +16,20 @@ export function TopDevedores({ items }: { items: DevedorRow[] }) {
           </span>
           <div>
             <h3 className="text-sm font-bold text-ink">Top devedores</h3>
-            <p className="text-[0.66rem] text-ink/55">cobranças vencidas</p>
+            <p className="text-[0.66rem] text-ink/60">cobranças vencidas</p>
           </div>
         </div>
         {items.length > 0 && (
           <div className="text-right">
             <strong className="block text-lg font-bold text-danger leading-none">{money.format(total)}</strong>
-            <p className="mt-0.5 text-[0.6rem] font-semibold uppercase tracking-kicker text-ink/45">
+            <p className="mt-0.5 text-[0.6rem] font-semibold uppercase tracking-kicker text-ink/60">
               em atraso
             </p>
           </div>
         )}
       </div>
       {items.length === 0 ? (
-        <div className="mt-6 flex flex-col items-center justify-center gap-2 rounded-ui bg-muted/30 py-8 text-ink/40">
+        <div className="mt-6 flex flex-col items-center justify-center gap-2 rounded-ui bg-muted/30 py-8 text-ink/60">
           <Receipt size={24} />
           <p className="text-sm">Sem inadimplência registrada.</p>
         </div>
@@ -47,7 +47,7 @@ export function TopDevedores({ items }: { items: DevedorRow[] }) {
                 <Avatar name={d.nome} src={d.fotoUrl} size={32} />
                 <div className="min-w-0 flex-1">
                   <p className="truncate text-sm font-semibold text-ink">{d.nome}</p>
-                  <p className="text-xs text-ink/55">{d.diasVencimento} dias em atraso</p>
+                  <p className="text-xs text-ink/60">{d.diasVencimento} dias em atraso</p>
                 </div>
                 <span className="shrink-0 rounded-pill bg-danger/10 px-2 py-1 text-sm font-bold text-danger">
                   {money.format(d.valor)}

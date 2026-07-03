@@ -115,7 +115,7 @@ export default async function AvaliacaoDetailPage({
             Lançamento de notas
           </h2>
           <div className="text-right">
-            <p className="text-xs text-ink/55">{aval.notasLancadas} de {aval.totalAlunos} alunos</p>
+            <p className="text-xs text-ink/60">{aval.notasLancadas} de {aval.totalAlunos} alunos</p>
             <div className="mt-1 h-1.5 w-32 rounded-pill bg-muted overflow-hidden">
               <div
                 className={`h-1.5 ${pct === 100 ? "bg-success" : "bg-warning"}`}
@@ -126,13 +126,13 @@ export default async function AvaliacaoDetailPage({
         </div>
 
         {aval.alunos.length === 0 ? (
-          <div className="flex flex-col items-center justify-center gap-2 py-10 text-ink/40">
+          <div className="flex flex-col items-center justify-center gap-2 py-10 text-ink/60">
             <Users size={28} />
             <p className="text-sm font-medium">Nenhum aluno matriculado na turma.</p>
           </div>
         ) : (
           <>
-            <p className="text-xs text-ink/55">
+            <p className="text-xs text-ink/60">
               Salva automaticamente ao sair do campo ou pressionar Enter.
             </p>
             <NotasInlineGrid

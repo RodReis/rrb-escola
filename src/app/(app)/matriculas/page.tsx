@@ -58,7 +58,7 @@ export default async function MatriculasPage({
 
       <Panel id="nova-matricula" className="grid gap-5">
         <div>
-          <p className="text-[0.66rem] font-bold uppercase tracking-[0.14em] text-ink/55">Nova matrícula</p>
+          <p className="text-[0.66rem] font-bold uppercase tracking-[0.14em] text-ink/60">Nova matrícula</p>
           <h2 className="mt-1 flex items-center gap-2 text-xl font-bold text-ink">
             <UserPlus size={20} className="text-brand" />
             Cadastrar vínculo acadêmico

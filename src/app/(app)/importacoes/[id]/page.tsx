@@ -73,7 +73,7 @@ export default async function ImportDetailPage({ params }: { params: { id: strin
       <section className="grid gap-4">
         {rows.length === 0 ? (
           <Panel>
-            <div className="flex flex-col items-center justify-center gap-2 py-10 text-ink/40">
+            <div className="flex flex-col items-center justify-center gap-2 py-10 text-ink/60">
               <Inbox size={28} />
               <p className="text-sm font-medium">Nenhuma linha foi extraída deste arquivo.</p>
             </div>

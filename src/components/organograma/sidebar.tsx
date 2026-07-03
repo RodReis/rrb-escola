@@ -70,7 +70,7 @@ export function OrganogramaSidebar({
         </span>
         <div className="min-w-0">
           <p className="truncate text-sm font-black text-ink">{escolaNome}</p>
-          <p className="text-xs text-ink/55">{totalAlunos} alunos · {tree.length} segmentos</p>
+          <p className="text-xs text-ink/60">{totalAlunos} alunos · {tree.length} segmentos</p>
         </div>
       </div>
 
@@ -87,7 +87,7 @@ export function OrganogramaSidebar({
               >
                 <span className={cn("h-2.5 w-2.5 shrink-0 rounded-full", bullet)} />
                 <span className="flex-1 truncate">{seg.nome}</span>
-                <span className="text-xs font-medium text-ink/50">
+                <span className="text-xs font-medium text-ink/60">
                   {seg.alunos} · {seg.turmas.length} turmas
                 </span>
                 {isOpen
@@ -112,7 +112,7 @@ export function OrganogramaSidebar({
                         )}
                       >
                         <span className="truncate">{turma.serieNome} - {turma.nome}</span>
-                        <span className="ml-2 shrink-0 text-xs text-ink/45">{turma.alunos} alunos</span>
+                        <span className="ml-2 shrink-0 text-xs text-ink/60">{turma.alunos} alunos</span>
                       </button>
                     );
                   })}

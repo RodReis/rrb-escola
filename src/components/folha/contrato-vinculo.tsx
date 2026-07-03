@@ -22,7 +22,7 @@ export function ContratoVinculo({ funcionarios, empresas, perfis }: Props) {
 
   return (
     <section className="grid gap-4">
-      <h2 className="text-xs font-bold uppercase tracking-kicker text-ink/55">Vínculo</h2>
+      <h2 className="text-xs font-bold uppercase tracking-kicker text-ink/60">Vínculo</h2>
       <div className="grid gap-4 md:grid-cols-3">
         <label className="flex flex-col gap-1 text-sm font-medium text-ink/80">
           Empresa
@@ -49,7 +49,7 @@ export function ContratoVinculo({ funcionarios, empresas, perfis }: Props) {
             ))}
           </select>
           {companyId && funcionariosDaEmpresa.length === 0 ? (
-            <span className="text-xs text-ink/45">
+            <span className="text-xs text-ink/60">
               Nenhum funcionário sem contrato nesta empresa.
             </span>
           ) : null}

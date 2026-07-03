@@ -85,7 +85,7 @@ export default async function ContratosPage({
             {rows.length === 0 ? (
               <tr>
                 <td colSpan={6} className="py-12">
-                  <div className="flex flex-col items-center gap-2 text-ink/40">
+                  <div className="flex flex-col items-center gap-2 text-ink/60">
                     <FileText size={24} />
                     <p className="text-sm">Nenhum contrato cadastrado.</p>
                   </div>

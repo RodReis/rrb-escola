@@ -74,7 +74,7 @@ export function VendaForm({ action, variacoes }: Props) {
 
       <div>
         <div className="mb-2 flex items-center justify-between">
-          <h3 className="text-xs font-bold uppercase tracking-kicker text-ink/55">Itens</h3>
+          <h3 className="text-xs font-bold uppercase tracking-kicker text-ink/60">Itens</h3>
           <Button type="button" variant="secondary" onClick={addItem} disabled={variacoes.length === 0}>
             <Plus size={14} /> Adicionar item
           </Button>
@@ -82,7 +82,7 @@ export function VendaForm({ action, variacoes }: Props) {
         {variacoes.length === 0 ? (
           <div className="flex flex-col items-start gap-2 rounded-ui border border-dashed border-line bg-muted/20 p-4">
             <p className="text-sm font-medium text-ink/70">Nenhuma variação ativa para vender.</p>
-            <p className="text-xs text-ink/45">
+            <p className="text-xs text-ink/60">
               Cadastre um produto e ao menos uma variação (SKU) ativa antes de montar a venda.
             </p>
             <a
@@ -93,7 +93,7 @@ export function VendaForm({ action, variacoes }: Props) {
             </a>
           </div>
         ) : itens.length === 0 ? (
-          <p className="text-sm text-ink/45">Nenhum item. Clique em &quot;Adicionar item&quot;.</p>
+          <p className="text-sm text-ink/60">Nenhum item. Clique em &quot;Adicionar item&quot;.</p>
         ) : (
           <div className="grid gap-2">
             {itens.map((it, idx) => (
@@ -160,7 +160,7 @@ export function VendaForm({ action, variacoes }: Props) {
         </label>
         <div className="flex items-end justify-end">
           <div className="text-right">
-            <div className="text-xs uppercase tracking-kicker text-ink/55">Total</div>
+            <div className="text-xs uppercase tracking-kicker text-ink/60">Total</div>
             <div className="text-2xl font-bold tabular-nums text-ink">{money.format(Math.max(total, 0))}</div>
           </div>
         </div>

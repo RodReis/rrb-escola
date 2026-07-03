@@ -70,10 +70,10 @@ export default async function DREPage({
 
       {eventos.length > 0 && (
         <Panel className="p-5">
-          <h2 className="mb-4 text-xs font-bold uppercase tracking-kicker text-ink/55">Resultado por evento</h2>
+          <h2 className="mb-4 text-xs font-bold uppercase tracking-kicker text-ink/60">Resultado por evento</h2>
           <table className="w-full text-sm">
             <thead>
-              <tr className="border-b border-line text-left text-[0.66rem] font-bold uppercase tracking-kicker text-ink/55">
+              <tr className="border-b border-line text-left text-[0.66rem] font-bold uppercase tracking-kicker text-ink/60">
                 <th className="py-2 px-3">Evento</th>
                 <th className="py-2 px-3 text-right">Receitas</th>
                 <th className="py-2 px-3 text-right">Despesas</th>

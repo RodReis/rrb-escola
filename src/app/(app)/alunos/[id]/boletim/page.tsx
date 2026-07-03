@@ -74,7 +74,7 @@ export default async function BoletimPage({
         </div>
         <div className="grid grid-cols-3 gap-3">
           <div className="rounded-ui bg-muted/40 p-3 text-center">
-            <p className="text-[0.66rem] uppercase tracking-kicker text-ink/55">Disciplinas</p>
+            <p className="text-[0.66rem] uppercase tracking-kicker text-ink/60">Disciplinas</p>
             <strong className="mt-1 block text-2xl font-bold text-ink">{totalDisciplinas}</strong>
           </div>
           <div className="rounded-ui bg-success/10 p-3 text-center">
@@ -94,7 +94,7 @@ export default async function BoletimPage({
           <h3 className="font-bold text-ink">Notas por bimestre</h3>
         </div>
         {boletim.disciplinas.length === 0 ? (
-          <div className="flex flex-col items-center justify-center gap-2 py-10 text-ink/40">
+          <div className="flex flex-col items-center justify-center gap-2 py-10 text-ink/60">
             <BookOpen size={28} />
             <p className="text-sm font-medium">Nenhuma nota lançada neste ano letivo.</p>
           </div>
@@ -102,7 +102,7 @@ export default async function BoletimPage({
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead>
-                <tr className="text-[0.66rem] uppercase tracking-kicker text-ink/55">
+                <tr className="text-[0.66rem] uppercase tracking-kicker text-ink/60">
                   <th className="px-2 py-2 text-left">Disciplina</th>
                   <th className="px-2 py-2 text-center">1º Bim</th>
                   <th className="px-2 py-2 text-center">2º Bim</th>
@@ -150,14 +150,14 @@ export default async function BoletimPage({
           <h3 className="font-bold text-ink">Frequência (ano letivo)</h3>
         </div>
         {boletim.frequencia.totalDias === 0 ? (
-          <div className="flex flex-col items-center justify-center gap-2 py-10 text-ink/40">
+          <div className="flex flex-col items-center justify-center gap-2 py-10 text-ink/60">
             <ClipboardList size={28} />
             <p className="text-sm font-medium">Nenhum registro de frequência.</p>
           </div>
         ) : (
           <div className="grid gap-3 md:grid-cols-4">
             <div className="rounded-ui bg-muted/40 p-3">
-              <p className="text-[0.66rem] uppercase tracking-kicker text-ink/55">Total dias</p>
+              <p className="text-[0.66rem] uppercase tracking-kicker text-ink/60">Total dias</p>
               <strong className="mt-1 block text-xl font-bold text-ink">{boletim.frequencia.totalDias}</strong>
             </div>
             <div className="rounded-ui bg-success/10 p-3">

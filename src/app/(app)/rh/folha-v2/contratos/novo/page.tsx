@@ -57,7 +57,7 @@ export default async function NovoContratoPage({
           />
 
           <section className="grid gap-4">
-            <h2 className="text-xs font-bold uppercase tracking-kicker text-ink/55">Remuneração</h2>
+            <h2 className="text-xs font-bold uppercase tracking-kicker text-ink/60">Remuneração</h2>
             <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
               <CurrencyField name="salario_base" label="Salário base" placeholder="Se mensalista" />
               <CurrencyField name="valor_hora_aula" label="Valor hora-aula" placeholder="Se horista" />
@@ -70,11 +70,11 @@ export default async function NovoContratoPage({
                 <input name="dependentes_irrf" type="number" min="0" step="1" defaultValue="0" />
               </label>
             </div>
-            <p className="text-xs text-ink/45">Preencha salário base (mensalista) <strong>ou</strong> valor hora-aula + aulas semanais (horista).</p>
+            <p className="text-xs text-ink/60">Preencha salário base (mensalista) <strong>ou</strong> valor hora-aula + aulas semanais (horista).</p>
           </section>
 
           <section className="grid gap-4">
-            <h2 className="text-xs font-bold uppercase tracking-kicker text-ink/55">Aulas por turno (opcional)</h2>
+            <h2 className="text-xs font-bold uppercase tracking-kicker text-ink/60">Aulas por turno (opcional)</h2>
             <div className="grid gap-4 md:grid-cols-3">
               <label className="flex flex-col gap-1 text-sm font-medium text-ink/80">
                 Aulas manhã
@@ -92,7 +92,7 @@ export default async function NovoContratoPage({
           </section>
 
           <section className="grid gap-4">
-            <h2 className="text-xs font-bold uppercase tracking-kicker text-ink/55">Dados do contrato</h2>
+            <h2 className="text-xs font-bold uppercase tracking-kicker text-ink/60">Dados do contrato</h2>
             <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
               <label className="flex flex-col gap-1 text-sm font-medium text-ink/80">
                 Cargo
@@ -114,7 +114,7 @@ export default async function NovoContratoPage({
           </section>
 
           <section className="grid gap-3">
-            <h2 className="text-xs font-bold uppercase tracking-kicker text-ink/55">Opções</h2>
+            <h2 className="text-xs font-bold uppercase tracking-kicker text-ink/60">Opções</h2>
             <div className="flex flex-wrap gap-x-8 gap-y-3">
               <label className="flex cursor-pointer items-center gap-2.5 text-sm font-medium text-ink/80">
                 <input type="checkbox" name="antecipa_13_com_ferias" className="h-4 w-4 shrink-0 accent-brand" />

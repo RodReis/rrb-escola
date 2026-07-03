@@ -35,7 +35,7 @@ export function DashboardTabs({
             className={`relative inline-flex items-center gap-2 px-4 py-2.5 text-sm font-semibold transition-colors ${
               isActive
                 ? "text-brand"
-                : "text-ink/55 hover:text-ink"
+                : "text-ink/60 hover:text-ink"
             }`}
           >
             <Icon size={14} />

@@ -24,7 +24,7 @@ export function AniversariantesCard({ items }: { items: AniversarianteRow[] }) {
           </span>
           <div>
             <h3 className="text-sm font-bold text-ink">Aniversariantes do mês</h3>
-            <p className="text-[0.66rem] text-ink/55">{mesLabel}</p>
+            <p className="text-[0.66rem] text-ink/60">{mesLabel}</p>
           </div>
         </div>
         {items.length > 0 && (
@@ -38,7 +38,7 @@ export function AniversariantesCard({ items }: { items: AniversarianteRow[] }) {
       </div>
 
       {items.length === 0 && (
-        <div className="mt-6 flex flex-col items-center justify-center gap-2 rounded-ui bg-muted/30 py-8 text-ink/40">
+        <div className="mt-6 flex flex-col items-center justify-center gap-2 rounded-ui bg-muted/30 py-8 text-ink/60">
           <Cake size={24} />
           <p className="text-sm">Nenhum aniversário neste mês.</p>
         </div>
@@ -94,7 +94,7 @@ export function AniversariantesCard({ items }: { items: AniversarianteRow[] }) {
               >
                 <span
                   className={`grid h-9 w-9 shrink-0 place-items-center rounded-pill text-xs font-bold ${
-                    a.proximo ? "" : "bg-muted text-ink/40"
+                    a.proximo ? "" : "bg-muted text-ink/60"
                   }`}
                   style={a.proximo ? { background: "color-mix(in oklab, var(--c-amber) 20%, var(--surface))", color: "var(--c-amber)" } : undefined}
                 >
@@ -102,7 +102,7 @@ export function AniversariantesCard({ items }: { items: AniversarianteRow[] }) {
                 </span>
                 <div className="min-w-0 flex-1">
                   <p className="truncate text-sm font-semibold text-ink">{a.nome}</p>
-                  <p className="text-xs text-ink/55">{a.diaSemana}</p>
+                  <p className="text-xs text-ink/60">{a.diaSemana}</p>
                 </div>
               </Link>
             </li>

@@ -48,7 +48,7 @@ export function BracketsTable(props: Props) {
         <tbody>
           {brackets.length === 0 ? (
             <tr>
-              <td colSpan={table === "ir" ? 8 : 7} className="text-center text-ink/50 py-8">
+              <td colSpan={table === "ir" ? 8 : 7} className="text-center text-ink/60 py-8">
                 Nenhuma faixa nesta vigência.
               </td>
             </tr>

@@ -23,19 +23,19 @@ export function ProximasCobrancasCard({ items }: { items: ProximaCobrancaRow[] }
           </span>
           <div>
             <h3 className="text-sm font-bold text-ink">Próximas cobranças</h3>
-            <p className="text-[0.66rem] text-ink/55">próximos 7 dias</p>
+            <p className="text-[0.66rem] text-ink/60">próximos 7 dias</p>
           </div>
         </div>
         {items.length > 0 && (
           <div className="text-right">
             <strong className="block text-lg font-bold text-ink leading-none">{money.format(total)}</strong>
-            <p className="mt-0.5 text-[0.6rem] font-semibold uppercase tracking-kicker text-ink/45">total</p>
+            <p className="mt-0.5 text-[0.6rem] font-semibold uppercase tracking-kicker text-ink/60">total</p>
           </div>
         )}
       </div>
 
       {items.length === 0 ? (
-        <div className="mt-6 flex flex-col items-center justify-center gap-2 rounded-ui bg-muted/30 py-8 text-ink/40">
+        <div className="mt-6 flex flex-col items-center justify-center gap-2 rounded-ui bg-muted/30 py-8 text-ink/60">
           <CalendarClock size={24} />
           <p className="text-sm">Nenhuma cobrança nos próximos 7 dias.</p>
         </div>
@@ -55,7 +55,7 @@ export function ProximasCobrancasCard({ items }: { items: ProximaCobrancaRow[] }
                   <Avatar name={c.alunoNome} src={c.fotoUrl} size={32} />
                   <div className="min-w-0 flex-1">
                     <p className="truncate text-sm font-semibold text-ink">{c.alunoNome}</p>
-                    <p className="truncate text-xs text-ink/55">{c.descricao}</p>
+                    <p className="truncate text-xs text-ink/60">{c.descricao}</p>
                   </div>
                   <span className="shrink-0 text-sm font-bold text-ink">{money.format(c.valor)}</span>
                   <ArrowUpRight size={12} className="text-ink/40 shrink-0" />

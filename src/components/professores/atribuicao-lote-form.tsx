@@ -172,7 +172,7 @@ export function AtribuicaoLoteForm({
         </button>
       </div>
 
-      <p className="text-xs text-ink/55">
+      <p className="text-xs text-ink/60">
         {modo === "disciplina"
           ? "Use quando o professor leciona UMA disciplina em VÁRIAS turmas (FUND2/Médio)."
           : "Use quando o professor leciona TODAS disciplinas de UMA turma (Infantil/FUND1)."}
@@ -234,7 +234,7 @@ export function AtribuicaoLoteForm({
               </div>
 
               {turmasDaSerie.length === 0 ? (
-                <p className="py-2 text-center text-xs text-ink/40">
+                <p className="py-2 text-center text-xs text-ink/60">
                   Esta disciplina não tem turmas associadas.
                 </p>
               ) : (
@@ -253,7 +253,7 @@ export function AtribuicaoLoteForm({
                         }`}
                       >
                         <span className="truncate font-semibold">
-                          {t.nome} <span className="text-ink/40">({t.ano_letivo})</span>
+                          {t.nome} <span className="text-ink/60">({t.ano_letivo})</span>
                         </span>
                         {ativo && <Check size={12} />}
                       </button>
@@ -265,7 +265,7 @@ export function AtribuicaoLoteForm({
           )}
 
           <div className="flex items-center justify-between gap-3">
-            <p className="text-xs text-ink/55">
+            <p className="text-xs text-ink/60">
               {turmasSel.size > 0
                 ? `${turmasSel.size} turma${turmasSel.size === 1 ? "" : "s"} selecionada${turmasSel.size === 1 ? "" : "s"}`
                 : "Nenhuma turma selecionada"}

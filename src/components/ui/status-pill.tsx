@@ -26,7 +26,7 @@ export function StatusPill({
       >
         {children}
       </span>
-      {sub ? <span className="pl-3.5 text-[0.72rem] font-medium text-ink/50">{sub}</span> : null}
+      {sub ? <span className="pl-3.5 text-[0.72rem] font-medium text-ink/60">{sub}</span> : null}
     </span>
   );
 }

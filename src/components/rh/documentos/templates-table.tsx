@@ -25,7 +25,7 @@ export function TemplatesTable({ templates }: { templates: TemplateRow[] }) {
   return (
     <div className="overflow-hidden rounded-ui border border-line bg-surface">
       <table className="w-full text-sm">
-        <thead className="bg-paper text-left text-xs uppercase tracking-kicker text-ink/55">
+        <thead className="bg-paper text-left text-xs uppercase tracking-kicker text-ink/60">
           <tr>
             <th className="px-4 py-3">Nome</th>
             <th className="px-4 py-3">Categoria</th>

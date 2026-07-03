@@ -66,7 +66,7 @@ export default async function GateNotificationsPage({
 
         <div className="grid bg-paper/70">
           {notifications.length === 0 ? (
-            <div className="flex flex-col items-center justify-center gap-2 py-12 text-ink/40">
+            <div className="flex flex-col items-center justify-center gap-2 py-12 text-ink/60">
               <Bell size={28} />
               <p className="text-sm font-medium">Nenhuma notificação encontrada.</p>
             </div>

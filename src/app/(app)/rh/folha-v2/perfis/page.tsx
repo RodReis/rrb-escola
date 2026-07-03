@@ -64,7 +64,7 @@ export default async function PerfisPage({
       ) : null}
 
       <Card>
-        <p className="mb-4 text-xs font-bold uppercase tracking-kicker text-ink/55">Novo perfil</p>
+        <p className="mb-4 text-xs font-bold uppercase tracking-kicker text-ink/60">Novo perfil</p>
         <form action={createPerfilAction} className="flex flex-wrap items-end gap-3">
           <label className="flex flex-col gap-1 text-sm font-medium text-ink/80">
             Código <input name="codigo" required maxLength={20} placeholder="CLT_PROF" className="w-36" />
@@ -77,7 +77,7 @@ export default async function PerfisPage({
       </Card>
 
       {perfis.length === 0 ? (
-        <div className="flex flex-col items-center gap-2 rounded-panel border border-line bg-surface py-14 text-ink/40">
+        <div className="flex flex-col items-center gap-2 rounded-panel border border-line bg-surface py-14 text-ink/60">
           <Users size={28} />
           <p className="text-sm">Nenhum perfil cadastrado.</p>
         </div>
@@ -125,7 +125,7 @@ export default async function PerfisPage({
               <tbody>
                 {perfil.folha_perfis_rubricas.length === 0 ? (
                   <tr>
-                    <td colSpan={4} className="py-4 text-center text-sm text-ink/40">
+                    <td colSpan={4} className="py-4 text-center text-sm text-ink/60">
                       Nenhuma rubrica vinculada.
                     </td>
                   </tr>

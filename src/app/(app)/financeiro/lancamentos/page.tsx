@@ -109,7 +109,7 @@ export default async function LancamentosPage({
       </div>
 
       <Panel className="p-5">
-        <div className="mb-3 flex items-center gap-2 text-xs font-bold uppercase tracking-kicker text-ink/55">
+        <div className="mb-3 flex items-center gap-2 text-xs font-bold uppercase tracking-kicker text-ink/60">
           <Filter size={12} />
           Filtros
         </div>
@@ -148,13 +148,13 @@ export default async function LancamentosPage({
 
       <Panel className="p-5">
         <div className="mb-4 flex items-center justify-between">
-          <h2 className="text-sm font-bold uppercase tracking-kicker text-ink/55">Lançamentos do mês</h2>
+          <h2 className="text-sm font-bold uppercase tracking-kicker text-ink/60">Lançamentos do mês</h2>
           {lancamentos.length > 0 && (
-            <span className="text-xs text-ink/45">{lancamentos.length} {lancamentos.length === 1 ? "registro" : "registros"}</span>
+            <span className="text-xs text-ink/60">{lancamentos.length} {lancamentos.length === 1 ? "registro" : "registros"}</span>
           )}
         </div>
         {lancamentos.length === 0 ? (
-          <div className="flex flex-col items-center justify-center gap-2 rounded-ui bg-muted/30 py-12 text-ink/40">
+          <div className="flex flex-col items-center justify-center gap-2 rounded-ui bg-muted/30 py-12 text-ink/60">
             <BookOpen size={28} />
             <p className="text-sm">Nenhum lançamento neste mês.</p>
             <ButtonLink href={`/financeiro/lancamentos/novo?mes=${competencia}`} variant="ghost" className="mt-2">
@@ -165,7 +165,7 @@ export default async function LancamentosPage({
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead>
-                <tr className="border-b border-line text-left text-[0.66rem] font-bold uppercase tracking-kicker text-ink/55">
+                <tr className="border-b border-line text-left text-[0.66rem] font-bold uppercase tracking-kicker text-ink/60">
                   <th className="py-2 px-3">Descrição</th>
                   <th className="py-2 px-3">Tipo</th>
                   <th className="py-2 px-3">Categoria</th>

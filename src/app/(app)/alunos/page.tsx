@@ -83,7 +83,7 @@ export default async function StudentsPage({
               Mostrando <strong className="text-ink">{students.length}</strong> de{" "}
               <strong className="text-ink">{students.length}</strong> alunos
             </span>
-            <span className="text-ink/45">Página 1</span>
+            <span className="text-ink/60">Página 1</span>
           </>
         }
       >
@@ -103,7 +103,7 @@ export default async function StudentsPage({
             {students.length === 0 ? (
               <tr>
                 <td colSpan={7} className="px-5 py-12">
-                  <div className="flex flex-col items-center justify-center gap-2 text-ink/40">
+                  <div className="flex flex-col items-center justify-center gap-2 text-ink/60">
                     <Users size={28} />
                     <p className="text-sm font-medium">Nenhum aluno cadastrado.</p>
                   </div>
@@ -129,7 +129,7 @@ export default async function StudentsPage({
                       <Avatar name={student.nome} src={fotoUrl} size={36} />
                       <span className="flex flex-col leading-tight">
                         <span className="font-semibold text-ink group-hover:text-brand">{student.nome}</span>
-                        <span className="text-xs text-ink/45 font-medium">
+                        <span className="text-xs text-ink/60 font-medium">
                           #{student.matricula_codigo}
                           {student.cpf ? <> · <span>{student.cpf}</span></> : null}
                         </span>
@@ -140,7 +140,7 @@ export default async function StudentsPage({
                     {series?.nome || turma?.nome ? (
                       <span className="flex flex-col leading-tight">
                         <span className="font-semibold text-ink">{turma?.nome ?? series?.nome ?? "—"}</span>
-                        <span className="text-xs text-ink/50">{series?.nome ?? ""}</span>
+                        <span className="text-xs text-ink/60">{series?.nome ?? ""}</span>
                       </span>
                     ) : (
                       <span className="text-ink/38">—</span>
@@ -156,7 +156,7 @@ export default async function StudentsPage({
                     {resp ? (
                       <span className="flex flex-col leading-tight">
                         <span className="font-semibold text-ink">{resp.nome}</span>
-                        <span className="text-xs text-ink/50">{resp.celular || resp.telefone || "—"}</span>
+                        <span className="text-xs text-ink/60">{resp.celular || resp.telefone || "—"}</span>
                       </span>
                     ) : (
                       <span className="text-ink/38">—</span>

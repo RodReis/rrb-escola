@@ -50,7 +50,7 @@ export default async function GateDailyPanelPage({ searchParams }: { searchParam
       </header>
 
       <Panel>
-        <div className="mb-3 flex items-center gap-2 text-xs font-bold uppercase tracking-kicker text-ink/55">
+        <div className="mb-3 flex items-center gap-2 text-xs font-bold uppercase tracking-kicker text-ink/60">
           <Filter size={12} /> Filtrar por data
         </div>
         <form action="/portaria/painel" className="grid gap-4 md:grid-cols-[220px_140px]">
@@ -87,7 +87,7 @@ export default async function GateDailyPanelPage({ searchParams }: { searchParam
 
         <div className="grid bg-paper/70">
           {panel.rows.length === 0 && (
-            <div className="flex flex-col items-center justify-center gap-2 py-12 text-ink/40">
+            <div className="flex flex-col items-center justify-center gap-2 py-12 text-ink/60">
               <Users size={28} />
               <p className="text-sm font-medium">Sem alunos para este dia.</p>
             </div>

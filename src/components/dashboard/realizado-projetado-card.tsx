@@ -31,20 +31,20 @@ export function RealizadoProjetadoCard({ data }: { data: RealizadoVsProjetadoDat
           </span>
           <div>
             <h3 className="text-sm font-bold text-ink">Realizado vs Projetado</h3>
-            <p className="text-[0.66rem] text-ink/55">por etapa de ensino</p>
+            <p className="text-[0.66rem] text-ink/60">por etapa de ensino</p>
           </div>
         </div>
         <div className="text-right">
           <strong className={`block text-2xl font-bold leading-none ${pct >= 95 ? "text-success" : pct >= 80 ? "text-warning" : "text-danger"}`}>
             {pct.toFixed(1)}%
           </strong>
-          <p className="mt-0.5 text-[0.6rem] font-semibold uppercase tracking-kicker text-ink/45">taxa de realização</p>
+          <p className="mt-0.5 text-[0.6rem] font-semibold uppercase tracking-kicker text-ink/60">taxa de realização</p>
         </div>
       </div>
 
       <div className="mt-5 grid gap-3 md:grid-cols-3">
         <div className="rounded-ui bg-muted/40 p-3">
-          <p className="text-[0.66rem] uppercase tracking-kicker text-ink/55">Projetado</p>
+          <p className="text-[0.66rem] uppercase tracking-kicker text-ink/60">Projetado</p>
           <strong className="mt-1 block text-xl font-bold text-ink">{money.format(data.projetado)}</strong>
         </div>
         <div className="rounded-ui bg-brand/10 p-3">
@@ -69,7 +69,7 @@ export function RealizadoProjetadoCard({ data }: { data: RealizadoVsProjetadoDat
       </div>
 
       <div className="mt-6 grid gap-2">
-        <p className="text-[0.66rem] font-bold uppercase tracking-kicker text-ink/55">Por etapa</p>
+        <p className="text-[0.66rem] font-bold uppercase tracking-kicker text-ink/60">Por etapa</p>
         {data.porEtapa.map((e) => {
           const pctEtapa = e.projetado > 0 ? (e.realizado / e.projetado) * 100 : 0;
           const dotColor = SEG_COLOR[e.etapa] ?? "bg-ink/30";
@@ -79,7 +79,7 @@ export function RealizadoProjetadoCard({ data }: { data: RealizadoVsProjetadoDat
                 <div className="flex items-center gap-2 min-w-0">
                   <span className={`h-2 w-2 shrink-0 rounded-full ${dotColor}`} />
                   <span className="text-sm font-semibold text-ink truncate">{SEG_LABEL[e.etapa] ?? e.etapa}</span>
-                  <span className="text-xs text-ink/55">{e.matriculados} × {money.format(e.valorReferencia)}</span>
+                  <span className="text-xs text-ink/60">{e.matriculados} × {money.format(e.valorReferencia)}</span>
                 </div>
                 <span className={`shrink-0 text-xs font-bold ${e.diferenca >= 0 ? "text-success" : "text-danger"}`}>
                   {e.diferenca >= 0 ? "+" : ""}{money.format(e.diferenca)}
@@ -89,7 +89,7 @@ export function RealizadoProjetadoCard({ data }: { data: RealizadoVsProjetadoDat
                 <div className="h-1.5 flex-1 rounded-pill bg-muted overflow-hidden">
                   <div className={`h-1.5 ${dotColor}`} style={{ width: `${Math.min(pctEtapa, 100)}%` }} />
                 </div>
-                <span className="shrink-0 text-[0.66rem] font-semibold text-ink/55 w-12 text-right">
+                <span className="shrink-0 text-[0.66rem] font-semibold text-ink/60 w-12 text-right">
                   {pctEtapa.toFixed(0)}%
                 </span>
               </div>

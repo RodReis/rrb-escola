@@ -60,13 +60,13 @@ export default async function EstoquePage({
 
       <div className="grid gap-4 md:grid-cols-2">
         <Panel className="p-5">
-          <h2 className="mb-4 flex items-center gap-2 text-xs font-bold uppercase tracking-kicker text-ink/55">
+          <h2 className="mb-4 flex items-center gap-2 text-xs font-bold uppercase tracking-kicker text-ink/60">
             <ArrowDownToLine size={12} /> Registrar entrada
           </h2>
           {opcoes.length === 0 ? (
             <div className="flex flex-col items-start gap-2 rounded-ui border border-dashed border-line bg-muted/20 p-4">
               <p className="text-sm font-medium text-ink/70">Sem variações ativas.</p>
-              <p className="text-xs text-ink/45">Cadastre um produto com variação (SKU) ativa para movimentar estoque.</p>
+              <p className="text-xs text-ink/60">Cadastre um produto com variação (SKU) ativa para movimentar estoque.</p>
               <ButtonLink href="/comercial/produtos/novo" variant="primary" className="mt-1">
                 <Plus size={13} /> Cadastrar produto
               </ButtonLink>
@@ -91,13 +91,13 @@ export default async function EstoquePage({
         </Panel>
 
         <Panel className="p-5">
-          <h2 className="mb-4 flex items-center gap-2 text-xs font-bold uppercase tracking-kicker text-ink/55">
+          <h2 className="mb-4 flex items-center gap-2 text-xs font-bold uppercase tracking-kicker text-ink/60">
             <SlidersHorizontal size={12} /> Ajuste de contagem
           </h2>
           {opcoes.length === 0 ? (
             <div className="flex flex-col items-start gap-2 rounded-ui border border-dashed border-line bg-muted/20 p-4">
               <p className="text-sm font-medium text-ink/70">Sem variações ativas.</p>
-              <p className="text-xs text-ink/45">Cadastre um produto com variação (SKU) ativa para movimentar estoque.</p>
+              <p className="text-xs text-ink/60">Cadastre um produto com variação (SKU) ativa para movimentar estoque.</p>
               <ButtonLink href="/comercial/produtos/novo" variant="primary" className="mt-1">
                 <Plus size={13} /> Cadastrar produto
               </ButtonLink>
@@ -129,11 +129,11 @@ export default async function EstoquePage({
       </div>
 
       <Panel className="p-5">
-        <h2 className="mb-4 flex items-center gap-2 text-xs font-bold uppercase tracking-kicker text-ink/55">
+        <h2 className="mb-4 flex items-center gap-2 text-xs font-bold uppercase tracking-kicker text-ink/60">
           <Boxes size={12} /> Saldo por variação
         </h2>
         {saldos.length === 0 ? (
-          <div className="flex flex-col items-center justify-center gap-2 rounded-ui bg-muted/30 py-12 text-ink/40">
+          <div className="flex flex-col items-center justify-center gap-2 rounded-ui bg-muted/30 py-12 text-ink/60">
             <Boxes size={28} />
             <p className="text-sm">Nenhuma variação ativa.</p>
           </div>
@@ -141,7 +141,7 @@ export default async function EstoquePage({
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead>
-                <tr className="border-b border-line text-left text-[0.66rem] font-bold uppercase tracking-kicker text-ink/55">
+                <tr className="border-b border-line text-left text-[0.66rem] font-bold uppercase tracking-kicker text-ink/60">
                   <th className="py-2 px-3">Produto</th>
                   <th className="py-2 px-3">SKU / Atributos</th>
                   <th className="py-2 px-3 text-right">Saldo</th>

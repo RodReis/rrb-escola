@@ -72,7 +72,7 @@ export function StudentCombobox({ alunos, defaultValue }: { alunos: Aluno[]; def
                 </span>
                 <div className="flex flex-col leading-tight">
                   <span className="font-semibold text-ink">{a.nome}</span>
-                  <span className="text-xs text-ink/50">#{a.matricula_codigo}</span>
+                  <span className="text-xs text-ink/60">#{a.matricula_codigo}</span>
                 </div>
               </button>
             </li>
@@ -80,7 +80,7 @@ export function StudentCombobox({ alunos, defaultValue }: { alunos: Aluno[]; def
         </ul>
       )}
       {open && query.length > 0 && filtered.length === 0 && (
-        <div className="absolute z-50 mt-1 w-full rounded-ui border border-line bg-surface shadow-soft px-4 py-3 text-sm text-ink/50">
+        <div className="absolute z-50 mt-1 w-full rounded-ui border border-line bg-surface shadow-soft px-4 py-3 text-sm text-ink/60">
           Nenhum aluno encontrado.
         </div>
       )}

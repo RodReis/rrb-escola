@@ -59,7 +59,7 @@ export default async function SeriesPage() {
       <section className="grid gap-3">
         {series.length === 0 ? (
           <Panel>
-            <div className="flex flex-col items-center justify-center gap-2 py-10 text-ink/40">
+            <div className="flex flex-col items-center justify-center gap-2 py-10 text-ink/60">
               <Layers3 size={28} />
               <p className="text-sm font-medium">Nenhuma série cadastrada.</p>
             </div>

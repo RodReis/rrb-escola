@@ -87,7 +87,7 @@ export default async function UsuariosPage({
           <CheckCircle2 size={16} className="mt-0.5 shrink-0" />
           <div>
             {sp.senha ? "Nova senha gerada" : "Usuário criado"} para <strong>{flash.email}</strong>. Senha: <code className="font-mono">{flash.password}</code>
-            <p className="mt-1 text-xs font-medium text-ink/55">
+            <p className="mt-1 text-xs font-medium text-ink/60">
               {sp.email
                 ? "Email enviado com as credenciais. Senha não será exibida novamente."
                 : "Email NÃO enviado (Resend não configurado). Anote agora — não será exibida novamente."}
@@ -120,7 +120,7 @@ export default async function UsuariosPage({
       <Panel>
         <form className="grid gap-3 md:grid-cols-[1fr_180px_160px_auto] items-end">
           <label className="relative">
-            <span className="text-xs font-semibold text-ink/55">Buscar</span>
+            <span className="text-xs font-semibold text-ink/60">Buscar</span>
             <Search size={14} className="absolute left-3 bottom-3 text-ink/40" />
             <input
               name="q"
@@ -130,7 +130,7 @@ export default async function UsuariosPage({
             />
           </label>
           <label>
-            <span className="text-xs font-semibold text-ink/55">Perfil</span>
+            <span className="text-xs font-semibold text-ink/60">Perfil</span>
             <select name="perfil" defaultValue={sp.perfil ?? ""}>
               <option value="">Todos</option>
               <option value="admin">Admin</option>
@@ -140,7 +140,7 @@ export default async function UsuariosPage({
             </select>
           </label>
           <label>
-            <span className="text-xs font-semibold text-ink/55">Status</span>
+            <span className="text-xs font-semibold text-ink/60">Status</span>
             <select name="status" defaultValue={sp.status ?? ""}>
               <option value="">Todos</option>
               <option value="ativo">Ativos</option>
@@ -169,7 +169,7 @@ export default async function UsuariosPage({
             {rows.length === 0 ? (
               <tr>
                 <td colSpan={5} className="py-12">
-                  <div className="flex flex-col items-center justify-center gap-2 text-ink/40">
+                  <div className="flex flex-col items-center justify-center gap-2 text-ink/60">
                     <Users size={28} />
                     <p className="text-sm font-medium">Nenhum usuário encontrado.</p>
                   </div>

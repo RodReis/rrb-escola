@@ -104,7 +104,7 @@ function SectionHeader({ title, subtitle }: { title: string; subtitle?: string }
   return (
     <header className="flex items-baseline gap-3 border-l-2 border-brand/40 pl-3">
       <h2 className="text-base font-bold text-ink">{title}</h2>
-      {subtitle && <p className="text-xs text-ink/55">{subtitle}</p>}
+      {subtitle && <p className="text-xs text-ink/60">{subtitle}</p>}
     </header>
   );
 }
@@ -188,7 +188,7 @@ export default async function DashboardPage({
           counter={mesLabel(competencia)}
           description="Visão executiva para tomada de decisão."
         />
-        <div className="rounded-ui bg-muted p-12 text-center text-ink/55">
+        <div className="rounded-ui bg-muted p-12 text-center text-ink/60">
           Seu perfil não tem permissão para visualizar nenhum dashboard. Contate um administrador.
         </div>
       </div>

@@ -20,7 +20,7 @@ export function AlunosTabs({ active }: { active: AlunosTab }) {
             href={`/financeiro/alunos-sem-valor?aba=${t.id}`}
             scroll={false}
             className={`relative inline-flex items-center gap-2 px-4 py-2.5 text-sm font-semibold transition-colors ${
-              isActive ? "text-brand" : "text-ink/55 hover:text-ink"
+              isActive ? "text-brand" : "text-ink/60 hover:text-ink"
             }`}
           >
             <Icon size={14} />

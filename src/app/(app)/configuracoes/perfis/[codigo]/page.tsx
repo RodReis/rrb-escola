@@ -74,16 +74,16 @@ export default async function EditarPerfilPage({
         <form action={updateRoleAction} className="grid gap-3 md:grid-cols-[200px_1fr_auto] items-end">
           <input type="hidden" name="codigo" value={role.codigo} />
           <label>
-            <span className="text-xs font-semibold text-ink/55">Código</span>
+            <span className="text-xs font-semibold text-ink/60">Código</span>
             <input value={role.codigo} disabled className="font-mono" />
           </label>
           <label>
-            <span className="text-xs font-semibold text-ink/55">Nome</span>
+            <span className="text-xs font-semibold text-ink/60">Nome</span>
             <input name="nome" defaultValue={role.nome} required />
           </label>
           <button className="ds-button ds-button-secondary">Atualizar dados</button>
           <label className="md:col-span-3">
-            <span className="text-xs font-semibold text-ink/55">Descrição</span>
+            <span className="text-xs font-semibold text-ink/60">Descrição</span>
             <input name="descricao" defaultValue={role.descricao ?? ""} />
           </label>
         </form>

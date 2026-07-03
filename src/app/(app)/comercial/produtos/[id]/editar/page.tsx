@@ -51,21 +51,21 @@ export default async function EditarProdutoPage({
       ) : null}
 
       <Panel className="p-6">
-        <h2 className="mb-4 flex items-center gap-2 text-xs font-bold uppercase tracking-kicker text-ink/55">
+        <h2 className="mb-4 flex items-center gap-2 text-xs font-bold uppercase tracking-kicker text-ink/60">
           <FileText size={12} /> Dados
         </h2>
         <ProdutoForm action={updateProdutoAction} initial={produto} submitLabel="Atualizar" />
       </Panel>
 
       <Panel className="p-6">
-        <h2 className="mb-4 flex items-center gap-2 text-xs font-bold uppercase tracking-kicker text-ink/55">
+        <h2 className="mb-4 flex items-center gap-2 text-xs font-bold uppercase tracking-kicker text-ink/60">
           <Tags size={12} /> Variações (SKU)
         </h2>
 
         {produto.variacoes.length > 0 && (
           <table className="mb-5 w-full text-sm">
             <thead>
-              <tr className="border-b border-line text-left text-[0.66rem] font-bold uppercase tracking-kicker text-ink/55">
+              <tr className="border-b border-line text-left text-[0.66rem] font-bold uppercase tracking-kicker text-ink/60">
                 <th className="py-1.5 px-2">SKU</th>
                 <th className="py-1.5 px-2 text-right">Preço</th>
                 <th className="py-1.5 px-2 text-right">Custo</th>
@@ -83,7 +83,7 @@ export default async function EditarProdutoPage({
         )}
 
         <VariacaoForm action={createVariacaoAction} produtoId={produto.id} />
-        <p className="mt-2 text-xs text-ink/45">Saldo de estoque entra na Fase 2; aqui você só define o cadastro e o mínimo.</p>
+        <p className="mt-2 text-xs text-ink/60">Saldo de estoque entra na Fase 2; aqui você só define o cadastro e o mínimo.</p>
       </Panel>
     </div>
   );

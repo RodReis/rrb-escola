@@ -25,7 +25,7 @@ export function ExcecoesList({ excecoes }: { excecoes: CalendarioExcecao[] }) {
       <h2 className="font-bold text-ink">Feriados e recessos</h2>
 
       {excecoes.length === 0 ? (
-        <div className="flex flex-col items-center gap-2 py-8 text-ink/40">
+        <div className="flex flex-col items-center gap-2 py-8 text-ink/60">
           <CalendarOff size={24} />
           <p className="text-sm">Nenhuma exceção cadastrada.</p>
         </div>
@@ -42,7 +42,7 @@ export function ExcecoesList({ excecoes }: { excecoes: CalendarioExcecao[] }) {
                 </span>
                 <div>
                   <p className="text-sm font-semibold text-ink">{ex.descricao}</p>
-                  <p className="text-xs text-ink/55">{formatPeriodo(ex.dataInicio, ex.dataFim)}</p>
+                  <p className="text-xs text-ink/60">{formatPeriodo(ex.dataInicio, ex.dataFim)}</p>
                 </div>
               </div>
               <form action={excluirExcecaoAction}>

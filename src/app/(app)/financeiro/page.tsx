@@ -140,7 +140,7 @@ export default async function FinanceiroPage({ searchParams }: { searchParams: P
       <section className="grid gap-3">
         {cobrancas.length === 0 ? (
           <Panel>
-            <div className="flex flex-col items-center justify-center gap-2 py-10 text-ink/40">
+            <div className="flex flex-col items-center justify-center gap-2 py-10 text-ink/60">
               <Receipt size={28} />
               <p className="text-sm font-medium">Nenhuma cobrança cadastrada.</p>
             </div>
@@ -180,7 +180,7 @@ export default async function FinanceiroPage({ searchParams }: { searchParams: P
                 </div>
 
                 <div>
-                  <p className="text-xs font-black uppercase tracking-[0.12em] text-ink/50">Saldo</p>
+                  <p className="text-xs font-black uppercase tracking-[0.12em] text-ink/60">Saldo</p>
                   <strong className="mt-1 block text-2xl text-brand">{money.format(saldo)}</strong>
                   <span className="text-xs text-muted">de {money.format(valorFinal)}</span>
                 </div>

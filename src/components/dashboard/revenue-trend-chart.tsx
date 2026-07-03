@@ -27,7 +27,7 @@ export function RevenueTrendChart({ data }: { data: RevenueTrendPoint[] }) {
         </span>
         <div>
           <h3 className="text-sm font-bold text-ink">Receita × Custos</h3>
-          <p className="text-[0.66rem] text-ink/55">tendência últimos 6 meses</p>
+          <p className="text-[0.66rem] text-ink/60">tendência últimos 6 meses</p>
         </div>
       </div>
       <div className="mt-5 h-64">

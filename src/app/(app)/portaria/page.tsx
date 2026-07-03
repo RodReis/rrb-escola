@@ -81,7 +81,7 @@ export default async function PortariaPage() {
           </h2>
           <div className="grid gap-2">
             {data.events.length === 0 && (
-              <div className="flex flex-col items-center justify-center gap-2 py-8 text-ink/40">
+              <div className="flex flex-col items-center justify-center gap-2 py-8 text-ink/60">
                 <Inbox size={24} />
                 <p className="text-sm">Nenhum evento registrado ainda.</p>
               </div>
@@ -107,7 +107,7 @@ export default async function PortariaPage() {
           </div>
           <div className="grid gap-2">
             {data.notifications.length === 0 && (
-              <div className="flex flex-col items-center justify-center gap-2 py-8 text-ink/40">
+              <div className="flex flex-col items-center justify-center gap-2 py-8 text-ink/60">
                 <Bell size={24} />
                 <p className="text-sm">Nenhuma notificação enviada.</p>
               </div>

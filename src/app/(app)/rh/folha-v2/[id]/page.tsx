@@ -43,7 +43,7 @@ function mesLabel(competencia: string) {
 function Valor({ v, tone }: { v: number; tone?: "provento" | "desconto" | "liquido" }) {
   const zero = !v || v === 0;
   const cls = zero
-    ? "text-ink/30"
+    ? "text-ink/60"
     : tone === "desconto"
     ? "text-danger"
     : tone === "liquido"
@@ -142,18 +142,18 @@ export default async function RunPage({
         <table className="w-full min-w-[760px] border-separate border-spacing-0 text-sm">
           <thead>
             <tr className="border-b border-line">
-              <th className="px-4 py-3 text-left text-[0.68rem] font-bold uppercase tracking-kicker text-ink/45">Funcionário</th>
-              <th className="px-4 py-3 text-left text-[0.68rem] font-bold uppercase tracking-kicker text-ink/45">Perfil</th>
-              <th className="px-4 py-3 text-right text-[0.68rem] font-bold uppercase tracking-kicker text-ink/45">Proventos</th>
-              <th className="px-4 py-3 text-right text-[0.68rem] font-bold uppercase tracking-kicker text-ink/45">Descontos</th>
-              <th className="px-4 py-3 text-right text-[0.68rem] font-bold uppercase tracking-kicker text-ink/45">Líquido</th>
-              <th className="px-4 py-3 text-right text-[0.68rem] font-bold uppercase tracking-kicker text-ink/45">Detalhe</th>
+              <th className="px-4 py-3 text-left text-[0.68rem] font-bold uppercase tracking-kicker text-ink/60">Funcionário</th>
+              <th className="px-4 py-3 text-left text-[0.68rem] font-bold uppercase tracking-kicker text-ink/60">Perfil</th>
+              <th className="px-4 py-3 text-right text-[0.68rem] font-bold uppercase tracking-kicker text-ink/60">Proventos</th>
+              <th className="px-4 py-3 text-right text-[0.68rem] font-bold uppercase tracking-kicker text-ink/60">Descontos</th>
+              <th className="px-4 py-3 text-right text-[0.68rem] font-bold uppercase tracking-kicker text-ink/60">Líquido</th>
+              <th className="px-4 py-3 text-right text-[0.68rem] font-bold uppercase tracking-kicker text-ink/60">Detalhe</th>
             </tr>
           </thead>
           <tbody>
             {itensAtivos.length === 0 ? (
               <tr>
-                <td colSpan={6} className="py-10 text-center text-ink/40 text-sm">
+                <td colSpan={6} className="py-10 text-center text-ink/60 text-sm">
                   Nenhum item nesta folha.
                 </td>
               </tr>
@@ -206,7 +206,7 @@ export default async function RunPage({
 
       {despesas && despesas.length > 0 ? (
         <Card>
-          <p className="mb-3 text-xs font-bold uppercase tracking-kicker text-ink/55">
+          <p className="mb-3 text-xs font-bold uppercase tracking-kicker text-ink/60">
             Conciliação — despesas geradas
           </p>
           <ul className="divide-y divide-line">
@@ -220,7 +220,7 @@ export default async function RunPage({
                 </span>
                 <span className="tabular-nums text-ink font-medium">
                   {money.format(Number(d.valor))}
-                  <span className="ml-2 text-ink/50 font-normal">{d.status}</span>
+                  <span className="ml-2 text-ink/60 font-normal">{d.status}</span>
                 </span>
               </li>
             ))}

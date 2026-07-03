@@ -54,7 +54,7 @@ export default async function ContratosPage({
 
       <Panel className="p-5">
         {contratos.length === 0 ? (
-          <div className="flex flex-col items-center justify-center gap-2 rounded-ui bg-muted/30 py-12 text-ink/40">
+          <div className="flex flex-col items-center justify-center gap-2 rounded-ui bg-muted/30 py-12 text-ink/60">
             <FileSignature size={28} />
             <p className="text-sm">Nenhum contrato cadastrado.</p>
           </div>
@@ -62,7 +62,7 @@ export default async function ContratosPage({
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead>
-                <tr className="border-b border-line text-left text-[0.66rem] font-bold uppercase tracking-kicker text-ink/55">
+                <tr className="border-b border-line text-left text-[0.66rem] font-bold uppercase tracking-kicker text-ink/60">
                   <th className="py-2 px-3">Descrição</th>
                   <th className="py-2 px-3">Contraparte</th>
                   <th className="py-2 px-3">Categoria</th>

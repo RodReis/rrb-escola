@@ -174,7 +174,7 @@ export default async function EnrollmentDetailPage({
               </div>
               <div className="grid gap-2">
                 {detail.charges.length === 0 ? (
-                  <div className="flex flex-col items-center justify-center gap-2 rounded-ui bg-muted/30 py-8 text-ink/40">
+                  <div className="flex flex-col items-center justify-center gap-2 rounded-ui bg-muted/30 py-8 text-ink/60">
                     <Receipt size={24} />
                     <p className="text-sm">Nenhuma cobrança vinculada.</p>
                   </div>
@@ -203,7 +203,7 @@ export default async function EnrollmentDetailPage({
               </div>
               <div className="grid gap-2">
                 {detail.payments.length === 0 ? (
-                  <div className="flex flex-col items-center justify-center gap-2 rounded-ui bg-muted/30 py-8 text-ink/40">
+                  <div className="flex flex-col items-center justify-center gap-2 rounded-ui bg-muted/30 py-8 text-ink/60">
                     <Wallet size={24} />
                     <p className="text-sm">Nenhum pagamento vinculado.</p>
                   </div>
@@ -238,7 +238,7 @@ export default async function EnrollmentDetailPage({
             </div>
             <div className="grid gap-2">
               {detail.attendance.length === 0 ? (
-                <div className="flex flex-col items-center justify-center gap-2 rounded-ui bg-muted/30 py-8 text-ink/40">
+                <div className="flex flex-col items-center justify-center gap-2 rounded-ui bg-muted/30 py-8 text-ink/60">
                   <Calendar size={24} />
                   <p className="text-sm">Nenhuma frequência vinculada.</p>
                 </div>
@@ -266,7 +266,7 @@ export default async function EnrollmentDetailPage({
             </div>
             <div className="grid gap-2">
               {detail.history.length === 0 ? (
-                <div className="flex flex-col items-center justify-center gap-2 rounded-ui bg-muted/30 py-8 text-ink/40">
+                <div className="flex flex-col items-center justify-center gap-2 rounded-ui bg-muted/30 py-8 text-ink/60">
                   <History size={24} />
                   <p className="text-sm">Nenhuma alteração registrada.</p>
                 </div>

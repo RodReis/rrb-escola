@@ -42,7 +42,7 @@ export default async function NovaRolePage({
       <Panel>
         <form action={createRoleAction} className="grid gap-4 max-w-2xl">
           <label>
-            <span className="text-xs font-semibold text-ink/55">Código</span>
+            <span className="text-xs font-semibold text-ink/60">Código</span>
             <input
               name="codigo"
               required
@@ -50,16 +50,16 @@ export default async function NovaRolePage({
               placeholder="ex: coordenador"
               className="font-mono"
             />
-            <p className="mt-1 text-xs text-ink/55">
+            <p className="mt-1 text-xs text-ink/60">
               Letras minúsculas, números, _ ou -. Começa com letra.
             </p>
           </label>
           <label>
-            <span className="text-xs font-semibold text-ink/55">Nome</span>
+            <span className="text-xs font-semibold text-ink/60">Nome</span>
             <input name="nome" required placeholder="ex: Coordenador Pedagógico" />
           </label>
           <label>
-            <span className="text-xs font-semibold text-ink/55">Descrição (opcional)</span>
+            <span className="text-xs font-semibold text-ink/60">Descrição (opcional)</span>
             <input name="descricao" />
           </label>
           <div className="flex gap-2 justify-end">

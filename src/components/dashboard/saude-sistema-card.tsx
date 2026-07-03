@@ -21,7 +21,7 @@ export function SaudeSistemaCard({ data }: { data: SaudeSistemaData }) {
           </span>
           <div>
             <h3 className="text-sm font-bold text-ink">Saúde do sistema</h3>
-            <p className="text-[0.66rem] text-ink/55">configurações pendentes</p>
+            <p className="text-[0.66rem] text-ink/60">configurações pendentes</p>
           </div>
         </div>
         <span className={`shrink-0 rounded-pill px-2 py-0.5 text-[0.66rem] font-bold uppercase ${colorCfg.bg} ${colorCfg.text}`}>
@@ -32,7 +32,7 @@ export function SaudeSistemaCard({ data }: { data: SaudeSistemaData }) {
       <div className="mt-4">
         <div className="flex items-baseline gap-2">
           <strong className={`text-3xl font-bold leading-none ${colorCfg.text}`}>{pct.toFixed(0)}%</strong>
-          <span className="text-[0.66rem] uppercase tracking-kicker text-ink/45">configurado</span>
+          <span className="text-[0.66rem] uppercase tracking-kicker text-ink/60">configurado</span>
         </div>
         <div className="mt-3 h-1.5 w-full rounded-pill bg-muted overflow-hidden">
           <div
