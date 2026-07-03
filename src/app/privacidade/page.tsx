@@ -4,9 +4,9 @@ import { LegalShell, type LegalTocItem } from "@/components/legal/legal-shell";
 export const dynamic = "force-static";
 
 export const metadata: Metadata = {
-  title: "Política de Privacidade — RRB Escola",
+  title: "Política de Privacidade — CRM Escola",
   description:
-    "Como a RRB Trading Ltda. trata dados pessoais no CRM de gestão escolar RRB Escola, incluindo integração com a Plataforma WhatsApp da Meta e a LGPD."
+    "Como a RRB Trading Ltda. trata dados pessoais no CRM de gestão escolar CRM Escola, incluindo integração com a Plataforma WhatsApp da Meta e a LGPD."
 };
 
 const UPDATED_AT = "1 de julho de 2026";
@@ -40,7 +40,7 @@ export default function PoliticaPrivacidadePage() {
     >
       <p>
         Esta Política de Privacidade descreve como a <strong>RRB Trading Ltda.</strong> trata dados pessoais no
-        contexto do <strong>RRB Escola</strong>, um sistema (CRM) de gestão escolar disponibilizado como serviço às
+        contexto do <strong>CRM Escola</strong>, um sistema (CRM) de gestão escolar disponibilizado como serviço às
         instituições de ensino contratantes, incluindo a integração com a Plataforma do WhatsApp Business, da Meta, e o
         processamento de pagamentos. O documento observa a Lei nº 13.709/2018 (Lei Geral de Proteção de Dados — LGPD).
       </p>
@@ -59,7 +59,7 @@ export default function PoliticaPrivacidadePage() {
       <h2 id="papeis">2. Controladora e operadora: os dois papéis da RRB</h2>
       <p>
         A LGPD distingue quem <strong>decide</strong> como os dados são usados (controlador) de quem apenas os{" "}
-        <strong>processa em nome de outra pessoa</strong> (operador). No RRB Escola, a RRB atua nos dois papéis,
+        <strong>processa em nome de outra pessoa</strong> (operador). No CRM Escola, a RRB atua nos dois papéis,
         conforme o dado:
       </p>
       <ul>
@@ -154,7 +154,7 @@ export default function PoliticaPrivacidadePage() {
 
       <h2 id="whatsapp">5. WhatsApp e a Plataforma da Meta</h2>
       <p>
-        O RRB Escola utiliza a <strong>Plataforma do WhatsApp Business (WhatsApp Cloud API)</strong>, fornecida pela
+        O CRM Escola utiliza a <strong>Plataforma do WhatsApp Business (WhatsApp Cloud API)</strong>, fornecida pela
         Meta Platforms, para permitir que a instituição se comunique com responsáveis (lembretes, comunicados e
         atendimento). Ao usar esse recurso:
       </p>

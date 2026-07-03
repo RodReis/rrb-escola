@@ -4,9 +4,9 @@ import { LegalShell, type LegalTocItem } from "@/components/legal/legal-shell";
 export const dynamic = "force-static";
 
 export const metadata: Metadata = {
-  title: "Termos de Uso — RRB Escola",
+  title: "Termos de Uso — CRM Escola",
   description:
-    "Termos e condições de uso do CRM de gestão escolar RRB Escola, fornecido pela RRB Trading Ltda., incluindo assinatura, pagamentos e uso do WhatsApp."
+    "Termos e condições de uso do CRM de gestão escolar CRM Escola, fornecido pela RRB Trading Ltda., incluindo assinatura, pagamentos e uso do WhatsApp."
 };
 
 const UPDATED_AT = "1 de julho de 2026";
@@ -38,7 +38,7 @@ export default function TermosDeUsoPage() {
       otherDoc={{ href: "/privacidade", label: "Ler a Política de Privacidade" }}
     >
       <p>
-        Estes Termos de Uso (&ldquo;Termos&rdquo;) regem o acesso e o uso do <strong>RRB Escola</strong>, sistema (CRM)
+        Estes Termos de Uso (&ldquo;Termos&rdquo;) regem o acesso e o uso do <strong>CRM Escola</strong>, sistema (CRM)
         de gestão escolar fornecido pela <strong>RRB Trading Ltda.</strong> (&ldquo;RRB&rdquo;). Ao contratar, acessar
         ou usar o sistema, a instituição contratante e seus usuários concordam com estes Termos. Se não concordar, não
         utilize o serviço.
@@ -47,7 +47,7 @@ export default function TermosDeUsoPage() {
       <h2 id="objeto">1. Objeto</h2>
       <p>
         A RRB concede à instituição contratante (&ldquo;Cliente&rdquo;) uma licença de uso, não exclusiva e
-        intransferível, do RRB Escola, disponibilizado no modelo software como serviço (SaaS) para gestão de
+        intransferível, do CRM Escola, disponibilizado no modelo software como serviço (SaaS) para gestão de
         secretaria, matrículas, frequência, financeiro, comunicação e demais funcionalidades ofertadas, conforme o
         plano contratado.
       </p>
@@ -66,7 +66,7 @@ export default function TermosDeUsoPage() {
           colaborador).
         </li>
         <li>
-          <strong>Plataforma</strong>: o software RRB Escola e seus módulos e integrações.
+          <strong>Plataforma</strong>: o software CRM Escola e seus módulos e integrações.
         </li>
       </ul>
 

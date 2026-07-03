@@ -1,4 +1,4 @@
-# RRB Escola
+# CRM Escola
 
 Sistema de gestão escolar (CRM). Next.js 14 (App Router) + Tailwind + Supabase. PT-BR.
 

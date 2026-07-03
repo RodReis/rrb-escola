@@ -1,7 +1,7 @@
-# RRB Escola — Design System
+# CRM Escola — Design System
 
 > Sistema de gestão escolar. Estética moderna e **colorida**, com tema **claro e escuro**.
-> Marca: **RRB Escola** (logo **EPG**). Sem identidade serifada.
+> Marca: **CRM Escola** (logo **EPG**). Sem identidade serifada.
 >
 > Este documento é a fonte de verdade para implementação. Todos os valores são literais e prontos para conversão (CSS variables + componentes). A folha de tokens canônica é `src/rrb-tokens.css`.
 
@@ -72,7 +72,7 @@ function setTheme(t) {                       // t = 'light' | 'dark'
 
 ## 3. Marca e logo
 
-- **Nome:** `RRB Escola` — sempre em `--font-display` (Bricolage Grotesque) 700.
+- **Nome:** `CRM Escola` — sempre em `--font-display` (Bricolage Grotesque) 700.
 - **Subtítulo:** `Gestão Escolar`.
 - **Logo:** wordmark **EPG** (formas angulares). Fornecido como PNG transparente em duas versões:
   - `epg-white.png` — letras brancas → usar sobre o **selo de marca** (gradiente azul) ou fundos escuros.
@@ -741,7 +741,7 @@ body.ready [data-reveal] { opacity:1; transform:none;
 | `src/sistema-app.jsx` | Roteamento (Dashboard/Alunos/placeholders), tema, painel de Tweaks. |
 | `src/login.jsx` | Tela de login (variações Aurora claro / Spotlight escuro), Mark (selo EPG), inputs. |
 | `assets/epg-white.png`, `assets/epg-navy.png` | Logo EPG transparente (branco / navy). Também em `uploads/`. |
-| **Telas de referência** | `RRB Escola - Design System.html` (showcase), `RRB Escola - Sistema.html` (app: dashboard + alunos), `RRB Escola - Login.html` (logins). |
+| **Telas de referência** | `CRM Escola - Design System.html` (showcase), `CRM Escola - Sistema.html` (app: dashboard + alunos), `CRM Escola - Login.html` (logins). |
 
 ### Ordem de carregamento (HTML)
 1. Fontes (Google) → 2. `rrb-tokens.css` → 3. script pre-paint de tema → 4. React 18.3.1 + ReactDOM + Babel standalone (versões fixas) → 5. `icons.jsx` → componentes → `tweaks-panel.jsx` → `*-app.jsx`.

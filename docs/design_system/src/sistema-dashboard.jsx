@@ -1,5 +1,5 @@
 /* global React, I */
-// RRB Escola — Dashboard. Colorful KPI cards + charts, 4 area tabs.
+// CRM Escola — Dashboard. Colorful KPI cards + charts, 4 area tabs.
 
 const fmtBR = (n) => n.toLocaleString('pt-BR');
 

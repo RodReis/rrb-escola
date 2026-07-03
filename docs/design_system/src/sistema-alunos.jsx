@@ -1,5 +1,5 @@
 /* global React, I */
-// RRB Escola — Alunos (grid/table) on the new design system.
+// CRM Escola — Alunos (grid/table) on the new design system.
 
 const ROWS = [
   { id: '#A-1024', nome: 'Maria Eduarda Albuquerque', turma: '6º A',  nivel: 'Fund. II', lvl: 'fund_ii', resp: 'Carolina Albuquerque', plano: 'Integral', valor: 'R$ 1.840,00', s: 'ok',   fin: 'Em dia',            venc: '10/06', age: 11, av: '#FFD3D3', i: 'ME' },

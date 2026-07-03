@@ -1,5 +1,5 @@
 /* global React, Shell, Dashboard, Alunos, I, TweaksPanel, useTweaks, TweakSection, TweakRadio */
-// RRB Escola — Sistema app: routes Dashboard / Alunos, owns theme, hosts Tweaks.
+// CRM Escola — Sistema app: routes Dashboard / Alunos, owns theme, hosts Tweaks.
 
 const SISTEMA_TWEAKS = /*EDITMODE-BEGIN*/{
   "theme": "light"

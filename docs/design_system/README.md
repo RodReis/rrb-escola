@@ -1,7 +1,7 @@
-# Handoff: RRB Escola — Sistema de Gestão Escolar (CRM)
+# Handoff: CRM Escola — Sistema de Gestão Escolar (CRM)
 
 ## Overview
-RRB Escola é um sistema (CRM) de gestão escolar. Este pacote contém o **design system completo** e três telas de referência: **Design System (showcase)**, **Sistema (Dashboard + Alunos)** e **Login**. Estética moderna e colorida, com **tema claro e escuro**. Marca: **RRB Escola**, logo **EPG**.
+CRM Escola é um sistema (CRM) de gestão escolar. Este pacote contém o **design system completo** e três telas de referência: **Design System (showcase)**, **Sistema (Dashboard + Alunos)** e **Login**. Estética moderna e colorida, com **tema claro e escuro**. Marca: **CRM Escola**, logo **EPG**.
 
 ## About the Design Files
 Os arquivos `.html`/`.jsx`/`.css` deste pacote são **referências de design criadas em HTML** — protótipos que mostram aparência e comportamento pretendidos, **não código de produção para copiar diretamente**. A tarefa é **recriar estes designs no ambiente do codebase de destino** (React, Vue, Next, etc.) usando seus padrões e bibliotecas estabelecidos. Se ainda não houver ambiente, escolha o framework mais adequado e implemente lá. Os protótipos usam React 18 + Babel standalone (transpilação no browser) apenas para prototipagem — **não reproduza esse setup em produção**.
@@ -27,18 +27,18 @@ Todos os tokens (claro **e** escuro), com valores literais, estão em **`DESIGN-
 
 ## Screens / Views
 
-### 1. Login (`RRB Escola - Login.html` → `src/login.jsx`)
+### 1. Login (`CRM Escola - Login.html` → `src/login.jsx`)
 - **Purpose:** autenticação do operador da escola.
 - **Layout:** split em duas colunas. **Esquerda** (`flex:1.14`, padding 60×56) = painel de marca com fundo decorativo animado; **direita** (`flex:1`, `var(--surface)`) = card de formulário centrado (`max-width:396px`).
 - **Duas direções (variants):**
   - **A · Aurora (tema claro):** fundo `linear-gradient(160deg, var(--bg-grad-a), var(--bg-grad-b))` + 3 “blobs” borrados (blue/violet/teal, `blur(72px)`, `opacity:.5`, animação `lgdrift` 16s). Chips de features (Matrículas/Cobranças/Claro-escuro).
   - **B · Spotlight (tema escuro):** fundo `radial-gradient(120% 90% at 20% 0%, #16213f, var(--bg) 70%)` + textura de pontos (`.dots`, mask radial) + 2 orbs (brand-glow/violet). Features em linha.
-- **Componentes:** selo de marca EPG 52px; eyebrow (mono uppercase); título “RRB Escola” (Bricolage 56px); subtítulo; campos `.rb-input` (email com ícone, senha com toggle mostrar/ocultar), checkbox “Manter conectado”, link “Esqueci a senha”, botão primário full-width “Entrar”; toggle de tema (sol/lua) no canto superior direito.
+- **Componentes:** selo de marca EPG 52px; eyebrow (mono uppercase); título “CRM Escola” (Bricolage 56px); subtítulo; campos `.rb-input` (email com ícone, senha com toggle mostrar/ocultar), checkbox “Manter conectado”, link “Esqueci a senha”, botão primário full-width “Entrar”; toggle de tema (sol/lua) no canto superior direito.
 - **Interações:** foco com anel azul (`box-shadow 0 0 0 4px color-mix(... 18%)`); botão de olho alterna `type` do password; entradas com stagger (`.reveal`, delays via `--d`).
 
-### 2. Sistema — Dashboard (`RRB Escola - Sistema.html` → `src/sistema-dashboard.jsx` + `src/sistema-shell.jsx`)
+### 2. Sistema — Dashboard (`CRM Escola - Sistema.html` → `src/sistema-dashboard.jsx` + `src/sistema-shell.jsx`)
 - **Purpose:** visão geral operacional.
-- **Topbar (62px, `var(--surface)`, borda inferior):** selo EPG + “RRB Escola / Gestão Escolar” · nav em pílulas (Dashboard, Alunos, Matrículas, Financeiro, Secretaria, Relatórios) · busca (`.rb-input.has-icon` 230px + `⌘K`) · chip de ano letivo · toggle de tema · sino (com dot) · botão de usuário (nome/cargo + avatar gradiente). Ativo: `color:var(--brand-600); background:color-mix(in oklab, var(--brand-600) 12%, var(--surface))`.
+- **Topbar (62px, `var(--surface)`, borda inferior):** selo EPG + “CRM Escola / Gestão Escolar” · nav em pílulas (Dashboard, Alunos, Matrículas, Financeiro, Secretaria, Relatórios) · busca (`.rb-input.has-icon` 230px + `⌘K`) · chip de ano letivo · toggle de tema · sino (com dot) · botão de usuário (nome/cargo + avatar gradiente). Ativo: `color:var(--brand-600); background:color-mix(in oklab, var(--brand-600) 12%, var(--surface))`.
 - **Cabeçalho:** eyebrow “Visão geral · 2026.1”, título “Olá, Renata 👋” (Bricolage 28), data; ações “Relatório” (ghost) + “Nova matrícula” (primary).
 - **Abas segmentadas:** Financeiro · Comercial · Secretaria · Pedagógico (cada uma troca KPIs/gráficos/lista — dados em `DASH` no arquivo).
 - **Grid:** KPIs `repeat(4,1fr)` (cards coloridos por `--hue`, glow radial, ícone em chip, delta em pill); gráficos `1.5fr 1fr` (área de receita + donut); barras `1fr 1.2fr` (barras por categoria + lista “Inadimplência recente”).
@@ -51,7 +51,7 @@ Todos os tokens (claro **e** escuro), com valores literais, estão em **`DESIGN-
 - **Bulk bar:** ao selecionar ≥1 linha aparece barra azul translúcida com “N selecionado(s)” + Mensagem/Gerar boleto/Exportar/Excluir + “Limpar seleção” (entra com `rbSlideDown`).
 - **Tabela (CSS grid `34px 2.3fr 1fr 1.1fr 1.4fr 1.2fr 116px`):** checkbox · Aluno (avatar+nome+ID) · Turma · Plano · Responsável · Status financeiro (pill) · **Ações por linha** (mensagem=verde, editar=azul, mais=neutro; 30×30, opacidade .55→1 no hover). Linha: altura 56, hover `--surface-2`, selecionada tint azul + barra esquerda 3px. Footer com “Mostrando 1–N de 1.284” + paginação.
 
-### 4. Design System (`RRB Escola - Design System.html`)
+### 4. Design System (`CRM Escola - Design System.html`)
 Showcase navegável de cores, tipografia e **todos os componentes** (botões, inputs, switch, pills, tags, segmented/underline tabs, breadcrumb, KPIs, gráficos, tabela, navegação, modal, drawer, avatares, lista). Use como catálogo visual.
 
 ---
@@ -87,7 +87,7 @@ Showcase navegável de cores, tipografia e **todos os componentes** (botões, in
 - `src/sistema-app.jsx` — roteamento + tema + tweaks (referência).
 - `src/login.jsx` — telas de login (Aurora/Spotlight).
 - `src/tweaks-panel.jsx`, `src/design-canvas.jsx` — utilitários de prototipagem (NÃO portar; específicos do ambiente de protótipo).
-- `RRB Escola - *.html` — telas montáveis (abrir via servidor estático para ver render; usam caminhos relativos a `src/`, `uploads/`, `assets/`).
+- `CRM Escola - *.html` — telas montáveis (abrir via servidor estático para ver render; usam caminhos relativos a `src/`, `uploads/`, `assets/`).
 
 ## Notas de implementação
 - Manter **numerais tabulares** em dados (`font-variant-numeric: tabular-nums`) e **títulos em Bricolage (sans), nunca serifados**.

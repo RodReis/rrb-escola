@@ -1,4 +1,4 @@
-# Regras de Conversão — Design System RRB Escola
+# Regras de Conversão — Design System CRM Escola
 
 > Invariantes que valem para **toda** a conversão de layout. Leia antes de editar qualquer arquivo.
 > Plano de execução: `docs/design_system/PLANO-CONVERSAO.md`. Spec visual: `docs/design_system/DESIGN-SYSTEM.md`.
@@ -61,7 +61,7 @@
 Não existe `CLAUDE.md` na raiz. Crie um (ou adicione a um existente) com:
 
 ```md
-# RRB Escola
+# CRM Escola
 
 ## Conversão de Design System (em andamento)
 Ao trabalhar em layout/estilo, siga obrigatoriamente:

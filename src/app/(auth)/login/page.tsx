@@ -53,7 +53,7 @@ export default async function LoginPage({ searchParams }: { searchParams: { erro
               className="mt-3.5 font-display font-bold leading-[0.96] text-ink"
               style={{ fontSize: "clamp(2.75rem, 1.5rem + 4vw, 3.5rem)", letterSpacing: "-0.03em", textWrap: "balance" }}
             >
-              RRB Escola
+              CRM Escola
             </h1>
             <p className="mt-5 max-w-md text-[19px] font-semibold leading-7 tracking-[-0.01em] text-ink">
               Secretaria, matrículas e cobranças em uma só base.

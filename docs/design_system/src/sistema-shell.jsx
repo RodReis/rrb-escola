@@ -1,5 +1,5 @@
 /* global React, I */
-// RRB Escola — Sistema shell (topbar) on the new colorful design system.
+// CRM Escola — Sistema shell (topbar) on the new colorful design system.
 // Light + dark via [data-theme] on <html>. EPG brand badge.
 
 const TOP_NAV = [
@@ -23,7 +23,7 @@ function Brand() {
         <img src="uploads/epg-white.png" alt="EPG" style={{ width: '70%', height: 'auto', display: 'block' }} />
       </span>
       <div style={{ lineHeight: 1.12, minWidth: 0 }}>
-        <div style={{ fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: 15, letterSpacing: '-0.02em', whiteSpace: 'nowrap' }}>RRB Escola</div>
+        <div style={{ fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: 15, letterSpacing: '-0.02em', whiteSpace: 'nowrap' }}>CRM Escola</div>
         <div style={{ fontSize: 10.5, color: 'var(--text-muted)', marginTop: 1, whiteSpace: 'nowrap', letterSpacing: '0.01em' }}>Gestão Escolar</div>
       </div>
     </div>

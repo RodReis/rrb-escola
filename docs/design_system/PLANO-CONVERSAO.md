@@ -1,4 +1,4 @@
-# Plano de Conversão de Layout — RRB Escola → Design System
+# Plano de Conversão de Layout — CRM Escola → Design System
 
 > **Para quem:** Claude Code (CLI), executando dentro de `C:\Desenv\Projetos\rrb-escola`.
 > **Fonte de verdade visual:** `docs/design_system/DESIGN-SYSTEM.md` + `docs/design_system/src/rrb-tokens.css`.
@@ -34,8 +34,8 @@ Pixel-perfeito só é **definível onde existe protótipo para comparar**. Exist
 
 | Tela de referência (protótipo) | Arquivo no app | Meta |
 |---|---|---|
-| `RRB Escola - Login.html` / `src/login.jsx` | `src/app/(auth)/login/page.tsx` | **Pixel-perfeito** |
-| `RRB Escola - Sistema.html` (Dashboard) / `src/sistema-dashboard.jsx` | `src/app/(app)/page.tsx` | **Pixel-perfeito** |
+| `CRM Escola - Login.html` / `src/login.jsx` | `src/app/(auth)/login/page.tsx` | **Pixel-perfeito** |
+| `CRM Escola - Sistema.html` (Dashboard) / `src/sistema-dashboard.jsx` | `src/app/(app)/page.tsx` | **Pixel-perfeito** |
 | `src/sistema-alunos.jsx` (Alunos) | `src/app/(app)/alunos/page.tsx` | **Pixel-perfeito** |
 
 As **outras ~95 páginas não têm protótipo** — não há ground truth para medir pixel. Meta delas: **consistência com o DS** via os primitivos das Fases 1–4. Não tente "adivinhar" um pixel-perfeito inexistente; isso só gera divergência arbitrária.
@@ -203,7 +203,7 @@ Só começar **depois** que tokens/primitivos/shell (Fases 1–5) estiverem pron
    ```bash
    npx --yes serve "docs/design_system/html" -l 5055   # ou: python3 -m http.server 5055 --directory docs/design_system
    ```
-   Telas: `http://localhost:5055/RRB Escola - Login.html`, `… - Sistema.html`. Conferir também os PNGs em `docs/design_system/pages/*` (claro/escuro) e os PDFs.
+   Telas: `http://localhost:5055/CRM Escola - Login.html`, `… - Sistema.html`. Conferir também os PNGs em `docs/design_system/pages/*` (claro/escuro) e os PDFs.
 2. Subir o app: `npm run dev` (porta 3000).
 3. Script de diff com o **puppeteer já instalado** (criar em `scripts/visual-diff.mjs`): para cada par (protótipo, rota do app), em **claro e escuro** e em larguras 1440 e 1280, capturar screenshot dos dois, sobrepor e gerar uma imagem de diferença + % de pixels divergentes. Guardar em `docs/design_system/_diff/`.
 

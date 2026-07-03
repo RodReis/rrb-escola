@@ -1,5 +1,5 @@
 /* global React */
-// RRB Escola — Login screen, 3 split-layout variations.
+// CRM Escola — Login screen, 3 split-layout variations.
 // Each screen is self-contained with its own theme toggle.
 
 const { useState } = React;
@@ -110,7 +110,7 @@ function LeftContent({ accent, inverted }) {
       <div className="reveal" style={{ '--d': '0ms' }}><Mark size={52} /></div>
       <div className="reveal" style={{ '--d': '60ms', marginTop: 30 }}>
         <div className="rb-eyebrow" style={{ color: eyebrow }}>Gestão escolar local</div>
-        <h1 className="rb-display" style={{ fontSize: 56, margin: '14px 0 0', color: tColor, lineHeight: .96 }}>RRB Escola</h1>
+        <h1 className="rb-display" style={{ fontSize: 56, margin: '14px 0 0', color: tColor, lineHeight: .96 }}>CRM Escola</h1>
       </div>
       <p className="reveal" style={{ '--d': '120ms', fontSize: 19, fontWeight: 600, color: tColor, margin: '22px 0 0', maxWidth: 440, letterSpacing: '-0.01em' }}>
         Secretaria, matrículas e cobranças em uma só base.
