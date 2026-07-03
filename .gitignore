@@ -17,3 +17,7 @@ docs/pdfs/backup-matriculas-2026-*.json
 docs/pdfs/*.dump
 .superpowers/
 .vercel
+
+# Artefatos de ferramentas locais (impeccable, playwright MCP)
+.impeccable/
+.playwright-mcp/
