@@ -79,7 +79,7 @@ export default async function DisciplinasPage() {
 
       {disciplinas.length === 0 && (
         <Panel>
-          <div className="flex flex-col items-center justify-center gap-2 py-10 text-ink/40">
+          <div className="flex flex-col items-center justify-center gap-2 py-10 text-ink/60">
             <BookOpen size={28} />
             <p className="text-sm font-medium">Nenhuma disciplina cadastrada.</p>
           </div>
@@ -99,7 +99,7 @@ export default async function DisciplinasPage() {
               <span className={`rounded-pill px-2 py-0.5 text-[0.66rem] font-semibold uppercase tracking-kicker ${segColor}`}>
                 {segLabel}
               </span>
-              <span className="ml-auto text-xs text-ink/55">{lista.length} disciplinas</span>
+              <span className="ml-auto text-xs text-ink/60">{lista.length} disciplinas</span>
             </div>
             <ul className="grid gap-2">
               {lista.map((d) => (

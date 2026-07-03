@@ -15,12 +15,12 @@ export function RenovacoesPendentes({ items }: { items: RenovacaoRow[] }) {
           </span>
           <div>
             <h3 className="text-sm font-bold text-ink">Renovações pendentes</h3>
-            <p className="text-[0.66rem] text-ink/55">próximos vencimentos de matrícula</p>
+            <p className="text-[0.66rem] text-ink/60">próximos vencimentos de matrícula</p>
           </div>
         </div>
       </div>
       {sorted.length === 0 ? (
-        <div className="mt-6 flex flex-col items-center justify-center gap-2 rounded-ui bg-muted/30 py-8 text-ink/40">
+        <div className="mt-6 flex flex-col items-center justify-center gap-2 rounded-ui bg-muted/30 py-8 text-ink/60">
           <CalendarClock size={24} />
           <p className="text-sm">Nenhuma matrícula ativa no ano corrente.</p>
         </div>
@@ -40,7 +40,7 @@ export function RenovacoesPendentes({ items }: { items: RenovacaoRow[] }) {
                   <Avatar name={r.alunoNome} src={r.fotoUrl} size={32} />
                   <div className="min-w-0 flex-1">
                     <p className="truncate text-sm font-semibold text-ink">{r.alunoNome}</p>
-                    <p className="text-xs text-ink/55">Ano letivo {r.anoLetivo}</p>
+                    <p className="text-xs text-ink/60">Ano letivo {r.anoLetivo}</p>
                   </div>
                   <span className={`shrink-0 rounded-pill px-2 py-1 text-sm font-bold ${urgente ? "bg-danger/10 text-danger" : "bg-warning/10 text-warning"}`}>
                     {r.diasRestantes}d

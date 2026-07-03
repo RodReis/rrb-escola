@@ -16,7 +16,7 @@ export function PedagogicoOverviewSection({ data }: { data: PedagogicoOverview }
       <header className="flex items-start justify-between gap-4">
         <div>
           <h2 className="text-lg font-bold text-ink">Visão geral pedagógica</h2>
-          <p className="mt-1 text-xs text-ink/55">
+          <p className="mt-1 text-xs text-ink/60">
             Distribuição de alunos por etapa, séries e turnos no ano corrente.
           </p>
         </div>
@@ -96,7 +96,7 @@ function Stat({
         <Icon size={12} />
       </span>
       <strong className="mt-1 text-xl font-bold text-ink leading-none">{value}</strong>
-      <p className="mt-0.5 text-[0.6rem] font-semibold uppercase tracking-kicker text-ink/45">{label}</p>
+      <p className="mt-0.5 text-[0.6rem] font-semibold uppercase tracking-kicker text-ink/60">{label}</p>
     </div>
   );
 }

@@ -36,7 +36,7 @@ export function PipelineStatusCard({ data }: Props) {
           </span>
           <div>
             <h3 className="text-sm font-bold text-ink">Pipeline — Status &amp; Conversão</h3>
-            <p className="text-[0.66rem] text-ink/55">últimos 30 dias</p>
+            <p className="text-[0.66rem] text-ink/60">últimos 30 dias</p>
           </div>
         </div>
         <Link
@@ -49,7 +49,7 @@ export function PipelineStatusCard({ data }: Props) {
       </div>
 
       {totalLeads === 0 ? (
-        <div className="mt-6 flex flex-col items-center justify-center gap-2 rounded-ui bg-muted/40 py-10 text-ink/40">
+        <div className="mt-6 flex flex-col items-center justify-center gap-2 rounded-ui bg-muted/40 py-10 text-ink/60">
           <GitBranch size={24} />
           <p className="text-sm text-center px-3">Nenhum lead nos últimos 30 dias.</p>
         </div>
@@ -87,15 +87,15 @@ export function PipelineStatusCard({ data }: Props) {
             <strong className="text-4xl font-bold leading-none text-green">
               {data.conversao.taxa_pct.toFixed(1)}%
             </strong>
-            <span className="text-xs text-ink/55">taxa de conversão</span>
+            <span className="text-xs text-ink/60">taxa de conversão</span>
           </div>
           <dl className="mt-3 grid grid-cols-2 gap-2 text-xs">
             <div className="rounded-ui bg-muted/40 p-2">
-              <dt className="text-[0.66rem] uppercase tracking-kicker text-ink/55">Matrículas</dt>
+              <dt className="text-[0.66rem] uppercase tracking-kicker text-ink/60">Matrículas</dt>
               <dd className="mt-1 font-bold text-green">{data.conversao.matriculas}</dd>
             </div>
             <div className="rounded-ui bg-muted/40 p-2">
-              <dt className="text-[0.66rem] uppercase tracking-kicker text-ink/55">Reservas</dt>
+              <dt className="text-[0.66rem] uppercase tracking-kicker text-ink/60">Reservas</dt>
               <dd className="mt-1 font-bold text-ink">{data.conversao.reservas}</dd>
             </div>
           </dl>

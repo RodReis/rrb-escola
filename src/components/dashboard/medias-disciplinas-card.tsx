@@ -55,7 +55,7 @@ export function MediasDisciplinasCard({
           </span>
           <div>
             <h3 className="text-sm font-bold text-ink">Notas e desempenho</h3>
-            <p className="text-[0.66rem] text-ink/55">médias por disciplina e bimestre</p>
+            <p className="text-[0.66rem] text-ink/60">médias por disciplina e bimestre</p>
           </div>
         </div>
         {totalAlunos > 0 && (
@@ -66,7 +66,7 @@ export function MediasDisciplinasCard({
                 {(taxaAprovacao * 100).toFixed(1)}%
               </strong>
             </div>
-            <p className="mt-0.5 text-[0.6rem] font-semibold uppercase tracking-kicker text-ink/45">
+            <p className="mt-0.5 text-[0.6rem] font-semibold uppercase tracking-kicker text-ink/60">
               taxa de aprovação
             </p>
           </div>
@@ -75,15 +75,15 @@ export function MediasDisciplinasCard({
 
       <div className="mt-5 grid gap-3 md:grid-cols-5">
         <div className="rounded-ui bg-muted/40 p-3">
-          <p className="text-[0.6rem] font-semibold uppercase tracking-kicker text-ink/55">Disciplinas</p>
+          <p className="text-[0.6rem] font-semibold uppercase tracking-kicker text-ink/60">Disciplinas</p>
           <strong className="mt-1 block text-lg font-bold text-ink leading-none">{summary.totalDisciplinas}</strong>
         </div>
         <div className="rounded-ui bg-muted/40 p-3">
-          <p className="text-[0.6rem] font-semibold uppercase tracking-kicker text-ink/55">Avaliações</p>
+          <p className="text-[0.6rem] font-semibold uppercase tracking-kicker text-ink/60">Avaliações</p>
           <strong className="mt-1 block text-lg font-bold text-ink leading-none">{summary.totalAvaliacoes}</strong>
         </div>
         <div className="rounded-ui bg-muted/40 p-3">
-          <p className="text-[0.6rem] font-semibold uppercase tracking-kicker text-ink/55">Notas lançadas</p>
+          <p className="text-[0.6rem] font-semibold uppercase tracking-kicker text-ink/60">Notas lançadas</p>
           <strong className="mt-1 block text-lg font-bold text-ink leading-none">{summary.totalNotasLancadas}</strong>
         </div>
         <div className="rounded-ui bg-success/10 p-3">
@@ -103,7 +103,7 @@ export function MediasDisciplinasCard({
       )}
 
       {linhas.length === 0 ? (
-        <div className="mt-6 flex flex-col items-center justify-center gap-2 rounded-ui bg-muted/40 py-10 text-ink/40">
+        <div className="mt-6 flex flex-col items-center justify-center gap-2 rounded-ui bg-muted/40 py-10 text-ink/60">
           <BookOpen size={28} />
           <p className="text-sm text-center px-4">
             Nenhuma nota consolidada.
@@ -115,7 +115,7 @@ export function MediasDisciplinasCard({
         <div className="mt-6 overflow-x-auto">
           <table className="w-full text-sm">
             <thead>
-              <tr className="text-[0.6rem] font-bold uppercase tracking-kicker text-ink/55 border-b border-line">
+              <tr className="text-[0.6rem] font-bold uppercase tracking-kicker text-ink/60 border-b border-line">
                 <th className="px-3 py-2 text-left">Série</th>
                 <th className="px-3 py-2 text-left">Disciplina</th>
                 <th className="px-3 py-2 text-center">1º Bim</th>

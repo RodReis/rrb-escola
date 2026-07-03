@@ -150,7 +150,7 @@ export function NotasBimestraisGrid({
     <div className="overflow-x-auto rounded-panel border border-line">
       <table className="w-full text-sm">
         <thead className="bg-muted/50">
-          <tr className="text-[0.66rem] uppercase tracking-kicker text-ink/55">
+          <tr className="text-[0.66rem] uppercase tracking-kicker text-ink/60">
             <th className="px-3 py-2 text-left">Aluno</th>
             {BIMESTRES.map((b) => (
               <th key={b} className="px-2 py-2 text-center w-24">
@@ -226,7 +226,7 @@ export function NotasBimestraisGrid({
         </tbody>
       </table>
       {alunos.length === 0 && (
-        <div className="py-8 text-center text-sm text-ink/40">
+        <div className="py-8 text-center text-sm text-ink/60">
           Nenhum aluno matriculado nessa turma.
         </div>
       )}

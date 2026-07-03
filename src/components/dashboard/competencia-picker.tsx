@@ -38,7 +38,7 @@ export function CompetenciaPicker({ current }: { current: string }) {
   return (
     <label className="inline-flex items-center gap-2 rounded-ui border border-line bg-surface px-3 py-1.5 text-sm">
       <Calendar size={14} className="text-ink/55" />
-      <span className="text-[0.66rem] uppercase tracking-kicker text-ink/55">Mês</span>
+      <span className="text-[0.66rem] uppercase tracking-kicker text-ink/60">Mês</span>
       <select
         value={current}
         onChange={(e) => handleChange(e.target.value)}

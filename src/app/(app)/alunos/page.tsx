@@ -16,6 +16,7 @@ type EnrollmentRef = {
   status?: string | null;
   series?: { nome?: string | null } | { nome?: string | null }[] | null;
   turmas?: { nome?: string | null } | { nome?: string | null }[] | null;
+  planos?: { nome?: string | null } | { nome?: string | null }[] | null;
 };
 
 function one<T>(value: T | T[] | null | undefined): T | null {
@@ -33,14 +34,16 @@ export default async function StudentsPage({
 }) {
   await requirePermission("alunos", "read");
   const params = await searchParams;
+  const pageParam = Number.parseInt(params.page ?? "1", 10);
   const filters = {
     nome:     params.nome     || undefined,
     serieId:  params.serie    || undefined,
     turmaId:  params.turma    || undefined,
-    segmento: params.segmento || undefined
+    segmento: params.segmento || undefined,
+    page:     Number.isNaN(pageParam) ? 1 : pageParam
   };
 
-  const [students, reportRows, counts] = await Promise.all([
+  const [{ rows: students, total, page, pageSize }, reportRows, counts] = await Promise.all([
     listStudents(filters),
     getStudentsReport(),
     getStudentSegmentCounts()
@@ -50,6 +53,21 @@ export default async function StudentsPage({
     students.map((s) => ("foto_url" in s ? (s.foto_url as string | null) : null))
   );
 
+  const firstRow = total === 0 ? 0 : (page - 1) * pageSize + 1;
+  const lastRow = (page - 1) * pageSize + students.length;
+  const totalPages = Math.max(1, Math.ceil(total / pageSize));
+
+  function pageHref(target: number) {
+    const sp = new URLSearchParams();
+    if (filters.nome) sp.set("nome", filters.nome);
+    if (params.serie) sp.set("serie", params.serie);
+    if (params.turma) sp.set("turma", params.turma);
+    if (filters.segmento) sp.set("segmento", filters.segmento);
+    if (target > 1) sp.set("page", String(target));
+    const qs = sp.toString();
+    return qs ? `/alunos?${qs}` : "/alunos";
+  }
+
   return (
     <div className="grid gap-8">
       <PageHeader
@@ -58,7 +76,7 @@ export default async function StudentsPage({
           { label: "Alunos" }
         ]}
         title="Lista de Alunos"
-        counter={students.length.toLocaleString("pt-BR")}
+        counter={total.toLocaleString("pt-BR")}
         description="Cadastro completo dos alunos ativos e suas matrículas no ano letivo."
         actions={
           <>
@@ -80,10 +98,37 @@ export default async function StudentsPage({
         footer={
           <>
             <span>
-              Mostrando <strong className="text-ink">{students.length}</strong> de{" "}
-              <strong className="text-ink">{students.length}</strong> alunos
+              {total === 0 ? (
+                "Nenhum aluno encontrado"
+              ) : (
+                <>
+                  Mostrando <strong className="text-ink">{firstRow.toLocaleString("pt-BR")}</strong>
+                  –<strong className="text-ink">{lastRow.toLocaleString("pt-BR")}</strong> de{" "}
+                  <strong className="text-ink">{total.toLocaleString("pt-BR")}</strong> alunos
+                </>
+              )}
             </span>
-            <span className="text-ink/45">Página 1</span>
+            {totalPages > 1 ? (
+              <span className="ds-pager">
+                {page > 1 ? (
+                  <ButtonLink href={pageHref(page - 1)} variant="secondary" className="rb-btn sm">
+                    Anterior
+                  </ButtonLink>
+                ) : (
+                  <button className="pg-btn" disabled>Anterior</button>
+                )}
+                <span className="px-2 text-ink/60 rb-num">
+                  Página {page} de {totalPages}
+                </span>
+                {page < totalPages ? (
+                  <ButtonLink href={pageHref(page + 1)} variant="secondary" className="rb-btn sm">
+                    Próxima
+                  </ButtonLink>
+                ) : (
+                  <button className="pg-btn" disabled>Próxima</button>
+                )}
+              </span>
+            ) : null}
           </>
         }
       >
@@ -103,9 +148,18 @@ export default async function StudentsPage({
             {students.length === 0 ? (
               <tr>
                 <td colSpan={7} className="px-5 py-12">
-                  <div className="flex flex-col items-center justify-center gap-2 text-ink/40">
+                  <div className="flex flex-col items-center justify-center gap-2 text-ink/60">
                     <Users size={28} />
-                    <p className="text-sm font-medium">Nenhum aluno cadastrado.</p>
+                    <p className="text-sm font-medium">
+                      {filters.nome || filters.segmento
+                        ? "Nenhum aluno corresponde aos filtros."
+                        : "Nenhum aluno cadastrado."}
+                    </p>
+                    {filters.nome || filters.segmento ? (
+                      <ButtonLink href="/alunos" variant="secondary" className="rb-btn sm mt-1">
+                        Limpar filtros
+                      </ButtonLink>
+                    ) : null}
                   </div>
                 </td>
               </tr>
@@ -114,6 +168,7 @@ export default async function StudentsPage({
               const enrollment = activeEnrollment(student.matriculas);
               const series = one(enrollment?.series);
               const turma  = one(enrollment?.turmas);
+              const plano  = one(enrollment?.planos);
               const fotoUrl =
                 signedFotos.get(("foto_url" in student ? (student.foto_url as string | null) : null) ?? "") ?? null;
 
@@ -129,7 +184,7 @@ export default async function StudentsPage({
                       <Avatar name={student.nome} src={fotoUrl} size={36} />
                       <span className="flex flex-col leading-tight">
                         <span className="font-semibold text-ink group-hover:text-brand">{student.nome}</span>
-                        <span className="text-xs text-ink/45 font-medium">
+                        <span className="text-xs text-ink/60 font-medium">
                           #{student.matricula_codigo}
                           {student.cpf ? <> · <span>{student.cpf}</span></> : null}
                         </span>
@@ -140,31 +195,32 @@ export default async function StudentsPage({
                     {series?.nome || turma?.nome ? (
                       <span className="flex flex-col leading-tight">
                         <span className="font-semibold text-ink">{turma?.nome ?? series?.nome ?? "—"}</span>
-                        <span className="text-xs text-ink/50">{series?.nome ?? ""}</span>
+                        <span className="text-xs text-ink/60">{series?.nome ?? ""}</span>
                       </span>
                     ) : (
                       <span className="text-ink/38">—</span>
                     )}
                   </td>
                   <td>
-                    <span className="flex flex-col leading-tight">
-                      <span className="font-semibold text-ink">—</span>
-                      <span className="text-xs text-ink/45">—</span>
-                    </span>
+                    {plano?.nome ? (
+                      <span className="font-semibold text-ink">{plano.nome}</span>
+                    ) : (
+                      <span className="text-ink/38">—</span>
+                    )}
                   </td>
                   <td>
                     {resp ? (
                       <span className="flex flex-col leading-tight">
                         <span className="font-semibold text-ink">{resp.nome}</span>
-                        <span className="text-xs text-ink/50">{resp.celular || resp.telefone || "—"}</span>
+                        <span className="text-xs text-ink/60">{resp.celular || resp.telefone || "—"}</span>
                       </span>
                     ) : (
                       <span className="text-ink/38">—</span>
                     )}
                   </td>
                   <td>
-                    <StatusPill tone={student.ativo ? "success" : "danger"}>
-                      {student.ativo ? "Em dia" : "Inativo"}
+                    <StatusPill tone={student.ativo ? "success" : "neutral"}>
+                      {student.ativo ? "Ativo" : "Inativo"}
                     </StatusPill>
                   </td>
                   <td className="pr-4 text-right">

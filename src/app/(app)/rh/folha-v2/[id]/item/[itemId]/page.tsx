@@ -133,7 +133,7 @@ export default async function ContrachequeePage({
             <tbody>
               {proventos.length === 0 ? (
                 <tr>
-                  <td colSpan={4} className="py-6 text-center text-sm text-ink/40">
+                  <td colSpan={4} className="py-6 text-center text-sm text-ink/60">
                     Nenhum provento lançado.
                   </td>
                 </tr>
@@ -146,7 +146,7 @@ export default async function ContrachequeePage({
               <>
                 <tbody>
                   <tr>
-                    <td colSpan={4} className="bg-line/30 py-1 pl-3 text-xs font-bold uppercase tracking-kicker text-ink/45">
+                    <td colSpan={4} className="bg-line/30 py-1 pl-3 text-xs font-bold uppercase tracking-kicker text-ink/60">
                       Descontos
                     </td>
                   </tr>
@@ -181,7 +181,7 @@ export default async function ContrachequeePage({
           <table className="ds-dt min-w-[600px]">
             <thead>
               <tr>
-                <th colSpan={4} className="text-xs font-bold uppercase tracking-kicker text-ink/45">
+                <th colSpan={4} className="text-xs font-bold uppercase tracking-kicker text-ink/60">
                   Informativas (não afetam o líquido)
                 </th>
               </tr>
@@ -203,7 +203,7 @@ export default async function ContrachequeePage({
 
       {editavel && (
         <Card>
-          <p className="mb-4 text-xs font-bold uppercase tracking-kicker text-ink/55">
+          <p className="mb-4 text-xs font-bold uppercase tracking-kicker text-ink/60">
             Adicionar lançamento manual
           </p>
           <form action={adicionarLancamentoAction} className="flex flex-wrap items-end gap-3">

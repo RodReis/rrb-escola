@@ -27,7 +27,7 @@ export default async function GateDevicesPage() {
       </header>
 
       <Panel>
-        <div className="mb-4 flex items-center gap-2 text-xs font-bold uppercase tracking-kicker text-ink/55">
+        <div className="mb-4 flex items-center gap-2 text-xs font-bold uppercase tracking-kicker text-ink/60">
           <Plus size={12} /> Novo dispositivo
         </div>
         <form action={createGateDeviceAction} className="grid gap-4 md:grid-cols-[1fr_1fr_180px_140px]">
@@ -48,7 +48,7 @@ export default async function GateDevicesPage() {
       <section className="grid gap-3">
         {devices.length === 0 ? (
           <Panel>
-            <div className="flex flex-col items-center justify-center gap-2 py-10 text-ink/40">
+            <div className="flex flex-col items-center justify-center gap-2 py-10 text-ink/60">
               <Cpu size={28} />
               <p className="text-sm font-medium">Nenhum dispositivo cadastrado.</p>
             </div>

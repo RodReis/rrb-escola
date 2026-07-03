@@ -94,7 +94,7 @@ export function PermissionsMatrix({
                   className={cn("transition-transform", open && "rotate-180")}
                 />
                 <span className="font-semibold text-ink">{GRUPO_LABEL[grupo]}</span>
-                <span className="text-xs text-ink/55">
+                <span className="text-xs text-ink/60">
                   {ativas}/{total} permissões
                 </span>
               </button>

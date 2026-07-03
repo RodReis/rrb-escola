@@ -7,7 +7,7 @@ type DrillData = Awaited<ReturnType<typeof getOrganogramaDrill>>;
 export function OrganogramaDrillPanel({ data }: { data: DrillData }) {
   if (!data.turma) {
     return (
-      <div className="flex flex-1 items-center justify-center text-sm text-ink/50">
+      <div className="flex flex-1 items-center justify-center text-sm text-ink/60">
         Selecione uma turma na sidebar para ver o detalhamento.
       </div>
     );
@@ -26,9 +26,9 @@ export function OrganogramaDrillPanel({ data }: { data: DrillData }) {
             </span>
           </div>
           <h2 className="mt-1 text-2xl font-black text-ink">{turma.serieNome} - {turma.nome}</h2>
-          <p className="text-sm text-ink/55">{turma.segmentoNome}</p>
+          <p className="text-sm text-ink/60">{turma.segmentoNome}</p>
         </div>
-        <p className="text-xs text-ink/40 text-right">
+        <p className="text-xs text-ink/60 text-right">
           {competencia}
         </p>
       </div>
@@ -56,16 +56,16 @@ export function OrganogramaDrillPanel({ data }: { data: DrillData }) {
         <table className="w-full text-sm">
           <thead>
             <tr className="border-b border-line bg-muted">
-              <th className="px-4 py-3 text-left text-xs font-black uppercase tracking-wider text-ink/50">#</th>
-              <th className="px-4 py-3 text-left text-xs font-black uppercase tracking-wider text-ink/50">Aluno</th>
-              <th className="px-4 py-3 text-left text-xs font-black uppercase tracking-wider text-ink/50">Resp. Financ.</th>
-              <th className="px-4 py-3 text-right text-xs font-black uppercase tracking-wider text-ink/50">Mensalidade</th>
+              <th className="px-4 py-3 text-left text-xs font-black uppercase tracking-wider text-ink/60">#</th>
+              <th className="px-4 py-3 text-left text-xs font-black uppercase tracking-wider text-ink/60">Aluno</th>
+              <th className="px-4 py-3 text-left text-xs font-black uppercase tracking-wider text-ink/60">Resp. Financ.</th>
+              <th className="px-4 py-3 text-right text-xs font-black uppercase tracking-wider text-ink/60">Mensalidade</th>
             </tr>
           </thead>
           <tbody>
             {alunos.map((aluno, idx) => (
               <tr key={aluno.id} className="border-b border-line last:border-0 hover:bg-muted/50">
-                <td className="px-4 py-3 text-ink/40">{idx + 1}</td>
+                <td className="px-4 py-3 text-ink/60">{idx + 1}</td>
                 <td className="px-4 py-3 font-medium text-ink">{aluno.nome}</td>
                 <td className="px-4 py-3 text-brand">{aluno.respFinanceiro ?? "-"}</td>
                 <td className="px-4 py-3 text-right font-medium text-ink">

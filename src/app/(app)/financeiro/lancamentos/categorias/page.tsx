@@ -43,7 +43,7 @@ export default async function CategoriasFinanceirasPage({
       ) : null}
 
       <Panel>
-        <h2 className="mb-4 flex items-center gap-2 text-xs font-bold uppercase tracking-kicker text-ink/55">
+        <h2 className="mb-4 flex items-center gap-2 text-xs font-bold uppercase tracking-kicker text-ink/60">
           <Plus size={12} /> Nova categoria
         </h2>
         <CategoriaFinanceiraCreateForm />
@@ -51,15 +51,15 @@ export default async function CategoriasFinanceirasPage({
 
       <Panel>
         <div className="mb-4 flex items-center justify-between">
-          <h2 className="flex items-center gap-2 text-xs font-bold uppercase tracking-kicker text-ink/55">
+          <h2 className="flex items-center gap-2 text-xs font-bold uppercase tracking-kicker text-ink/60">
             <Tag size={12} /> Categorias cadastradas
           </h2>
           {categorias.length > 0 && (
-            <span className="text-xs text-ink/45">{categorias.length} {categorias.length === 1 ? "categoria" : "categorias"}</span>
+            <span className="text-xs text-ink/60">{categorias.length} {categorias.length === 1 ? "categoria" : "categorias"}</span>
           )}
         </div>
         {categorias.length === 0 ? (
-          <div className="flex flex-col items-center justify-center gap-2 rounded-ui bg-muted/30 py-10 text-ink/40">
+          <div className="flex flex-col items-center justify-center gap-2 rounded-ui bg-muted/30 py-10 text-ink/60">
             <Tag size={24} />
             <p className="text-sm">Nenhuma categoria cadastrada.</p>
           </div>
@@ -67,7 +67,7 @@ export default async function CategoriasFinanceirasPage({
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead>
-                <tr className="border-b border-line text-left text-[0.66rem] font-bold uppercase tracking-kicker text-ink/55">
+                <tr className="border-b border-line text-left text-[0.66rem] font-bold uppercase tracking-kicker text-ink/60">
                   <th className="py-2 px-3">Nome</th>
                   <th className="py-2 px-3">Tipo</th>
                   <th className="py-2 px-3">Ativa</th>
@@ -106,7 +106,7 @@ export default async function CategoriasFinanceirasPage({
                     </td>
                     <td className="py-2.5 px-3">
                       <span className={`inline-flex items-center rounded-pill px-2 py-0.5 text-xs font-semibold ${
-                        c.ativo ? "bg-success/10 text-success" : "bg-muted text-ink/55"
+                        c.ativo ? "bg-success/10 text-success" : "bg-muted text-ink/60"
                       }`}>
                         {c.ativo ? "Sim" : "Não"}
                       </span>

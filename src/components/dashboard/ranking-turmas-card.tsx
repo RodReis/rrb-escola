@@ -38,7 +38,7 @@ export function RankingTurmasCard({ items }: { items: TurmaRankingRow[] }) {
           </span>
           <div>
             <h3 className="text-sm font-bold text-ink">Ranking de turmas</h3>
-            <p className="text-[0.66rem] text-ink/55">por ocupação</p>
+            <p className="text-[0.66rem] text-ink/60">por ocupação</p>
           </div>
         </div>
         {items.length > 0 && (
@@ -49,7 +49,7 @@ export function RankingTurmasCard({ items }: { items: TurmaRankingRow[] }) {
       </div>
 
       {items.length === 0 ? (
-        <div className="mt-6 flex flex-col items-center justify-center gap-2 rounded-ui bg-muted/30 py-8 text-ink/40">
+        <div className="mt-6 flex flex-col items-center justify-center gap-2 rounded-ui bg-muted/30 py-8 text-ink/60">
           <Trophy size={24} />
           <p className="text-sm">Nenhuma turma ativa no ano corrente.</p>
         </div>
@@ -91,7 +91,7 @@ export function RankingTurmasCard({ items }: { items: TurmaRankingRow[] }) {
                     <p className="truncate text-sm font-semibold text-ink">
                       {t.serie} {t.turmaNome}
                     </p>
-                    <p className="text-xs text-ink/55">
+                    <p className="text-xs text-ink/60">
                       {SEG_LABEL[t.segmento] ?? t.segmento} · {TURNO_LABEL[t.turno] ?? t.turno}
                     </p>
                   </div>
@@ -99,7 +99,7 @@ export function RankingTurmasCard({ items }: { items: TurmaRankingRow[] }) {
                     <p className={`text-sm font-bold ${overbook ? "text-danger" : "text-ink"}`}>
                       {(t.ocupacao * 100).toFixed(0)}%
                     </p>
-                    <p className="text-xs text-ink/55">{t.matriculados}/{t.capacidade}</p>
+                    <p className="text-xs text-ink/60">{t.matriculados}/{t.capacidade}</p>
                   </div>
                 </div>
                 <div className="mt-2 h-1.5 w-full rounded-pill bg-muted overflow-hidden">

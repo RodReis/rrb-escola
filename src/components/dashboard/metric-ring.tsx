@@ -24,7 +24,7 @@ export function MetricRing({ label, percent, centerLabel, centerValue, variant =
 
   return (
     <article className={`relative overflow-hidden rounded-panel bg-surface bg-gradient-to-br ${v.bg} p-6 shadow-soft`}>
-      <p className="text-[0.66rem] font-bold uppercase tracking-kicker text-ink/55">{label}</p>
+      <p className="text-[0.66rem] font-bold uppercase tracking-kicker text-ink/60">{label}</p>
       <div className="mt-4 flex flex-col items-center gap-3">
         <div className="relative">
           <svg width={size} height={size} className="-rotate-90">
@@ -54,7 +54,7 @@ export function MetricRing({ label, percent, centerLabel, centerValue, variant =
           </div>
         </div>
         <div className="text-center">
-          <p className="text-[0.66rem] uppercase tracking-kicker text-ink/55">{centerLabel}</p>
+          <p className="text-[0.66rem] uppercase tracking-kicker text-ink/60">{centerLabel}</p>
           <strong className="block text-xl font-bold text-ink">{centerValue}</strong>
         </div>
       </div>

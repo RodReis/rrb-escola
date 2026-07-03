@@ -138,7 +138,7 @@ export default async function AlunosSemValorPage({
 
         {rows.length === 0 ? (
           <Panel>
-            <div className="flex flex-col items-center justify-center gap-2 py-10 text-ink/40">
+            <div className="flex flex-col items-center justify-center gap-2 py-10 text-ink/60">
               <BadgePercent size={28} />
               <p className="text-sm font-medium">Nenhum aluno com desconto encontrado.</p>
             </div>
@@ -177,7 +177,7 @@ export default async function AlunosSemValorPage({
                       <div className="font-semibold text-ink">
                         {money.format(r.valorMensalidadePlano)}
                       </div>
-                      <div className="text-xs text-ink/50">
+                      <div className="text-xs text-ink/60">
                         de {money.format(r.valorPraticadoCheio)}
                       </div>
                     </td>
@@ -186,7 +186,7 @@ export default async function AlunosSemValorPage({
                         <div className="text-sm">
                           <span className="font-medium text-ink">{r.responsavelNome}</span>
                           {r.responsavelParentesco ? (
-                            <span className="text-ink/50"> ({r.responsavelParentesco})</span>
+                            <span className="text-ink/60"> ({r.responsavelParentesco})</span>
                           ) : null}
                           {r.responsavelTelefone ? (
                             <span className="text-ink/60"> · {r.responsavelTelefone}</span>
@@ -251,7 +251,7 @@ export default async function AlunosSemValorPage({
 
       {rows.length === 0 ? (
         <Panel>
-          <div className="flex flex-col items-center justify-center gap-2 py-10 text-ink/40">
+          <div className="flex flex-col items-center justify-center gap-2 py-10 text-ink/60">
             <AlertTriangle size={28} />
             <p className="text-sm font-medium">Nenhum aluno sem valor encontrado.</p>
           </div>
@@ -289,7 +289,7 @@ export default async function AlunosSemValorPage({
                           <div key={`${resp.nome}-${resp.parentesco ?? ""}`} className="text-sm">
                             <span className="font-medium text-ink">{resp.nome}</span>
                             {resp.parentesco ? (
-                              <span className="text-ink/50"> ({resp.parentesco})</span>
+                              <span className="text-ink/60"> ({resp.parentesco})</span>
                             ) : null}
                             {resp.telefone ? (
                               <span className="text-ink/60"> · {resp.telefone}</span>

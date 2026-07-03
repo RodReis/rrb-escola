@@ -905,12 +905,68 @@ textarea {
 .pipeline-scroll { scrollbar-width: none; -ms-overflow-style: none; }
 .pipeline-scroll::-webkit-scrollbar { display: none; }
 
+/* ===================== Foco visível sistêmico (§12) =====================
+   Inputs já ganham anel no seletor global. Aqui estendemos o MESMO anel de
+   marca a todos os demais interativos (botões, chips, dropdowns, pager,
+   switch, ações de linha, itens de menu, links de nav). :focus-visible só
+   dispara em navegação por teclado — não polui o clique de mouse.
+   Não remover sem substituir (a11y AA). */
+.ds-button:focus-visible,
+.rb-btn:focus-visible,
+.ds-chip:focus-visible,
+.ds-dropdown:focus-visible,
+.ds-pager button:focus-visible,
+.pg-btn:focus-visible,
+.rb-switch:focus-visible,
+.row-action:focus-visible,
+[role="menuitem"]:focus-visible,
+.ds-breadcrumb a:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 4px color-mix(in oklab, var(--brand-500) 18%, transparent);
+  border-radius: var(--r-sm);
+}
+/* Primário/danger: o anel de marca some sobre o próprio azul — usar anel
+   claro de contorno para manter visível sobre superfície colorida. */
+.ds-button-primary:focus-visible,
+.ds-button-accent:focus-visible,
+.rb-btn-primary:focus-visible,
+.rb-btn-danger:focus-visible {
+  box-shadow:
+    0 0 0 2px var(--surface),
+    0 0 0 5px color-mix(in oklab, var(--brand-500) 55%, transparent);
+}
+/* Fallback p/ navegadores sem :focus-visible: usa :focus mas remove no mouse. */
+@supports not selector(:focus-visible) {
+  .ds-button:focus,
+  .rb-btn:focus,
+  .ds-chip:focus,
+  .row-action:focus {
+    box-shadow: 0 0 0 4px color-mix(in oklab, var(--brand-500) 18%, transparent);
+  }
+}
+
 /* ===================== Animações (§11) ===================== */
 @keyframes rbGrow { from { transform: scaleY(0); opacity: 0; } to { transform: scaleY(1); opacity: 1; } }
 @keyframes rbSlideDown { from { transform: translateY(-8px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
 @keyframes drift {
   0%, 100% { transform: translate(0, 0); }
   50% { transform: translate(12px, -10px); }
+}
+
+/* ===================== Reduced motion (§11 / §12) =====================
+   Respeita prefers-reduced-motion: reduce em TODO o sistema. Zera durações
+   de animação/transição e neutraliza os keyframes de deslocamento, mantendo
+   o estado final visível (nunca esconde conteúdo atrás de uma transição). */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+    scroll-behavior: auto !important;
+  }
+  .login-blob { animation: none !important; }
 }
 
 /* ===================== Login: painel aurora (claro) / spotlight (escuro) ===================== */

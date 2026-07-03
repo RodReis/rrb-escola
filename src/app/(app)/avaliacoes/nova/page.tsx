@@ -30,7 +30,7 @@ export default async function NovaAvaliacaoPage() {
       <Panel className="grid gap-4">
         <div className="flex items-center gap-2">
           <ClipboardList size={16} className="text-brand" />
-          <h2 className="text-sm font-bold uppercase tracking-kicker text-ink/55">Dados da avaliação</h2>
+          <h2 className="text-sm font-bold uppercase tracking-kicker text-ink/60">Dados da avaliação</h2>
         </div>
         <form action={createAvaliacaoAction} className="grid gap-3 md:grid-cols-2">
           <label className="md:col-span-2">

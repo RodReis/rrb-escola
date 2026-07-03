@@ -49,7 +49,7 @@ export async function RematricularLoteStep3({ ano, turma_id, serie_dest_id }: Pr
           {candidatos.map((aluno) => (
             <label
               key={aluno.matricula_id}
-              className="flex cursor-pointer items-center gap-3 px-4 py-3 hover:bg-surface-raised"
+              className="flex cursor-pointer items-center gap-3 px-4 py-3 hover:bg-muted"
             >
               <input
                 type="checkbox"

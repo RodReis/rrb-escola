@@ -90,7 +90,7 @@ export default async function RematricularLoteResultadoPage() {
             </div>
             <table className="w-full text-sm">
               <thead>
-                <tr className="border-b border-line text-left text-ink/50">
+                <tr className="border-b border-line text-left text-ink/60">
                   <th className="pb-2 font-medium">Aluno</th>
                   <th className="pb-2 font-medium text-right">Nova matrícula</th>
                 </tr>
@@ -122,7 +122,7 @@ export default async function RematricularLoteResultadoPage() {
             </div>
             <table className="w-full text-sm">
               <thead>
-                <tr className="border-b border-line text-left text-ink/50">
+                <tr className="border-b border-line text-left text-ink/60">
                   <th className="pb-2 font-medium">Aluno</th>
                   <th className="pb-2 font-medium">Motivo</th>
                 </tr>

@@ -41,7 +41,7 @@ export default async function ImportaçõesPage() {
               <span className="text-brand">Importações</span>
             </p>
             <h1 className="mt-8 text-4xl font-black leading-none text-brand md:text-5xl">
-              Importações <span className="font-display italic text-ink/42">{files.length}</span>
+              Importações <span className="font-display italic text-ink/60">{files.length}</span>
             </h1>
             <p className="mt-4 max-w-2xl text-sm font-medium leading-6 text-ink/68">
               Controle de PDFs e planilhas recebidos para conferência e cadastro em lote na base local.
@@ -95,7 +95,7 @@ export default async function ImportaçõesPage() {
       <section className="grid gap-3">
         {files.length === 0 ? (
           <Panel>
-            <div className="flex flex-col items-center justify-center gap-2 py-10 text-ink/40">
+            <div className="flex flex-col items-center justify-center gap-2 py-10 text-ink/60">
               <Inbox size={28} />
               <p className="text-sm font-medium">Nenhum arquivo importado ainda.</p>
             </div>
@@ -106,7 +106,7 @@ export default async function ImportaçõesPage() {
             <div>
               <h2 className="font-black text-ink">{file.nome_arquivo}</h2>
               <p className="mt-1 text-sm text-ink/65">{file.observacao || file.storage_path}</p>
-              <p className="mt-1 text-xs font-medium text-ink/50">{dateText(file.created_at)}</p>
+              <p className="mt-1 text-xs font-medium text-ink/60">{dateText(file.created_at)}</p>
               <div className="mt-3 flex flex-wrap gap-2">
                 <ButtonLink href={`/importacoes/${file.id}`} variant="primary">Revisar lote</ButtonLink>
                 {file.signed_url ? (

@@ -36,7 +36,7 @@ export function CurrencyField({ name, label, defaultValue, placeholder = "R$ 0,0
         className="mt-1 w-full rounded-ui border border-line bg-surface px-3 py-2 text-sm tabular-nums"
       />
       <input type="hidden" name={name} value={value > 0 ? value : ""} />
-      {hint ? <span className="text-xs text-ink/45">{hint}</span> : null}
+      {hint ? <span className="text-xs text-ink/60">{hint}</span> : null}
     </label>
   );
 }

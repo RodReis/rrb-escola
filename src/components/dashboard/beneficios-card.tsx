@@ -30,13 +30,13 @@ export function BeneficiosCard({ data }: { data: BeneficiosData }) {
           </span>
           <div>
             <h3 className="text-sm font-bold text-ink">Benefícios</h3>
-            <p className="text-[0.66rem] text-ink/55">bolsas, permutas e gratuidades</p>
+            <p className="text-[0.66rem] text-ink/60">bolsas, permutas e gratuidades</p>
           </div>
         </div>
       </div>
 
       <strong className="mt-4 block text-4xl font-bold leading-none text-ink">{data.total}</strong>
-      <p className="mt-1 text-[0.66rem] uppercase tracking-kicker text-ink/45">alunos beneficiados</p>
+      <p className="mt-1 text-[0.66rem] uppercase tracking-kicker text-ink/60">alunos beneficiados</p>
 
       <ul className="mt-4 grid gap-2">
         {ORDEM.map((tipo) => {

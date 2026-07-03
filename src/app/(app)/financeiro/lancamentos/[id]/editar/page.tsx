@@ -46,7 +46,7 @@ export default async function EditarLancamentoPage({
       ) : null}
 
       <Panel className="p-6">
-        <h2 className="mb-4 flex items-center gap-2 text-xs font-bold uppercase tracking-kicker text-ink/55">
+        <h2 className="mb-4 flex items-center gap-2 text-xs font-bold uppercase tracking-kicker text-ink/60">
           <FileText size={12} /> Dados
         </h2>
         <LancamentoForm
@@ -58,7 +58,7 @@ export default async function EditarLancamentoPage({
       </Panel>
 
       <Panel className="p-6">
-        <h2 className="mb-4 flex items-center gap-2 text-xs font-bold uppercase tracking-kicker text-ink/55">
+        <h2 className="mb-4 flex items-center gap-2 text-xs font-bold uppercase tracking-kicker text-ink/60">
           <Paperclip size={12} /> Comprovante
         </h2>
         <UploadComprovanteLancamento lancamentoId={lancamento.id} currentPath={lancamento.comprovante_path} />

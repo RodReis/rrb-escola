@@ -74,17 +74,17 @@ export default async function RelatoriosComercialPage({
 
       <Panel className="p-5">
         <div className="mb-4 flex items-center justify-between">
-          <h2 className="flex items-center gap-2 text-xs font-bold uppercase tracking-kicker text-ink/55">
+          <h2 className="flex items-center gap-2 text-xs font-bold uppercase tracking-kicker text-ink/60">
             <PackageX size={12} /> Estoque parado
           </h2>
           <ExportRelatorioButton titulo="Estoque parado" colunas={["Item", "Saldo", "Dias parado", "Imobilizado"]} linhas={exportParado} nomeArquivo="estoque_parado" />
         </div>
         {parado.length === 0 ? (
-          <p className="text-sm text-ink/45">Nenhuma variação parada na janela configurada.</p>
+          <p className="text-sm text-ink/60">Nenhuma variação parada na janela configurada.</p>
         ) : (
           <table className="w-full text-sm">
             <thead>
-              <tr className="border-b border-line text-left text-[0.66rem] font-bold uppercase tracking-kicker text-ink/55">
+              <tr className="border-b border-line text-left text-[0.66rem] font-bold uppercase tracking-kicker text-ink/60">
                 <th className="py-2 px-3">Item</th>
                 <th className="py-2 px-3 text-right">Saldo</th>
                 <th className="py-2 px-3 text-right">Dias parado</th>
@@ -107,19 +107,19 @@ export default async function RelatoriosComercialPage({
 
       <Panel className="p-5">
         <div className="mb-4 flex items-center justify-between">
-          <h2 className="flex items-center gap-2 text-xs font-bold uppercase tracking-kicker text-ink/55">
+          <h2 className="flex items-center gap-2 text-xs font-bold uppercase tracking-kicker text-ink/60">
             <BarChart3 size={12} /> Curva ABC (giro no período)
           </h2>
           <ExportRelatorioButton titulo="Curva ABC" colunas={["Item", "Saídas", "% do total", "Classe"]} linhas={exportAbc} nomeArquivo="curva_abc" />
         </div>
         {abc.length === 0 ? (
-          <p className="text-sm text-ink/45">Sem saídas no período.</p>
+          <p className="text-sm text-ink/60">Sem saídas no período.</p>
         ) : (
           <>
             <BarrasChart data={abc.slice(0, 12).map((a) => ({ label: a.rotulo, valor: a.quantidadeSaida }))} />
             <table className="mt-4 w-full text-sm">
               <thead>
-                <tr className="border-b border-line text-left text-[0.66rem] font-bold uppercase tracking-kicker text-ink/55">
+                <tr className="border-b border-line text-left text-[0.66rem] font-bold uppercase tracking-kicker text-ink/60">
                   <th className="py-2 px-3">Item</th>
                   <th className="py-2 px-3 text-right">Saídas</th>
                   <th className="py-2 px-3 text-right">% total</th>
@@ -134,7 +134,7 @@ export default async function RelatoriosComercialPage({
                     <td className="py-2.5 px-3 text-right tabular-nums text-ink/60">{a.percentual.toFixed(1)}%</td>
                     <td className="py-2.5 px-3">
                       <span className={`inline-flex items-center rounded-pill px-2 py-0.5 text-xs font-bold ${
-                        a.classe === "A" ? "bg-success/10 text-success" : a.classe === "B" ? "bg-warning/10 text-warning" : "bg-muted text-ink/55"
+                        a.classe === "A" ? "bg-success/10 text-success" : a.classe === "B" ? "bg-warning/10 text-warning" : "bg-muted text-ink/60"
                       }`}>{a.classe}</span>
                     </td>
                   </tr>
@@ -146,13 +146,13 @@ export default async function RelatoriosComercialPage({
       </Panel>
 
       <Panel className="p-5">
-        <h2 className="mb-4 flex items-center gap-2 text-xs font-bold uppercase tracking-kicker text-ink/55">
+        <h2 className="mb-4 flex items-center gap-2 text-xs font-bold uppercase tracking-kicker text-ink/60">
           <Boxes size={12} /> Valor imobilizado por item
         </h2>
         <BarrasChart cor="var(--c-violet)" data={[...variacoes].filter((v) => v.saldo > 0).sort((a, b) => b.saldo * b.custo - a.saldo * a.custo).slice(0, 12).map((v) => ({ label: v.rotulo, valor: v.saldo * v.custo }))} />
       </Panel>
 
-      <p className="text-xs text-ink/45">Sazonalidade: meses marcados como baixa temporada não contam como giro ao avaliar &quot;parado&quot; (spec 6.4). Meses: {MESES.join(", ")}.</p>
+      <p className="text-xs text-ink/60">Sazonalidade: meses marcados como baixa temporada não contam como giro ao avaliar &quot;parado&quot; (spec 6.4). Meses: {MESES.join(", ")}.</p>
     </div>
   );
 }

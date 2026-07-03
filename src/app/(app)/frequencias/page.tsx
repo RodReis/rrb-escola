@@ -37,7 +37,7 @@ export default async function FrequenciasPage() {
               <span className="text-brand">Frequência</span>
             </p>
             <h1 className="mt-8 text-4xl font-black leading-none text-brand md:text-5xl">
-              Frequência <span className="font-display italic text-ink/42">{frequencias.length}</span>
+              Frequência <span className="font-display italic text-ink/60">{frequencias.length}</span>
             </h1>
             <p className="mt-4 max-w-2xl text-sm font-medium leading-6 text-ink/68">
               Registro diário de presenças e faltas por aluno, com suporte a chamada por turma.
@@ -125,7 +125,7 @@ export default async function FrequenciasPage() {
               {frequencias.length === 0 ? (
                 <tr>
                   <td colSpan={4} className="px-5 py-12">
-                    <div className="flex flex-col items-center justify-center gap-2 text-ink/40">
+                    <div className="flex flex-col items-center justify-center gap-2 text-ink/60">
                       <ClipboardList size={28} />
                       <p className="text-sm font-medium">Nenhum registro de frequência.</p>
                     </div>
@@ -137,7 +137,7 @@ export default async function FrequenciasPage() {
                   <td className="px-5 py-4 font-medium text-ink/70">{dateText(item.data_aula)}</td>
                   <td className="px-5 py-4">
                     <strong className="text-ink">{item.alunos?.nome}</strong>
-                    <span className="block text-xs text-ink/55">{item.alunos?.matricula_codigo}</span>
+                    <span className="block text-xs text-ink/60">{item.alunos?.matricula_codigo}</span>
                   </td>
                   <td className="px-5 py-4">
                     <Badge tone={item.presente ? "green" : "red"}>{item.presente ? "Presente" : "Falta"}</Badge>

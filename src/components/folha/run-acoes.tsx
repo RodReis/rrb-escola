@@ -53,7 +53,7 @@ function isVoltar(de: string, para: string): boolean {
 // Cor de destaque por destino (classes inline, sem mexer no CSS global).
 function destinoClasse(de: string, para: string): string {
   if (para === "aprovado") return "!bg-success !text-white !shadow-[0_4px_12px_rgba(34,160,90,0.28)] hover:!brightness-105";
-  if (isVoltar(de, para)) return "text-ink/55 hover:text-ink";
+  if (isVoltar(de, para)) return "text-ink/60 hover:text-ink";
   return ""; // avançar usa primary (azul) padrão
 }
 

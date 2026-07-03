@@ -24,7 +24,7 @@ export function AlertList({ items }: { items: AlertaItem[] }) {
           </span>
           <div>
             <h3 className="text-sm font-bold text-ink">Alertas</h3>
-            <p className="text-[0.66rem] text-ink/55">itens que precisam de atenção</p>
+            <p className="text-[0.66rem] text-ink/60">itens que precisam de atenção</p>
           </div>
         </div>
         {items.length > 0 && (
@@ -34,7 +34,7 @@ export function AlertList({ items }: { items: AlertaItem[] }) {
         )}
       </div>
       {items.length === 0 ? (
-        <div className="mt-6 flex flex-col items-center justify-center gap-2 rounded-ui bg-muted/30 py-8 text-ink/40">
+        <div className="mt-6 flex flex-col items-center justify-center gap-2 rounded-ui bg-muted/30 py-8 text-ink/60">
           <BellRing size={24} />
           <p className="text-sm">Tudo certo. Sem alertas.</p>
         </div>

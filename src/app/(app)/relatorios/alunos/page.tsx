@@ -49,7 +49,7 @@ export default async function RelatorioAlunosPage() {
             {rows.length === 0 && (
               <tr>
                 <td colSpan={9} className="py-12">
-                  <div className="flex flex-col items-center justify-center gap-2 text-ink/40">
+                  <div className="flex flex-col items-center justify-center gap-2 text-ink/60">
                     <Users size={28} />
                     <p className="text-sm font-medium">Nenhum aluno encontrado.</p>
                   </div>

@@ -45,13 +45,13 @@ export function StageTable({ rows }: { rows: StageBreakdownRow[] }) {
   return (
     <article className="rounded-panel bg-surface p-6 shadow-soft">
       <div className="flex items-baseline justify-between">
-        <p className="text-[0.66rem] font-bold uppercase tracking-kicker text-ink/55">Detalhamento por etapa</p>
-        <p className="text-xs text-ink/55">{sorted.length} segmentos</p>
+        <p className="text-[0.66rem] font-bold uppercase tracking-kicker text-ink/60">Detalhamento por etapa</p>
+        <p className="text-xs text-ink/60">{sorted.length} segmentos</p>
       </div>
       <div className="mt-4 overflow-x-auto">
         <table className="w-full text-sm">
           <thead>
-            <tr className="text-[0.66rem] uppercase tracking-kicker text-ink/55">
+            <tr className="text-[0.66rem] uppercase tracking-kicker text-ink/60">
               <th className="px-2 py-2 text-left">Etapa</th>
               <th className="px-2 py-2 text-right">Alunos</th>
               <th className="px-2 py-2 text-right">Bolsistas</th>

@@ -99,7 +99,7 @@ export default async function AvaliacoesPage({
 
       {avaliacoes.length === 0 ? (
         <Panel>
-          <div className="flex flex-col items-center justify-center gap-2 py-10 text-ink/40">
+          <div className="flex flex-col items-center justify-center gap-2 py-10 text-ink/60">
             <ClipboardList size={28} />
             <p className="text-sm font-medium">Nenhuma avaliação cadastrada.</p>
             <ButtonLink href="/avaliacoes/lancamento" variant="ghost" className="mt-2">
@@ -119,7 +119,7 @@ export default async function AvaliacoesPage({
                   key={b}
                   href={`/avaliacoes?bim=${b}`}
                   className={`relative inline-flex items-center gap-2 px-4 py-2.5 text-sm font-semibold transition ${
-                    ativo ? "text-brand" : "text-ink/55 hover:text-ink"
+                    ativo ? "text-brand" : "text-ink/60 hover:text-ink"
                   }`}
                 >
                   {b}º Bimestre
@@ -139,7 +139,7 @@ export default async function AvaliacoesPage({
           </nav>
 
           {seriesDoBim.length === 0 ? (
-            <div className="rounded-ui bg-muted/30 p-10 text-center text-ink/40">
+            <div className="rounded-ui bg-muted/30 p-10 text-center text-ink/60">
               <ClipboardList className="mx-auto mb-2" size={24} />
               <p className="text-sm">Nenhuma avaliação neste bimestre.</p>
             </div>
@@ -163,7 +163,7 @@ export default async function AvaliacoesPage({
                         </span>
                         <h3 className="text-sm font-bold text-ink">{serie}</h3>
                       </div>
-                      <span className="text-[0.66rem] font-semibold uppercase tracking-kicker text-ink/45">
+                      <span className="text-[0.66rem] font-semibold uppercase tracking-kicker text-ink/60">
                         {totalSerie} avaliaç{totalSerie === 1 ? "ão" : "ões"}
                       </span>
                     </header>
@@ -176,7 +176,7 @@ export default async function AvaliacoesPage({
                             key={turma}
                             className="grid gap-2 rounded-ui bg-muted/30 p-3"
                           >
-                            <div className="flex items-center gap-1.5 text-[0.66rem] font-bold uppercase tracking-kicker text-ink/55">
+                            <div className="flex items-center gap-1.5 text-[0.66rem] font-bold uppercase tracking-kicker text-ink/60">
                               <Users size={11} /> Turma {turma}
                               <span className="ml-auto rounded-pill bg-surface px-1.5 text-[0.6rem] text-ink/60">
                                 {lista.length}
@@ -193,7 +193,7 @@ export default async function AvaliacoesPage({
                                     ? "text-success"
                                     : pct > 0
                                       ? "text-warning"
-                                      : "text-ink/40";
+                                      : "text-ink/60";
                                 return (
                                   <Link
                                     key={a.id}

@@ -60,7 +60,7 @@ export function StudentFilters({ counts }: { counts?: Counts }) {
       {(nome || segmento) && (
         <button
           type="button"
-          className="text-xs font-semibold text-ink/55 hover:text-brand"
+          className="text-xs font-semibold text-ink/60 hover:text-brand"
           onClick={() => router.push(pathname)}
         >
           Limpar filtros

@@ -39,7 +39,7 @@ export function FolhaRatioCard({
           </span>
           <div>
             <h3 className="text-sm font-bold text-ink">Folha / Receita</h3>
-            <p className="text-[0.66rem] text-ink/55">indicador trabalhista</p>
+            <p className="text-[0.66rem] text-ink/60">indicador trabalhista</p>
           </div>
         </div>
         <span className={`shrink-0 rounded-pill px-2 py-0.5 text-[0.6rem] font-semibold uppercase tracking-kicker ${cfg.chip}`}>
@@ -59,11 +59,11 @@ export function FolhaRatioCard({
       {serieVisual.length >= 2 && (
         <div className={`mt-3 flex items-center gap-2 ${cfg.spark}`}>
           <TrendSpark values={serieVisual} width={120} height={28} />
-          <span className="text-[0.66rem] uppercase tracking-kicker text-ink/45">últ 6m</span>
+          <span className="text-[0.66rem] uppercase tracking-kicker text-ink/60">últ 6m</span>
         </div>
       )}
 
-      <p className="mt-3 text-xs text-ink/55">
+      <p className="mt-3 text-xs text-ink/60">
         {money.format(data.folha)} <span className="text-ink/30">/</span> {money.format(data.receita)}
       </p>
     </article>

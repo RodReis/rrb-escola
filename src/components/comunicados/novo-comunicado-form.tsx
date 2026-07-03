@@ -132,7 +132,7 @@ export function NovoComunicadoForm({
         </span>
         <div>
           <h2 className="font-bold text-ink">Novo comunicado</h2>
-          <p className="text-xs text-ink/55">Envie um aviso aos responsáveis via WhatsApp.</p>
+          <p className="text-xs text-ink/60">Envie um aviso aos responsáveis via WhatsApp.</p>
         </div>
       </div>
 
@@ -166,7 +166,7 @@ export function NovoComunicadoForm({
           <label className="grid gap-1 text-sm">
             <span className="font-semibold text-ink">Imagem (opcional)</span>
             <input type="file" name="imagem" accept="image/png,image/jpeg,image/webp" />
-            <span className="text-xs text-ink/55">PNG, JPG ou WEBP — máx 5MB.</span>
+            <span className="text-xs text-ink/60">PNG, JPG ou WEBP — máx 5MB.</span>
           </label>
         </section>
 
@@ -174,7 +174,7 @@ export function NovoComunicadoForm({
         <section className="grid gap-3 rounded-ui border border-line bg-muted/20 p-4">
           <div>
             <h3 className="text-sm font-bold text-ink">Destinatários</h3>
-            <p className="text-xs text-ink/55">
+            <p className="text-xs text-ink/60">
               Adicione séries ou turmas inteiras — os alunos entram na lista abaixo, onde você
               pode revisar e remover. Ou use “Enviar para todos”.
             </p>
@@ -282,7 +282,7 @@ export function NovoComunicadoForm({
 
               <ul className="grid max-h-64 gap-1 overflow-y-auto">
                 {listaSelecionados.length === 0 ? (
-                  <li className="py-3 text-center text-xs text-ink/45">
+                  <li className="py-3 text-center text-xs text-ink/60">
                     Nenhum aluno encontrado para “{busca}”.
                   </li>
                 ) : (
@@ -307,7 +307,7 @@ export function NovoComunicadoForm({
             </>
           )}
 
-          {carregando && <p className="text-xs text-ink/55">Carregando alunos…</p>}
+          {carregando && <p className="text-xs text-ink/60">Carregando alunos…</p>}
         </section>
 
         {/* ── Ações ── */}

@@ -204,7 +204,7 @@ export function AniversariantesProximosRow({
 
   return (
     <div>
-      <p className="mb-2 text-[0.66rem] font-bold uppercase tracking-kicker text-ink/50">
+      <p className="mb-2 text-[0.66rem] font-bold uppercase tracking-kicker text-ink/60">
         Próximos aniversários
       </p>
       <div className="flex gap-2 overflow-x-auto pb-1 no-scrollbar">
@@ -232,7 +232,7 @@ export function AniversariantesProximosRow({
             </div>
             <div className="min-w-0">
               <p className="max-w-[100px] truncate text-xs font-semibold text-ink">{a.nome}</p>
-              <p className="text-[0.65rem] text-ink/50">{a.dataLabel} · {a.idade}a</p>
+              <p className="text-[0.65rem] text-ink/60">{a.dataLabel} · {a.idade}a</p>
             </div>
           </Link>
         ))}
@@ -255,12 +255,12 @@ export function AniversariantesSemanaCard({
       <h2 className="text-lg font-bold text-ink">
         Aniversariantes da Semana
         {items.length > 0 && (
-          <span className="ml-2 text-base font-semibold italic text-ink/40">· {items.length}</span>
+          <span className="ml-2 text-base font-semibold italic text-ink/60">· {items.length}</span>
         )}
       </h2>
 
       {items.length === 0 && (
-        <div className="mt-6 flex flex-col items-center justify-center gap-2 rounded-ui bg-muted/40 py-10 text-ink/40">
+        <div className="mt-6 flex flex-col items-center justify-center gap-2 rounded-ui bg-muted/40 py-10 text-ink/60">
           <Cake size={28} />
           <p className="text-sm">Sem aniversariantes nesta semana.</p>
         </div>

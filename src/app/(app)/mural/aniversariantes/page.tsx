@@ -62,7 +62,7 @@ export default async function MuralAniversariantesPage() {
             <span className="grid h-9 w-9 place-items-center rounded-ui bg-brand/10 text-brand">
               <Calendar size={16} />
             </span>
-            <p className="text-[0.66rem] font-bold uppercase tracking-kicker text-ink/55">
+            <p className="text-[0.66rem] font-bold uppercase tracking-kicker text-ink/60">
               Próximos da semana
             </p>
           </div>
@@ -79,7 +79,7 @@ export default async function MuralAniversariantesPage() {
                   <Avatar src={foto} name={a.nome} size={48} />
                   <div className="min-w-0 flex-1">
                     <p className="truncate font-semibold text-ink">{a.nome}</p>
-                    <p className="text-xs text-ink/55">
+                    <p className="text-xs text-ink/60">
                       {a.diaSemana} · {String(a.dia).padStart(2, "0")}/{MESES[a.mes - 1]} · faz {a.idade}a
                     </p>
                   </div>

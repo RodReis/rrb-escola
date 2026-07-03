@@ -74,7 +74,7 @@ export default async function LancamentoNotasPage({
       </Panel>
 
       {!turmaValida && (
-        <div className="rounded-ui bg-muted/30 p-10 text-center text-ink/50">
+        <div className="rounded-ui bg-muted/30 p-10 text-center text-ink/60">
           <ClipboardEdit className="mx-auto mb-2" size={28} />
           <p className="text-sm">Selecione série e turma para ver as disciplinas.</p>
         </div>
@@ -94,7 +94,7 @@ export default async function LancamentoNotasPage({
         <Panel className="grid gap-3">
           <div className="flex items-center justify-between">
             <h2 className="font-bold text-ink">Notas dos alunos</h2>
-            <p className="text-xs text-ink/55">
+            <p className="text-xs text-ink/60">
               {grid.alunos.length} aluno{grid.alunos.length === 1 ? "" : "s"} ·
               salva automaticamente
             </p>

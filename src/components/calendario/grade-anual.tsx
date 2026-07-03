@@ -40,7 +40,7 @@ const CELL_CLASS: Record<EstadoDia, string> = {
   letivo: "bg-surface text-ink",
   feriado: "bg-danger/20 text-danger font-bold ring-1 ring-inset ring-danger/50",
   recesso: "bg-warning/20 text-warning font-bold ring-1 ring-inset ring-warning/50",
-  "nao-letivo": "bg-muted/50 text-ink/35",
+  "nao-letivo": "bg-muted/50 text-ink/60",
 };
 
 function MesGrid({
@@ -72,7 +72,7 @@ function MesGrid({
       </h3>
       <div className="grid grid-cols-7 gap-0.5 text-center text-[0.6rem]">
         {DIAS_SEMANA.map((d, i) => (
-          <span key={i} className="font-bold text-ink/45">{d}</span>
+          <span key={i} className="font-bold text-ink/60">{d}</span>
         ))}
         {celulas.map((dia, i) => {
           if (dia === null) return <span key={i} />;

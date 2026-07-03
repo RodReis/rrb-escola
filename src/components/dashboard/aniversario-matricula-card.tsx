@@ -34,7 +34,7 @@ export function AniversarioMatriculaCard({ items }: { items: AniversarioMatricul
           </span>
           <div>
             <h3 className="text-sm font-bold text-ink">Aniversário na escola</h3>
-            <p className="text-[0.66rem] text-ink/55">{mesLabel} · fidelidade</p>
+            <p className="text-[0.66rem] text-ink/60">{mesLabel} · fidelidade</p>
           </div>
         </div>
         {items.length > 0 && (
@@ -45,7 +45,7 @@ export function AniversarioMatriculaCard({ items }: { items: AniversarioMatricul
       </div>
 
       {items.length === 0 && (
-        <div className="mt-6 flex flex-col items-center justify-center gap-2 rounded-ui bg-muted/30 py-8 text-ink/40">
+        <div className="mt-6 flex flex-col items-center justify-center gap-2 rounded-ui bg-muted/30 py-8 text-ink/60">
           <Trophy size={24} />
           <p className="text-sm">Nenhum aniversário de matrícula este mês.</p>
         </div>
@@ -104,7 +104,7 @@ export function AniversarioMatriculaCard({ items }: { items: AniversarioMatricul
                   </span>
                   <div className="min-w-0 flex-1">
                     <p className="truncate text-sm font-semibold text-ink">{a.nome}</p>
-                    <p className="text-xs text-ink/55">
+                    <p className="text-xs text-ink/60">
                       Dia {String(dia).padStart(2, "0")} · {a.diaSemana}
                     </p>
                   </div>

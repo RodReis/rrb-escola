@@ -113,7 +113,7 @@ export default async function ConfigPage({
             </div>
 
             <fieldset className="rounded-ui border border-line p-4">
-              <legend className="px-1 text-xs font-bold uppercase tracking-kicker text-ink/55">
+              <legend className="px-1 text-xs font-bold uppercase tracking-kicker text-ink/60">
                 Regra de pagamento
               </legend>
               <div className="grid grid-cols-2 gap-4 pt-2">
@@ -163,13 +163,13 @@ export default async function ConfigPage({
                 placeholder={"2025-02-03\n2025-02-04\n2025-06-19"}
                 className="font-mono text-sm"
               />
-              <span className="text-xs text-ink/50">
+              <span className="text-xs text-ink/60">
                 Feriados móveis (Carnaval, Corpus Christi) devem ser cadastrados aqui anualmente.
               </span>
             </label>
 
             <fieldset className="rounded-ui border border-line p-4">
-              <legend className="px-1 text-xs font-bold uppercase tracking-kicker text-ink/55">
+              <legend className="px-1 text-xs font-bold uppercase tracking-kicker text-ink/60">
                 Férias e 13º
               </legend>
               <div className="grid grid-cols-2 gap-4 pt-2">
@@ -227,7 +227,7 @@ export default async function ConfigPage({
                     defaultValue={config?.ferias_janelas ? JSON.stringify(config.ferias_janelas, null, 2) : ""}
                     placeholder={`[{"codigo":"J1","meses":[1,2]},{"codigo":"J2","meses":[6,7]}]`}
                   />
-                  <span className="text-xs text-ink/50">JSON — array de janelas com código e meses válidos.</span>
+                  <span className="text-xs text-ink/60">JSON — array de janelas com código e meses válidos.</span>
                 </label>
               </div>
               <div className="mt-4">
@@ -248,7 +248,7 @@ export default async function ConfigPage({
           </form>
         </Panel>
       ) : (
-        <p className="text-sm text-ink/50">Nenhuma empresa disponível.</p>
+        <p className="text-sm text-ink/60">Nenhuma empresa disponível.</p>
       )}
     </div>
   );

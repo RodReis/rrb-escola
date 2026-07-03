@@ -75,7 +75,7 @@ export default async function NovaRubricaPage({
             </label>
           </div>
           <fieldset className="rounded-ui border border-line p-4">
-            <legend className="px-1 text-xs font-bold uppercase tracking-kicker text-ink/55">
+            <legend className="px-1 text-xs font-bold uppercase tracking-kicker text-ink/60">
               Incidências
             </legend>
             <div className="flex flex-wrap gap-6 pt-2">

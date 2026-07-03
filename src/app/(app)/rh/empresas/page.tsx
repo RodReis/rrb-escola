@@ -61,7 +61,7 @@ export default async function EmpresasPage({
       ) : null}
 
       {companies.length === 0 ? (
-        <div className="flex flex-col items-center justify-center gap-2 rounded-panel border border-line bg-surface py-14 text-ink/40">
+        <div className="flex flex-col items-center justify-center gap-2 rounded-panel border border-line bg-surface py-14 text-ink/60">
           <Building2 size={32} />
           <p className="text-sm font-medium">Nenhuma empresa cadastrada.</p>
           {isAdmin ? (

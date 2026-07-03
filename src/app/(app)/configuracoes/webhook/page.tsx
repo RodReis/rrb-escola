@@ -46,7 +46,7 @@ export default async function WebhookConfigPage() {
           <label className="flex items-center gap-3 rounded-ui border border-line bg-surface p-3">
             <input name="webhook_ativo" type="checkbox" defaultChecked={ativo} className="h-4 w-4" />
             <span className="font-semibold text-ink">Ativar webhook</span>
-            <span className="ml-auto text-xs text-ink/55">
+            <span className="ml-auto text-xs text-ink/60">
               Quando ativo, envia POST a cada notificação crítica
             </span>
           </label>

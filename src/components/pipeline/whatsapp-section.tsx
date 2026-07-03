@@ -59,7 +59,7 @@ export function WhatsappSection({ cardId, templates, atividades, onUpdated }: Pr
   return (
     <div className="space-y-3">
       <div className="flex items-center gap-2">
-        <MessageCircle size={15} style={{ color: "rgb(var(--color-success-600))" }} />
+        <MessageCircle size={15} style={{ color: "rgb(var(--color-success))" }} />
         <span className="text-sm font-medium" style={{ color: "rgb(var(--color-ink))" }}>
           WhatsApp
         </span>
@@ -86,10 +86,10 @@ export function WhatsappSection({ cardId, templates, atividades, onUpdated }: Pr
 
         {template && template.variaveis_count > 0 && (
           <div className="space-y-1.5 rounded-md border p-3"
-            style={{ borderColor: "rgb(var(--color-line))", background: "rgb(var(--color-surface-raised))" }}>
+            style={{ borderColor: "rgb(var(--color-line))", background: "rgb(var(--color-muted))" }}>
             {Array.from({ length: template.variaveis_count }, (_, i) => (
               <div key={i} className="space-y-0.5">
-                <label className="text-xs" style={{ color: "rgb(var(--color-text-muted))" }}>
+                <label className="text-xs" style={{ color: "rgb(var(--color-ink) / 0.6)" }}>
                   {`Variável {{${i + 1}}}`}
                 </label>
                 <input
@@ -113,7 +113,7 @@ export function WhatsappSection({ cardId, templates, atividades, onUpdated }: Pr
         )}
 
         {erro && (
-          <p className="text-xs" style={{ color: "rgb(var(--color-danger-600))" }}>
+          <p className="text-xs" style={{ color: "rgb(var(--color-danger))" }}>
             {erro}
           </p>
         )}
@@ -124,7 +124,7 @@ export function WhatsappSection({ cardId, templates, atividades, onUpdated }: Pr
             disabled={sending}
             className="flex items-center gap-1.5 rounded-md px-3 py-1.5 text-sm font-medium disabled:opacity-50"
             style={{
-              background: "rgb(var(--color-success-600))",
+              background: "rgb(var(--color-success))",
               color: "#fff",
             }}
           >
@@ -138,7 +138,7 @@ export function WhatsappSection({ cardId, templates, atividades, onUpdated }: Pr
         <div>
           <button
             className="flex items-center gap-1 text-xs mb-1"
-            style={{ color: "rgb(var(--color-text-muted))" }}
+            style={{ color: "rgb(var(--color-ink) / 0.6)" }}
             onClick={() => setShowHistorico((v) => !v)}
           >
             {showHistorico ? <ChevronDown size={12} /> : <ChevronRight size={12} />}
@@ -150,7 +150,7 @@ export function WhatsappSection({ cardId, templates, atividades, onUpdated }: Pr
                 <li
                   key={a.id}
                   className="text-xs rounded px-2 py-1"
-                  style={{ background: "rgb(var(--color-surface-raised))", color: "rgb(var(--color-text-muted))" }}
+                  style={{ background: "rgb(var(--color-muted))", color: "rgb(var(--color-ink) / 0.6)" }}
                 >
                   <span>📱 {a.descricao}</span>
                   <span className="ml-2">

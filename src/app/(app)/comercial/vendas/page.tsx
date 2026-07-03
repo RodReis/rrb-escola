@@ -54,7 +54,7 @@ export default async function VendasPage({
 
       <Panel className="p-5">
         {vendas.length === 0 ? (
-          <div className="flex flex-col items-center justify-center gap-2 rounded-ui bg-muted/30 py-12 text-ink/40">
+          <div className="flex flex-col items-center justify-center gap-2 rounded-ui bg-muted/30 py-12 text-ink/60">
             <ShoppingCart size={28} />
             <p className="text-sm">Nenhuma venda registrada.</p>
             <ButtonLink href="/comercial/vendas/nova" variant="ghost" className="mt-2">
@@ -65,7 +65,7 @@ export default async function VendasPage({
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead>
-                <tr className="border-b border-line text-left text-[0.66rem] font-bold uppercase tracking-kicker text-ink/55">
+                <tr className="border-b border-line text-left text-[0.66rem] font-bold uppercase tracking-kicker text-ink/60">
                   <th className="py-2 px-3">Data</th>
                   <th className="py-2 px-3">Cliente</th>
                   <th className="py-2 px-3">Pagamento</th>

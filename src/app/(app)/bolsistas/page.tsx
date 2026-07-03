@@ -61,13 +61,13 @@ export default async function BolsistasPage() {
 
       <section className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
         <article className="rounded-panel bg-surface p-5 shadow-soft">
-          <p className="text-[0.66rem] font-bold uppercase tracking-kicker text-ink/55">Total</p>
+          <p className="text-[0.66rem] font-bold uppercase tracking-kicker text-ink/60">Total</p>
           <strong className="mt-2 block text-3xl font-bold text-ink">{total}</strong>
           <p className="text-sm text-ink/60">alunos beneficiados</p>
         </article>
 
         <article className="rounded-panel bg-surface p-5 shadow-soft">
-          <p className="text-[0.66rem] font-bold uppercase tracking-kicker text-ink/55">Por tipo</p>
+          <p className="text-[0.66rem] font-bold uppercase tracking-kicker text-ink/60">Por tipo</p>
           <ul className="mt-2 grid gap-1 text-sm">
             {(Object.keys(porTipo) as TipoVagaBolsa[]).map((t) =>
               porTipo[t] > 0 ? (
@@ -87,7 +87,7 @@ export default async function BolsistasPage() {
         </article>
 
         <article className="rounded-panel bg-surface p-5 shadow-soft">
-          <p className="text-[0.66rem] font-bold uppercase tracking-kicker text-ink/55">Anual estimado</p>
+          <p className="text-[0.66rem] font-bold uppercase tracking-kicker text-ink/60">Anual estimado</p>
           <strong className="mt-2 block text-2xl font-bold text-ink">{money.format(receitaPerdida * 12)}</strong>
           <p className="text-sm text-ink/60">12 meses</p>
         </article>
@@ -97,7 +97,7 @@ export default async function BolsistasPage() {
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
             <thead>
-              <tr className="border-b border-line text-[0.66rem] uppercase tracking-kicker text-ink/55">
+              <tr className="border-b border-line text-[0.66rem] uppercase tracking-kicker text-ink/60">
                 <th className="px-4 py-3 text-left">Aluno</th>
                 <th className="px-4 py-3 text-left whitespace-nowrap">Etapa</th>
                 <th className="px-4 py-3 text-left whitespace-nowrap">Série / Turma</th>
@@ -111,7 +111,7 @@ export default async function BolsistasPage() {
               {bolsistas.length === 0 ? (
                 <tr>
                   <td colSpan={7} className="px-4 py-14">
-                    <div className="flex flex-col items-center justify-center gap-2 text-ink/40">
+                    <div className="flex flex-col items-center justify-center gap-2 text-ink/60">
                       <HandHeart size={28} />
                       <p className="text-sm font-medium">Nenhum bolsista no ano letivo corrente.</p>
                     </div>
@@ -129,7 +129,7 @@ export default async function BolsistasPage() {
                           <div className="min-w-0">
                             <p className="truncate font-semibold text-ink group-hover:text-brand">{b.nome}</p>
                             {b.matriculaCodigo && (
-                              <p className="text-xs text-ink/55">Mat. {b.matriculaCodigo}</p>
+                              <p className="text-xs text-ink/60">Mat. {b.matriculaCodigo}</p>
                             )}
                           </div>
                         </Link>
@@ -141,14 +141,14 @@ export default async function BolsistasPage() {
                       </td>
                       <td className="px-4 py-3">
                         <p className="font-medium text-ink">{b.serie}</p>
-                        <p className="text-xs text-ink/55">{b.turma}</p>
+                        <p className="text-xs text-ink/60">{b.turma}</p>
                       </td>
                       <td className="px-4 py-3">
                         {b.responsavelNome ? (
                           <>
                             <p className="font-medium text-ink">{b.responsavelNome}</p>
                             {b.responsavelParentesco && (
-                              <p className="text-xs text-ink/55">{b.responsavelParentesco}</p>
+                              <p className="text-xs text-ink/60">{b.responsavelParentesco}</p>
                             )}
                           </>
                         ) : (
@@ -163,12 +163,12 @@ export default async function BolsistasPage() {
                             </span>
                           )}
                           {b.celular && b.celular !== b.responsavelCelular && (
-                            <span className="inline-flex items-center gap-1 text-xs text-ink/55">
+                            <span className="inline-flex items-center gap-1 text-xs text-ink/60">
                               <Phone size={12} /> {b.celular}
                             </span>
                           )}
                           {b.email && (
-                            <span className="inline-flex items-center gap-1 text-xs text-ink/55">
+                            <span className="inline-flex items-center gap-1 text-xs text-ink/60">
                               <Mail size={12} /> {b.email}
                             </span>
                           )}

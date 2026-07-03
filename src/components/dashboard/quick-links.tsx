@@ -126,7 +126,7 @@ function EditModal({
         <div className="flex items-center justify-between border-b border-line px-5 py-4">
           <div>
             <h2 className="text-[14px] font-bold text-ink">Acesso rápido</h2>
-            <p className="text-[12px] text-ink/55 mt-0.5">Selecione até {MAX_LINKS} atalhos ({selected.length}/{MAX_LINKS})</p>
+            <p className="text-[12px] text-ink/60 mt-0.5">Selecione até {MAX_LINKS} atalhos ({selected.length}/{MAX_LINKS})</p>
           </div>
           <button type="button" onClick={onClose} className="rounded-[7px] p-1.5 text-ink/40 hover:bg-muted hover:text-ink">
             <X size={15} />
@@ -139,7 +139,7 @@ function EditModal({
             if (routes.length === 0) return null;
             return (
               <div key={group}>
-                <p className="mb-2 text-[11px] font-bold uppercase tracking-wider text-ink/40">{group}</p>
+                <p className="mb-2 text-[11px] font-bold uppercase tracking-wider text-ink/60">{group}</p>
                 <div className="grid grid-cols-2 gap-1.5">
                   {routes.map((route) => {
                     const { Icon } = route;
@@ -225,7 +225,7 @@ export function QuickLinks({ initialLinks, allowedHrefs }: { initialLinks: strin
             <button
               type="button"
               onClick={() => setEditing(true)}
-              className="flex flex-col items-center gap-2 rounded-[10px] border border-dashed border-line bg-surface p-3 text-ink/40 transition-colors hover:border-brand/40 hover:text-brand min-w-[80px]"
+              className="flex flex-col items-center gap-2 rounded-[10px] border border-dashed border-line bg-surface p-3 text-ink/60 transition-colors hover:border-brand/40 hover:text-brand min-w-[80px]"
             >
               <span className="flex h-9 w-9 items-center justify-center rounded-[8px] bg-muted">
                 <Plus size={16} />

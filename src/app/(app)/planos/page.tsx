@@ -79,7 +79,7 @@ export default async function PlanosPage() {
       <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
         {planos.length === 0 ? (
           <Panel className="md:col-span-2 xl:col-span-3">
-            <div className="flex flex-col items-center justify-center gap-2 py-10 text-ink/40">
+            <div className="flex flex-col items-center justify-center gap-2 py-10 text-ink/60">
               <CreditCard size={28} />
               <p className="text-sm font-medium">Nenhum plano cadastrado.</p>
             </div>
@@ -134,19 +134,19 @@ export default async function PlanosPage() {
 
             <div className="grid grid-cols-2 gap-3 border-y border-line py-4">
               <div>
-                <p className="text-xs font-black uppercase tracking-[0.12em] text-ink/50">Mensalidade</p>
+                <p className="text-xs font-black uppercase tracking-[0.12em] text-ink/60">Mensalidade</p>
                 <strong className="mt-2 block text-xl text-brand">{money.format(Number(item.valor_mensalidade))}</strong>
               </div>
               <div>
-                <p className="text-xs font-black uppercase tracking-[0.12em] text-ink/50">Matrícula</p>
+                <p className="text-xs font-black uppercase tracking-[0.12em] text-ink/60">Matrícula</p>
                 <strong className="mt-2 block text-xl text-brand">{money.format(Number(item.valor_matricula))}</strong>
               </div>
               <div>
-                <p className="text-xs font-black uppercase tracking-[0.12em] text-ink/50">Parcelas</p>
+                <p className="text-xs font-black uppercase tracking-[0.12em] text-ink/60">Parcelas</p>
                 <strong className="mt-2 block text-xl text-ink">{item.quantidade_parcelas}</strong>
               </div>
               <div>
-                <p className="text-xs font-black uppercase tracking-[0.12em] text-ink/50">Vencimento</p>
+                <p className="text-xs font-black uppercase tracking-[0.12em] text-ink/60">Vencimento</p>
                 <strong className="mt-2 block text-xl text-ink">Dia {item.dia_vencimento}</strong>
               </div>
             </div>

@@ -85,13 +85,13 @@ export function ConfigLembretesForm({
           <h2 className="font-bold text-ink">
             Cobranças vencidas sem lembrete ({pendentes.length})
           </h2>
-          <p className="text-xs text-ink/55">
+          <p className="text-xs text-ink/60">
             Marque as cobranças e use "Enviar selecionados", ou envie todas de uma vez.
           </p>
         </div>
 
         {pendentes.length === 0 ? (
-          <p className="py-6 text-center text-sm text-ink/55">
+          <p className="py-6 text-center text-sm text-ink/60">
             Nenhuma cobrança vencida sem lembrete.
           </p>
         ) : (
@@ -110,7 +110,7 @@ export function ConfigLembretesForm({
                   />
                   <div className="min-w-0 flex-1">
                     <p className="truncate font-semibold text-ink">{p.alunoNome}</p>
-                    <p className="text-xs text-ink/55">
+                    <p className="text-xs text-ink/60">
                       Resp.: {p.responsavelNome} · {p.descricao}
                     </p>
                   </div>

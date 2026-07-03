@@ -27,7 +27,7 @@ export function StudentEditTabs() {
             href={`${pathname}?tab=${t.id}`}
             scroll={false}
             className={`relative inline-flex items-center gap-2 px-4 py-3 text-sm font-semibold transition-colors ${
-              isActive ? "text-brand" : "text-ink/55 hover:text-ink"
+              isActive ? "text-brand" : "text-ink/60 hover:text-ink"
             }`}
           >
             <Icon size={14} />

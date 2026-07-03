@@ -30,7 +30,7 @@ export function EventosList({
       <h2 className="font-bold text-ink">Eventos cadastrados</h2>
 
       {eventos.length === 0 ? (
-        <div className="flex flex-col items-center gap-2 py-8 text-ink/40">
+        <div className="flex flex-col items-center gap-2 py-8 text-ink/60">
           <CalendarOff size={24} />
           <p className="text-sm">Nenhum evento cadastrado.</p>
         </div>
@@ -49,9 +49,9 @@ export function EventosList({
                   </span>
                   <div className="min-w-0">
                     <p className="truncate text-sm font-semibold text-ink">{ev.titulo}</p>
-                    <p className="text-xs text-ink/55">{formatPeriodo(ev.dataInicio, ev.dataFim)}</p>
+                    <p className="text-xs text-ink/60">{formatPeriodo(ev.dataInicio, ev.dataFim)}</p>
                     {ev.local && (
-                      <p className="mt-0.5 flex items-center gap-1 text-[0.66rem] text-ink/55">
+                      <p className="mt-0.5 flex items-center gap-1 text-[0.66rem] text-ink/60">
                         <MapPin size={11} /> {ev.local}
                       </p>
                     )}

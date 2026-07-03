@@ -63,7 +63,7 @@ export default async function BracketsPage({
             {inssVigencias.length > 0 ? (
               <VigenciaSelect table="inss" vigencias={inssVigencias} current={inssVigSel} />
             ) : (
-              <span className="text-sm text-ink/55">Nenhuma vigência</span>
+              <span className="text-sm text-ink/60">Nenhuma vigência</span>
             )}
             <NewVigenciaButton table="inss" vigencias={inssVigencias} />
             {inssVigSel ? <DeleteVigenciaButton table="inss" vigencia={inssVigSel} /> : null}
@@ -72,7 +72,7 @@ export default async function BracketsPage({
         {inssVigSel ? (
           <BracketsTable table="inss" vigencia={inssVigSel} brackets={inssBrackets as InssBracketRow[]} />
         ) : (
-          <p className="text-sm text-ink/55">Crie uma vigência para começar.</p>
+          <p className="text-sm text-ink/60">Crie uma vigência para começar.</p>
         )}
       </Panel>
 
@@ -85,7 +85,7 @@ export default async function BracketsPage({
             {irVigencias.length > 0 ? (
               <VigenciaSelect table="ir" vigencias={irVigencias} current={irVigSel} />
             ) : (
-              <span className="text-sm text-ink/55">Nenhuma vigência</span>
+              <span className="text-sm text-ink/60">Nenhuma vigência</span>
             )}
             <NewVigenciaButton table="ir" vigencias={irVigencias} />
             {irVigSel ? <DeleteVigenciaButton table="ir" vigencia={irVigSel} /> : null}
@@ -94,11 +94,11 @@ export default async function BracketsPage({
         {irVigSel ? (
           <BracketsTable table="ir" vigencia={irVigSel} brackets={irBrackets as IrBracketRow[]} />
         ) : (
-          <p className="text-sm text-ink/55">Crie uma vigência para começar.</p>
+          <p className="text-sm text-ink/60">Crie uma vigência para começar.</p>
         )}
       </Panel>
 
-      <Panel className="p-4 text-xs text-ink/55">
+      <Panel className="p-4 text-xs text-ink/60">
         <Link href="/rh/folha-v2" className="inline-flex items-center gap-1 font-semibold text-brand hover:underline">
           <ArrowLeft size={12} /> Voltar para folha v2
         </Link>

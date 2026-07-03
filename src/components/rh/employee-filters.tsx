@@ -103,7 +103,7 @@ export function EmployeeFilters({ companies, counts, canViewInactive }: Props) {
       {(search || segmento || companyId || statusContrato || incluirInativos) && (
         <button
           type="button"
-          className="text-xs font-semibold text-ink/55 hover:text-brand"
+          className="text-xs font-semibold text-ink/60 hover:text-brand"
           onClick={() => router.push(pathname)}
         >
           Limpar filtros
