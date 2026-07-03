@@ -7,39 +7,62 @@ export type StudentFilters = {
   serieId?: string;
   turmaId?: string;
   segmento?: string;
+  page?: number;
+  pageSize?: number;
 };
 
-export async function listStudents(filters?: StudentFilters) {
-  const supabase = await createServerClient();
+export const STUDENTS_PAGE_SIZE = 30;
+
+export type PaginatedStudents = {
+  rows: NonNullable<Awaited<ReturnType<typeof runStudentsQuery>>["data"]>;
+  total: number;
+  page: number;
+  pageSize: number;
+};
+
+function runStudentsQuery(
+  supabase: Awaited<ReturnType<typeof createServerClient>>,
+  filters: StudentFilters | undefined,
+  from: number,
+  to: number
+) {
+  // Filtro por matrícula (segmento/série/turma) exige inner join na relação;
+  // sem esses filtros usamos left join para não perder alunos sem matrícula.
+  const hasEnrollmentFilter = Boolean(filters?.serieId || filters?.turmaId || filters?.segmento);
+  const matriculaSelect = hasEnrollmentFilter
+    ? "matriculas!inner(status, serie_id, turma_id, series!inner(id, nome, segmento), turmas(id, nome), planos(nome))"
+    : "matriculas(status, serie_id, turma_id, series(id, nome, segmento), turmas(id, nome), planos(nome))";
+
   let query = supabase
     .from("alunos")
-    .select("id, matricula_codigo, nome, cpf, celular, ativo, foto_url, matriculas(status, serie_id, turma_id, series(id, nome, segmento), turmas(id, nome)), responsaveis_aluno(nome, celular, telefone, parentesco)")
+    .select(
+      `id, matricula_codigo, nome, cpf, celular, ativo, foto_url, ${matriculaSelect}, responsaveis_aluno(nome, celular, telefone, parentesco)`,
+      { count: "exact" }
+    )
     .eq("escola_id", DEFAULT_SCHOOL_ID)
-    .order("nome");
+    .order("nome")
+    .range(from, to);
 
-  if (filters?.nome) {
-    query = query.ilike("nome", `%${filters.nome}%`);
-  }
+  if (filters?.nome) query = query.ilike("nome", `%${filters.nome}%`);
+  if (hasEnrollmentFilter) query = query.eq("matriculas.status", "ativa");
+  if (filters?.serieId) query = query.eq("matriculas.serie_id", filters.serieId);
+  if (filters?.turmaId) query = query.eq("matriculas.turma_id", filters.turmaId);
+  if (filters?.segmento) query = query.eq("matriculas.series.segmento", filters.segmento);
 
-  const { data, error } = await query;
+  return query;
+}
+
+export async function listStudents(filters?: StudentFilters): Promise<PaginatedStudents> {
+  const supabase = await createServerClient();
+  const page = Math.max(1, filters?.page ?? 1);
+  const pageSize = filters?.pageSize ?? STUDENTS_PAGE_SIZE;
+  const from = (page - 1) * pageSize;
+  const to = from + pageSize - 1;
+
+  const { data, error, count } = await runStudentsQuery(supabase, filters, from, to);
   if (error) throw error;
 
-  let rows = data ?? [];
-
-  if (filters?.serieId || filters?.turmaId || filters?.segmento) {
-    rows = rows.filter((student) => {
-      const enrollment = student.matriculas?.find((m) => m.status === "ativa") ?? student.matriculas?.[0];
-      if (!enrollment) return false;
-      const serie = Array.isArray(enrollment.series) ? enrollment.series[0] : enrollment.series;
-      const turma = Array.isArray(enrollment.turmas) ? enrollment.turmas[0] : enrollment.turmas;
-      if (filters.serieId && serie?.id !== filters.serieId) return false;
-      if (filters.turmaId && turma?.id !== filters.turmaId) return false;
-      if (filters.segmento && (serie as { segmento?: string | null })?.segmento !== filters.segmento) return false;
-      return true;
-    });
-  }
-
-  return rows;
+  return { rows: data ?? [], total: count ?? 0, page, pageSize };
 }
 
 export async function getStudentSegmentCounts() {

@@ -100,7 +100,7 @@ export function TemplatesConfigClient({ templates: initialTemplates }: Props) {
     <div className="space-y-4">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
-          <MessageCircle size={16} style={{ color: "rgb(var(--color-success-600))" }} />
+          <MessageCircle size={16} style={{ color: "rgb(var(--color-success))" }} />
           <h2 className="text-base font-semibold" style={{ color: "rgb(var(--color-ink))" }}>
             Templates WhatsApp
           </h2>
@@ -108,7 +108,7 @@ export function TemplatesConfigClient({ templates: initialTemplates }: Props) {
         <button
           onClick={abrirCriar}
           className="flex items-center gap-1.5 rounded-md px-3 py-1.5 text-sm font-medium"
-          style={{ background: "rgb(var(--color-brand-600))", color: "#fff" }}
+          style={{ background: "rgb(var(--color-brand))", color: "#fff" }}
         >
           <Plus size={14} />
           Novo template
@@ -116,7 +116,7 @@ export function TemplatesConfigClient({ templates: initialTemplates }: Props) {
       </div>
 
       {ativos.length === 0 ? (
-        <p className="text-sm" style={{ color: "rgb(var(--color-text-muted))" }}>
+        <p className="text-sm" style={{ color: "rgb(var(--color-ink) / 0.6)" }}>
           Nenhum template cadastrado.
         </p>
       ) : (
@@ -131,7 +131,7 @@ export function TemplatesConfigClient({ templates: initialTemplates }: Props) {
                 <p className="text-sm font-medium" style={{ color: "rgb(var(--color-ink))" }}>
                   {t.descricao}
                 </p>
-                <p className="text-xs mt-0.5" style={{ color: "rgb(var(--color-text-muted))" }}>
+                <p className="text-xs mt-0.5" style={{ color: "rgb(var(--color-ink) / 0.6)" }}>
                   Template: <code>{t.nome_template}</code>
                   {" · "}
                   {t.variaveis_count} variável{t.variaveis_count !== 1 ? "is" : ""}
@@ -142,7 +142,7 @@ export function TemplatesConfigClient({ templates: initialTemplates }: Props) {
                       <span
                         key={i}
                         className="text-[10px] rounded px-1.5 py-0.5"
-                        style={{ background: "rgb(var(--color-surface-raised))", color: "rgb(var(--color-text-muted))" }}
+                        style={{ background: "rgb(var(--color-muted))", color: "rgb(var(--color-ink) / 0.6)" }}
                       >
                         {`{{${i + 1}}}`} {FONTES_WPP_LABEL[t.variaveis_fontes[i] ?? "campo_livre"]}
                       </span>
@@ -154,7 +154,7 @@ export function TemplatesConfigClient({ templates: initialTemplates }: Props) {
                 <button
                   onClick={() => abrirEditar(t)}
                   className="rounded p-1.5 hover:opacity-70"
-                  style={{ color: "rgb(var(--color-text-muted))" }}
+                  style={{ color: "rgb(var(--color-ink) / 0.6)" }}
                   title="Editar"
                 >
                   <Pencil size={13} />
@@ -162,7 +162,7 @@ export function TemplatesConfigClient({ templates: initialTemplates }: Props) {
                 <button
                   onClick={() => handleArquivar(t.id)}
                   className="rounded p-1.5 hover:opacity-70"
-                  style={{ color: "rgb(var(--color-text-muted))" }}
+                  style={{ color: "rgb(var(--color-ink) / 0.6)" }}
                   title="Arquivar"
                 >
                   <Archive size={13} />
@@ -177,7 +177,7 @@ export function TemplatesConfigClient({ templates: initialTemplates }: Props) {
         <details className="mt-4">
           <summary
             className="cursor-pointer text-xs"
-            style={{ color: "rgb(var(--color-text-muted))" }}
+            style={{ color: "rgb(var(--color-ink) / 0.6)" }}
           >
             Arquivados ({arquivados.length})
           </summary>
@@ -186,7 +186,7 @@ export function TemplatesConfigClient({ templates: initialTemplates }: Props) {
               <li
                 key={t.id}
                 className="flex items-center gap-3 rounded px-3 py-2 opacity-50"
-                style={{ background: "rgb(var(--color-surface-raised))" }}
+                style={{ background: "rgb(var(--color-muted))" }}
               >
                 <span className="text-sm line-through" style={{ color: "rgb(var(--color-ink))" }}>
                   {t.descricao}
@@ -217,12 +217,12 @@ export function TemplatesConfigClient({ templates: initialTemplates }: Props) {
                 {editandoId ? "Editar template" : "Novo template WhatsApp"}
               </h3>
               <button onClick={() => setModalAberto(false)}>
-                <X size={14} style={{ color: "rgb(var(--color-text-muted))" }} />
+                <X size={14} style={{ color: "rgb(var(--color-ink) / 0.6)" }} />
               </button>
             </div>
             <div className="space-y-4 px-5 py-4">
               <div>
-                <label className="block text-xs mb-1" style={{ color: "rgb(var(--color-text-muted))" }}>
+                <label className="block text-xs mb-1" style={{ color: "rgb(var(--color-ink) / 0.6)" }}>
                   Descrição (rótulo na UI) *
                 </label>
                 <input
@@ -239,7 +239,7 @@ export function TemplatesConfigClient({ templates: initialTemplates }: Props) {
                 />
               </div>
               <div>
-                <label className="block text-xs mb-1" style={{ color: "rgb(var(--color-text-muted))" }}>
+                <label className="block text-xs mb-1" style={{ color: "rgb(var(--color-ink) / 0.6)" }}>
                   Nome do template Meta *
                 </label>
                 <input
@@ -254,12 +254,12 @@ export function TemplatesConfigClient({ templates: initialTemplates }: Props) {
                   }}
                   placeholder="boas_vindas_escola"
                 />
-                <p className="text-[10px] mt-0.5" style={{ color: "rgb(var(--color-text-muted))" }}>
+                <p className="text-[10px] mt-0.5" style={{ color: "rgb(var(--color-ink) / 0.6)" }}>
                   Nome exato aprovado no Meta Business Manager.
                 </p>
               </div>
               <div>
-                <label className="block text-xs mb-1" style={{ color: "rgb(var(--color-text-muted))" }}>
+                <label className="block text-xs mb-1" style={{ color: "rgb(var(--color-ink) / 0.6)" }}>
                   Quantidade de variáveis (0–10)
                 </label>
                 <input
@@ -283,7 +283,7 @@ export function TemplatesConfigClient({ templates: initialTemplates }: Props) {
                   </p>
                   {Array.from({ length: form.variaveis_count }, (_, i) => (
                     <div key={i} className="flex items-center gap-2">
-                      <span className="text-xs w-10" style={{ color: "rgb(var(--color-text-muted))" }}>
+                      <span className="text-xs w-10" style={{ color: "rgb(var(--color-ink) / 0.6)" }}>
                         {`{{${i + 1}}}`}
                       </span>
                       <select
@@ -307,7 +307,7 @@ export function TemplatesConfigClient({ templates: initialTemplates }: Props) {
                 </div>
               )}
               {erro && (
-                <p className="text-xs" style={{ color: "rgb(var(--color-danger-600))" }}>
+                <p className="text-xs" style={{ color: "rgb(var(--color-danger))" }}>
                   {erro}
                 </p>
               )}
@@ -317,7 +317,7 @@ export function TemplatesConfigClient({ templates: initialTemplates }: Props) {
               <button
                 onClick={() => setModalAberto(false)}
                 className="rounded-md px-3 py-1.5 text-sm"
-                style={{ color: "rgb(var(--color-text-muted))" }}
+                style={{ color: "rgb(var(--color-ink) / 0.6)" }}
               >
                 Cancelar
               </button>
@@ -325,7 +325,7 @@ export function TemplatesConfigClient({ templates: initialTemplates }: Props) {
                 onClick={handleSalvar}
                 disabled={salvando || !form.nome_template.trim() || !form.descricao.trim()}
                 className="rounded-md px-3 py-1.5 text-sm font-medium disabled:opacity-50"
-                style={{ background: "rgb(var(--color-brand-600))", color: "#fff" }}
+                style={{ background: "rgb(var(--color-brand))", color: "#fff" }}
               >
                 {salvando ? "Salvando…" : "Salvar"}
               </button>

@@ -210,7 +210,7 @@ export function AutomacoesConfigClient({ automacoes: init, quadros, colunas, tem
     <div className="space-y-4">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
-          <Zap size={16} style={{ color: "rgb(var(--color-warning-600))" }} />
+          <Zap size={16} style={{ color: "rgb(var(--color-warning))" }} />
           <h2 className="text-base font-semibold" style={{ color: "rgb(var(--color-ink))" }}>
             Automações
           </h2>
@@ -218,7 +218,7 @@ export function AutomacoesConfigClient({ automacoes: init, quadros, colunas, tem
         <button
           onClick={abrirCriar}
           className="flex items-center gap-1.5 rounded-md px-3 py-1.5 text-sm font-medium"
-          style={{ background: "rgb(var(--color-brand-600))", color: "#fff" }}
+          style={{ background: "rgb(var(--color-brand))", color: "#fff" }}
         >
           <Plus size={14} />
           Nova automação
@@ -226,7 +226,7 @@ export function AutomacoesConfigClient({ automacoes: init, quadros, colunas, tem
       </div>
 
       {automacoes.length === 0 ? (
-        <p className="text-sm" style={{ color: "rgb(var(--color-text-muted))" }}>
+        <p className="text-sm" style={{ color: "rgb(var(--color-ink) / 0.6)" }}>
           Nenhuma automação configurada.
         </p>
       ) : (
@@ -239,11 +239,11 @@ export function AutomacoesConfigClient({ automacoes: init, quadros, colunas, tem
             >
               <div className="flex items-start gap-2 min-w-0">
                 {AUTOMACAO_GATILHO[a.tipo] === "tempo"
-                  ? <Clock size={13} className="mt-0.5 shrink-0" style={{ color: "rgb(var(--color-warning-600))" }} />
-                  : <Zap size={13} className="mt-0.5 shrink-0" style={{ color: "rgb(var(--color-brand-600))" }} />
+                  ? <Clock size={13} className="mt-0.5 shrink-0" style={{ color: "rgb(var(--color-warning))" }} />
+                  : <Zap size={13} className="mt-0.5 shrink-0" style={{ color: "rgb(var(--color-brand))" }} />
                 }
                 <div className="min-w-0">
-                  <p className="text-xs font-medium truncate" style={{ color: "rgb(var(--color-text-muted))" }}>
+                  <p className="text-xs font-medium truncate" style={{ color: "rgb(var(--color-ink) / 0.6)" }}>
                     {AUTOMACAO_LABEL[a.tipo]}
                   </p>
                   <p className="text-sm mt-0.5 truncate" style={{ color: "rgb(var(--color-ink))" }}>
@@ -258,8 +258,8 @@ export function AutomacoesConfigClient({ automacoes: init, quadros, colunas, tem
                   title={a.ativo ? "Desativar" : "Ativar"}
                   className="rounded px-2 py-1 text-[10px] font-medium border"
                   style={{
-                    borderColor: a.ativo ? "rgb(var(--color-success-600))" : "rgb(var(--color-line))",
-                    color: a.ativo ? "rgb(var(--color-success-600))" : "rgb(var(--color-text-muted))",
+                    borderColor: a.ativo ? "rgb(var(--color-success))" : "rgb(var(--color-line))",
+                    color: a.ativo ? "rgb(var(--color-success))" : "rgb(var(--color-ink) / 0.6)",
                   }}
                 >
                   {a.ativo ? "Ativo" : "Inativo"}
@@ -267,7 +267,7 @@ export function AutomacoesConfigClient({ automacoes: init, quadros, colunas, tem
                 <button
                   onClick={() => abrirEditar(a)}
                   className="rounded p-1.5 hover:opacity-70"
-                  style={{ color: "rgb(var(--color-text-muted))" }}
+                  style={{ color: "rgb(var(--color-ink) / 0.6)" }}
                   title="Editar"
                 >
                   <Pencil size={12} />
@@ -300,14 +300,14 @@ export function AutomacoesConfigClient({ automacoes: init, quadros, colunas, tem
                 {editandoId ? "Editar automação" : "Nova automação"}
               </h3>
               <button onClick={() => setModalAberto(false)}>
-                <X size={14} style={{ color: "rgb(var(--color-text-muted))" }} />
+                <X size={14} style={{ color: "rgb(var(--color-ink) / 0.6)" }} />
               </button>
             </div>
 
             <div className="space-y-4 px-5 py-4">
               {/* Tipo */}
               <div>
-                <label className="block text-xs mb-1" style={{ color: "rgb(var(--color-text-muted))" }}>Tipo *</label>
+                <label className="block text-xs mb-1" style={{ color: "rgb(var(--color-ink) / 0.6)" }}>Tipo *</label>
                 <select
                   value={form.tipo}
                   onChange={(e) => set("tipo", e.target.value as TipoAutomacao)}
@@ -323,7 +323,7 @@ export function AutomacoesConfigClient({ automacoes: init, quadros, colunas, tem
               {/* Quadro (opcional) */}
               {quadros.length > 0 && (
                 <div>
-                  <label className="block text-xs mb-1" style={{ color: "rgb(var(--color-text-muted))" }}>Quadro (deixe vazio para todos)</label>
+                  <label className="block text-xs mb-1" style={{ color: "rgb(var(--color-ink) / 0.6)" }}>Quadro (deixe vazio para todos)</label>
                   <select
                     value={form.quadro_id}
                     onChange={(e) => { set("quadro_id", e.target.value); set("coluna_id", ""); }}
@@ -339,7 +339,7 @@ export function AutomacoesConfigClient({ automacoes: init, quadros, colunas, tem
               {/* Coluna (quando aplicável) */}
               {precisaColuna && (
                 <div>
-                  <label className="block text-xs mb-1" style={{ color: "rgb(var(--color-text-muted))" }}>Coluna *</label>
+                  <label className="block text-xs mb-1" style={{ color: "rgb(var(--color-ink) / 0.6)" }}>Coluna *</label>
                   <select
                     value={form.coluna_id}
                     onChange={(e) => set("coluna_id", e.target.value)}
@@ -355,7 +355,7 @@ export function AutomacoesConfigClient({ automacoes: init, quadros, colunas, tem
               {/* Template */}
               {precisaTemplate && (
                 <div>
-                  <label className="block text-xs mb-1" style={{ color: "rgb(var(--color-text-muted))" }}>Template WhatsApp *</label>
+                  <label className="block text-xs mb-1" style={{ color: "rgb(var(--color-ink) / 0.6)" }}>Template WhatsApp *</label>
                   <select
                     value={form.template_id}
                     onChange={(e) => set("template_id", e.target.value)}
@@ -371,7 +371,7 @@ export function AutomacoesConfigClient({ automacoes: init, quadros, colunas, tem
               {/* Título da tarefa */}
               {["card_parado_cria_tarefa", "coluna_entrada_cria_tarefa", "coluna_entrada_solicita_dado"].includes(form.tipo) && (
                 <div>
-                  <label className="block text-xs mb-1" style={{ color: "rgb(var(--color-text-muted))" }}>
+                  <label className="block text-xs mb-1" style={{ color: "rgb(var(--color-ink) / 0.6)" }}>
                     {form.tipo === "coluna_entrada_solicita_dado" ? "Campo a solicitar *" : "Título da tarefa *"}
                   </label>
                   <input
@@ -387,7 +387,7 @@ export function AutomacoesConfigClient({ automacoes: init, quadros, colunas, tem
               {/* Dias (card_parado) */}
               {form.tipo === "card_parado_cria_tarefa" && (
                 <div>
-                  <label className="block text-xs mb-1" style={{ color: "rgb(var(--color-text-muted))" }}>
+                  <label className="block text-xs mb-1" style={{ color: "rgb(var(--color-ink) / 0.6)" }}>
                     Dias parado antes de acionar (mín. 2; deixe vazio para usar prazo da coluna)
                   </label>
                   <input
@@ -404,7 +404,7 @@ export function AutomacoesConfigClient({ automacoes: init, quadros, colunas, tem
               {/* Due em dias (cria_tarefa) */}
               {form.tipo === "coluna_entrada_cria_tarefa" && (
                 <div>
-                  <label className="block text-xs mb-1" style={{ color: "rgb(var(--color-text-muted))" }}>Prazo em dias (opcional)</label>
+                  <label className="block text-xs mb-1" style={{ color: "rgb(var(--color-ink) / 0.6)" }}>Prazo em dias (opcional)</label>
                   <input
                     type="number"
                     min={1}
@@ -419,7 +419,7 @@ export function AutomacoesConfigClient({ automacoes: init, quadros, colunas, tem
               {/* Responsável (tarefas) */}
               {["card_parado_cria_tarefa", "coluna_entrada_cria_tarefa"].includes(form.tipo) && perfis.length > 0 && (
                 <div>
-                  <label className="block text-xs mb-1" style={{ color: "rgb(var(--color-text-muted))" }}>Responsável pela tarefa (opcional)</label>
+                  <label className="block text-xs mb-1" style={{ color: "rgb(var(--color-ink) / 0.6)" }}>Responsável pela tarefa (opcional)</label>
                   <select
                     value={form.assigned_to}
                     onChange={(e) => set("assigned_to", e.target.value)}
@@ -435,7 +435,7 @@ export function AutomacoesConfigClient({ automacoes: init, quadros, colunas, tem
               {/* Status destino */}
               {form.tipo === "coluna_entrada_muda_status" && (
                 <div>
-                  <label className="block text-xs mb-1" style={{ color: "rgb(var(--color-text-muted))" }}>Status destino *</label>
+                  <label className="block text-xs mb-1" style={{ color: "rgb(var(--color-ink) / 0.6)" }}>Status destino *</label>
                   <select
                     value={form.status_destino}
                     onChange={(e) => set("status_destino", e.target.value)}
@@ -451,7 +451,7 @@ export function AutomacoesConfigClient({ automacoes: init, quadros, colunas, tem
               {form.tipo === "mover_card_condicional" && (
                 <>
                   <div>
-                    <label className="block text-xs mb-1" style={{ color: "rgb(var(--color-text-muted))" }}>Da coluna *</label>
+                    <label className="block text-xs mb-1" style={{ color: "rgb(var(--color-ink) / 0.6)" }}>Da coluna *</label>
                     <select
                       value={form.de_coluna_id}
                       onChange={(e) => set("de_coluna_id", e.target.value)}
@@ -463,7 +463,7 @@ export function AutomacoesConfigClient({ automacoes: init, quadros, colunas, tem
                     </select>
                   </div>
                   <div>
-                    <label className="block text-xs mb-1" style={{ color: "rgb(var(--color-text-muted))" }}>Para a coluna *</label>
+                    <label className="block text-xs mb-1" style={{ color: "rgb(var(--color-ink) / 0.6)" }}>Para a coluna *</label>
                     <select
                       value={form.para_coluna_id}
                       onChange={(e) => set("para_coluna_id", e.target.value)}
@@ -477,14 +477,14 @@ export function AutomacoesConfigClient({ automacoes: init, quadros, colunas, tem
                 </>
               )}
 
-              {erro && <p className="text-xs" style={{ color: "rgb(var(--color-danger-600))" }}>{erro}</p>}
+              {erro && <p className="text-xs" style={{ color: "rgb(var(--color-danger))" }}>{erro}</p>}
             </div>
 
             <div className="flex justify-end gap-2 border-t px-5 py-3" style={{ borderColor: "rgb(var(--color-line))" }}>
               <button
                 onClick={() => setModalAberto(false)}
                 className="rounded-md px-3 py-1.5 text-sm"
-                style={{ color: "rgb(var(--color-text-muted))" }}
+                style={{ color: "rgb(var(--color-ink) / 0.6)" }}
               >
                 Cancelar
               </button>
@@ -492,7 +492,7 @@ export function AutomacoesConfigClient({ automacoes: init, quadros, colunas, tem
                 onClick={handleSalvar}
                 disabled={isPending}
                 className="rounded-md px-3 py-1.5 text-sm font-medium disabled:opacity-50"
-                style={{ background: "rgb(var(--color-brand-600))", color: "#fff" }}
+                style={{ background: "rgb(var(--color-brand))", color: "#fff" }}
               >
                 {isPending ? "Salvando…" : "Salvar"}
               </button>
