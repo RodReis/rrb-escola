@@ -21,3 +21,10 @@ docs/pdfs/*.dump
 # Artefatos de ferramentas locais (impeccable, playwright MCP)
 .impeccable/
 .playwright-mcp/
+
+# Fichas de alunos (dados pessoais de menores: CPF, RG, endereco, foto).
+# public/ e servido estaticamente pelo Next — nada de aluno pode entrar aqui.
+public/*.pdf
+public/*.xlsx
+public/*.json
+!public/face-models/*.json
