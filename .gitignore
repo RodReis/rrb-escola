@@ -22,9 +22,21 @@ docs/pdfs/*.dump
 .impeccable/
 .playwright-mcp/
 
-# Fichas de alunos (dados pessoais de menores: CPF, RG, endereco, foto).
-# public/ e servido estaticamente pelo Next — nada de aluno pode entrar aqui.
+# Dados pessoais de alunos (CPF, RG, endereco, telefone, foto de menores).
+# Ficam so na maquina de quem opera a importacao — nunca versionados.
+dados-alunos/
+
+# public/ e servido estaticamente pelo Next: planilha ou ficha de aluno
+# largada aqui vira download, bastando o middleware deixar de cobrir estatico.
 public/*.pdf
 public/*.xlsx
 public/*.json
 !public/face-models/*.json
+
+# Fichas exportadas do Escolar Manager
+docs/pdfs/*.pdf
+docs/pdfs/*.txt
+
+# Bytecode Python dos scripts de importacao
+__pycache__/
+*.pyc

@@ -19,8 +19,8 @@ SERVICE_KEY = "sb_secret_N7UND0UgjKTVK-Uodkm0Hg_xSvEMPvz"
 ESCOLA_ID = "00000000-0000-0000-0000-000000000001"
 
 PDF_FILES = [
-    Path(__file__).parent.parent / "docs" / "pdfs" / "Resultado.pdf",
-    Path(__file__).parent.parent / "docs" / "pdfs" / "Resultado1.pdf",
+    Path(__file__).parent.parent / "dados-alunos" / "Resultado.pdf",
+    Path(__file__).parent.parent / "dados-alunos" / "Resultado1.pdf",
 ]
 
 HEADERS = {

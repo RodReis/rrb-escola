@@ -20,7 +20,7 @@ const { createClient } = require(path.join(__dirname, "../node_modules/@supabase
 const ESCOLA_ID = "00000000-0000-0000-0000-000000000001";
 const ANO_LETIVO = 2026;
 const DIA_VENCIMENTO = 5;
-const XLSX_PATH = path.join(__dirname, "../public/MATRICULADOS2026.xlsx");
+const XLSX_PATH = path.join(__dirname, "../dados-alunos/MATRICULADOS2026.xlsx");
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL,

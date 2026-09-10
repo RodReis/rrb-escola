@@ -41,7 +41,7 @@ aluno_by_norm = {norm(a['nome']): a for a in alunos_db}
 mat_by_aluno  = {m['aluno_id']: m for m in mats_db}
 
 # xlsx
-wb = openpyxl.load_workbook('c:/Desenv/Projetos/rrb-escola/public/MATRICULADOS2026.xlsx')
+wb = openpyxl.load_workbook('c:/Desenv/Projetos/rrb-escola/dados-alunos/MATRICULADOS2026.xlsx')
 ws = wb.active
 
 print('=== MAPEAMENTO SÉRIE/TURMA ===')

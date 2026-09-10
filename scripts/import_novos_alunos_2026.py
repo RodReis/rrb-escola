@@ -30,8 +30,8 @@ sys.stdout.reconfigure(encoding="utf-8")
 
 ROOT = Path(__file__).parent.parent
 PAIRS = [
-    (ROOT / "public" / "11714876000116.pdf", ROOT / "public" / "11714876000116.json"),
-    (ROOT / "public" / "35027047000123.pdf", ROOT / "public" / "35027047000123.json"),
+    (ROOT / "dados-alunos" / "11714876000116.pdf", ROOT / "dados-alunos" / "11714876000116.json"),
+    (ROOT / "dados-alunos" / "35027047000123.pdf", ROOT / "dados-alunos" / "35027047000123.json"),
 ]
 BUCKET = "alunos-fotos"
 ANO_CORRENTE = 2026

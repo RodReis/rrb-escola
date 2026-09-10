@@ -1,5 +1,5 @@
 """
-Le public/MATRICULADOS2026.xlsx, atualiza matriculas 2026 (serie/turma) e
+Le dados-alunos/MATRICULADOS2026.xlsx, atualiza matriculas 2026 (serie/turma) e
 gera 12 cobrancas jan-dez 2026 com status=paga.
 
 Mapping headers xlsx -> serie do banco:
@@ -30,7 +30,7 @@ SERVICE_KEY = "sb_secret_N7UND0UgjKTVK-Uodkm0Hg_xSvEMPvz"
 ESCOLA_ID = "00000000-0000-0000-0000-000000000001"
 PLANO_ID = "30000000-0000-0000-0000-000000000001"
 ANO = 2026
-XLSX = Path(__file__).parent.parent / "public" / "MATRICULADOS2026.xlsx"
+XLSX = Path(__file__).parent.parent / "dados-alunos" / "MATRICULADOS2026.xlsx"
 
 HEADERS = {
     "apikey": SERVICE_KEY,

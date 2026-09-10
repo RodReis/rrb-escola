@@ -12,7 +12,7 @@ import { normalizeName } from "./lib/normalize-name.mjs";
 import { mapHeaderToTarget } from "./lib/reset-matriculas-mapper.mjs";
 
 const ANO_LETIVO = 2026;
-const XLSX_PATH = "public/MATRICULADOS2026.xlsx";
+const XLSX_PATH = "dados-alunos/MATRICULADOS2026.xlsx";
 const PLANO_NOME = "Mensalidade 2026";
 
 function loadEnvFile(file) {
