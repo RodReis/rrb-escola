@@ -8,7 +8,12 @@ import { StatusPill } from "@/components/ui/status-pill";
 import { ExportStudentsReportButton } from "@/components/pdf/export-students-report-button";
 import { StudentFilters } from "@/components/students/student-filters";
 import { AlunoRowActions } from "@/components/students/aluno-row-actions";
-import { getStudentsReport, listStudents, getStudentSegmentCounts } from "@/lib/data/students";
+import {
+  getStudentsReport,
+  listStudents,
+  getStudentSegmentCounts,
+  getStudentFilterOptions
+} from "@/lib/data/students";
 import { getSignedFotoUrls } from "@/lib/storage/photos";
 import { requirePermission } from "@/lib/auth/session";
 
@@ -43,11 +48,13 @@ export default async function StudentsPage({
     page:     Number.isNaN(pageParam) ? 1 : pageParam
   };
 
-  const [{ rows: students, total, page, pageSize }, reportRows, counts] = await Promise.all([
-    listStudents(filters),
-    getStudentsReport(),
-    getStudentSegmentCounts()
-  ]);
+  const [{ rows: students, total, page, pageSize }, reportRows, counts, filterOptions] =
+    await Promise.all([
+      listStudents(filters),
+      getStudentsReport(),
+      getStudentSegmentCounts(),
+      getStudentFilterOptions()
+    ]);
 
   const signedFotos = await getSignedFotoUrls(
     students.map((s) => ("foto_url" in s ? (s.foto_url as string | null) : null))
@@ -93,7 +100,11 @@ export default async function StudentsPage({
 
       <DataTableShell
         toolbar={
-          <StudentFilters counts={counts} />
+          <StudentFilters
+            counts={counts}
+            series={filterOptions.series}
+            turmas={filterOptions.turmas}
+          />
         }
         footer={
           <>
@@ -151,11 +162,11 @@ export default async function StudentsPage({
                   <div className="flex flex-col items-center justify-center gap-2 text-ink/60">
                     <Users size={28} />
                     <p className="text-sm font-medium">
-                      {filters.nome || filters.segmento
+                      {filters.nome || filters.segmento || filters.serieId || filters.turmaId
                         ? "Nenhum aluno corresponde aos filtros."
                         : "Nenhum aluno cadastrado."}
                     </p>
-                    {filters.nome || filters.segmento ? (
+                    {filters.nome || filters.segmento || filters.serieId || filters.turmaId ? (
                       <ButtonLink href="/alunos" variant="secondary" className="rb-btn sm mt-1">
                         Limpar filtros
                       </ButtonLink>

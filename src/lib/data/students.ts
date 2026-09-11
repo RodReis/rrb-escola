@@ -98,10 +98,11 @@ export async function getStudentFilterOptions() {
       .order("ordem"),
     supabase
       .from("turmas")
-      .select("id, nome, serie_id, ano_letivo")
+      .select("id, nome, serie_id, ano_letivo, turno")
       .eq("escola_id", DEFAULT_SCHOOL_ID)
       .eq("ativo", true)
       .eq("ano_letivo", new Date().getFullYear())
+      .order("turno")
       .order("nome"),
   ]);
 
