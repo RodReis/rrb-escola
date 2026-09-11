@@ -16,29 +16,46 @@ function normalizarData(value: string | undefined): string {
   return new Date().toISOString().slice(0, 10);
 }
 
+// O extrato não traz endToEndId em campo próprio; quando o movimento é Pix, o
+// identificador aparece dentro do texto complementar.
+export function extrairEndToEndId(item: SicoobExtratoItem): string | null {
+  const texto = `${item.descInfComplementar ?? ""} ${item.descricao ?? ""}`;
+  return texto.match(/E\d{8}\d{12}[a-zA-Z0-9]{11}/)?.[0] ?? null;
+}
+
 function mapItem(item: SicoobExtratoItem, contaId: string, escolaId: string) {
   const valor = Math.abs(Number(item.valor ?? 0));
+  const data = normalizarData(item.data);
   return {
     escola_id: escolaId,
     conta_id: contaId,
-    id_transacao: String(item.idTransacao ?? item.id ?? `${normalizarData(item.data)}-${item.descricao}-${item.valor}`),
-    data: normalizarData(item.data),
+    id_transacao: String(item.numeroDocumento ?? `${data}-${item.descricao}-${item.valor}`),
+    data,
     tipo: normalizarTipo(item.tipo, Number(item.valor ?? 0)),
     valor,
     descricao: String(item.descricao ?? "Movimento Sicoob"),
-    end_to_end_id: item.endToEndId ?? null,
-    contraparte_doc: item.documentoContraparte ?? null,
+    end_to_end_id: extrairEndToEndId(item),
+    contraparte_doc: item.cpfCnpj ?? null,
     payload: item,
   };
 }
 
-export async function syncExtratoSicoob(input?: { dataInicio?: string; dataFim?: string }) {
-  const supabase = createAdminClient();
-  const hoje = new Date();
+// A janela de 3 dias pode cruzar a virada do mês, e o extrato do Sicoob é
+// mensal — então busca o mês corrente e, quando necessário, também o anterior.
+export function competenciasDaJanela(hoje: Date): Array<{ mes: number; ano: number }> {
   const inicio = new Date(hoje);
   inicio.setDate(inicio.getDate() - 3);
-  const dataInicio = input?.dataInicio ?? inicio.toISOString().slice(0, 10);
-  const dataFim = input?.dataFim ?? hoje.toISOString().slice(0, 10);
+  const atual = { mes: hoje.getMonth() + 1, ano: hoje.getFullYear() };
+  const anterior = { mes: inicio.getMonth() + 1, ano: inicio.getFullYear() };
+  const mesmaCompetencia = atual.mes === anterior.mes && atual.ano === anterior.ano;
+  return mesmaCompetencia ? [atual] : [anterior, atual];
+}
+
+export async function syncExtratoSicoob(input?: { mes?: number; ano?: number }) {
+  const supabase = createAdminClient();
+  const hoje = new Date();
+  const competencias =
+    input?.mes && input?.ano ? [{ mes: input.mes, ano: input.ano }] : competenciasDaJanela(hoje);
 
   const { data: contas, error } = await supabase
     .from("contas_bancarias")
@@ -50,22 +67,24 @@ export async function syncExtratoSicoob(input?: { dataInicio?: string; dataFim?:
 
   let inseridos = 0;
   for (const conta of contas ?? []) {
-    const extrato = await consultarExtrato({
-      contaCorrente: conta.conta,
-      dataInicio,
-      dataFim,
-    });
-    if (!extrato.ok) throw new Error(extrato.reason);
+    for (const competencia of competencias) {
+      const extrato = await consultarExtrato({
+        contaCorrente: conta.conta,
+        mes: competencia.mes,
+        ano: competencia.ano,
+      });
+      if (!extrato.ok) throw new Error(extrato.reason);
 
-    const itens = extrato.data.resultado ?? extrato.data.transacoes ?? [];
-    const rows = itens.map((item) => mapItem(item, conta.id, conta.escola_id));
-    if (rows.length === 0) continue;
+      const itens = extrato.data.transacoes ?? [];
+      const rows = itens.map((item) => mapItem(item, conta.id, conta.escola_id));
+      if (rows.length === 0) continue;
 
-    const { error: upsertError } = await supabase
-      .from("extrato_bancario")
-      .upsert(rows, { onConflict: "conta_id,id_transacao" });
-    if (upsertError) throw upsertError;
-    inseridos += rows.length;
+      const { error: upsertError } = await supabase
+        .from("extrato_bancario")
+        .upsert(rows, { onConflict: "conta_id,id_transacao" });
+      if (upsertError) throw upsertError;
+      inseridos += rows.length;
+    }
   }
 
   const { data: pendentes } = await supabase
@@ -118,5 +137,5 @@ export async function syncExtratoSicoob(input?: { dataInicio?: string; dataFim?:
       .eq("id", linha.id);
   }
 
-  return { ok: true, dataInicio, dataFim, contas: contas?.length ?? 0, movimentos: inseridos };
+  return { ok: true, competencias, contas: contas?.length ?? 0, movimentos: inseridos };
 }

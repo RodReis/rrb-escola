@@ -1,9 +1,10 @@
-import { Filter, RefreshCcw } from "lucide-react";
+import { Filter } from "lucide-react";
 import { PageHeader } from "@/components/ui/page-header";
 import { Panel } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { AtualizarExtratoButton } from "@/components/finance/atualizar-extrato-button";
 import { getConciliacaoData } from "@/lib/data/conciliacao";
-import { atualizarExtratoAction, conciliarExtratoAction, ignorarExtratoAction } from "@/lib/actions/conciliacao";
+import { conciliarExtratoAction, ignorarExtratoAction } from "@/lib/actions/conciliacao";
 import { requirePermission } from "@/lib/auth/session";
 import { money } from "@/lib/constants";
 
@@ -33,13 +34,7 @@ export default async function ConciliacaoPage({
         title="Conciliação Bancária"
         description="Extrato Sicoob contra pagamentos e livro-razão."
         counter={status}
-        actions={
-          <form action={atualizarExtratoAction}>
-            <Button variant="secondary">
-              <RefreshCcw size={14} /> Atualizar extrato
-            </Button>
-          </form>
-        }
+        actions={<AtualizarExtratoButton />}
         kpis={[
           { label: "Linhas", value: data.extrato.length.toLocaleString("pt-BR") },
           { label: "Saldo filtrado", value: money.format(data.totalExtrato) },

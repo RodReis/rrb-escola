@@ -5,10 +5,22 @@ import { requirePermission } from "@/lib/auth/session";
 import { createServerClient } from "@/lib/supabase/server";
 import { syncExtratoSicoob } from "@/lib/conciliacao/sync-extrato";
 
-export async function atualizarExtratoAction() {
+export type AtualizarExtratoResult =
+  | { ok: true; movimentos: number }
+  | { ok: false; reason: string };
+
+export async function atualizarExtratoAction(
+  _prev: AtualizarExtratoResult | null,
+  _formData: FormData,
+): Promise<AtualizarExtratoResult> {
   await requirePermission("financeiro.conciliacao", "update");
-  await syncExtratoSicoob();
-  revalidatePath("/financeiro/tesouraria/conciliacao");
+  try {
+    const resultado = await syncExtratoSicoob();
+    revalidatePath("/financeiro/tesouraria/conciliacao");
+    return { ok: true, movimentos: resultado.movimentos };
+  } catch (err) {
+    return { ok: false, reason: err instanceof Error ? err.message : "Falha ao sincronizar extrato" };
+  }
 }
 
 export async function ignorarExtratoAction(formData: FormData) {
