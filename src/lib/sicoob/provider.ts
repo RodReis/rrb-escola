@@ -1,5 +1,11 @@
 import "server-only";
-import { criarCobPixImediata, consultarCobPix } from "@/lib/sicoob/pix";
+import {
+  criarCobPixImediata,
+  consultarCobPix,
+  extrairCopiaECola,
+  isCopiaEColaValido,
+} from "@/lib/sicoob/pix";
+import { getSicoobEnv } from "@/lib/sicoob/endpoints";
 import { gerarTxidOrigem } from "@/lib/sicoob/txid";
 import type { PaymentProvider } from "@/lib/pagamentos/provider";
 
@@ -27,6 +33,17 @@ export const sicoobProvider: PaymentProvider = {
 
     if (!cob.ok) return cob;
 
+    const copiaCola = extrairCopiaECola(cob.data);
+    if (!isCopiaEColaValido(copiaCola)) {
+      return {
+        ok: false,
+        reason:
+          getSicoobEnv() === "sandbox"
+            ? "O sandbox do Sicoob devolve dados fictícios e não gera um Pix válido. Conclua a Fase 0 (app de produção, e-CNPJ A1 e escopos) e use SICOOB_ENV=production."
+            : "Sicoob não retornou um copia-e-cola Pix válido",
+      };
+    }
+
     const criadoEm = cob.data.calendario?.criacao
       ? new Date(cob.data.calendario.criacao)
       : new Date();
@@ -39,8 +56,8 @@ export const sicoobProvider: PaymentProvider = {
         tipo: "pix_imediato",
         id_externo: cob.data.txid ?? txid,
         status_externo: cob.data.status,
-        pix_copia_cola: cob.data.pixCopiaECola,
-        pix_location: cob.data.location,
+        pix_copia_cola: copiaCola,
+        pix_location: cob.data.location ?? cob.data.loc?.location,
         expira_em: expiraEm,
         payload: cob.data,
       },

@@ -12,13 +12,30 @@ export type CriarCobPixInput = {
   expiracao?: number;
 };
 
+// O Sicoob devolve o copia-e-cola em `brcode`; `pixCopiaECola` é o nome do
+// padrão Bacen e vem como fallback caso a API passe a segui-lo.
 export type SicoobCobPix = {
   txid?: string;
   status?: string;
+  brcode?: string;
   pixCopiaECola?: string;
   location?: string;
+  loc?: { brcode?: string; location?: string };
   calendario?: { expiracao?: number; criacao?: string };
 };
+
+export function extrairCopiaECola(cob: SicoobCobPix): string | undefined {
+  return cob.brcode ?? cob.pixCopiaECola ?? cob.loc?.brcode;
+}
+
+// O sandbox do Sicoob responde com dados fictícios (lorem ipsum) em vez do
+// BR Code real. Um copia-e-cola válido começa com o payload format indicator
+// "0002" do padrão EMV e cita o domínio do arranjo Pix do Bacen. O nome do
+// recebedor e a cidade são campos livres, então espaços são permitidos.
+export function isCopiaEColaValido(valor: string | undefined): valor is string {
+  if (!valor) return false;
+  return valor.startsWith("0002") && valor.toLowerCase().includes("br.gov.bcb.pix");
+}
 
 export type SicoobPixRecebido = {
   endToEndId?: string;
