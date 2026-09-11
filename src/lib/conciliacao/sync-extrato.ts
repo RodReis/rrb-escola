@@ -23,16 +23,27 @@ export function extrairEndToEndId(item: SicoobExtratoItem): string | null {
   return texto.match(/E\d{8}\d{12}[a-zA-Z0-9]{11}/)?.[0] ?? null;
 }
 
+// O valor chega como string ("1234,56" ou "1234.56"). O sandbox devolve texto
+// fictício, que viraria NaN e seria rejeitado pela coluna numeric — por isso o
+// movimento é descartado em vez de derrubar a sincronização inteira.
+export function parseValor(valor: string | number | undefined): number | null {
+  if (typeof valor === "number") return Number.isFinite(valor) ? valor : null;
+  if (!valor) return null;
+  const n = Number(String(valor).replace(/\./g, "").replace(",", "."));
+  return Number.isFinite(n) ? n : null;
+}
+
 function mapItem(item: SicoobExtratoItem, contaId: string, escolaId: string) {
-  const valor = Math.abs(Number(item.valor ?? 0));
+  const valorBruto = parseValor(item.valor);
+  if (valorBruto === null) return null;
   const data = normalizarData(item.data);
   return {
     escola_id: escolaId,
     conta_id: contaId,
     id_transacao: String(item.numeroDocumento ?? `${data}-${item.descricao}-${item.valor}`),
     data,
-    tipo: normalizarTipo(item.tipo, Number(item.valor ?? 0)),
-    valor,
+    tipo: normalizarTipo(item.tipo, valorBruto),
+    valor: Math.abs(valorBruto),
     descricao: String(item.descricao ?? "Movimento Sicoob"),
     end_to_end_id: extrairEndToEndId(item),
     contraparte_doc: item.cpfCnpj ?? null,
@@ -66,6 +77,7 @@ export async function syncExtratoSicoob(input?: { mes?: number; ano?: number }) 
   if (error) throw error;
 
   let inseridos = 0;
+  let descartados = 0;
   for (const conta of contas ?? []) {
     for (const competencia of competencias) {
       const extrato = await consultarExtrato({
@@ -76,7 +88,10 @@ export async function syncExtratoSicoob(input?: { mes?: number; ano?: number }) 
       if (!extrato.ok) throw new Error(extrato.reason);
 
       const itens = extrato.data.transacoes ?? [];
-      const rows = itens.map((item) => mapItem(item, conta.id, conta.escola_id));
+      const rows = itens
+        .map((item) => mapItem(item, conta.id, conta.escola_id))
+        .filter((row): row is NonNullable<typeof row> => row !== null);
+      descartados += itens.length - rows.length;
       if (rows.length === 0) continue;
 
       const { error: upsertError } = await supabase
@@ -137,5 +152,11 @@ export async function syncExtratoSicoob(input?: { mes?: number; ano?: number }) 
       .eq("id", linha.id);
   }
 
-  return { ok: true, competencias, contas: contas?.length ?? 0, movimentos: inseridos };
+  return {
+    ok: true,
+    competencias,
+    contas: contas?.length ?? 0,
+    movimentos: inseridos,
+    descartados,
+  };
 }

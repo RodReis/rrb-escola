@@ -6,8 +6,20 @@ import { createServerClient } from "@/lib/supabase/server";
 import { syncExtratoSicoob } from "@/lib/conciliacao/sync-extrato";
 
 export type AtualizarExtratoResult =
-  | { ok: true; movimentos: number }
+  | { ok: true; movimentos: number; descartados: number }
   | { ok: false; reason: string };
+
+// Erros do Supabase são objetos simples com `message`/`details`, não instâncias
+// de Error — extrair o texto evita perder a causa real no relatório.
+function descreverErro(err: unknown): string {
+  if (err instanceof Error) return err.message;
+  if (err && typeof err === "object") {
+    const e = err as { message?: string; details?: string; hint?: string; code?: string };
+    const texto = e.message ?? e.details ?? e.hint;
+    if (texto) return e.code ? `${texto} (${e.code})` : texto;
+  }
+  return "Falha ao sincronizar extrato";
+}
 
 export async function atualizarExtratoAction(
   _prev: AtualizarExtratoResult | null,
@@ -17,9 +29,10 @@ export async function atualizarExtratoAction(
   try {
     const resultado = await syncExtratoSicoob();
     revalidatePath("/financeiro/tesouraria/conciliacao");
-    return { ok: true, movimentos: resultado.movimentos };
+    return { ok: true, movimentos: resultado.movimentos, descartados: resultado.descartados };
   } catch (err) {
-    return { ok: false, reason: err instanceof Error ? err.message : "Falha ao sincronizar extrato" };
+    console.error("[conciliacao] falha ao sincronizar extrato", err);
+    return { ok: false, reason: descreverErro(err) };
   }
 }
 

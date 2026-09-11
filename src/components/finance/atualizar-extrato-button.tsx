@@ -25,11 +25,17 @@ export function AtualizarExtratoButton() {
   useEffect(() => {
     if (!state) return;
     if (state.ok) {
-      toast.success(
-        state.movimentos > 0
-          ? `Extrato atualizado: ${state.movimentos} movimento(s).`
-          : "Extrato atualizado. Nenhum movimento novo.",
-      );
+      if (state.movimentos === 0 && state.descartados > 0) {
+        toast.warning(
+          `${state.descartados} movimento(s) ignorado(s) por virem sem valor numérico. Em sandbox o Sicoob devolve dados fictícios.`,
+        );
+      } else {
+        toast.success(
+          state.movimentos > 0
+            ? `Extrato atualizado: ${state.movimentos} movimento(s).`
+            : "Extrato atualizado. Nenhum movimento novo.",
+        );
+      }
     } else {
       toast.error(state.reason);
     }

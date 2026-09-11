@@ -1,5 +1,28 @@
 import { describe, expect, it } from "vitest";
-import { competenciasDaJanela, extrairEndToEndId } from "@/lib/conciliacao/sync-extrato";
+import { competenciasDaJanela, extrairEndToEndId, parseValor } from "@/lib/conciliacao/sync-extrato";
+
+describe("parseValor", () => {
+  it("aceita número já tipado", () => {
+    expect(parseValor(1234.56)).toBe(1234.56);
+  });
+
+  it("converte valor em formato brasileiro", () => {
+    expect(parseValor("1.234,56")).toBe(1234.56);
+  });
+
+  it("aceita valor negativo, que indica débito", () => {
+    expect(parseValor("-49,90")).toBe(-49.9);
+  });
+
+  it("rejeita o texto fictício do sandbox em vez de virar NaN", () => {
+    expect(parseValor("ut velit incididunt ullamco")).toBeNull();
+  });
+
+  it("rejeita valor ausente", () => {
+    expect(parseValor(undefined)).toBeNull();
+    expect(parseValor("")).toBeNull();
+  });
+});
 
 describe("competenciasDaJanela", () => {
   it("usa só o mês corrente quando a janela de 3 dias não cruza o mês", () => {
