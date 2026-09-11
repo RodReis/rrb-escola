@@ -1,0 +1,2 @@
+-- Placeholder para migration aplicada diretamente em producao.
+-- O schema correspondente ja esta coberto por migrations canonicas locais.

@@ -8,6 +8,7 @@ import { money } from "@/lib/constants";
 import { getVendas } from "@/lib/data/comercial";
 import { confirmarVendaAction, cancelarVendaAction } from "@/lib/actions/comercial";
 import { requirePermission } from "@/lib/auth/session";
+import { GerarPixOrigemButton } from "@/components/finance/gerar-pix-origem-button";
 
 export const dynamic = "force-dynamic";
 
@@ -84,6 +85,14 @@ export default async function VendasPage({
                     <td className="py-2.5 px-3"><StatusPill tone={tones[v.status]}>{v.status}</StatusPill></td>
                     <td className="py-2.5 px-3 text-right">
                       <div className="inline-flex items-center gap-1">
+                        {v.status === "rascunho" ? (
+                          <GerarPixOrigemButton
+                            origemTipo="venda"
+                            origemId={v.id}
+                            valor={v.total}
+                            descricao={`Venda ${v.cliente_nome ?? v.id}`}
+                          />
+                        ) : null}
                         {v.status === "rascunho" ? (
                           <form action={confirmarVendaAction}>
                             <input type="hidden" name="id" value={v.id} />

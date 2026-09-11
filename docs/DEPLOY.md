@@ -51,6 +51,30 @@ Notas:
 - Comparado ao `.env.example` local: `RESEND_FROM`/`RESEND_API_KEY` e `NEXT_PUBLIC_APP_URL` aparecem em produção mas **não estão** no `.env.example` do repo (arquivo de exemplo desatualizado). Por outro lado, várias vars do `.env.example` (`ASAAS_*`, `GATE_MATCH_THRESHOLD`, `GATE_EVENT_COOLDOWN_SECONDS`, `META_TEMPLATE_*`, `APP_DEFAULT_ADMIN_*`) **não apareceram** nesta captura — ou estão fora da rolagem, ou não estão configuradas em produção (features ainda não ativadas em prod, ou usam default no código).
 - `META_PHONE_NUMBER_ID`, `META_WHATSAPP_TOKEN`, `META_VERIFY_TOKEN`, `META_APP_SECRET` com escopo **Production and Preview** — as demais são só **Production**.
 
+## Sicoob Pix e Conciliação
+
+Status em 2026-09-11: código preparado; credenciais/portal ainda precisam ser validados com a cooperativa.
+
+Endpoints sandbox confirmados no portal Sicoob em 2026-09-11:
+
+- Pix Recebimentos: `https://sandbox.sicoob.com.br/sicoob/sandbox/pix/api/v2`
+- Conta Corrente: `https://sandbox.sicoob.com.br/sicoob/sandbox/conta-corrente/v4`
+- Cobrança Bancária: `https://sandbox.sicoob.com.br/sicoob/sandbox/cobranca-bancaria/v3`
+
+Pagamentos Pix/SPB/API de saída não entram nesta frente.
+
+Checklist:
+
+- [ ] Criar app sandbox em `developers.sicoob.com.br` e preencher `SICOOB_CLIENT_ID`, `SICOOB_SANDBOX_TOKEN`, `SICOOB_ENV=sandbox`.
+- [ ] Emitir e-CNPJ A1 e converter para PEM antes de publicar env: `SICOOB_CERT_PEM_B64` e `SICOOB_KEY_PEM_B64`.
+- [ ] Preencher `SICOOB_CERT_NOT_AFTER`, `SICOOB_WEBHOOK_SECRET`.
+- [ ] Cadastrar conta Sicoob e chave Pix em `contas_bancarias`.
+- [ ] Criar app produção, subir certificado público e solicitar escopos `cob.read`, `cob.write`, `pix.read`, `webhook.read`, `webhook.write`, `cco_extrato`, `cco_saldo`.
+- [ ] Aplicar migration `202609110001_sicoob_tesouraria_core.sql` antes do deploy do código.
+- [ ] Validar `GET /api/sicoob/health` autenticado como admin/financeiro.
+- [ ] Registrar webhook com `SICOOB_WEBHOOK_URL=https://gestao.epgtrindade.com.br node scripts/sicoob-registrar-webhook.mjs <chave-pix>`.
+- [ ] Em preview, gerar Pix de teste e reenviar webhook 3 vezes confirmando uma única linha em `pix_recebido`.
+
 ### Pendências para fechar esta tabela
 
 - [ ] Confirmar se há mais env vars de Production fora da rolagem capturada (rolar a aba Variables até o fim).

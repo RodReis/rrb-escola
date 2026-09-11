@@ -89,6 +89,16 @@ const RH_ITEMS: DropdownItem[] = [
 
 const FINANCEIRO_ITEMS: DropdownItem[] = [
   { href: "/financeiro", label: "Financeiro", iconName: "BarChart3" },
+  {
+    href: "/financeiro/tesouraria",
+    label: "Tesouraria",
+    iconName: "Wallet",
+    children: [
+      { href: "/financeiro/tesouraria", label: "Contas", iconName: "Wallet" },
+      { href: "/financeiro/tesouraria/cobrancas-pix", label: "Cobranças Pix", iconName: "Receipt" },
+      { href: "/financeiro/tesouraria/conciliacao", label: "Conciliação", iconName: "ReceiptText" },
+    ],
+  },
   { href: "/financeiro/lancamentos", label: "Livro-Razão", iconName: "ReceiptText" },
   { href: "/financeiro/contratos", label: "Contratos de Receita", iconName: "FileText" },
   { href: "/valores-praticados", label: "Valores praticados", iconName: "ReceiptText" },
