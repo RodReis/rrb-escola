@@ -47,6 +47,11 @@ export function PageHeader({
               })}
             </nav>
           ) : null}
+          <div className="mt-2 flex flex-wrap items-center gap-3">
+            <h1 className="font-display text-[26px] font-bold leading-tight text-ink">{title}</h1>
+            {counter != null ? <span className="rb-pill rb-pill-info">{counter}</span> : null}
+          </div>
+          {description ? <p className="mt-1.5 text-[13.5px] text-ink/60">{description}</p> : null}
         </div>
         {actions ? <div className="flex flex-wrap items-center gap-2 lg:justify-end shrink-0">{actions}</div> : null}
       </div>

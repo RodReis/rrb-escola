@@ -41,3 +41,4 @@ docs/pdfs/*.txt
 # Bytecode Python dos scripts de importacao
 __pycache__/
 *.pyc
+.gstack/
