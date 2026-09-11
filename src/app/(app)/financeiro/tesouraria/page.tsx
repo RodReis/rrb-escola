@@ -1,7 +1,7 @@
 import { Landmark, QrCode } from "lucide-react";
 import { PageHeader } from "@/components/ui/page-header";
 import { Panel } from "@/components/ui/card";
-import { ButtonLink } from "@/components/ui/button";
+import { Button, ButtonLink } from "@/components/ui/button";
 import { requirePermission } from "@/lib/auth/session";
 import { getTesourariaData } from "@/lib/data/tesouraria";
 import { money } from "@/lib/constants";
@@ -47,44 +47,69 @@ export default async function TesourariaPage() {
           <Panel key={conta.id} className="grid gap-2">
             <div className="flex items-center justify-between gap-3">
               <strong className="text-ink">{conta.apelido ?? "Conta Sicoob"}</strong>
-              <span className="text-xs font-semibold text-muted">{conta.ativo ? "ativa" : "inativa"}</span>
+              <span
+                className={`text-xs font-bold uppercase tracking-kicker ${
+                  conta.ativo ? "text-moss" : "text-ink/50"
+                }`}
+              >
+                {conta.ativo ? "ativa" : "inativa"}
+              </span>
             </div>
-            <p className="text-sm text-muted">
+            <p className="text-sm text-ink/70">
               Banco {conta.banco} - agência {conta.agencia ?? "-"} - conta {conta.conta}
             </p>
-            <p className="text-xs text-muted">Chave Pix: {conta.chave_pix ?? "não cadastrada"}</p>
-            <p className="text-xs text-muted">Saldo sincronizado: {dateText(conta.saldo_sincronizado_em)}</p>
+            <p className="text-xs text-ink/60">Chave Pix: {conta.chave_pix ?? "não cadastrada"}</p>
+            <p className="text-xs text-ink/60">Saldo sincronizado: {dateText(conta.saldo_sincronizado_em)}</p>
             <form action={alternarContaBancariaAction}>
               <input type="hidden" name="id" value={conta.id} />
               <input type="hidden" name="ativo" value={String(conta.ativo)} />
-              <button className="text-xs font-black text-brand" type="submit">
+              <Button type="submit" variant="ghost" className="px-0 text-xs">
                 {conta.ativo ? "Desativar" : "Ativar"}
-              </button>
+              </Button>
             </form>
           </Panel>
         ))}
       </section>
 
       <Panel className="grid gap-4">
-        <h2 className="font-display text-xl text-ink">Nova conta Sicoob</h2>
-        <form action={salvarContaBancariaAction} className="grid gap-3 md:grid-cols-6">
-          <input name="apelido" placeholder="Apelido" />
-          <input name="cooperativa" placeholder="Cooperativa" />
-          <input name="agencia" placeholder="Agência" />
-          <input name="conta" placeholder="Conta" required />
-          <input name="chave_pix" placeholder="Chave Pix" className="md:col-span-2" />
-          <button className="ds-button ds-button-primary md:col-span-1" type="submit">Salvar</button>
+        <h2 className="text-sm font-bold uppercase tracking-kicker text-ink/60">Nova conta Sicoob</h2>
+        <form action={salvarContaBancariaAction} className="grid gap-4 md:grid-cols-3">
+          <label>
+            Apelido
+            <input name="apelido" maxLength={60} placeholder="Ex.: Conta principal" />
+          </label>
+          <label>
+            Cooperativa
+            <input name="cooperativa" maxLength={10} inputMode="numeric" placeholder="Ex.: 3300" />
+          </label>
+          <label>
+            Agência
+            <input name="agencia" maxLength={10} inputMode="numeric" placeholder="Ex.: 3300" />
+          </label>
+          <label>
+            Conta
+            <input name="conta" required maxLength={20} inputMode="numeric" placeholder="Ex.: 27570" />
+          </label>
+          <label className="md:col-span-2">
+            Chave Pix
+            <input name="chave_pix" maxLength={120} placeholder="CNPJ, e-mail ou chave aleatória" />
+          </label>
+          <div className="md:col-span-3">
+            <Button type="submit" variant="primary">Salvar conta</Button>
+          </div>
         </form>
       </Panel>
 
       <Panel className="grid gap-3">
-        <h2 className="font-display text-xl text-ink">Últimos Pix recebidos</h2>
-        {data.recebidos.length === 0 ? <p className="text-sm text-muted">Nenhum Pix recebido registrado.</p> : null}
+        <h2 className="text-sm font-bold uppercase tracking-kicker text-ink/60">Últimos Pix recebidos</h2>
+        {data.recebidos.length === 0 ? (
+          <p className="py-8 text-center text-sm text-ink/60">Nenhum Pix recebido registrado.</p>
+        ) : null}
         {data.recebidos.map((pix) => (
-          <div key={pix.id} className="grid gap-2 border-t border-line py-2 text-sm md:grid-cols-[130px_120px_1fr]">
-            <span>{dateText(pix.recebido_em)}</span>
-            <strong>{money.format(Number(pix.valor))}</strong>
-            <span className="text-muted">{pix.txid ?? pix.end_to_end_id}</span>
+          <div key={pix.id} className="grid gap-2 border-t border-line py-3 text-sm md:grid-cols-[130px_120px_1fr]">
+            <span className="text-ink/60">{dateText(pix.recebido_em)}</span>
+            <strong className="tabular-nums">{money.format(Number(pix.valor))}</strong>
+            <span className="text-ink/60">{pix.txid ?? pix.end_to_end_id}</span>
           </div>
         ))}
       </Panel>

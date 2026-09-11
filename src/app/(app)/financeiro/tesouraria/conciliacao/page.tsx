@@ -1,4 +1,4 @@
-import { RefreshCcw } from "lucide-react";
+import { Filter, RefreshCcw } from "lucide-react";
 import { PageHeader } from "@/components/ui/page-header";
 import { Panel } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -47,72 +47,99 @@ export default async function ConciliacaoPage({
         ]}
       />
 
-      <form className="grid gap-3 md:grid-cols-[1fr_150px_150px_150px_auto]">
-        <select name="conta" defaultValue={params.conta ?? ""}>
-          <option value="">Todas as contas</option>
-          {data.contas.map((conta) => (
-            <option key={conta.id} value={conta.id}>
-              {conta.agencia ?? "-"} / {conta.conta}
-            </option>
-          ))}
-        </select>
-        <input name="de" type="date" defaultValue={params.de ?? ""} />
-        <input name="ate" type="date" defaultValue={params.ate ?? ""} />
-        <select name="status" defaultValue={status}>
-          <option value="pendente">Pendentes</option>
-          <option value="auto">Conciliadas auto</option>
-          <option value="manual">Conciliadas manual</option>
-          <option value="ignorado">Ignoradas</option>
-        </select>
-        <button className="ds-button ds-button-secondary" type="submit">Filtrar</button>
-      </form>
+      <Panel>
+        <div className="mb-3 flex items-center gap-2 text-xs font-bold uppercase tracking-kicker text-ink/60">
+          <Filter size={12} />
+          Filtros
+        </div>
+        <form className="flex flex-wrap items-end gap-3">
+          <label>
+            Conta
+            <select name="conta" defaultValue={params.conta ?? ""}>
+              <option value="">Todas as contas</option>
+              {data.contas.map((conta) => (
+                <option key={conta.id} value={conta.id}>
+                  {conta.agencia ?? "-"} / {conta.conta}
+                </option>
+              ))}
+            </select>
+          </label>
+          <label>
+            De
+            <input name="de" type="date" defaultValue={params.de ?? ""} />
+          </label>
+          <label>
+            Até
+            <input name="ate" type="date" defaultValue={params.ate ?? ""} />
+          </label>
+          <label>
+            Situação
+            <select name="status" defaultValue={status}>
+              <option value="pendente">Pendentes</option>
+              <option value="auto">Conciliadas auto</option>
+              <option value="manual">Conciliadas manual</option>
+              <option value="ignorado">Ignoradas</option>
+            </select>
+          </label>
+          <Button type="submit" variant="secondary">Aplicar</Button>
+        </form>
+      </Panel>
 
       <section className="grid gap-3">
         {data.extrato.length === 0 ? (
           <Panel>
-            <p className="py-8 text-center text-sm text-muted">Nenhuma linha de extrato neste filtro.</p>
+            <p className="py-8 text-center text-sm text-ink/60">Nenhuma linha de extrato neste filtro.</p>
           </Panel>
         ) : null}
 
         {data.extrato.map((linha) => (
           <Panel key={linha.id} className="grid gap-3">
             <div className="grid gap-3 lg:grid-cols-[130px_120px_1fr_220px] lg:items-center">
-              <span className="text-sm">{dateText(linha.data)}</span>
-              <strong className={linha.tipo === "credito" ? "text-emerald-700" : "text-clay"}>
+              <span className="text-sm text-ink/60">{dateText(linha.data)}</span>
+              <strong className={`tabular-nums ${linha.tipo === "credito" ? "text-moss" : "text-clay"}`}>
                 {linha.tipo === "credito" ? "+" : "-"} {money.format(Number(linha.valor))}
               </strong>
               <div>
                 <p className="font-semibold text-ink">{linha.descricao}</p>
-                <p className="text-xs text-muted">
+                <p className="text-xs text-ink/60">
                   {linha.end_to_end_id ?? (linha.tipo === "credito" ? "sem candidato por E2E" : "sem E2E")}
                 </p>
               </div>
               <form action={ignorarExtratoAction} className="justify-self-start lg:justify-self-end">
                 <input type="hidden" name="id" value={linha.id} />
-                <button className="text-xs font-black text-muted" type="submit">Ignorar</button>
+                <Button type="submit" variant="ghost" className="text-xs">Ignorar</Button>
               </form>
             </div>
 
             {status === "pendente" ? (
-              <form action={conciliarExtratoAction} className="grid gap-2 md:grid-cols-[1fr_1fr_110px]">
+              <form
+                action={conciliarExtratoAction}
+                className="grid gap-3 border-t border-line pt-3 md:grid-cols-[1fr_1fr_auto] md:items-end"
+              >
                 <input type="hidden" name="id" value={linha.id} />
-                <select name="pagamento_id" defaultValue="">
-                  <option value="">Pagamento...</option>
-                  {data.pagamentos.map((p) => (
-                    <option key={p.id} value={p.id}>
-                      {dateText(p.data_pagamento)} - {money.format(Number(p.valor_pago))} - {p.forma_pagamento}
-                    </option>
-                  ))}
-                </select>
-                <select name="lancamento_id" defaultValue="">
-                  <option value="">Lançamento...</option>
-                  {data.lancamentos.map((l) => (
-                    <option key={l.id} value={l.id}>
-                      {dateText(l.data_vencimento)} - {money.format(Number(l.valor))} - {l.descricao}
-                    </option>
-                  ))}
-                </select>
-                <button className="ds-button ds-button-primary text-xs" type="submit">Conciliar</button>
+                <label>
+                  Pagamento
+                  <select name="pagamento_id" defaultValue="">
+                    <option value="">Selecione...</option>
+                    {data.pagamentos.map((p) => (
+                      <option key={p.id} value={p.id}>
+                        {dateText(p.data_pagamento)} - {money.format(Number(p.valor_pago))} - {p.forma_pagamento}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+                <label>
+                  Lançamento
+                  <select name="lancamento_id" defaultValue="">
+                    <option value="">Selecione...</option>
+                    {data.lancamentos.map((l) => (
+                      <option key={l.id} value={l.id}>
+                        {dateText(l.data_vencimento)} - {money.format(Number(l.valor))} - {l.descricao}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+                <Button type="submit" variant="primary">Conciliar</Button>
               </form>
             ) : null}
           </Panel>

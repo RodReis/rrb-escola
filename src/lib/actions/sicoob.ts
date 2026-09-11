@@ -245,7 +245,10 @@ export async function gerarPixAction(cobrancaId: string): Promise<GerarPixResult
   return gerarPixOrigemAction({ origemTipo: "cobranca", origemId: cobrancaId });
 }
 
-export async function gerarPixCobrancaFormAction(formData: FormData) {
+export async function gerarPixCobrancaFormAction(
+  _prev: GerarPixResult | null,
+  formData: FormData,
+): Promise<GerarPixResult> {
   const result = await gerarPixOrigemAction({
     origemTipo: "avulso",
     valor: Number(String(formData.get("valor") ?? "0").replace(",", ".")),
@@ -254,8 +257,8 @@ export async function gerarPixCobrancaFormAction(formData: FormData) {
     devedorDoc: String(formData.get("devedor_doc") ?? ""),
     contaId: String(formData.get("conta_id") ?? "") || null,
   });
-  if (!result.ok) throw new Error(result.reason);
-  revalidatePath("/financeiro/tesouraria/cobrancas-pix");
+  if (result.ok) revalidatePath("/financeiro/tesouraria/cobrancas-pix");
+  return result;
 }
 
 export async function enviarPixWhatsAppAction(cobrancaId: string): Promise<{ ok: true } | { ok: false; reason: string }> {

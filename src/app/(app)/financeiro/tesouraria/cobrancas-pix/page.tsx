@@ -1,7 +1,7 @@
 import { PageHeader } from "@/components/ui/page-header";
 import { Panel } from "@/components/ui/card";
+import { PixAvulsoForm } from "@/components/finance/pix-avulso-form";
 import { requirePermission } from "@/lib/auth/session";
-import { gerarPixCobrancaFormAction } from "@/lib/actions/sicoob";
 import { getCobrancasPixData } from "@/lib/data/tesouraria";
 import { money } from "@/lib/constants";
 
@@ -23,34 +23,36 @@ export default async function CobrancasPixPage() {
       />
 
       <Panel className="grid gap-4">
-        <h2 className="font-display text-xl text-ink">Pix avulso</h2>
-        <form action={gerarPixCobrancaFormAction} className="grid gap-3 md:grid-cols-[1fr_1fr_130px_140px]">
-          <select name="conta_id" required>
-            {data.contas.map((conta) => (
-              <option key={conta.id} value={conta.id}>
-                {conta.apelido ?? conta.conta}
-              </option>
-            ))}
-          </select>
-          <input name="descricao" placeholder="Descrição" required />
-          <input name="valor" placeholder="Valor" inputMode="decimal" required />
-          <button className="ds-button ds-button-primary" type="submit">Gerar Pix</button>
-        </form>
+        <h2 className="text-sm font-bold uppercase tracking-kicker text-ink/60">Pix avulso</h2>
+        {data.contas.length === 0 ? (
+          <p className="text-sm text-ink/60">
+            Cadastre uma conta bancária ativa na Tesouraria antes de gerar Pix.
+          </p>
+        ) : (
+          <PixAvulsoForm contas={data.contas} />
+        )}
       </Panel>
 
-      <section className="grid gap-3">
+      <Panel className="grid gap-3">
+        <h2 className="text-sm font-bold uppercase tracking-kicker text-ink/60">Cobranças geradas</h2>
+        {data.pix.length === 0 ? (
+          <p className="py-8 text-center text-sm text-ink/60">Nenhuma cobrança Pix gerada ainda.</p>
+        ) : null}
         {data.pix.map((pix) => (
-          <Panel key={pix.id} className="grid gap-2 md:grid-cols-[130px_120px_1fr_110px] md:items-center">
-            <span className="text-sm">{dateText(pix.criado_em)}</span>
-            <strong>{money.format(Number(pix.valor))}</strong>
+          <div
+            key={pix.id}
+            className="grid gap-2 border-t border-line py-3 text-sm md:grid-cols-[110px_120px_1fr_110px] md:items-center"
+          >
+            <span className="text-ink/60">{dateText(pix.criado_em)}</span>
+            <strong className="tabular-nums">{money.format(Number(pix.valor))}</strong>
             <div>
               <p className="font-semibold text-ink">{pix.descricao}</p>
-              <p className="text-xs text-muted">{pix.origem_tipo} - {pix.txid}</p>
+              <p className="text-xs text-ink/60">{pix.origem_tipo} - {pix.txid}</p>
             </div>
-            <span className="text-xs font-semibold text-muted">{pix.status}</span>
-          </Panel>
+            <span className="text-xs font-bold uppercase tracking-kicker text-ink/60">{pix.status}</span>
+          </div>
         ))}
-      </section>
+      </Panel>
     </div>
   );
 }
