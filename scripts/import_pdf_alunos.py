@@ -13,6 +13,9 @@ import argparse
 from datetime import datetime
 from pathlib import Path
 
+sys.path.insert(0, str(Path(__file__).parent))
+from lib.ano_letivo import ano_letivo_da_data
+
 sys.stdout.reconfigure(encoding="utf-8")
 
 # ── config ───────────────────────────────────────────────────────────────────
@@ -378,7 +381,7 @@ def parse_page(text):
                 serie_turma_raw = m.group(1).strip()
                 data_mat = parse_date(m.group(2))
                 idade = int(m.group(3))
-                ano_letivo = int(m.group(2).split("/")[2])
+                ano_letivo = ano_letivo_da_data(m.group(2))
                 serie, turma = split_serie_turma(serie_turma_raw)
                 student["matriculas"].append({
                     "serie": serie,

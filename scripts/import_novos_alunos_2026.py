@@ -26,6 +26,9 @@ from pathlib import Path
 
 import pymupdf
 
+sys.path.insert(0, str(Path(__file__).parent))
+from lib.ano_letivo import ano_letivo_da_data
+
 sys.stdout.reconfigure(encoding="utf-8")
 
 ROOT = Path(__file__).parent.parent
@@ -271,7 +274,7 @@ def parse_page(text):
             i += 1
             continue
         serie, turma = split_serie_turma(serie_txt, turma_txt)
-        ano = int(data_txt.split("/")[2])
+        ano = ano_letivo_da_data(data_txt)
         s["matriculas"].append({
             "serie": serie,
             "turma": turma,

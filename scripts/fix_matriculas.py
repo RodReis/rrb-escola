@@ -12,6 +12,9 @@ import argparse
 from datetime import datetime
 from pathlib import Path
 
+sys.path.insert(0, str(Path(__file__).parent))
+from lib.ano_letivo import ano_letivo_da_data
+
 sys.stdout.reconfigure(encoding="utf-8")
 
 SUPABASE_URL = "http://127.0.0.1:55421"
@@ -49,6 +52,7 @@ def parse_date(s):
     m = re.match(r'^(\d{1,2})/(\d{1,2})/(\d{4})$', s.strip())
     if m: return f"{m.group(3)}-{m.group(2).zfill(2)}-{m.group(1).zfill(2)}"
     return None
+
 
 _SERIE_PREFIXES = [
     r'\d+[ºª°]\s*Ano',
@@ -116,7 +120,7 @@ def extract_matriculas_from_page(text):
                 serie_turma_raw = m.group(1).strip()
                 data_mat = parse_date(m.group(2))
                 idade = int(m.group(3))
-                ano_letivo = int(m.group(2).split("/")[2])
+                ano_letivo = ano_letivo_da_data(m.group(2))
                 serie, turma = split_serie_turma(serie_turma_raw)
                 matriculas.append({
                     "serie": serie,
@@ -145,13 +149,19 @@ def load_alunos():
     return {r["matricula_codigo"]: r["id"] for r in rows}
 
 def load_existing_matriculas_by_aluno():
-    """Returns dict aluno_id → set of (serie_id, turma_id, ano_letivo)."""
-    rows = get(f"matriculas?select=aluno_id,serie_id,turma_id,ano_letivo&escola_id=eq.{ESCOLA_ID}")
+    """Returns dict aluno_id → set of (serie_id, ano_letivo).
+
+    A turma fica fora da chave de propósito: um aluno cursa uma série por ano
+    letivo, e o turno não muda esse fato. Com a turma na chave, a mesma etapa
+    entrava de novo sempre que o PDF trazia o turno escrito de outro jeito
+    ("MATUTINO" e "INFANTIL III - MAT", por exemplo).
+    """
+    rows = get(f"matriculas?select=aluno_id,serie_id,ano_letivo&escola_id=eq.{ESCOLA_ID}")
     result = {}
     for r in rows:
         key = r["aluno_id"]
         result.setdefault(key, set())
-        result[key].add((r["serie_id"], r["turma_id"], int(r["ano_letivo"])))
+        result[key].add((r["serie_id"], int(r["ano_letivo"])))
     return result
 
 def ensure_serie(nome, series_cache, dry_run):
@@ -186,8 +196,15 @@ def ensure_turma(serie_id, turma_nome, ano_letivo, turmas_cache, dry_run):
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--dry-run", action="store_true")
+    parser.add_argument(
+        "--ano-corrente",
+        type=int,
+        default=datetime.now().year,
+        help="Ano letivo vigente; so ele recebe status ativa (padrao: ano do relogio)",
+    )
     args = parser.parse_args()
     dry_run = args.dry_run
+    ano_corrente = args.ano_corrente
 
     if dry_run:
         print("=== DRY RUN ===\n")
@@ -231,14 +248,14 @@ def main():
                     for mat in matriculas:
                         serie_id = ensure_serie(mat["serie"], series_cache, dry_run)
                         turma_id = ensure_turma(serie_id, mat["turma"], mat["ano_letivo"], turmas_cache, dry_run)
-                        key = (serie_id, turma_id, int(mat["ano_letivo"]))
+                        key = (serie_id, int(mat["ano_letivo"]))
 
                         if key in aluno_mats:
                             skipped += 1
                             continue
 
                         ano = mat["ano_letivo"]
-                        status = "ativa" if ano == datetime.now().year else "concluida"
+                        status = "ativa" if ano == ano_corrente else "concluida"
                         print(f"  [{matricula_codigo}] matrícula {mat['serie']} {mat['turma']} {ano} → {status}")
 
                         if not dry_run:
