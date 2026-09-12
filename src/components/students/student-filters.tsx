@@ -85,55 +85,62 @@ export function StudentFilters({
     { value: "MEDIO",        label: "Médio",    count: counts?.medio }
   ];
 
+  const temFiltro = Boolean(nome || segmento || serie || turma);
+
   return (
-    <div className="flex w-full flex-wrap items-center gap-4">
-      <FilterChips
-        items={chips}
-        value={segmento}
-        onChange={(v) => update("segmento", v, ["serie", "turma", "page"])}
-      />
+    <div className="flex w-full flex-col gap-3">
+      {/* Linha 1: segmento + serie + turma. Linha 2: busca, sempre em barra larga. */}
+      <div className="flex flex-wrap items-center gap-4">
+        <FilterChips
+          items={chips}
+          value={segmento}
+          onChange={(v) => update("segmento", v, ["serie", "turma", "page"])}
+        />
 
-      <FilterDropdown
-        label="Série"
-        value={serie}
-        options={serieOptions}
-        emptyLabel="Todas"
-        onChange={(v) => update("serie", v, ["turma", "page"])}
-      />
+        <FilterDropdown
+          label="Série"
+          value={serie}
+          options={serieOptions}
+          emptyLabel="Todas"
+          onChange={(v) => update("serie", v, ["turma", "page"])}
+        />
 
-      <FilterDropdown
-        label="Turma"
-        value={turma}
-        options={turmaOptions}
-        emptyLabel="Todas"
-        disabled={turmaOptions.length === 0}
-        onChange={(v) => update("turma", v, ["page"])}
-      />
+        <FilterDropdown
+          label="Turma"
+          value={turma}
+          options={turmaOptions}
+          emptyLabel="Todas"
+          disabled={turmaOptions.length === 0}
+          onChange={(v) => update("turma", v, ["page"])}
+        />
+      </div>
 
-      <SearchInline
-        defaultValue={nome}
-        placeholder="Buscar por nome, matrícula ou responsável..."
-        bordered
-        containerClassName="flex-1 min-w-[280px]"
-        onChange={(e) => {
-          const value = (e.target as HTMLInputElement).value;
-          clearTimeout((window as unknown as Record<string, ReturnType<typeof setTimeout>>)._nomeTimer);
-          (window as unknown as Record<string, ReturnType<typeof setTimeout>>)._nomeTimer = setTimeout(
-            () => update("nome", value, ["page"]),
-            300
-          );
-        }}
-      />
+      <div className="flex w-full items-center gap-4">
+        <SearchInline
+          defaultValue={nome}
+          placeholder="Buscar por nome, matrícula ou responsável..."
+          bordered
+          containerClassName="flex-1 min-w-0"
+          onChange={(e) => {
+            const value = (e.target as HTMLInputElement).value;
+            clearTimeout((window as unknown as Record<string, ReturnType<typeof setTimeout>>)._nomeTimer);
+            (window as unknown as Record<string, ReturnType<typeof setTimeout>>)._nomeTimer = setTimeout(
+              () => update("nome", value, ["page"]),
+              300
+            );
+          }}
+        />
 
-      {(nome || segmento || serie || turma) && (
-        <button
-          type="button"
-          className="text-xs font-semibold text-ink/60 hover:text-brand"
-          onClick={() => router.push(pathname)}
-        >
-          Limpar filtros
-        </button>
-      )}
+        {temFiltro && (
+          <button
+            type="button"
+            className="shrink-0 text-xs font-semibold text-ink/60 hover:text-brand"
+            onClick={() => router.push(pathname)}
+          >
+            Limpar filtros
+          </button>
+        )}
+      </div>
     </div>
   );
 }
