@@ -887,7 +887,8 @@ export async function getPedagogicoOverview(
       .from("matriculas")
       .select("id", { count: "exact", head: true })
       .eq("escola_id", escolaId)
-      .eq("status", "ativa"),
+      .eq("status", "ativa")
+      .eq("ano_letivo", anoLetivo),
     supabase
       .from("turmas")
       .select("id, turno")
@@ -902,7 +903,8 @@ export async function getPedagogicoOverview(
       .from("matriculas")
       .select("series(segmento)")
       .eq("escola_id", escolaId)
-      .eq("status", "ativa"),
+      .eq("status", "ativa")
+      .eq("ano_letivo", anoLetivo),
   ]);
 
   const turnosSet = new Set<string>();
