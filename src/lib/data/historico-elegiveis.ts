@@ -14,12 +14,16 @@ export type FiltroElegiveis = {
 export async function listarElegiveis(filtro: FiltroElegiveis): Promise<AlunoElegivel[]> {
   const supabase = await createServerClient();
 
+  // Ano de referência = em que série o aluno estava naquele ano, não se a
+  // matrícula segue aberta: um ano encerrado tem todas as matrículas como
+  // "concluida", e filtrar por "ativa" fazia a emissão de qualquer ano passado
+  // voltar vazia. Só matrícula cancelada fica de fora.
   let query = supabase
     .from("matriculas")
     .select("aluno_id, alunos(id, nome)")
     .eq("escola_id", DEFAULT_SCHOOL_ID)
     .eq("ano_letivo", filtro.anoLetivo)
-    .eq("status", "ativa");
+    .in("status", ["ativa", "concluida"]);
 
   if (filtro.serieId) query = query.eq("serie_id", filtro.serieId);
   if (filtro.turmaId) query = query.eq("turma_id", filtro.turmaId);

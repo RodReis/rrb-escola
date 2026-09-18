@@ -68,14 +68,31 @@ function loadEnvFile(file) {
   }
 }
 
+/**
+ * Aceita arquivo, pasta de PDFs ou pasta de pastas (histo/ com 2015..2026).
+ * Cada PDF traz o historico completo do aluno, entao varias pastas se
+ * sobrepoem — o upsert por (historico_id, ano) cuida da repeticao.
+ */
 function listarPdfs(alvo) {
   const path = resolve(alvo);
   if (!existsSync(path)) throw new Error(`Caminho nao encontrado: ${path}`);
   if (statSync(path).isFile()) return [path];
-  return readdirSync(path)
-    .filter((f) => f.toLowerCase().endsWith(".pdf"))
-    .sort()
-    .map((f) => join(path, f));
+
+  const pdfs = [];
+  const subpastas = [];
+  for (const entrada of readdirSync(path).sort()) {
+    const completo = join(path, entrada);
+    if (entrada.toLowerCase().endsWith(".pdf")) pdfs.push(completo);
+    else if (statSync(completo).isDirectory()) subpastas.push(completo);
+  }
+
+  // Só desce um nível: pasta-de-anos contendo pastas-de-PDFs.
+  for (const sub of subpastas) {
+    for (const f of readdirSync(sub).sort()) {
+      if (f.toLowerCase().endsWith(".pdf")) pdfs.push(join(sub, f));
+    }
+  }
+  return pdfs;
 }
 
 async function lerPdf(arquivo) {
