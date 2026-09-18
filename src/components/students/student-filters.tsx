@@ -44,6 +44,7 @@ export function StudentFilters({
 
   const nome     = searchParams.get("nome") ?? "";
   const segmento = searchParams.get("segmento") ?? "";
+  const situacao = searchParams.get("situacao") ?? "ativos";
   const serie    = searchParams.get("serie") ?? "";
   const turma    = searchParams.get("turma") ?? "";
   const ano      = searchParams.get("ano") ?? String(anoAtual ?? new Date().getFullYear());
@@ -92,7 +93,7 @@ export function StudentFilters({
 
   const anoOptions: DropdownOption[] = anos.map((a) => ({ value: String(a), label: String(a) }));
 
-  const temFiltro = Boolean(nome || segmento || serie || turma);
+  const temFiltro = Boolean(nome || segmento || serie || turma || situacao !== "ativos");
 
   return (
     <div className="flex w-full flex-col gap-3">
@@ -118,6 +119,18 @@ export function StudentFilters({
           options={serieOptions}
           emptyLabel="Todas"
           onChange={(v) => update("serie", v, ["turma", "page"])}
+        />
+
+        <FilterDropdown
+          label="Situação"
+          value={situacao}
+          options={[
+            { value: "ativos", label: "Ativos" },
+            { value: "inativos", label: "Ex-alunos" },
+            { value: "todos", label: "Todos" }
+          ]}
+          hideEmpty
+          onChange={(v) => update("situacao", v, ["page"])}
         />
 
         <FilterDropdown

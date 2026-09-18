@@ -53,6 +53,7 @@ export default async function StudentsPage({
     serieId:   params.serie    || undefined,
     turmaId:   params.turma    || undefined,
     segmento:  params.segmento || undefined,
+    situacao:  (params.situacao as "ativos" | "inativos" | "todos") || undefined,
     anoLetivo,
     page:      Number.isNaN(pageParam) ? 1 : pageParam
   };

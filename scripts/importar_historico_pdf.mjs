@@ -24,6 +24,28 @@ import { deveCongelar } from "../src/lib/historico/congelamento.ts";
 
 const ESCOLA_ID = "00000000-0000-0000-0000-000000000001";
 
+/** "29/02/2016" -> "2016-02-29" (o banco espera date ISO). */
+function dataISO(br) {
+  const m = String(br ?? "").match(/^(\d{2})\/(\d{2})\/(\d{4})$/);
+  return m ? `${m[3]}-${m[2]}-${m[1]}` : null;
+}
+
+/**
+ * Filiacao do PDF ("FULANO e SICRANA") -> responsaveis_aluno.
+ *
+ * O documento nao diz quem e pai e quem e mae, e a ordem varia — ha casos com
+ * a mae primeiro. Gravar um parentesco chutado colocaria dado errado na ficha,
+ * entao fica null: a filiacao impressa no historico usa a ordem do documento,
+ * que e o que importa, e a secretaria completa o parentesco se precisar.
+ */
+function separarFiliacao(filiacao) {
+  return String(filiacao ?? "")
+    .split(/\s+e\s+/i)
+    .map((s) => s.trim())
+    .filter(Boolean)
+    .map((nome) => ({ nome, parentesco: null }));
+}
+
 /** Prefixo da serie -> nivel de ensino da tabela historico_escolar. */
 function nivelDaSerie(serieNome) {
   if (/^[1-5]º ANO$/.test(serieNome)) return "fund1";
@@ -104,6 +126,8 @@ async function lerPdf(arquivo) {
 async function main() {
   const args = process.argv.slice(2);
   const apply = args.includes("--apply");
+  // Ex-alunos entram por padrao; --sem-ex-alunos so importa quem ja esta na base.
+  const criarExAlunos = !args.includes("--sem-ex-alunos");
   const alvo = args.find((a) => !a.startsWith("--"));
   if (!alvo) {
     console.error("Uso: node scripts/importar_historico_pdf.mjs <pasta-ou-pdf> [--apply]");
@@ -127,9 +151,11 @@ async function main() {
     .eq("escola_id", ESCOLA_ID);
   if (erroAlunos) throw erroAlunos;
   const porCpf = new Map();
+  const porMatricula = new Map();
   for (const a of alunosBase ?? []) {
     const cpf = String(a.cpf ?? "").replace(/\D/g, "");
     if (cpf) porCpf.set(cpf, a);
+    if (a.matricula_codigo) porMatricula.set(String(a.matricula_codigo), a);
   }
 
   const { data: disciplinasBase, error: erroDisc } = await db
@@ -160,6 +186,8 @@ async function main() {
   }
 
   const naoEncontrados = [];
+  const exAlunosCriados = [];
+  const cpfsCompletados = [];
   const congeladosPreservados = [];
   let totAlunos = 0;
   let totAnos = 0;
@@ -170,11 +198,87 @@ async function main() {
     console.log(`\n── ${arquivo.split(/[\\/]/).pop()} (${registros.length} alunos)`);
 
     for (const { aluno, anos } of registros) {
-      const base = aluno.cpf ? porCpf.get(aluno.cpf) : null;
+      let base = aluno.cpf ? porCpf.get(aluno.cpf) : null;
+
+      // Aluno ja cadastrado mas sem CPF: o PDF tem o CPF e a base nao, entao
+      // ele nao casava. Completa o cadastro em vez de criar um duplicado.
+      if (!base && aluno.cpf && aluno.matricula) {
+        const semCpf = porMatricula.get(String(aluno.matricula));
+        if (semCpf && !semCpf.cpf) {
+          if (apply) {
+            await comRetry(`completa CPF ${aluno.nome}`, async () => {
+              const { error } = await db
+                .from("alunos")
+                .update({ cpf: aluno.cpf })
+                .eq("id", semCpf.id);
+              if (error) throw error;
+            });
+          }
+          porCpf.set(aluno.cpf, semCpf);
+          cpfsCompletados.push({ ...aluno, arquivo });
+          base = semCpf;
+        }
+      }
+
+      // Ex-aluno: esta no PDF mas nunca foi migrado para a base. Entra como
+      // aluno INATIVO, sem matricula — matriculas exige turma_id, plano e
+      // valor, que o historico nao tem e nao da para inventar. O que importa e
+      // que ele exista para poder receber o historico e ser encontrado na busca.
+      if (!base && aluno.cpf && criarExAlunos) {
+        if (!apply) {
+          exAlunosCriados.push({ ...aluno, arquivo });
+          base = { id: null, nome: aluno.nome };
+        } else {
+          const criado = await comRetry(`cria ex-aluno ${aluno.nome}`, async () => {
+            const { data, error } = await db
+              .from("alunos")
+              .insert({
+                escola_id: ESCOLA_ID,
+                // Matricula ja ocupada por outro aluno: prefixa para nao colidir
+                // com o cadastro vivo (unique escola_id + matricula_codigo).
+                matricula_codigo:
+                  aluno.matricula && !porMatricula.has(String(aluno.matricula))
+                    ? aluno.matricula
+                    : `EX-${aluno.cpf}`,
+                nome: aluno.nome,
+                cpf: aluno.cpf,
+                rg: aluno.rg,
+                data_nascimento: dataISO(aluno.dataNascimento),
+                naturalidade: aluno.naturalidade,
+                nacionalidade: aluno.nacionalidade,
+                orgao_expedidor: aluno.orgaoExpedidor,
+                data_expedicao: dataISO(aluno.dataExpedicao),
+                ativo: false
+              })
+              .select("id, nome, cpf, matricula_codigo")
+              .single();
+            if (error) throw error;
+            return data;
+          });
+
+          const responsaveis = separarFiliacao(aluno.filiacao);
+          if (responsaveis.length > 0) {
+            await comRetry(`filiacao ${aluno.nome}`, async () => {
+              const { error } = await db
+                .from("responsaveis_aluno")
+                .insert(responsaveis.map((r) => ({ ...r, aluno_id: criado.id })));
+              if (error) throw error;
+            });
+          }
+
+          porCpf.set(aluno.cpf, criado);
+          if (criado.matricula_codigo) porMatricula.set(String(criado.matricula_codigo), criado);
+          exAlunosCriados.push({ ...aluno, arquivo });
+          base = criado;
+        }
+      }
+
       if (!base) {
         naoEncontrados.push({ ...aluno, arquivo });
         continue;
       }
+      // No dry-run o ex-aluno ainda nao tem id: contamos e seguimos.
+      if (!base.id) continue;
 
       // Um historico por nivel: os anos do PDF se distribuem entre fund1/fund2/medio.
       const porNivel = new Map();
@@ -313,8 +417,18 @@ async function main() {
   console.log(`Alunos casados por CPF : ${totAlunos}`);
   console.log(`Anos de historico      : ${totAnos}`);
   console.log(`Notas                  : ${totNotas}`);
+  console.log(`Ex-alunos cadastrados  : ${exAlunosCriados.length}`);
+  console.log(`CPF completado no cadastro: ${cpfsCompletados.length}`);
   console.log(`CPF nao encontrado     : ${naoEncontrados.length}`);
   console.log(`Anos congelados mantidos: ${congeladosPreservados.length}`);
+
+  if (exAlunosCriados.length > 0) {
+    console.log("\n── Ex-alunos cadastrados como inativos (sem matricula) ──");
+    for (const a of exAlunosCriados.slice(0, 20)) {
+      console.log(`  ${a.cpf}  ${a.nome}  (matricula ${a.matricula ?? "-"})`);
+    }
+    if (exAlunosCriados.length > 20) console.log(`  ... e mais ${exAlunosCriados.length - 20}`);
+  }
 
   if (naoEncontrados.length > 0) {
     console.log("\n── Alunos do PDF sem cadastro na base (nao importados) ──");

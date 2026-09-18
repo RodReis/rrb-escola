@@ -2,12 +2,16 @@ import { createServerClient } from "@/lib/supabase/server";
 import { DEFAULT_SCHOOL_ID } from "@/lib/constants";
 import type { StudentSheet } from "@/lib/types";
 
+/** "ativos" (padrao) | "inativos" | "todos" — ver `situacao` em runStudentsQuery. */
+export type SituacaoAluno = "ativos" | "inativos" | "todos";
+
 export type StudentFilters = {
   nome?: string;
   serieId?: string;
   turmaId?: string;
   segmento?: string;
   anoLetivo?: number;
+  situacao?: SituacaoAluno;
   page?: number;
   pageSize?: number;
 };
@@ -29,7 +33,13 @@ function runStudentsQuery(
 ) {
   // Filtro por matrícula (segmento/série/turma/ano) exige inner join na relação;
   // sem esses filtros usamos left join para não perder alunos sem matrícula.
-  const hasEnrollmentFilter = Boolean(filters?.serieId || filters?.turmaId || filters?.segmento || filters?.anoLetivo);
+  // Ex-aluno nao tem matricula: o inner join abaixo o excluiria sempre, entao
+  // ao pedir inativos (ou todos) o join volta a ser left.
+  const situacao = filters?.situacao ?? "ativos";
+  const querInativos = situacao !== "ativos";
+  const hasEnrollmentFilter =
+    !querInativos &&
+    Boolean(filters?.serieId || filters?.turmaId || filters?.segmento || filters?.anoLetivo);
   const matriculaSelect = hasEnrollmentFilter
     ? "matriculas!inner(status, serie_id, turma_id, ano_letivo, series!inner(id, nome, segmento), turmas(id, nome), planos(nome))"
     : "matriculas(status, serie_id, turma_id, ano_letivo, series(id, nome, segmento), turmas(id, nome), planos(nome))";
@@ -45,6 +55,8 @@ function runStudentsQuery(
     .range(from, to);
 
   if (filters?.nome) query = query.ilike("nome", `%${filters.nome}%`);
+  if (situacao === "ativos") query = query.eq("ativo", true);
+  if (situacao === "inativos") query = query.eq("ativo", false);
   // Filtrar por ano é visão histórica: quem foi re-matriculado fica "concluida"
   // no ano anterior e ainda deve aparecer nele.
   if (hasEnrollmentFilter) {
@@ -52,10 +64,12 @@ function runStudentsQuery(
       ? query.in("matriculas.status", ["ativa", "concluida"])
       : query.eq("matriculas.status", "ativa");
   }
-  if (filters?.serieId) query = query.eq("matriculas.serie_id", filters.serieId);
-  if (filters?.turmaId) query = query.eq("matriculas.turma_id", filters.turmaId);
-  if (filters?.segmento) query = query.eq("matriculas.series.segmento", filters.segmento);
-  if (filters?.anoLetivo) query = query.eq("matriculas.ano_letivo", filters.anoLetivo);
+  if (hasEnrollmentFilter) {
+    if (filters?.serieId) query = query.eq("matriculas.serie_id", filters.serieId);
+    if (filters?.turmaId) query = query.eq("matriculas.turma_id", filters.turmaId);
+    if (filters?.segmento) query = query.eq("matriculas.series.segmento", filters.segmento);
+    if (filters?.anoLetivo) query = query.eq("matriculas.ano_letivo", filters.anoLetivo);
+  }
 
   return query;
 }

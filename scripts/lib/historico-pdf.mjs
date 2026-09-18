@@ -146,6 +146,13 @@ function extrairAluno(pagina) {
   const filiacao = valorAntesDe("Filiação");
   const nascimento = valorAntesDe("Data de Nascimento");
   const naturalidade = valorAntesDe("Naturalidade");
+  const nacionalidade = valorAntesDe("Nacionalidade");
+  // Campo vazio faz o rotulo colar no seguinte ("RG: Orgão Expedidor:"), e ai
+  // o valor lido seria o rotulo anterior — descartamos nesse caso.
+  const semValor = (v) => !v || /:$/.test(v);
+  const rg = valorAntesDe("RG");
+  const orgao = valorAntesDe("Orgão Expedidor");
+  const expedicao = valorAntesDe("Data Expedição");
 
   return {
     nome,
@@ -153,7 +160,11 @@ function extrairAluno(pagina) {
     matricula,
     filiacao,
     dataNascimento: nascimento,
-    naturalidade
+    naturalidade,
+    nacionalidade: semValor(nacionalidade) ? null : nacionalidade,
+    rg: semValor(rg) ? null : rg,
+    orgaoExpedidor: semValor(orgao) ? null : orgao,
+    dataExpedicao: semValor(expedicao) ? null : expedicao
   };
 }
 
