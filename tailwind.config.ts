@@ -24,12 +24,16 @@ const config: Config = {
         accent: "rgb(var(--color-accent) / <alpha-value>)",
         surface: "rgb(var(--color-surface) / <alpha-value>)",
         muted: "rgb(var(--color-muted) / <alpha-value>)",
-        // Texto secundário. `muted` é cor de fundo (quase branca) e fica ilegível como texto.
-        dim: "var(--text-muted)",
         success: "rgb(var(--color-success) / <alpha-value>)",
         warning: "rgb(var(--color-warning) / <alpha-value>)",
         danger: "rgb(var(--color-danger) / <alpha-value>)"
       },
+      // `--color-muted` é superfície (quase branca): como texto dava 1.1:1, ilegível.
+      // text-muted passa a usar o token de texto; bg-muted segue sendo a superfície.
+      textColor: ({ theme }) => ({
+        ...theme("colors"),
+        muted: "var(--text-muted)",
+      }),
       boxShadow: {
         soft: "var(--shadow-soft)",
         lift: "var(--shadow-lift)",

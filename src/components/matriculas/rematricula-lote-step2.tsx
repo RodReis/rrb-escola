@@ -58,15 +58,15 @@ export async function RematricularLoteStep2({ ano, turma_id }: Props) {
       {/* Mesma largura dos campos abaixo: resumo e formulário compartilham o eixo. */}
       <dl className="grid gap-x-8 gap-y-4 border-y border-line py-4 sm:grid-cols-3">
         <div className="grid gap-0.5">
-          <dt className="text-xs font-semibold text-dim">Série de origem</dt>
+          <dt className="text-xs font-semibold text-muted">Série de origem</dt>
           <dd className="font-bold text-ink">{serieOrigem?.nome ?? "—"}</dd>
         </div>
         <div className="grid gap-0.5">
-          <dt className="text-xs font-semibold text-dim">Turma</dt>
+          <dt className="text-xs font-semibold text-muted">Turma</dt>
           <dd className="font-bold text-ink">{turmaLabel}</dd>
         </div>
         <div className="grid gap-0.5">
-          <dt className="text-xs font-semibold text-dim">Ano</dt>
+          <dt className="text-xs font-semibold text-muted">Ano</dt>
           <dd className="font-bold tabular-nums text-ink">{ano}</dd>
         </div>
       </dl>

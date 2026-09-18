@@ -20,7 +20,7 @@ export async function RematricularLoteStep3({ ano, turma_id, serie_dest_id, turm
     return (
       <Panel className="grid gap-4">
         <p className="ds-kicker">Passo 3 de 3</p>
-        <p className="text-sm text-dim">
+        <p className="text-sm text-muted">
           Nenhum aluno elegível nesta turma para re-matrícula. Todos já possuem
           matrícula ativa em {ano + 1} ou a turma não tem alunos ativos.
         </p>
@@ -39,7 +39,7 @@ export async function RematricularLoteStep3({ ano, turma_id, serie_dest_id, turm
       <div>
         <p className="ds-kicker">Passo 3 de 3</p>
         <h2 className="mt-1 text-xl font-bold text-ink">Confirme os alunos</h2>
-        <p className="mt-1 text-sm text-dim">
+        <p className="mt-1 text-sm text-muted">
           {candidatos.length} aluno{candidatos.length !== 1 ? "s" : ""} elegível
           {candidatos.length !== 1 ? "s" : ""}. Desmarque os que não devem ser re-matriculados.
         </p>

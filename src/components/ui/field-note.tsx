@@ -2,7 +2,7 @@ import { AlertTriangle, Info } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const tones = {
-  info: { wrap: "text-dim", icon: "text-dim" },
+  info: { wrap: "text-muted", icon: "text-muted" },
   warn: { wrap: "text-gold", icon: "text-gold" },
 };
 

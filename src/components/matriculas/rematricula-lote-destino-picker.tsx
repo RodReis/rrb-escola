@@ -79,7 +79,7 @@ export function RematriculaLoteDestinoPicker({
                   ? `Sem turma ${turnoLabel}`
                   : "Selecione a série primeiro"
             }
-            className={turmaCasada ? undefined : "text-dim"}
+            className={turmaCasada ? undefined : "text-muted"}
           />
         </label>
         <input type="hidden" name="turma_dest_id" value={turmaCasada?.id ?? ""} />

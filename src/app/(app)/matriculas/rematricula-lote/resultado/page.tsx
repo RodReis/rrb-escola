@@ -88,7 +88,7 @@ export default async function RematricularLoteResultadoPage() {
             </div>
             <table className="w-full text-sm">
               <thead>
-                <tr className="border-b border-line text-left text-dim">
+                <tr className="border-b border-line text-left text-muted">
                   <th className="pb-2 font-medium">Aluno</th>
                   <th className="pb-2 font-medium text-right">Nova matrícula</th>
                 </tr>
@@ -120,7 +120,7 @@ export default async function RematricularLoteResultadoPage() {
             </div>
             <table className="w-full text-sm">
               <thead>
-                <tr className="border-b border-line text-left text-dim">
+                <tr className="border-b border-line text-left text-muted">
                   <th className="pb-2 font-medium">Aluno</th>
                   <th className="pb-2 font-medium">Motivo</th>
                 </tr>
@@ -129,7 +129,7 @@ export default async function RematricularLoteResultadoPage() {
                 {errors.map((row) => (
                   <tr key={row.matriculaId}>
                     <td className="py-2 text-ink">{nomeMap[row.matriculaId] ?? "—"}</td>
-                    <td className="py-2 text-dim">{row.motivo}</td>
+                    <td className="py-2 text-muted">{row.motivo}</td>
                   </tr>
                 ))}
               </tbody>

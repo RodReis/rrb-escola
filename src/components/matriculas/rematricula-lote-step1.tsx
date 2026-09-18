@@ -25,7 +25,7 @@ export async function RematricularLoteStep1() {
       <div>
         <p className="ds-kicker">Passo 1 de 3</p>
         <h2 className="mt-1 text-xl font-bold text-ink">Selecione turma e ano letivo</h2>
-        <p className="mt-1 max-w-prose text-sm text-dim">
+        <p className="mt-1 max-w-prose text-sm text-muted">
           Serão listados apenas alunos com matrícula ativa na turma selecionada
           que ainda não foram re-matriculados para o próximo ano.
         </p>
