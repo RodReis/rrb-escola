@@ -15,6 +15,21 @@ export const COLUNAS = [
 ];
 
 /**
+ * O PDF de origem rotula o Ensino Medio como "CICLO II - D/E/F"; o sistema
+ * chama de "1ª SÉRIE/2ª SÉRIE/3ª SÉRIE" (tabela series). Traduzimos na entrada
+ * para o ano gravado casar com a serie cadastrada.
+ */
+const SERIE_POR_COLUNA = {
+  "CICLO II - D": "1ª SÉRIE",
+  "CICLO II - E": "2ª SÉRIE",
+  "CICLO II - F": "3ª SÉRIE"
+};
+
+export function serieDaColuna(coluna) {
+  return SERIE_POR_COLUNA[coluna] ?? coluna;
+}
+
+/**
  * Quais colunas trazem C.H. ao lado da media varia por PDF: o do Fund2 tem
  * "Média x5 + (Média C.H.) x4", o do Medio "Média x6 + (Média C.H.) x3". Em vez
  * de fixar, lemos a sequencia Média/C.H. do proprio cabecalho da grade.
@@ -278,7 +293,7 @@ export function parsearPagina(textoPagina) {
     anos.push({
       coluna,
       ano: info.ano,
-      serieNome: coluna,
+      serieNome: serieDaColuna(coluna),
       instituicao: info.instituicao,
       cidade: info.cidade,
       uf: info.uf,

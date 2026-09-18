@@ -16,7 +16,36 @@ export type HistoricoPdfOptions = {
 
 const PAGINA = { largura: 595, altura: 842 };
 const MARGEM_ESQ = 22;
+const MARGEM_DIR = 573;
 const TRACO = "-";
+
+/**
+ * Topo da tabela de estabelecimentos no modelo de referência. A grade de notas
+ * só empurra este bloco para baixo quando o aluno tem disciplinas demais.
+ */
+const Y_ESTABELECIMENTOS = 373;
+
+/**
+ * O formulário oficial imprime o ciclo inteiro em toda emissão do Fundamental —
+ * o aluno do 1º ANO recebe a mesma folha do 9º, com as séries não cursadas em
+ * branco. Só o Infantil e o Médio usam a própria faixa.
+ */
+const CICLO_FUNDAMENTAL = [
+  ...SERIES_POR_NIVEL.fund1,
+  ...SERIES_POR_NIVEL.fund2,
+  ...SERIES_POR_NIVEL.medio
+];
+
+const COLUNAS_IMPRESSAS: Record<HistoricoData["nivel"], string[]> = {
+  infantil: SERIES_POR_NIVEL.infantil,
+  fund1: CICLO_FUNDAMENTAL,
+  fund2: CICLO_FUNDAMENTAL,
+  medio: CICLO_FUNDAMENTAL
+};
+
+/** Espessuras das réguas: a externa fecha o bloco, a interna separa células. */
+const TRACO_BORDA = 0.7;
+const TRACO_CELULA = 0.3;
 
 /** Converte y do PDF de referência (origem embaixo) para y do jsPDF (origem no topo). */
 const y = (yPdf: number) => PAGINA.altura - yPdf;
@@ -33,9 +62,34 @@ function textoCentro(doc: jsPDF, str: string, yPdf: number, tamanho: number, bol
   doc.text(str, PAGINA.largura / 2, y(yPdf), { align: "center" });
 }
 
-function campo(doc: jsPDF, rotulo: string, valor: string | null, x: number, yRotulo: number) {
-  texto(doc, rotulo, x, yRotulo, 6);
-  texto(doc, valor ?? "", x, yRotulo - 8, 7, true);
+/** Texto centrado numa faixa horizontal — usado em toda célula de grade. */
+function textoNaCelula(
+  doc: jsPDF,
+  str: string,
+  xEsq: number,
+  xDir: number,
+  yPdf: number,
+  tamanho: number,
+  bold = false
+) {
+  doc.setFont("helvetica", bold ? "bold" : "normal");
+  doc.setFontSize(tamanho);
+  doc.text(str, (xEsq + xDir) / 2, y(yPdf), { align: "center" });
+}
+
+function linhaH(doc: jsPDF, xEsq: number, xDir: number, yPdf: number, espessura = TRACO_CELULA) {
+  doc.setLineWidth(espessura);
+  doc.line(xEsq, y(yPdf), xDir, y(yPdf));
+}
+
+function linhaV(doc: jsPDF, x: number, yTopo: number, yBase: number, espessura = TRACO_CELULA) {
+  doc.setLineWidth(espessura);
+  doc.line(x, y(yTopo), x, y(yBase));
+}
+
+function caixa(doc: jsPDF, xEsq: number, xDir: number, yTopo: number, yBase: number) {
+  doc.setLineWidth(TRACO_BORDA);
+  doc.rect(xEsq, y(yTopo), xDir - xEsq, yTopo - yBase);
 }
 
 function numero(valor: number | null, casas = 1): string {
@@ -69,99 +123,241 @@ function desenharCabecalho(doc: jsPDF, dados: HistoricoData, opts: HistoricoPdfO
 
   textoCentro(doc, "HISTÓRICO ESCOLAR", 708, 14, true);
   textoCentro(doc, NIVEL_LABEL[dados.nivel], 692, 14, true);
-  textoCentro(doc, `RESULTADOS REALIZADOS NO ${NIVEL_LABEL[dados.nivel].toUpperCase()}`, 606, 8, true);
 }
 
-function desenharIdentificacao(doc: jsPDF, dados: HistoricoData) {
+/**
+ * Bloco de identificação em caixa, como no modelo: três faixas (aluno, filiação,
+ * documentos) com divisórias internas. Retorna o y da base para o próximo bloco.
+ */
+function desenharIdentificacao(doc: jsPDF, dados: HistoricoData): number {
   const a = dados.aluno;
-  campo(doc, "Aluno(a):", a.nome, MARGEM_ESQ, 670);
-  campo(doc, "CPF:", a.cpf, 418.4, 670);
-  campo(doc, "Matrícula:", a.matricula, 497.7, 670);
-  campo(doc, "Filiação:", a.filiacao, MARGEM_ESQ, 650);
-  campo(doc, "Data de Nascimento:", a.dataNascimento, MARGEM_ESQ, 630);
-  campo(doc, "Naturalidade:", a.naturalidade, 101.3, 630);
-  campo(doc, "Nacionalidade:", a.nacionalidade, 259.9, 630);
-  campo(doc, "RG:", a.rg, 339.1, 630);
-  campo(doc, "Orgão Expedidor:", a.orgaoExpedidor, 418.4, 630);
-  campo(doc, "Data Expedição:", a.dataExpedicao, 497.7, 630);
+  // Âncoras do modelo: os valores caem em 662 (aluno), 642 (filiação) e 622
+  // (documentos); as faixas são desenhadas em volta deles.
+  const topo = 678;
+  const faixa1 = 658; // aluno | cpf | matrícula
+  const faixa2 = 638; // filiação
+  const base = 618; // nascimento | naturalidade | nacionalidade | rg | órgão | data
+
+  const xCpf = 418.4;
+  const xMatricula = 497.7;
+
+  caixa(doc, MARGEM_ESQ, MARGEM_DIR, topo, base);
+  linhaH(doc, MARGEM_ESQ, MARGEM_DIR, faixa1);
+  linhaH(doc, MARGEM_ESQ, MARGEM_DIR, faixa2);
+  linhaV(doc, xCpf, topo, faixa1);
+  linhaV(doc, xMatricula, topo, faixa1);
+
+  const campo = (rotulo: string, valor: string | null, x: number, yTopo: number) => {
+    texto(doc, rotulo, x + 2, yTopo - 7, 6);
+    texto(doc, valor ?? "", x + 2, yTopo - 16, 7, true);
+  };
+
+  campo("Aluno(a):", a.nome, MARGEM_ESQ, topo);
+  campo("CPF:", a.cpf, xCpf, topo);
+  campo("Matrícula:", a.matricula, xMatricula, topo);
+  campo("Filiação:", a.filiacao, MARGEM_ESQ, faixa1);
+
+  // Faixa de documentos: colunas de largura desigual, como no modelo.
+  const docs: Array<[string, string | null, number]> = [
+    ["Data de Nascimento:", a.dataNascimento, MARGEM_ESQ],
+    ["Naturalidade:", a.naturalidade, 101.3],
+    ["Nacionalidade:", a.nacionalidade, 259.9],
+    ["RG:", a.rg, 339.1],
+    ["Orgão Expedidor:", a.orgaoExpedidor, xCpf],
+    ["Data Expedição:", a.dataExpedicao, xMatricula]
+  ];
+  docs.forEach(([rotulo, valor, x], i) => {
+    if (i > 0) linhaV(doc, x, faixa2, base);
+    campo(rotulo, valor, x, faixa2);
+  });
+
+  return base;
 }
 
-function desenharGrade(doc: jsPDF, dados: HistoricoData) {
-  const colunas = SERIES_POR_NIVEL[dados.nivel];
+/** Geometria da grade: uma coluna por série do nível, mais rótulo e C.H. total. */
+type GeometriaGrade = {
+  xRotulo: number;
+  xColuna: (i: number) => number;
+  xFimColuna: (i: number) => number;
+  xMeioColuna: (i: number) => number;
+  larguraColuna: number;
+  exibeCh: boolean;
+  xChTotal: number;
+  xFimGrade: number;
+};
+
+function geometria(dados: HistoricoData, colunas: string[]): GeometriaGrade {
   const exibeCh = NIVEL_EXIBE_CH[dados.nivel];
-  const passo = 46.7;
-  const xPrimeira = 142.8;
-  const xColuna = (i: number) => xPrimeira + i * passo;
+  const xRotulo = MARGEM_ESQ;
+  // Rótulo de disciplina ocupa a primeira faixa; a C.H. total fecha à direita.
+  // 124 alinha os centros de coluna com o modelo de referência.
+  const xInicio = 124;
+  const larguraChTotal = exibeCh ? 26 : 0;
+  const xChTotal = MARGEM_DIR - larguraChTotal;
+  const larguraColuna = (xChTotal - xInicio) / colunas.length;
+
+  return {
+    xRotulo,
+    xColuna: (i) => xInicio + i * larguraColuna,
+    xFimColuna: (i) => xInicio + (i + 1) * larguraColuna,
+    xMeioColuna: (i) => xInicio + (i + 0.5) * larguraColuna,
+    larguraColuna,
+    exibeCh,
+    xChTotal,
+    xFimGrade: MARGEM_DIR
+  };
+}
+
+/**
+ * Grade de notas, desenhada de cima para baixo a partir de `yTopo`.
+ * A altura é derivada do conteúdo — com 21 disciplinas o rodapé descia sobre
+ * as linhas quando as âncoras eram fixas.
+ * Retorna o y da base para o bloco seguinte.
+ */
+function desenharGrade(doc: jsPDF, dados: HistoricoData, yTopo: number): number {
+  const colunas = COLUNAS_IMPRESSAS[dados.nivel];
+  const g = geometria(dados, colunas);
+  const linhas = montarGrade(dados.anos, colunas);
+
+  const yTituloBase = yTopo - 4;
+  textoCentro(
+    doc,
+    `RESULTADOS REALIZADOS NO ${NIVEL_LABEL[dados.nivel].toUpperCase()}`,
+    yTituloBase + 4,
+    8,
+    true
+  );
+
+  // ─── Cabeçalho da grade ───────────────────────────────────────────────────
+  const yCabTopo = yTituloBase;
+  const ySerie = yCabTopo - 13; // faixa dos nomes de série
+  const yCabBase = ySerie - 13; // faixa "Média / C.H."
 
   colunas.forEach((coluna, i) => {
-    texto(doc, coluna, xColuna(i), 595, 7, true);
-    if (exibeCh) {
-      texto(doc, "Média", xColuna(i), 580.5, 7, true);
-      texto(doc, "C.H.", xColuna(i) + 25.9, 580.5, 7, true);
+    textoNaCelula(doc, coluna, g.xColuna(i), g.xFimColuna(i), ySerie + 4, 6.5, true);
+    if (g.exibeCh) {
+      const meio = g.xMeioColuna(i);
+      textoNaCelula(doc, "Média", g.xColuna(i), meio, yCabBase + 4, 5.5, true);
+      textoNaCelula(doc, "C.H.", meio, g.xFimColuna(i), yCabBase + 4, 5.5, true);
+      linhaV(doc, meio, ySerie, yCabBase);
     } else {
-      texto(doc, "Média", xColuna(i), 580.5, 7, true);
+      textoNaCelula(doc, "Média", g.xColuna(i), g.xFimColuna(i), yCabBase + 4, 6.5, true);
     }
   });
-  texto(doc, "Disciplinas", 59.2, 580.5, 7, true);
-  if (exibeCh) {
-    texto(doc, "C.H.", 556.3, 584, 7, true);
-    texto(doc, "Total", 555.3, 577, 7, true);
+
+  textoNaCelula(doc, "Disciplinas", g.xRotulo, g.xColuna(0), yCabBase + 4, 7, true);
+  if (g.exibeCh) {
+    textoNaCelula(doc, "C.H.", g.xChTotal, g.xFimGrade, ySerie + 1, 5.5, true);
+    textoNaCelula(doc, "Total", g.xChTotal, g.xFimGrade, yCabBase + 4, 5.5, true);
   }
 
-  const linhas = montarGrade(dados.anos, colunas);
+  // ─── Linhas de disciplina ─────────────────────────────────────────────────
   const alturaLinha = 11;
-  let yLinha = 566;
+  let yAtual = yCabBase;
 
   for (const linha of linhas) {
-    texto(doc, linha.disciplina, MARGEM_ESQ, yLinha, 7);
+    const yBase = yAtual - alturaLinha;
+    texto(doc, linha.disciplina, g.xRotulo + 2, yBase + 3, 6.5);
     linha.celulas.forEach((celula, i) => {
-      texto(doc, numero(celula.nota), xColuna(i), yLinha, 7, true);
-      if (exibeCh) {
-        texto(doc, inteiro(celula.cargaHoraria), xColuna(i) + 25.9, yLinha, 7, true);
+      if (g.exibeCh) {
+        const meio = g.xMeioColuna(i);
+        textoNaCelula(doc, numero(celula.nota), g.xColuna(i), meio, yBase + 3, 6.5, true);
+        textoNaCelula(doc, inteiro(celula.cargaHoraria), meio, g.xFimColuna(i), yBase + 3, 6.5);
+        linhaV(doc, meio, yAtual, yBase);
+      } else {
+        textoNaCelula(doc, numero(celula.nota), g.xColuna(i), g.xFimColuna(i), yBase + 3, 6.5, true);
       }
     });
-    if (exibeCh) texto(doc, inteiro(linha.chTotal), 556.3, yLinha, 7, true);
-    yLinha -= alturaLinha;
+    if (g.exibeCh) {
+      textoNaCelula(doc, inteiro(linha.chTotal), g.xChTotal, g.xFimGrade, yBase + 3, 6.5, true);
+    }
+    linhaH(doc, MARGEM_ESQ, g.xFimGrade, yBase);
+    yAtual = yBase;
   }
 
+  // ─── Rodapé da grade: resultado, carga horária, dias letivos ──────────────
   const porColuna = new Map(dados.anos.map((a) => [a.serieNome, a]));
-  const rodape: Array<[string, number, (a: HistoricoAno | undefined) => string]> = [
-    ["Resultado Final", 401, (a) => (a ? RESULTADO_LABEL[a.resultado] : TRACO)],
-    ["Carga Horária Anual", 390, (a) => inteiro(a?.cargaHoraria ?? null)],
-    ["Dias Letivos", 379, (a) => inteiro(a?.diasLetivos ?? null)]
+  const rodape: Array<[string, (a: HistoricoAno | undefined) => string]> = [
+    ["Resultado Final", (a) => (a ? RESULTADO_LABEL[a.resultado] : TRACO)],
+    ["Carga Horária Anual", (a) => inteiro(a?.cargaHoraria ?? null)],
+    ["Dias Letivos", (a) => inteiro(a?.diasLetivos ?? null)]
   ];
+  const chTotalAnual = dados.anos.reduce((acc, a) => acc + (a.cargaHoraria ?? 0), 0);
 
-  for (const [rotulo, yRodape, valor] of rodape) {
-    texto(doc, rotulo, MARGEM_ESQ, yRodape, 7, true);
+  for (const [rotulo, valor] of rodape) {
+    const yBase = yAtual - alturaLinha;
+    texto(doc, rotulo, g.xRotulo + 2, yBase + 3, 6.5, true);
     colunas.forEach((coluna, i) => {
-      texto(doc, valor(porColuna.get(coluna)), xColuna(i), yRodape, 7, true);
+      textoNaCelula(
+        doc,
+        valor(porColuna.get(coluna)),
+        g.xColuna(i),
+        g.xFimColuna(i),
+        yBase + 3,
+        6.5,
+        true
+      );
     });
+    if (g.exibeCh && rotulo === "Carga Horária Anual" && chTotalAnual > 0) {
+      textoNaCelula(doc, String(chTotalAnual), g.xChTotal, g.xFimGrade, yBase + 3, 6.5, true);
+    }
+    linhaH(doc, MARGEM_ESQ, g.xFimGrade, yBase);
+    yAtual = yBase;
   }
 
-  const chTotalAnual = dados.anos.reduce((acc, a) => acc + (a.cargaHoraria ?? 0), 0);
-  if (chTotalAnual > 0) texto(doc, String(chTotalAnual), 556.3, 390, 7, true);
+  // ─── Réguas verticais e moldura, agora que a altura é conhecida ───────────
+  linhaH(doc, MARGEM_ESQ, g.xFimGrade, ySerie);
+  linhaH(doc, MARGEM_ESQ, g.xFimGrade, yCabBase);
+  linhaV(doc, g.xColuna(0), yCabTopo, yAtual);
+  colunas.forEach((_, i) => linhaV(doc, g.xFimColuna(i), yCabTopo, yAtual));
+  if (g.exibeCh) linhaV(doc, g.xChTotal, yCabTopo, yAtual);
+  caixa(doc, MARGEM_ESQ, g.xFimGrade, yCabTopo, yAtual);
+
+  return yAtual;
 }
 
-function desenharEstabelecimentos(doc: jsPDF, dados: HistoricoData) {
-  texto(doc, "Série", 66.8, 364, 8, true);
-  texto(doc, "Ano", 140.5, 364, 8, true);
-  texto(doc, "Estabelecimento", 258.4, 364, 8, true);
-  texto(doc, "Cidade", 465.6, 364, 8, true);
-  texto(doc, "UF", 555.8, 364, 8, true);
-
-  const colunas = SERIES_POR_NIVEL[dados.nivel];
+/**
+ * Tabela de estabelecimentos: uma linha por série do nível, com bordas.
+ * Retorna o y da base.
+ */
+function desenharEstabelecimentos(doc: jsPDF, dados: HistoricoData, yTopo: number): number {
+  const colunas = COLUNAS_IMPRESSAS[dados.nivel];
   const porSerie = new Map(dados.anos.map((a) => [a.serieNome, a]));
-  let yLinha = 352;
 
+  const xSerie = MARGEM_ESQ;
+  const xAno = 120.8;
+  const xEstabelecimento = 170;
+  const xCidade = 420;
+  const xUf = 545;
+  const divisorias = [xAno, xEstabelecimento, xCidade, xUf];
+
+  const alturaLinha = 12;
+  const yCabBase = yTopo - alturaLinha;
+
+  textoNaCelula(doc, "Série", xSerie, xAno, yCabBase + 3, 7, true);
+  textoNaCelula(doc, "Ano", xAno, xEstabelecimento, yCabBase + 3, 7, true);
+  textoNaCelula(doc, "Estabelecimento", xEstabelecimento, xCidade, yCabBase + 3, 7, true);
+  textoNaCelula(doc, "Cidade", xCidade, xUf, yCabBase + 3, 7, true);
+  textoNaCelula(doc, "UF", xUf, MARGEM_DIR, yCabBase + 3, 7, true);
+  linhaH(doc, MARGEM_ESQ, MARGEM_DIR, yCabBase);
+
+  let yAtual = yCabBase;
   for (const coluna of colunas) {
     const ano = porSerie.get(coluna);
-    texto(doc, coluna, MARGEM_ESQ, yLinha, 8);
-    texto(doc, ano ? String(ano.ano) : TRACO, 139.7, yLinha, 8);
-    texto(doc, ano?.instituicao ?? TRACO, 166.3, yLinha, 8);
-    texto(doc, ano?.cidade ?? TRACO, 410.5, yLinha, 8);
-    texto(doc, ano?.uf ?? TRACO, 549.3, yLinha, 8);
-    yLinha -= 12;
+    const yBase = yAtual - alturaLinha;
+    texto(doc, coluna, xSerie + 3, yBase + 3, 7);
+    textoNaCelula(doc, ano ? String(ano.ano) : TRACO, xAno, xEstabelecimento, yBase + 3, 7);
+    texto(doc, ano?.instituicao ?? TRACO, xEstabelecimento + 3, yBase + 3, 7);
+    texto(doc, ano?.cidade ?? TRACO, xCidade + 3, yBase + 3, 7);
+    textoNaCelula(doc, ano?.uf ?? TRACO, xUf, MARGEM_DIR, yBase + 3, 7);
+    linhaH(doc, MARGEM_ESQ, MARGEM_DIR, yBase);
+    yAtual = yBase;
   }
+
+  for (const x of divisorias) linhaV(doc, x, yTopo, yAtual);
+  caixa(doc, MARGEM_ESQ, MARGEM_DIR, yTopo, yAtual);
+
+  return yAtual;
 }
 
 function desenharRodape(doc: jsPDF, dados: HistoricoData, opts: HistoricoPdfOptions) {
@@ -172,7 +368,7 @@ function desenharRodape(doc: jsPDF, dados: HistoricoData, opts: HistoricoPdfOpti
 
   doc.setFont("helvetica", "normal");
   doc.setFontSize(10);
-  doc.text(`${cidade}, ${dataTexto}.`, 573, y(89), { align: "right" });
+  doc.text(`${cidade}, ${dataTexto}.`, MARGEM_DIR, y(89), { align: "right" });
 
   const assinaturas: Array<[string | null, string, number]> = [
     [c.secretarioNome, c.secretarioCargo, 160],
@@ -182,15 +378,18 @@ function desenharRodape(doc: jsPDF, dados: HistoricoData, opts: HistoricoPdfOpti
   for (const [nome, cargo, centro] of assinaturas) {
     doc.setLineWidth(0.5);
     doc.line(centro - 125, y(48), centro + 125, y(48));
-    doc.setFontSize(10);
+    doc.setFontSize(9);
+    doc.setFont("helvetica", "normal");
     doc.text(nome ?? "", centro, y(39), { align: "center" });
+    doc.setFontSize(8);
     doc.text(cargo, centro, y(29), { align: "center" });
   }
 }
 
 /**
  * Preview e emissão chamam esta mesma função: o que se vê é o que sai.
- * Uma página por aluno.
+ * Uma página por aluno. Os blocos encadeiam pela base do anterior, então uma
+ * grade longa empurra o resto para baixo em vez de escrever por cima dele.
  */
 export function renderHistoricos(
   alunos: HistoricoData[],
@@ -201,9 +400,11 @@ export function renderHistoricos(
   alunos.forEach((dados, i) => {
     if (i > 0) doc.addPage();
     desenharCabecalho(doc, dados, opts);
-    desenharIdentificacao(doc, dados);
-    desenharGrade(doc, dados);
-    desenharEstabelecimentos(doc, dados);
+    const yIdentificacao = desenharIdentificacao(doc, dados);
+    const yGrade = desenharGrade(doc, dados, yIdentificacao - 10);
+    // A tabela de estabelecimentos fica ancorada na parte baixa da página, como
+    // no modelo; só desce mais quando uma grade longa avança sobre ela.
+    desenharEstabelecimentos(doc, dados, Math.min(Y_ESTABELECIMENTOS, yGrade - 14));
     desenharRodape(doc, dados, opts);
   });
 

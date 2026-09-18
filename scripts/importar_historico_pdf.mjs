@@ -28,7 +28,7 @@ const ESCOLA_ID = "00000000-0000-0000-0000-000000000001";
 function nivelDaSerie(serieNome) {
   if (/^[1-5]º ANO$/.test(serieNome)) return "fund1";
   if (/^[6-9]º ANO$/.test(serieNome)) return "fund2";
-  if (/^CICLO II/.test(serieNome)) return "medio";
+  if (/^[1-3]ª SÉRIE$/.test(serieNome)) return "medio";
   return null;
 }
 

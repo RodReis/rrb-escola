@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import type { TextItem } from "pdfjs-dist/types/src/display/api";
-import { COORDENADAS_REFERENCIA, TOLERANCIA_PT } from "./historico-coordenadas";
+import { COORDENADAS_REFERENCIA, SOMENTE_Y, TOLERANCIA_PT } from "./historico-coordenadas";
 import { renderHistoricos } from "./historico-pdf";
 import type { HistoricoAno, HistoricoData } from "@/lib/historico/tipos";
 
@@ -90,7 +90,8 @@ describe("fidelidade do layout ao modelo de referência", () => {
         desvios.push(`"${esperado.texto}" não foi encontrado no PDF gerado`);
         continue;
       }
-      const dx = Math.abs(encontrado.x - esperado.x);
+      // Rótulo centrado na célula segue a largura da faixa, não um x literal.
+      const dx = SOMENTE_Y.has(esperado.texto) ? 0 : Math.abs(encontrado.x - esperado.x);
       const dy = Math.abs(encontrado.y - esperado.y);
       if (dx > TOLERANCIA_PT || dy > TOLERANCIA_PT) {
         desvios.push(

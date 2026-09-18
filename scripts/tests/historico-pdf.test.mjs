@@ -155,3 +155,24 @@ Série Ano Estabelecimento Cidade UF
   const nomes = anos[0].notas.map((n) => n.disciplinaNome);
   assert.ok(nomes.includes("CIÊNCIAS"), `nome saiu como ${JSON.stringify(nomes)}`);
 });
+
+test("traduz CICLO II do PDF para a serie do sistema", () => {
+  const pagina = `EPG
+BELTRANO
+Aluno(a):
+111.222.333-44
+CPF:
+Disciplinas Média Média
+C.H
+.
+Tot
+al
+MATEMÁTICA 8,5 -
+Resultado Final Aprovado -
+Série Ano Estabelecimento Cidade UF
+CICLO II - D 2024 EPG TRINDADE TRINDADE GO
+`;
+  const { anos } = parsearPagina(pagina);
+  assert.equal(anos[0].serieNome, "1ª SÉRIE");
+  assert.equal(anos[0].coluna, "CICLO II - D", "a coluna do PDF continua sendo a chave de leitura");
+});
