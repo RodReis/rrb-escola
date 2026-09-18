@@ -12,7 +12,7 @@ type Props = {
 };
 
 export function CompanyForm({ action, company, submitLabel = "Salvar" }: Props) {
-  const [cnpj, setCnpj] = useState(company?.cnpj ?? "");
+  const [cnpj, setCnpj] = useState(maskCNPJ(company?.cnpj ?? ""));
 
   return (
     <form action={action} className="grid gap-4 md:grid-cols-2">
