@@ -103,6 +103,7 @@ export type AlunoLoteRow = {
   id: string;
   nome: string;
   matricula_id: string;
+  foto_url: string | null;
 };
 
 export async function listAlunosCandidatosLote(
@@ -113,7 +114,7 @@ export async function listAlunosCandidatosLote(
 
   const { data, error } = await supabase
     .from("matriculas")
-    .select("id, alunos!inner(id, nome)")
+    .select("id, alunos!inner(id, nome, foto_url)")
     .eq("turma_id", turma_id)
     .eq("ano_letivo", ano_letivo)
     .eq("status", "ativa")
@@ -122,10 +123,10 @@ export async function listAlunosCandidatosLote(
   if (error) throw error;
 
   // !inner join — Supabase returns relation as array; extract first element per row
-  type AlunoRel = { id: string; nome: string };
+  type AlunoRel = { id: string; nome: string; foto_url: string | null };
   const candidatos = (data ?? []).map((m) => {
     const aluno = (Array.isArray(m.alunos) ? m.alunos[0] : m.alunos) as AlunoRel;
-    return { matricula_id: m.id, alunoId: aluno.id, alunoNome: aluno.nome };
+    return { matricula_id: m.id, alunoId: aluno.id, alunoNome: aluno.nome, fotoUrl: aluno.foto_url ?? null };
   });
 
   if (candidatos.length === 0) return [];
@@ -146,6 +147,41 @@ export async function listAlunosCandidatosLote(
 
   return candidatos
     .filter((c) => !jaMatriculadosSet.has(c.alunoId))
-    .map((c) => ({ id: c.alunoId, nome: c.alunoNome, matricula_id: c.matricula_id }))
+    .map((c) => ({ id: c.alunoId, nome: c.alunoNome, matricula_id: c.matricula_id, foto_url: c.fotoUrl }))
     .sort((a, b) => a.nome.localeCompare(b.nome, "pt-BR"));
+}
+
+/** Plano mais usado nas matrículas ativas da turma — contexto para escolher o plano do ano seguinte. */
+export async function getPlanoPredominanteDaTurma(
+  turma_id: string,
+  ano_letivo: number,
+): Promise<string | null> {
+  const supabase = await createServerClient();
+
+  const { data, error } = await supabase
+    .from("matriculas")
+    .select("planos(nome)")
+    .eq("turma_id", turma_id)
+    .eq("ano_letivo", ano_letivo)
+    .eq("status", "ativa")
+    .eq("escola_id", DEFAULT_SCHOOL_ID);
+
+  if (error) throw error;
+
+  const contagem: Record<string, number> = {};
+  for (const row of data ?? []) {
+    const plano = (Array.isArray(row.planos) ? row.planos[0] : row.planos) as { nome: string } | null;
+    if (!plano?.nome) continue;
+    contagem[plano.nome] = (contagem[plano.nome] ?? 0) + 1;
+  }
+
+  let predominante: string | null = null;
+  let maior = 0;
+  for (const nome of Object.keys(contagem)) {
+    if (contagem[nome] > maior) {
+      maior = contagem[nome];
+      predominante = nome;
+    }
+  }
+  return predominante;
 }

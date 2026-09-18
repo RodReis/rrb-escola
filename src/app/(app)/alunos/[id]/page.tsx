@@ -49,7 +49,7 @@ export default async function StudentPage({ params, searchParams }: { params: { 
           <ButtonLink href={`/alunos/${student.id}/editar`} variant="primary">
             <Pencil size={14} /> Editar
           </ButtonLink>
-          {matriculaAtivaPayload ? <ReenrollButton matriculaId={matriculaAtivaPayload.id} /> : null}
+          <ReenrollButton alunoId={student.id} novato={student.matriculas.length === 0} />
           <StudentHeaderActions student={student} matriculaAtiva={matriculaAtivaPayload} templates={templatesLite} />
         </div>
       </header>

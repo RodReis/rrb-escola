@@ -13,7 +13,8 @@ export function FilterDropdown({
   onChange,
   className,
   emptyLabel = "Todos",
-  disabled = false
+  disabled = false,
+  hideEmpty = false
 }: {
   label: string;
   value: string;
@@ -22,6 +23,7 @@ export function FilterDropdown({
   className?: string;
   emptyLabel?: string;
   disabled?: boolean;
+  hideEmpty?: boolean;
 }) {
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
@@ -61,19 +63,21 @@ export function FilterDropdown({
       </button>
       {open && !disabled ? (
         <div className="absolute right-0 z-30 mt-1.5 max-h-[320px] min-w-[180px] max-w-[320px] overflow-y-auto overflow-x-hidden rounded-ui border border-line bg-surface py-1 shadow-soft">
-          <button
-            type="button"
-            className={cn(
-              "block w-full px-3 py-1.5 text-left text-sm hover:bg-muted",
-              !value && "font-semibold text-brand"
-            )}
-            onClick={() => {
-              onChange("");
-              setOpen(false);
-            }}
-          >
-            {emptyLabel}
-          </button>
+          {hideEmpty ? null : (
+            <button
+              type="button"
+              className={cn(
+                "block w-full px-3 py-1.5 text-left text-sm hover:bg-muted",
+                !value && "font-semibold text-brand"
+              )}
+              onClick={() => {
+                onChange("");
+                setOpen(false);
+              }}
+            >
+              {emptyLabel}
+            </button>
+          )}
           {groups.map((g) => (
             <div key={g.name ?? "__sem_grupo"}>
               {g.name ? (

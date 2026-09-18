@@ -1,19 +1,31 @@
 import { Panel } from "@/components/ui/card";
+import { RematriculaLoteTurmaPicker } from "@/components/matriculas/rematricula-lote-turma-picker";
 import { getAcademicData } from "@/lib/data/lookups";
 
 export async function RematricularLoteStep1() {
-  const { turmas } = await getAcademicData();
-  const currentYear = new Date().getFullYear();
+  const { turmas, series } = await getAcademicData();
 
-  // Collect distinct years from turmas
   const anos = Array.from(new Set(turmas.map((t) => Number(t.ano_letivo)))).sort((a, b) => b - a);
 
+  const ordemPorSerie = new Map(series.map((s) => [s.id as string, Number(s.ordem ?? 0)]));
+
+  const turmasAtivas = turmas
+    .filter((t) => t.ativo)
+    .map((t) => ({
+      id: t.id as string,
+      nome: t.nome as string,
+      ano_letivo: Number(t.ano_letivo),
+      turno: t.turno as string,
+      serieNome: (t.series as { nome: string } | null)?.nome ?? null,
+      serieOrdem: ordemPorSerie.get(t.serie_id as string) ?? 0,
+    }));
+
   return (
-    <Panel className="grid gap-6 max-w-lg">
+    <Panel className="grid gap-6">
       <div>
         <p className="ds-kicker">Passo 1 de 3</p>
         <h2 className="mt-1 text-xl font-bold text-ink">Selecione turma e ano letivo</h2>
-        <p className="mt-1 text-sm text-ink/60">
+        <p className="mt-1 max-w-prose text-sm text-dim">
           Serão listados apenas alunos com matrícula ativa na turma selecionada
           que ainda não foram re-matriculados para o próximo ano.
         </p>
@@ -22,29 +34,9 @@ export async function RematricularLoteStep1() {
       <form method="GET" className="grid gap-4">
         <input type="hidden" name="step" value="2" />
 
-        <label>
-          Ano letivo origem
-          <select name="ano" required defaultValue={currentYear}>
-            {anos.map((ano) => (
-              <option key={ano} value={ano}>{ano}</option>
-            ))}
-          </select>
-        </label>
-
-        <label>
-          Turma
-          <select name="turma_id" required>
-            <option value="">Selecione…</option>
-            {turmas
-              .filter((t) => t.ativo)
-              .sort((a, b) => Number(b.ano_letivo) - Number(a.ano_letivo))
-              .map((t) => (
-                <option key={t.id} value={t.id}>
-                  {t.ano_letivo} — {(t.series as { nome: string } | null)?.nome} — {t.nome}
-                </option>
-              ))}
-          </select>
-        </label>
+        <div className="grid gap-4 sm:grid-cols-2">
+          <RematriculaLoteTurmaPicker anos={anos} turmas={turmasAtivas} />
+        </div>
 
         <button type="submit" className="ds-button ds-button-primary justify-self-start">
           Próximo →

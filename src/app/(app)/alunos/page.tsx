@@ -12,13 +12,15 @@ import {
   getStudentsReport,
   listStudents,
   getStudentSegmentCounts,
-  getStudentFilterOptions
+  getStudentFilterOptions,
+  getStudentAvailableYears
 } from "@/lib/data/students";
 import { getSignedFotoUrls } from "@/lib/storage/photos";
 import { requirePermission } from "@/lib/auth/session";
 
 type EnrollmentRef = {
   status?: string | null;
+  ano_letivo?: number | null;
   series?: { nome?: string | null } | { nome?: string | null }[] | null;
   turmas?: { nome?: string | null } | { nome?: string | null }[] | null;
   planos?: { nome?: string | null } | { nome?: string | null }[] | null;
@@ -28,8 +30,12 @@ function one<T>(value: T | T[] | null | undefined): T | null {
   return Array.isArray(value) ? value[0] ?? null : value ?? null;
 }
 
-function activeEnrollment(enrollments: EnrollmentRef[] | null | undefined) {
-  return enrollments?.find((item) => item.status === "ativa") ?? enrollments?.[0] ?? null;
+// Prioriza a matrícula do ano filtrado: sem isso a linha mostraria a série/turma
+// de outro ano quando o aluno tem histórico em vários.
+function activeEnrollment(enrollments: EnrollmentRef[] | null | undefined, anoLetivo?: number) {
+  const doAno = anoLetivo ? enrollments?.filter((item) => item.ano_letivo === anoLetivo) : enrollments;
+  const candidatos = doAno?.length ? doAno : enrollments;
+  return candidatos?.find((item) => item.status === "ativa") ?? candidatos?.[0] ?? null;
 }
 
 export default async function StudentsPage({
@@ -40,20 +46,24 @@ export default async function StudentsPage({
   await requirePermission("alunos", "read");
   const params = await searchParams;
   const pageParam = Number.parseInt(params.page ?? "1", 10);
+  const anoParam = Number.parseInt(params.ano ?? "", 10);
+  const anoLetivo = Number.isNaN(anoParam) ? new Date().getFullYear() : anoParam;
   const filters = {
-    nome:     params.nome     || undefined,
-    serieId:  params.serie    || undefined,
-    turmaId:  params.turma    || undefined,
-    segmento: params.segmento || undefined,
-    page:     Number.isNaN(pageParam) ? 1 : pageParam
+    nome:      params.nome     || undefined,
+    serieId:   params.serie    || undefined,
+    turmaId:   params.turma    || undefined,
+    segmento:  params.segmento || undefined,
+    anoLetivo,
+    page:      Number.isNaN(pageParam) ? 1 : pageParam
   };
 
-  const [{ rows: students, total, page, pageSize }, reportRows, counts, filterOptions] =
+  const [{ rows: students, total, page, pageSize }, reportRows, counts, filterOptions, anosDisponiveis] =
     await Promise.all([
       listStudents(filters),
       getStudentsReport(),
-      getStudentSegmentCounts(),
-      getStudentFilterOptions()
+      getStudentSegmentCounts(anoLetivo),
+      getStudentFilterOptions(anoLetivo),
+      getStudentAvailableYears()
     ]);
 
   const signedFotos = await getSignedFotoUrls(
@@ -70,6 +80,7 @@ export default async function StudentsPage({
     if (params.serie) sp.set("serie", params.serie);
     if (params.turma) sp.set("turma", params.turma);
     if (filters.segmento) sp.set("segmento", filters.segmento);
+    if (params.ano) sp.set("ano", params.ano);
     if (target > 1) sp.set("page", String(target));
     const qs = sp.toString();
     return qs ? `/alunos?${qs}` : "/alunos";
@@ -104,6 +115,8 @@ export default async function StudentsPage({
             counts={counts}
             series={filterOptions.series}
             turmas={filterOptions.turmas}
+            anos={anosDisponiveis}
+            anoAtual={anoLetivo}
           />
         }
         footer={
@@ -176,7 +189,7 @@ export default async function StudentsPage({
               </tr>
             ) : null}
             {students.map((student) => {
-              const enrollment = activeEnrollment(student.matriculas);
+              const enrollment = activeEnrollment(student.matriculas, anoLetivo);
               const series = one(enrollment?.series);
               const turma  = one(enrollment?.turmas);
               const plano  = one(enrollment?.planos);

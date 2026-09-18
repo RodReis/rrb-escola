@@ -1,9 +1,9 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { ChevronDown, FileText, Loader2, Plus } from "lucide-react";
+import { ChevronDown, FileText, Loader2 } from "lucide-react";
 import { toast } from "sonner";
-import { Button, ButtonLink } from "@/components/ui/button";
+import { Button } from "@/components/ui/button";
 import { generateFromTemplateAction } from "@/lib/actions/documents-generate-v2";
 import { downloadBase64Docx } from "@/lib/documents/download-client";
 
@@ -11,13 +11,12 @@ type MatriculaAtiva = { id: string; codigo: string | null };
 type TemplateLite = { id: string; nome: string };
 
 type Props = {
-  alunoId: string;
   matriculaAtiva: MatriculaAtiva | null;
   templates: TemplateLite[];
   onExportFichaPdf?: () => void;
 };
 
-export function QuickDocumentActions({ alunoId, matriculaAtiva, templates, onExportFichaPdf }: Props) {
+export function QuickDocumentActions({ matriculaAtiva, templates, onExportFichaPdf }: Props) {
   const [loadingId, setLoadingId] = useState<string | null>(null);
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
@@ -67,25 +66,13 @@ export function QuickDocumentActions({ alunoId, matriculaAtiva, templates, onExp
     }
   }
 
-  if (!matriculaAtiva) {
-    return (
-      <ButtonLink href={`/matriculas?aluno_id=${alunoId}`} variant="primary" className="gap-1">
-        <Plus size={14} />
-        Matricular aluno
-      </ButtonLink>
-    );
-  }
+  // Sem matrícula ativa não há documento a gerar; o botão de matricular fica no header.
+  if (!matriculaAtiva) return null;
 
   const quick = templates.slice(0, 3);
   const more = templates.slice(3);
 
-  if (templates.length === 0) {
-    return (
-      <ButtonLink href="/rh/documentos/novo" variant="secondary" className="gap-1">
-        <Plus size={14} /> Configurar templates
-      </ButtonLink>
-    );
-  }
+  if (templates.length === 0) return null;
 
   return (
     <div

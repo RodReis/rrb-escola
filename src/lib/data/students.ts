@@ -7,6 +7,7 @@ export type StudentFilters = {
   serieId?: string;
   turmaId?: string;
   segmento?: string;
+  anoLetivo?: number;
   page?: number;
   pageSize?: number;
 };
@@ -26,12 +27,12 @@ function runStudentsQuery(
   from: number,
   to: number
 ) {
-  // Filtro por matrícula (segmento/série/turma) exige inner join na relação;
+  // Filtro por matrícula (segmento/série/turma/ano) exige inner join na relação;
   // sem esses filtros usamos left join para não perder alunos sem matrícula.
-  const hasEnrollmentFilter = Boolean(filters?.serieId || filters?.turmaId || filters?.segmento);
+  const hasEnrollmentFilter = Boolean(filters?.serieId || filters?.turmaId || filters?.segmento || filters?.anoLetivo);
   const matriculaSelect = hasEnrollmentFilter
-    ? "matriculas!inner(status, serie_id, turma_id, series!inner(id, nome, segmento), turmas(id, nome), planos(nome))"
-    : "matriculas(status, serie_id, turma_id, series(id, nome, segmento), turmas(id, nome), planos(nome))";
+    ? "matriculas!inner(status, serie_id, turma_id, ano_letivo, series!inner(id, nome, segmento), turmas(id, nome), planos(nome))"
+    : "matriculas(status, serie_id, turma_id, ano_letivo, series(id, nome, segmento), turmas(id, nome), planos(nome))";
 
   let query = supabase
     .from("alunos")
@@ -44,10 +45,17 @@ function runStudentsQuery(
     .range(from, to);
 
   if (filters?.nome) query = query.ilike("nome", `%${filters.nome}%`);
-  if (hasEnrollmentFilter) query = query.eq("matriculas.status", "ativa");
+  // Filtrar por ano é visão histórica: quem foi re-matriculado fica "concluida"
+  // no ano anterior e ainda deve aparecer nele.
+  if (hasEnrollmentFilter) {
+    query = filters?.anoLetivo
+      ? query.in("matriculas.status", ["ativa", "concluida"])
+      : query.eq("matriculas.status", "ativa");
+  }
   if (filters?.serieId) query = query.eq("matriculas.serie_id", filters.serieId);
   if (filters?.turmaId) query = query.eq("matriculas.turma_id", filters.turmaId);
   if (filters?.segmento) query = query.eq("matriculas.series.segmento", filters.segmento);
+  if (filters?.anoLetivo) query = query.eq("matriculas.ano_letivo", filters.anoLetivo);
 
   return query;
 }
@@ -65,17 +73,21 @@ export async function listStudents(filters?: StudentFilters): Promise<PaginatedS
   return { rows: data ?? [], total: count ?? 0, page, pageSize };
 }
 
-export async function getStudentSegmentCounts() {
+export async function getStudentSegmentCounts(anoLetivo: number = new Date().getFullYear()) {
   const supabase = await createServerClient();
   const { data, error } = await supabase
     .from("alunos")
-    .select("id, matriculas(status, series(segmento))")
+    .select("id, matriculas(status, ano_letivo, series(segmento))")
     .eq("escola_id", DEFAULT_SCHOOL_ID);
   if (error) throw error;
   const counts = { all: 0, infantil: 0, fund1: 0, fund2: 0, medio: 0 };
   for (const row of data ?? []) {
+    const matriculasDoAno = (row.matriculas ?? []).filter(
+      (m: { ano_letivo?: number | null }) => m.ano_letivo === anoLetivo
+    );
+    if (matriculasDoAno.length === 0) continue;
     counts.all += 1;
-    const enr = (row.matriculas ?? []).find((m: { status?: string | null }) => m.status === "ativa") ?? row.matriculas?.[0];
+    const enr = matriculasDoAno.find((m: { status?: string | null }) => m.status === "ativa") ?? matriculasDoAno[0];
     const series = enr ? (Array.isArray(enr.series) ? enr.series[0] : enr.series) : null;
     const seg = (series as { segmento?: string | null } | null)?.segmento ?? null;
     if (seg === "INFANTIL") counts.infantil += 1;
@@ -86,7 +98,7 @@ export async function getStudentSegmentCounts() {
   return counts;
 }
 
-export async function getStudentFilterOptions() {
+export async function getStudentFilterOptions(anoLetivo: number = new Date().getFullYear()) {
   const supabase = await createServerClient();
   const [seriesRes, turmasRes] = await Promise.all([
     supabase
@@ -101,7 +113,7 @@ export async function getStudentFilterOptions() {
       .select("id, nome, serie_id, ano_letivo, turno")
       .eq("escola_id", DEFAULT_SCHOOL_ID)
       .eq("ativo", true)
-      .eq("ano_letivo", new Date().getFullYear())
+      .eq("ano_letivo", anoLetivo)
       .order("turno")
       .order("nome"),
   ]);
@@ -113,6 +125,18 @@ export async function getStudentFilterOptions() {
     series: seriesRes.data ?? [],
     turmas: turmasRes.data ?? [],
   };
+}
+
+export async function getStudentAvailableYears(): Promise<number[]> {
+  const supabase = await createServerClient();
+  const { data, error } = await supabase.rpc("anos_letivos_matriculas", {
+    p_escola_id: DEFAULT_SCHOOL_ID,
+  });
+  if (error) throw error;
+  const rows = (data ?? []) as { ano_letivo: number }[];
+  const anos = new Set<number>(rows.map((m) => m.ano_letivo));
+  anos.add(new Date().getFullYear());
+  return Array.from(anos).sort((a, b) => b - a);
 }
 
 export async function getStudentSheet(id: string) {

@@ -7,7 +7,11 @@ export async function getAcademicData() {
     supabase.from("series").select("*").eq("escola_id", DEFAULT_SCHOOL_ID).order("ordem"),
     supabase.from("turmas").select("*, series(nome)").eq("escola_id", DEFAULT_SCHOOL_ID).order("ano_letivo", { ascending: false }),
     supabase.from("planos").select("*").eq("escola_id", DEFAULT_SCHOOL_ID).order("nome"),
-    supabase.from("alunos").select("id, nome, matricula_codigo").eq("escola_id", DEFAULT_SCHOOL_ID).order("nome")
+    supabase
+      .from("alunos")
+      .select("id, nome, matricula_codigo, data_nascimento, matriculas(ano_letivo, status, serie_id)")
+      .eq("escola_id", DEFAULT_SCHOOL_ID)
+      .order("nome")
   ]);
 
   if (series.error) throw series.error;

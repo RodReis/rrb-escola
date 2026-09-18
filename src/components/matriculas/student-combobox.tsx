@@ -3,9 +3,23 @@
 import { useState, useRef, useEffect } from "react";
 import { Search } from "lucide-react";
 
-type Aluno = { id: string; nome: string; matricula_codigo: string };
+type Aluno = {
+  id: string;
+  nome: string;
+  matricula_codigo: string;
+  data_nascimento?: string | null;
+  matriculas?: { ano_letivo: number; status: string }[] | null;
+};
 
-export function StudentCombobox({ alunos, defaultValue }: { alunos: Aluno[]; defaultValue?: Aluno }) {
+export function StudentCombobox({
+  alunos,
+  defaultValue,
+  onSelect,
+}: {
+  alunos: Aluno[];
+  defaultValue?: Aluno;
+  onSelect?: (aluno: Aluno | null) => void;
+}) {
   const [query, setQuery] = useState(defaultValue?.nome ?? "");
   const [open, setOpen] = useState(false);
   const [selected, setSelected] = useState<Aluno | null>(defaultValue ?? null);
@@ -34,12 +48,14 @@ export function StudentCombobox({ alunos, defaultValue }: { alunos: Aluno[]; def
     setSelected(aluno);
     setQuery(aluno.nome);
     setOpen(false);
+    onSelect?.(aluno);
   }
 
   function handleChange(e: React.ChangeEvent<HTMLInputElement>) {
     setQuery(e.target.value);
     setSelected(null);
     setOpen(true);
+    onSelect?.(null);
   }
 
   return (

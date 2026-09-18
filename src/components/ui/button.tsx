@@ -6,6 +6,7 @@ const variants = {
   primary: "ds-button-primary",
   accent: "ds-button-accent",
   secondary: "ds-button-secondary",
+  warn: "ds-button-warn",
   ghost: "border-transparent bg-transparent text-ink hover:bg-muted"
 };
 

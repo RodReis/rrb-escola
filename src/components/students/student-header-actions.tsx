@@ -18,7 +18,6 @@ export function StudentHeaderActions({
 }) {
   return (
     <QuickDocumentActions
-      alunoId={student.id}
       matriculaAtiva={matriculaAtiva}
       templates={templates}
       onExportFichaPdf={() => exportStudentPdf(student)}

@@ -77,7 +77,7 @@ export default async function EnrollmentDetailPage({
             <ArrowLeft size={14} /> Voltar
           </ButtonLink>
           {student?.id ? <ButtonLink href={`/alunos/${student.id}`} variant="primary">Ficha do aluno</ButtonLink> : null}
-          {enrollment.status === "ativa" ? <ReenrollButton matriculaId={enrollment.id} /> : null}
+          {enrollment.status === "ativa" && student?.id ? <ReenrollButton alunoId={student.id} /> : null}
         </div>
       </header>
       {rematricula === "1" && (

@@ -1,13 +1,17 @@
 // Content-Security-Policy: restringe origens de script à própria app + Supabase.
 // 'unsafe-inline'/'unsafe-eval' em script-src são exigidos pelo runtime do Next.js
 // (hydration inline + dev). Migração para nonce por requisição é o próximo passo.
+// Em dev o Supabase roda em http/ws no localhost; em produção só os domínios .supabase.co.
+const isDev = process.env.NODE_ENV === "development";
+const localSupabase = isDev ? " http://127.0.0.1:55421 ws://127.0.0.1:55421" : "";
+
 const cspDirectives = [
   "default-src 'self'",
   "script-src 'self' 'unsafe-inline' 'unsafe-eval'",
   "style-src 'self' 'unsafe-inline'",
-  "img-src 'self' data: blob: https://*.supabase.co",
+  `img-src 'self' data: blob: https://*.supabase.co${isDev ? " http://127.0.0.1:55421" : ""}`,
   "font-src 'self' data:",
-  "connect-src 'self' https://*.supabase.co wss://*.supabase.co",
+  `connect-src 'self' https://*.supabase.co wss://*.supabase.co${localSupabase}`,
   "frame-ancestors 'none'",
   "object-src 'none'",
   "base-uri 'self'",

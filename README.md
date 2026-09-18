@@ -173,6 +173,7 @@ bash scripts/regenerate_seed_migration.sh  # Snapshot atual → migration
 | Migration nova quebra com FK | Ordem de migrations / seed antes de tabela existir | Conferir ordem dos arquivos em `supabase/migrations/` |
 | `gen_salt does not exist` no seed.sql | Falta extension pgcrypto | Não usado — seed.sql é noop, migration faz tudo |
 | Erros pré-existentes em `alunos/[id]/editar` typecheck | Componente removido em refator anterior | Sem fix ainda |
+| `Sem perfil ativo. Solicite acesso ao administrador.` no login | Auth user existe mas não tem linha em `perfis` (ou `perfis.ativo = false`) vinculada pro `escola_id` | Rodar `npx supabase db reset --local` para restaurar o snapshot com o perfil do `admin@rrb.local`, ou verificar a tabela `perfis` no Supabase Studio |
 
 ## Documentação adicional
 

@@ -361,6 +361,28 @@ textarea {
   .rb-btn-danger { background: var(--bad); color: #fff; }
   .rb-btn-danger:hover { filter: brightness(1.05); transform: translateY(-1px); }
 
+  /* Re-matrícula: ação sazonal destacada, sem competir com o azul primário.
+     Mesmo acabamento do primário (gradiente + brilho interno + sombra colorida).
+     Texto escuro porque branco sobre âmbar fica em 3.1:1 (claro) e 2.1:1 (escuro), abaixo do AA. */
+  .ds-button-warn {
+    background: linear-gradient(
+      180deg,
+      color-mix(in oklab, var(--warn) 88%, #fff),
+      var(--warn)
+    );
+    color: #20283e;
+    border-color: transparent;
+    box-shadow:
+      0 1px 0 rgba(255, 255, 255, 0.3) inset,
+      0 16px 40px -14px color-mix(in oklab, var(--warn) 55%, transparent);
+  }
+  .ds-button-warn:hover {
+    transform: translateY(-1px);
+    box-shadow:
+      0 1px 0 rgba(255, 255, 255, 0.34) inset,
+      0 22px 50px -16px color-mix(in oklab, var(--warn) 65%, transparent);
+  }
+
   /* Eyebrow / kicker — §4 */
   .ds-kicker,
   .rb-eyebrow {

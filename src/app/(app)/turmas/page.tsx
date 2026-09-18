@@ -1,4 +1,4 @@
-import { GraduationCap, Plus, Save } from "lucide-react";
+import { AlertCircle, GraduationCap, Plus, Save } from "lucide-react";
 import { ButtonLink } from "@/components/ui/button";
 import { ConfirmButton } from "@/components/ui/confirm-button";
 import { Panel } from "@/components/ui/card";
@@ -8,8 +8,18 @@ import { createTurmaAction, toggleTurmaAction, updateTurmaAction } from "@/lib/a
 import { getAcademicData } from "@/lib/data/lookups";
 import { requirePermission } from "@/lib/auth/session";
 
-export default async function TurmasPage() {
+const ERRO_MENSAGEM: Record<string, string> = {
+  duplicada: "Já existe uma turma com essa série, nome, ano letivo e turno.",
+  turma: "Erro ao salvar turma. Tente novamente.",
+};
+
+export default async function TurmasPage({
+  searchParams,
+}: {
+  searchParams: Promise<Record<string, string>>;
+}) {
   await requirePermission("turmas", "read");
+  const { erro } = await searchParams;
   const { series, turmas } = await getAcademicData();
   const activeClasses = turmas.filter((item) => item.ativo).length;
   const currentYear = new Date().getFullYear();
@@ -43,6 +53,12 @@ export default async function TurmasPage() {
             Cadastrar sala e turno
           </h2>
         </div>
+        {erro ? (
+          <p className="flex items-center gap-2 rounded-ui bg-clay/10 p-3 text-sm font-bold text-clay">
+            <AlertCircle size={16} />
+            {ERRO_MENSAGEM[erro] ?? ERRO_MENSAGEM.turma}
+          </p>
+        ) : null}
         <form action={createTurmaAction} className="grid gap-4 md:grid-cols-6">
           <label>
             Serie

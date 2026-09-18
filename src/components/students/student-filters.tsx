@@ -28,11 +28,15 @@ const SEGMENTO_LABEL: Record<string, string> = {
 export function StudentFilters({
   counts,
   series = [],
-  turmas = []
+  turmas = [],
+  anos = [],
+  anoAtual
 }: {
   counts?: Counts;
   series?: SerieOption[];
   turmas?: TurmaOption[];
+  anos?: number[];
+  anoAtual?: number;
 }) {
   const router = useRouter();
   const pathname = usePathname();
@@ -42,6 +46,7 @@ export function StudentFilters({
   const segmento = searchParams.get("segmento") ?? "";
   const serie    = searchParams.get("serie") ?? "";
   const turma    = searchParams.get("turma") ?? "";
+  const ano      = searchParams.get("ano") ?? String(anoAtual ?? new Date().getFullYear());
 
   const update = useCallback(
     (key: string, value: string, clear?: string[]) => {
@@ -85,6 +90,8 @@ export function StudentFilters({
     { value: "MEDIO",        label: "Médio",    count: counts?.medio }
   ];
 
+  const anoOptions: DropdownOption[] = anos.map((a) => ({ value: String(a), label: String(a) }));
+
   const temFiltro = Boolean(nome || segmento || serie || turma);
 
   return (
@@ -95,6 +102,14 @@ export function StudentFilters({
           items={chips}
           value={segmento}
           onChange={(v) => update("segmento", v, ["serie", "turma", "page"])}
+        />
+
+        <FilterDropdown
+          label="Ano letivo"
+          value={ano}
+          options={anoOptions}
+          hideEmpty
+          onChange={(v) => update("ano", v, ["page"])}
         />
 
         <FilterDropdown
