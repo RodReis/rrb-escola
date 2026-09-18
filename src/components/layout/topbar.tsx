@@ -64,6 +64,16 @@ const SECRETARIA_ITEMS: DropdownItem[] = [
       { href: "/pipeline/config", label: "Configurar quadros", iconName: "Settings2" },
     ],
   },
+  {
+    href: "/historico/associacoes",
+    label: "Histórico Escolar",
+    iconName: "FileText",
+    children: [
+      { href: "/historico/associacoes", label: "Histórico — Associações", iconName: "FileText" },
+      { href: "/historico/notas", label: "Histórico — Entrada de Notas", iconName: "FileText" },
+      { href: "/historico/emissao", label: "Histórico — Emissão", iconName: "FileText" },
+    ],
+  },
   { href: "/portaria", label: "Portaria", iconName: "DoorOpen" },
   { href: "/organograma", label: "Organograma", iconName: "Network" },
   { href: "/calendario", label: "Calendário Letivo", iconName: "CalendarDays" },
