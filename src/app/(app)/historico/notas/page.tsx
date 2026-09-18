@@ -28,7 +28,11 @@ export default async function EntradaNotasPage({ searchParams }: Props) {
       </header>
 
       <HistoricoAbas
-        alunos={alunos.map((a) => ({ id: a.id as string, nome: a.nome as string }))}
+        alunos={alunos.map((a) => ({
+          id: a.id as string,
+          nome: a.nome as string,
+          matricula_codigo: a.matricula_codigo as string
+        }))}
         series={series.map((s) => ({ id: s.id as string, nome: s.nome as string }))}
         alunoId={alunoId}
         nivel={nivel}

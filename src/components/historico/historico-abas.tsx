@@ -6,10 +6,11 @@ import { AbaAluno } from "./aba-aluno";
 import { AbaAnos } from "./aba-anos";
 import { AbaNotas } from "./aba-notas";
 import { AbaObservacao } from "./aba-observacao";
+import { StudentCombobox } from "@/components/matriculas/student-combobox";
 import type { HistoricoData, NivelEnsino } from "@/lib/historico/tipos";
 
 type Props = {
-  alunos: Array<{ id: string; nome: string }>;
+  alunos: Array<{ id: string; nome: string; matricula_codigo: string }>;
   series: Array<{ id: string; nome: string }>;
   alunoId: string;
   nivel: NivelEnsino;
@@ -44,16 +45,11 @@ export function HistoricoAbas({ alunos, series, alunoId, nivel, historico, anosM
       <div className="grid gap-4 md:grid-cols-2">
         <label className="flex flex-col gap-1 text-sm">
           Aluno
-          <select
-            value={alunoId}
-            onChange={(e) => navegar(e.target.value, nivel)}
-            className="rounded border border-line bg-surface p-2"
-          >
-            <option value="">Selecione um aluno</option>
-            {alunos.map((a) => (
-              <option key={a.id} value={a.id}>{a.nome}</option>
-            ))}
-          </select>
+          <StudentCombobox
+            alunos={alunos}
+            defaultValue={alunos.find((a) => a.id === alunoId)}
+            onSelect={(aluno) => navegar(aluno?.id ?? "", nivel)}
+          />
         </label>
 
         <label className="flex flex-col gap-1 text-sm">
