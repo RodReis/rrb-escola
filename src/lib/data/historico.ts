@@ -1,5 +1,5 @@
 import { DEFAULT_SCHOOL_ID } from "@/lib/constants";
-import { mediaAnual } from "@/lib/historico/medias";
+import { agregarNotasConsolidadas } from "@/lib/historico/medias";
 import type {
   HistoricoAno,
   HistoricoCredenciamento,
@@ -51,6 +51,33 @@ export async function listarCredenciamentos() {
   return (data ?? []).map((r) => ({ id: r.id as string, nomeFantasia: r.nome_fantasia as string }));
 }
 
+/** Anos que o aluno de fato cursou nesta escola, a partir de `matriculas` — fonte de verdade para anos internos. */
+export async function listarAnosMatriculados(
+  alunoId: string
+): Promise<Array<{ ano: number; serieId: string; serieNome: string }>> {
+  const supabase = await createServerClient();
+  const { data, error } = await supabase
+    .from("matriculas")
+    .select("ano_letivo, serie_id, series(nome)")
+    .eq("escola_id", DEFAULT_SCHOOL_ID)
+    .eq("aluno_id", alunoId)
+    .order("ano_letivo", { ascending: false });
+  if (error) throw error;
+
+  const vistos = new Set<string>();
+  const resultado: Array<{ ano: number; serieId: string; serieNome: string }> = [];
+  for (const row of data ?? []) {
+    const ano = row.ano_letivo as number;
+    const serieId = row.serie_id as string;
+    const chave = `${ano}-${serieId}`;
+    if (vistos.has(chave)) continue;
+    vistos.add(chave);
+    const serie = row.series as { nome?: string } | null;
+    resultado.push({ ano, serieId, serieNome: serie?.nome ?? "" });
+  }
+  return resultado;
+}
+
 export async function listarNiveisEnsino(): Promise<NivelEnsinoRow[]> {
   const supabase = await createServerClient();
   const { data, error } = await supabase
@@ -88,9 +115,10 @@ export async function getCredenciamentoVigente(
     .eq("serie_id", serieId)
     .lte("ano_inicio", ano)
     .gte("ano_fim", ano)
-    .maybeSingle();
+    .order("ano_inicio", { ascending: false })
+    .limit(1);
   if (error) throw error;
-  const cred = data?.historico_credenciamentos as unknown as Record<string, unknown> | null;
+  const cred = data?.[0]?.historico_credenciamentos as unknown as Record<string, unknown> | null;
   return cred ? mapCredenciamento(cred) : null;
 }
 
@@ -105,28 +133,13 @@ async function notasAoVivo(alunoId: string, anoLetivo: number): Promise<Historic
     .eq("ano_letivo", anoLetivo);
   if (error) throw error;
 
-  const porDisciplina = new Map<string, { nome: string; ordem: number; bimestrais: Array<number | null> }>();
-  for (const row of data ?? []) {
-    const id = row.disciplina_id as string;
-    const disciplina = row.disciplinas as { nome?: string; ordem?: number } | null;
-    let entrada = porDisciplina.get(id);
-    if (!entrada) {
-      entrada = { nome: disciplina?.nome ?? "", ordem: disciplina?.ordem ?? 0, bimestrais: [] };
-      porDisciplina.set(id, entrada);
-    }
-    entrada.bimestrais.push(row.media === null ? null : Number(row.media));
-  }
-
-  return Array.from(porDisciplina.entries())
-    .map(([disciplinaId, e]) => ({
-      disciplinaId,
-      disciplinaNome: e.nome,
-      nota: mediaAnual(e.bimestrais),
-      cargaHoraria: null,
-      faltas: null,
-      ordem: e.ordem
+  return agregarNotasConsolidadas(
+    (data ?? []).map((row) => ({
+      disciplina_id: row.disciplina_id as string,
+      media: row.media === null ? null : Number(row.media),
+      disciplinas: row.disciplinas as { nome?: string; ordem?: number } | null
     }))
-    .sort((a, b) => a.ordem - b.ordem);
+  );
 }
 
 export async function getHistoricoAluno(

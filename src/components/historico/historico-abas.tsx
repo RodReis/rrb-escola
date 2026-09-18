@@ -14,6 +14,7 @@ type Props = {
   alunoId: string;
   nivel: NivelEnsino;
   historico: HistoricoData | null;
+  anosMatriculados: Array<{ ano: number; serieId: string; serieNome: string }>;
 };
 
 const ABAS = [
@@ -29,7 +30,7 @@ const NIVEIS: Array<{ valor: NivelEnsino; rotulo: string }> = [
   { valor: "medio", rotulo: "Ensino Médio" }
 ];
 
-export function HistoricoAbas({ alunos, series, alunoId, nivel, historico }: Props) {
+export function HistoricoAbas({ alunos, series, alunoId, nivel, historico, anosMatriculados }: Props) {
   const router = useRouter();
   const [aba, setAba] = useState<(typeof ABAS)[number]["id"]>("aluno");
 
@@ -94,7 +95,13 @@ export function HistoricoAbas({ alunos, series, alunoId, nivel, historico }: Pro
 
           {aba === "aluno" && <AbaAluno historico={historico} />}
           {aba === "anos" && (
-            <AbaAnos alunoId={alunoId} nivel={nivel} series={series} historico={historico} />
+            <AbaAnos
+              alunoId={alunoId}
+              nivel={nivel}
+              series={series}
+              historico={historico}
+              anosMatriculados={anosMatriculados}
+            />
           )}
           {aba === "notas" && <AbaNotas historico={historico} />}
           {aba === "observacao" && (

@@ -6,7 +6,7 @@ import { DEFAULT_SCHOOL_ID } from "@/lib/constants";
 import { getHistoricoAluno } from "@/lib/data/historico";
 import { deveCongelar } from "@/lib/historico/congelamento";
 import { validarNovaAssociacao } from "@/lib/historico/associacoes";
-import { mediaAnual } from "@/lib/historico/medias";
+import { agregarNotasConsolidadas } from "@/lib/historico/medias";
 import type { HistoricoData, NivelEnsino, OrigemHistorico, ResultadoHistorico } from "@/lib/historico/tipos";
 import { createServerClient } from "@/lib/supabase/server";
 import { formNumber, formText } from "@/lib/utils";
@@ -121,24 +121,20 @@ async function congelarNotasDoAno(historicoAnoId: string, alunoId: string, ano: 
     .eq("ano_letivo", ano);
   if (error) throw error;
 
-  const porDisciplina = new Map<string, { nome: string; ordem: number; bimestrais: Array<number | null> }>();
-  for (const row of data ?? []) {
-    const id = row.disciplina_id as string;
-    const disciplina = row.disciplinas as { nome?: string; ordem?: number } | null;
-    let entrada = porDisciplina.get(id);
-    if (!entrada) {
-      entrada = { nome: disciplina?.nome ?? "", ordem: disciplina?.ordem ?? 0, bimestrais: [] };
-      porDisciplina.set(id, entrada);
-    }
-    entrada.bimestrais.push(row.media === null ? null : Number(row.media));
-  }
+  const notas = agregarNotasConsolidadas(
+    (data ?? []).map((row) => ({
+      disciplina_id: row.disciplina_id as string,
+      media: row.media === null ? null : Number(row.media),
+      disciplinas: row.disciplinas as { nome?: string; ordem?: number } | null
+    }))
+  );
 
-  const linhas = Array.from(porDisciplina.entries()).map(([disciplinaId, e]) => ({
+  const linhas = notas.map((n, i) => ({
     historico_ano_id: historicoAnoId,
-    disciplina_id: disciplinaId,
-    disciplina_nome: e.nome,
-    nota: mediaAnual(e.bimestrais),
-    ordem: e.ordem
+    disciplina_id: n.disciplinaId,
+    disciplina_nome: n.disciplinaNome,
+    nota: n.nota,
+    ordem: i
   }));
   if (linhas.length === 0) return;
 

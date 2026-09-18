@@ -1,6 +1,6 @@
 import { HistoricoAbas } from "@/components/historico/historico-abas";
 import { requirePermission } from "@/lib/auth/session";
-import { getHistoricoAluno } from "@/lib/data/historico";
+import { getHistoricoAluno, listarAnosMatriculados } from "@/lib/data/historico";
 import { getAcademicData } from "@/lib/data/lookups";
 import type { NivelEnsino } from "@/lib/historico/tipos";
 
@@ -16,6 +16,7 @@ export default async function EntradaNotasPage({ searchParams }: Props) {
   const alunoId = params.aluno ?? "";
   const nivel = (params.nivel ?? "fund1") as NivelEnsino;
   const historico = alunoId ? await getHistoricoAluno(alunoId, nivel) : null;
+  const anosMatriculados = alunoId ? await listarAnosMatriculados(alunoId) : [];
 
   return (
     <div className="space-y-6 p-6">
@@ -32,6 +33,7 @@ export default async function EntradaNotasPage({ searchParams }: Props) {
         alunoId={alunoId}
         nivel={nivel}
         historico={historico}
+        anosMatriculados={anosMatriculados}
       />
     </div>
   );

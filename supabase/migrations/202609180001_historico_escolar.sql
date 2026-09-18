@@ -41,18 +41,21 @@ create table if not exists public.historico_credenciamentos (
   updated_at timestamptz not null default now()
 );
 
-create index historico_credenciamentos_escola_idx
+create index if not exists historico_credenciamentos_escola_idx
   on historico_credenciamentos (escola_id);
 
+drop trigger if exists historico_credenciamentos_updated_at on historico_credenciamentos;
 create trigger historico_credenciamentos_updated_at
   before update on historico_credenciamentos
   for each row execute function set_updated_at();
 
 alter table historico_credenciamentos enable row level security;
 
+drop policy if exists historico_credenciamentos_service on historico_credenciamentos;
 create policy historico_credenciamentos_service on historico_credenciamentos
   for all to service_role using (true) with check (true);
 
+drop policy if exists historico_credenciamentos_escola on historico_credenciamentos;
 create policy historico_credenciamentos_escola on historico_credenciamentos
   for all to authenticated
   using (escola_id = (select escola_id from current_perfil()))
@@ -75,18 +78,21 @@ create table if not exists public.historico_niveis_ensino (
   check (ano_fim >= ano_inicio)
 );
 
-create index historico_niveis_ensino_serie_idx
+create index if not exists historico_niveis_ensino_serie_idx
   on historico_niveis_ensino (serie_id, ano_inicio);
 
+drop trigger if exists historico_niveis_ensino_updated_at on historico_niveis_ensino;
 create trigger historico_niveis_ensino_updated_at
   before update on historico_niveis_ensino
   for each row execute function set_updated_at();
 
 alter table historico_niveis_ensino enable row level security;
 
+drop policy if exists historico_niveis_ensino_service on historico_niveis_ensino;
 create policy historico_niveis_ensino_service on historico_niveis_ensino
   for all to service_role using (true) with check (true);
 
+drop policy if exists historico_niveis_ensino_escola on historico_niveis_ensino;
 create policy historico_niveis_ensino_escola on historico_niveis_ensino
   for all to authenticated
   using (escola_id = (select escola_id from current_perfil()))
@@ -106,17 +112,20 @@ create table if not exists public.historico_escolar (
   unique (escola_id, aluno_id, nivel)
 );
 
-create index historico_escolar_aluno_idx on historico_escolar (aluno_id);
+create index if not exists historico_escolar_aluno_idx on historico_escolar (aluno_id);
 
+drop trigger if exists historico_escolar_updated_at on historico_escolar;
 create trigger historico_escolar_updated_at
   before update on historico_escolar
   for each row execute function set_updated_at();
 
 alter table historico_escolar enable row level security;
 
+drop policy if exists historico_escolar_service on historico_escolar;
 create policy historico_escolar_service on historico_escolar
   for all to service_role using (true) with check (true);
 
+drop policy if exists historico_escolar_escola on historico_escolar;
 create policy historico_escolar_escola on historico_escolar
   for all to authenticated
   using (escola_id = (select escola_id from current_perfil()))
@@ -147,17 +156,20 @@ create table if not exists public.historico_anos (
   unique (historico_id, ano)
 );
 
-create index historico_anos_historico_idx on historico_anos (historico_id, ano);
+create index if not exists historico_anos_historico_idx on historico_anos (historico_id, ano);
 
+drop trigger if exists historico_anos_updated_at on historico_anos;
 create trigger historico_anos_updated_at
   before update on historico_anos
   for each row execute function set_updated_at();
 
 alter table historico_anos enable row level security;
 
+drop policy if exists historico_anos_service on historico_anos;
 create policy historico_anos_service on historico_anos
   for all to service_role using (true) with check (true);
 
+drop policy if exists historico_anos_escola on historico_anos;
 create policy historico_anos_escola on historico_anos
   for all to authenticated
   using (exists (
@@ -186,13 +198,15 @@ create table if not exists public.historico_notas (
   created_at timestamptz not null default now()
 );
 
-create index historico_notas_ano_idx on historico_notas (historico_ano_id, ordem);
+create index if not exists historico_notas_ano_idx on historico_notas (historico_ano_id, ordem);
 
 alter table historico_notas enable row level security;
 
+drop policy if exists historico_notas_service on historico_notas;
 create policy historico_notas_service on historico_notas
   for all to service_role using (true) with check (true);
 
+drop policy if exists historico_notas_escola on historico_notas;
 create policy historico_notas_escola on historico_notas
   for all to authenticated
   using (exists (

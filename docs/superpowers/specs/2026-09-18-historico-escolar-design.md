@@ -148,9 +148,12 @@ mesma semântica.
 
 ## Arquitetura
 
-Rota base `/secretaria/historico` em `src/app/(app)/`. Link manual no array do
+Rota base `/secretaria/historico` (implementado como `/historico` — não existe
+prefixo `/secretaria` neste projeto) em `src/app/(app)/`. Link manual no array do
 [topbar.tsx](src/components/layout/topbar.tsx) — os menus são hardcoded, RBAC só
-filtra. Permissões novas: `historico.editar` e `historico.emitir`, registradas em
+filtra. Permissões novas: `historico.editar` e `historico.emitir` (implementado
+como módulo `historico` + ações padrão read/create/update/delete — não há
+permissões nomeadas neste RBAC), registradas em
 `src/lib/auth/permissions.ts` (MODULOS + ROTA_PARA_MODULO) e no seed de
 `role_permissoes`.
 

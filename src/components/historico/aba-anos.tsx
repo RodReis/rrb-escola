@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import { removerAnoHistoricoAction, salvarAnoHistoricoAction } from "@/lib/actions/historico";
 import type { HistoricoData, NivelEnsino } from "@/lib/historico/tipos";
 
@@ -8,6 +9,7 @@ type Props = {
   nivel: NivelEnsino;
   series: Array<{ id: string; nome: string }>;
   historico: HistoricoData | null;
+  anosMatriculados: Array<{ ano: number; serieId: string; serieNome: string }>;
 };
 
 const RESULTADOS = [
@@ -17,11 +19,57 @@ const RESULTADOS = [
   { valor: "transferido", rotulo: "Transferido" }
 ];
 
-export function AbaAnos({ alunoId, nivel, series, historico }: Props) {
+export function AbaAnos({ alunoId, nivel, series, historico, anosMatriculados }: Props) {
   const anos = historico?.anos ?? [];
+
+  const jaNoHistorico = new Set(anos.map((a) => `${a.ano}-${a.serieId}`));
+  const anosDisponiveis = anosMatriculados.filter((m) => !jaNoHistorico.has(`${m.ano}-${m.serieId}`));
+  const [anoInternoSelecionado, setAnoInternoSelecionado] = useState<
+    { ano: number; serieId: string; serieNome: string } | null
+  >(anosDisponiveis[0] ?? null);
 
   return (
     <div className="space-y-4">
+      {anosDisponiveis.length > 0 && (
+        <form
+          action={salvarAnoHistoricoAction}
+          className="grid gap-4 rounded-lg border border-line bg-muted p-4 md:grid-cols-3"
+        >
+          <input type="hidden" name="alunoId" value={alunoId} />
+          <input type="hidden" name="nivel" value={nivel} />
+          <input type="hidden" name="origem" value="interna" />
+          <input type="hidden" name="resultado" value="cursando" />
+          <input type="hidden" name="ano" value={anoInternoSelecionado?.ano ?? ""} />
+          <input type="hidden" name="serieId" value={anoInternoSelecionado?.serieId ?? ""} />
+          <input type="hidden" name="serieNome" value={anoInternoSelecionado?.serieNome ?? ""} />
+
+          <label className="flex flex-col gap-1 text-sm md:col-span-2">
+            Ano cursado na escola
+            <select
+              value={anoInternoSelecionado ? `${anoInternoSelecionado.ano}-${anoInternoSelecionado.serieId}` : ""}
+              onChange={(e) => {
+                const encontrado = anosDisponiveis.find(
+                  (m) => `${m.ano}-${m.serieId}` === e.target.value
+                );
+                setAnoInternoSelecionado(encontrado ?? null);
+              }}
+              required
+              className="rounded border border-line bg-surface p-2"
+            >
+              {anosDisponiveis.map((m) => (
+                <option key={`${m.ano}-${m.serieId}`} value={`${m.ano}-${m.serieId}`}>
+                  {m.ano} — {m.serieNome}
+                </option>
+              ))}
+            </select>
+          </label>
+
+          <button type="submit" className="self-end rounded bg-brand px-4 py-2 text-paper">
+            Adicionar ano interno (EPG)
+          </button>
+        </form>
+      )}
+
       <form action={salvarAnoHistoricoAction} className="grid gap-4 rounded-lg border border-line p-4 md:grid-cols-4">
         <input type="hidden" name="alunoId" value={alunoId} />
         <input type="hidden" name="nivel" value={nivel} />
@@ -120,7 +168,30 @@ export function AbaAnos({ alunoId, nivel, series, historico }: Props) {
                 <td className="p-2">{a.serieNome}</td>
                 <td className="p-2">{a.origem === "interna" ? "EPG" : "Externa"}</td>
                 <td className="p-2">{a.instituicao ?? "—"}</td>
-                <td className="p-2">{a.resultado}</td>
+                <td className="p-2">
+                  {a.origem === "interna" && !a.congelado ? (
+                    <form action={salvarAnoHistoricoAction}>
+                      <input type="hidden" name="alunoId" value={alunoId} />
+                      <input type="hidden" name="nivel" value={nivel} />
+                      <input type="hidden" name="origem" value="interna" />
+                      <input type="hidden" name="ano" value={a.ano} />
+                      <input type="hidden" name="serieId" value={a.serieId ?? ""} />
+                      <input type="hidden" name="serieNome" value={a.serieNome} />
+                      <select
+                        name="resultado"
+                        defaultValue={a.resultado}
+                        onChange={(e) => e.currentTarget.form?.requestSubmit()}
+                        className="rounded border border-line bg-surface p-1 text-sm"
+                      >
+                        {RESULTADOS.map((r) => (
+                          <option key={r.valor} value={r.valor}>{r.rotulo}</option>
+                        ))}
+                      </select>
+                    </form>
+                  ) : (
+                    a.resultado
+                  )}
+                </td>
                 <td className="p-2">{a.diasLetivos ?? "—"}</td>
                 <td className="p-2">{a.cargaHoraria ?? "—"}</td>
                 <td className="p-2 text-right">

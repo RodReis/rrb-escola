@@ -69,9 +69,9 @@ const SECRETARIA_ITEMS: DropdownItem[] = [
     label: "Histórico Escolar",
     iconName: "FileText",
     children: [
-      { href: "/historico/associacoes", label: "Histórico — Associações", iconName: "FileText" },
-      { href: "/historico/notas", label: "Histórico — Entrada de Notas", iconName: "FileText" },
-      { href: "/historico/emissao", label: "Histórico — Emissão", iconName: "FileText" },
+      { href: "/historico/associacoes", label: "Associações", iconName: "FileText" },
+      { href: "/historico/notas", label: "Entrada de Notas", iconName: "FileText" },
+      { href: "/historico/emissao", label: "Emissão", iconName: "FileText" },
     ],
   },
   { href: "/portaria", label: "Portaria", iconName: "DoorOpen" },
