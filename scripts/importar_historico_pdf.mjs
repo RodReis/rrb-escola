@@ -33,7 +33,7 @@ function nivelDaSerie(serieNome) {
 }
 
 /** Nome comparavel: sem acento, maiusculo, sem espaco duplicado. */
-function chaveDisciplina(nome) {
+function chaveNome(nome) {
   return String(nome ?? "")
     .normalize("NFD")
     .replace(/\p{Diacritic}/gu, "")
@@ -120,12 +120,25 @@ async function main() {
     .select("id, nome")
     .eq("escola_id", ESCOLA_ID);
   if (erroDisc) throw erroDisc;
+
+  // serie_id liga o ano do historico a serie cadastrada — e por ela que a
+  // emissao acha a empresa (cabecalho, cidade e assinaturas do PDF).
+  const { data: seriesBase, error: erroSeries } = await db
+    .from("series")
+    .select("id, nome")
+    .eq("escola_id", ESCOLA_ID);
+  if (erroSeries) throw erroSeries;
+  const porSerie = new Map();
+  for (const s of seriesBase ?? []) {
+    const chave = chaveNome(s.nome);
+    if (chave && !porSerie.has(chave)) porSerie.set(chave, s.id);
+  }
   // O cadastro guarda os nomes sem acento ("MATEMATICA") e o PDF traz com
   // ("MATEMÁTICA"); comparamos normalizado. Ha varias linhas por disciplina
   // (uma por serie/turma) — qualquer id serve, e so para o vinculo opcional.
   const porDisciplina = new Map();
   for (const d of disciplinasBase ?? []) {
-    const chave = chaveDisciplina(d.nome);
+    const chave = chaveNome(d.nome);
     if (chave && !porDisciplina.has(chave)) porDisciplina.set(chave, d.id);
   }
 
@@ -221,6 +234,7 @@ async function main() {
           return {
             historico_id: historicoId,
             ano: ano.ano,
+            serie_id: porSerie.get(chaveNome(ano.serieNome)) ?? null,
             serie_nome: ano.serieNome,
             origem,
             instituicao: ano.instituicao,
@@ -259,7 +273,7 @@ async function main() {
         const linhasNota = aGravar.flatMap((ano) =>
           ano.notas.map((n) => ({
             historico_ano_id: idPorAno.get(ano.ano),
-            disciplina_id: porDisciplina.get(chaveDisciplina(n.disciplinaNome)) ?? null,
+            disciplina_id: porDisciplina.get(chaveNome(n.disciplinaNome)) ?? null,
             disciplina_nome: n.disciplinaNome,
             nota: n.nota,
             carga_horaria: n.cargaHoraria,

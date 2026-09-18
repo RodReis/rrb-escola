@@ -43,6 +43,18 @@ const COLUNAS_IMPRESSAS: Record<HistoricoData["nivel"], string[]> = {
   medio: CICLO_FUNDAMENTAL
 };
 
+/**
+ * Rótulo impresso da coluna. A série continua sendo "1ª SÉRIE" nos dados (é o
+ * nome cadastrado); no documento a escola imprime "1º MÉDIO".
+ */
+const ROTULO_COLUNA: Record<string, string> = {
+  "1ª SÉRIE": "1º MÉDIO",
+  "2ª SÉRIE": "2º MÉDIO",
+  "3ª SÉRIE": "3º MÉDIO"
+};
+
+const rotuloDaColuna = (serie: string) => ROTULO_COLUNA[serie] ?? serie;
+
 /** Espessuras das réguas: a externa fecha o bloco, a interna separa células. */
 const TRACO_BORDA = 0.7;
 const TRACO_CELULA = 0.3;
@@ -234,7 +246,7 @@ function desenharGrade(doc: jsPDF, dados: HistoricoData, yTopo: number): number 
   const yCabBase = ySerie - 13; // faixa "Média / C.H."
 
   colunas.forEach((coluna, i) => {
-    textoNaCelula(doc, coluna, g.xColuna(i), g.xFimColuna(i), ySerie + 4, 6.5, true);
+    textoNaCelula(doc, rotuloDaColuna(coluna), g.xColuna(i), g.xFimColuna(i), ySerie + 4, 6.5, true);
     if (g.exibeCh) {
       const meio = g.xMeioColuna(i);
       textoNaCelula(doc, "Média", g.xColuna(i), meio, yCabBase + 4, 5.5, true);
@@ -345,7 +357,7 @@ function desenharEstabelecimentos(doc: jsPDF, dados: HistoricoData, yTopo: numbe
   for (const coluna of colunas) {
     const ano = porSerie.get(coluna);
     const yBase = yAtual - alturaLinha;
-    texto(doc, coluna, xSerie + 3, yBase + 3, 7);
+    texto(doc, rotuloDaColuna(coluna), xSerie + 3, yBase + 3, 7);
     textoNaCelula(doc, ano ? String(ano.ano) : TRACO, xAno, xEstabelecimento, yBase + 3, 7);
     texto(doc, ano?.instituicao ?? TRACO, xEstabelecimento + 3, yBase + 3, 7);
     texto(doc, ano?.cidade ?? TRACO, xCidade + 3, yBase + 3, 7);

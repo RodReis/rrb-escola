@@ -141,3 +141,24 @@ describe("layout da grade não colide com o conteúdo abaixo", () => {
     expect(desenhos).toBeGreaterThan(20);
   });
 });
+
+describe("conteúdo do formulário oficial", () => {
+  it("imprime o Médio como 1º/2º/3º MÉDIO, não como série", async () => {
+    const itens = await textos(historicoCom(3));
+    const rotulos = itens.map((i) => i.texto);
+    expect(rotulos).toContain("1º MÉDIO");
+    expect(rotulos).toContain("3º MÉDIO");
+    // a série continua "1ª SÉRIE" nos dados; só o rótulo impresso muda
+    expect(rotulos).not.toContain("1ª SÉRIE");
+  });
+
+  it("imprime cabeçalho da escola, filiação e assinaturas", async () => {
+    const itens = await textos(historicoCom(3));
+    const rotulos = itens.map((i) => i.texto);
+    expect(rotulos).toContain("EPG TRINDADE");
+    expect(rotulos).toContain("PAI DE TAL e MAE DE TAL");
+    expect(rotulos).toContain("ROSSANIA BRÍGIDA RODRIGUES RIBEIRO BARBOSA");
+    expect(rotulos).toContain("RAFAELA MACHADO MARGARIDA BARROS");
+    expect(rotulos.some((t) => t.includes("TRINDADE-GO,"))).toBe(true);
+  });
+});

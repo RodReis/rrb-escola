@@ -1,4 +1,5 @@
 import { DEFAULT_SCHOOL_ID } from "@/lib/constants";
+import { montarFiliacao } from "@/lib/historico/filiacao";
 import { agregarNotasConsolidadas } from "@/lib/historico/medias";
 import type {
   HistoricoAno,
@@ -121,7 +122,22 @@ export async function getCredenciamentoVigente(
     .limit(1);
   if (error) throw error;
   const empresa = data?.[0]?.companies as unknown as Record<string, unknown> | null;
-  return empresa ? mapCredenciamento(empresa) : null;
+  if (empresa) return mapCredenciamento(empresa);
+
+  // Sem associação vigente para o ano (histórico antigo, associação só do ano
+  // corrente): cai para a associação mais recente da série. O cabeçalho e as
+  // assinaturas são da escola que emite hoje, não do ano cursado — sem isso o
+  // PDF saía sem cabeçalho, sem cidade e sem os nomes das signatárias.
+  const { data: recente, error: erroRecente } = await supabase
+    .from("historico_niveis_ensino")
+    .select("companies(*)")
+    .eq("escola_id", DEFAULT_SCHOOL_ID)
+    .eq("serie_id", serieId)
+    .order("ano_inicio", { ascending: false })
+    .limit(1);
+  if (erroRecente) throw erroRecente;
+  const fallback = recente?.[0]?.companies as unknown as Record<string, unknown> | null;
+  return fallback ? mapCredenciamento(fallback) : null;
 }
 
 /** Médias ao vivo de um ano interno, calculadas de notas_consolidadas. */
@@ -160,9 +176,14 @@ export async function getHistoricoAluno(
   if (erroHistorico) throw erroHistorico;
   if (!historico) return null;
 
-  // Nota: `nacionalidade`, `orgao_expedidor`, `data_expedicao` e `filiacao` não existem em `alunos`
-  // (ver supabase/migrations/202605130001_initial_schema.sql). Mapeados como null abaixo.
-  const [{ data: aluno, error: erroAluno }, { data: anosRows, error: erroAnos }] = await Promise.all([
+  // Nota: `nacionalidade`, `orgao_expedidor` e `data_expedicao` não existem em
+  // `alunos` (ver 202605130001_initial_schema.sql). Mapeados como null abaixo.
+  // A filiação do histórico vem dos responsáveis com parentesco de pai/mãe.
+  const [
+    { data: aluno, error: erroAluno },
+    { data: anosRows, error: erroAnos },
+    { data: responsaveis, error: erroResponsaveis }
+  ] = await Promise.all([
     supabase
       .from("alunos")
       .select("id, nome, cpf, matricula_codigo, data_nascimento, naturalidade, rg")
@@ -173,11 +194,23 @@ export async function getHistoricoAluno(
       .from("historico_anos")
       .select("*, historico_notas(*)")
       .eq("historico_id", historico.id as string)
-      .order("ano")
+      .order("ano"),
+    supabase
+      .from("responsaveis_aluno")
+      .select("nome, parentesco")
+      .eq("aluno_id", alunoId)
   ]);
   if (erroAluno) throw erroAluno;
   if (erroAnos) throw erroAnos;
+  if (erroResponsaveis) throw erroResponsaveis;
   if (!aluno) return null;
+
+  const filiacao = montarFiliacao(
+    (responsaveis ?? []).map((r) => ({
+      nome: r.nome as string,
+      parentesco: (r.parentesco as string) ?? null
+    }))
+  );
 
   const anos: HistoricoAno[] = [];
   for (const row of anosRows ?? []) {
@@ -229,7 +262,7 @@ export async function getHistoricoAluno(
       nome: aluno.nome as string,
       cpf: (aluno.cpf as string) ?? null,
       matricula: (aluno.matricula_codigo as string) ?? null,
-      filiacao: null,
+      filiacao,
       dataNascimento: (aluno.data_nascimento as string) ?? null,
       naturalidade: (aluno.naturalidade as string) ?? null,
       nacionalidade: null,
