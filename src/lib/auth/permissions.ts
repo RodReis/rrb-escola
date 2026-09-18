@@ -43,6 +43,7 @@ export const MODULOS = {
   pipeline: { grupo: "secretaria", nome: "Pipeline / Captação" },
   pipeline_admin: { grupo: "secretaria", nome: "Pipeline / Admin" },
   pipeline_sensivel: { grupo: "secretaria", nome: "Pipeline / Dados Sensíveis" },
+  historico: { grupo: "secretaria", nome: "Histórico Escolar" },
   // financeiro
   "financeiro.cobrancas": { grupo: "financeiro", nome: "Cobranças & Pagamentos" },
   "financeiro.tesouraria": { grupo: "financeiro", nome: "Tesouraria" },
@@ -107,6 +108,7 @@ export function modulosDoGrupo(grupo: Grupo): ModuloCodigo[] {
 // Sub-routes (e.g. /alunos/[id]/editar) inherit from their parent entry.
 export const ROTA_PARA_MODULO: Record<string, ModuloCodigo> = {
   "/alunos": "alunos",
+  "/historico": "historico",
   "/eventos": "eventos",
   "/comercial/produtos": "comercial.produtos",
   "/comercial/vendas": "comercial.vendas",
