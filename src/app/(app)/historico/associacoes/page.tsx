@@ -6,7 +6,7 @@ import { getAcademicData } from "@/lib/data/lookups";
 
 export default async function AssociacoesPage() {
   await requirePermission("historico", "read");
-  const [{ series }, credenciamentos, associacoes] = await Promise.all([
+  const [{ series }, empresas, associacoes] = await Promise.all([
     getAcademicData(),
     listarCredenciamentos(),
     listarNiveisEnsino()
@@ -21,7 +21,7 @@ export default async function AssociacoesPage() {
         </p>
       </header>
 
-      <AssociacaoForm series={series} credenciamentos={credenciamentos} />
+      <AssociacaoForm series={series} empresas={empresas} />
       <AssociacoesTabela associacoes={associacoes} />
     </div>
   );

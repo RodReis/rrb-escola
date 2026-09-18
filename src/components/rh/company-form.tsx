@@ -47,6 +47,74 @@ export function CompanyForm({ action, company, submitLabel = "Salvar" }: Props) 
         </label>
       ) : null}
 
+      {company ? (
+        <>
+          <div className="md:col-span-2 border-t border-line pt-4 text-sm font-medium text-muted">
+            Dados para o histórico escolar
+          </div>
+
+          <label className="md:col-span-2">
+            Endereço
+            <input name="endereco" defaultValue={company.endereco ?? ""} placeholder="Rua, número, bairro" />
+          </label>
+
+          <label>
+            Cidade
+            <input name="cidade" defaultValue={company.cidade ?? ""} />
+          </label>
+
+          <div className="grid grid-cols-2 gap-4">
+            <label>
+              UF
+              <input name="uf" maxLength={2} defaultValue={company.uf ?? ""} />
+            </label>
+            <label>
+              CEP
+              <input name="cep" defaultValue={company.cep ?? ""} placeholder="00000-000" />
+            </label>
+          </div>
+
+          <label className="md:col-span-2">
+            Resolução / credenciamento
+            <input
+              name="resolucao"
+              defaultValue={company.resolucao ?? ""}
+              placeholder="Ex.: RENOVAÇÃO DE RECONHECIMENTO, RESOLUÇÃO CEE/CEB Nº 000/0000"
+            />
+          </label>
+
+          <label>
+            Telefones
+            <input name="telefones" defaultValue={company.telefones ?? ""} />
+          </label>
+
+          <label>
+            E-mail
+            <input name="email" type="email" defaultValue={company.email ?? ""} />
+          </label>
+
+          <label>
+            Nome da secretária
+            <input name="secretarioNome" defaultValue={company.secretario_nome ?? ""} />
+          </label>
+
+          <label>
+            Cargo da secretária
+            <input name="secretarioCargo" defaultValue={company.secretario_cargo ?? "Secretário(a)"} />
+          </label>
+
+          <label>
+            Nome da diretora
+            <input name="diretorNome" defaultValue={company.diretor_nome ?? ""} />
+          </label>
+
+          <label>
+            Cargo da diretora
+            <input name="diretorCargo" defaultValue={company.diretor_cargo ?? "Diretor(a)"} />
+          </label>
+        </>
+      ) : null}
+
       <div className="md:col-span-2 flex justify-end gap-2">
         <Button type="submit" variant="primary">{submitLabel}</Button>
       </div>

@@ -13,17 +13,18 @@ export type NivelEnsinoRow = {
   id: string;
   serieId: string;
   serieNome: string;
-  credenciamentoId: string;
-  credenciamentoNome: string;
+  companyId: string;
+  companyNome: string;
   nivel: NivelEnsino;
   anoInicio: number;
   anoFim: number;
 };
 
+/** `companies` (RH) fornece a identidade jurídica e os dados de cabeçalho do histórico. */
 function mapCredenciamento(row: Record<string, unknown>): HistoricoCredenciamento {
   return {
-    razaoSocial: (row.razao_social as string) ?? "",
-    nomeFantasia: (row.nome_fantasia as string) ?? "",
+    razaoSocial: (row.name as string) ?? "",
+    nomeFantasia: (row.name as string) ?? "",
     cnpj: (row.cnpj as string) ?? null,
     resolucao: (row.resolucao as string) ?? null,
     endereco: (row.endereco as string) ?? null,
@@ -40,15 +41,16 @@ function mapCredenciamento(row: Record<string, unknown>): HistoricoCredenciament
   };
 }
 
+/** Empresas do RH, elegíveis para associar a uma série no histórico escolar. */
 export async function listarCredenciamentos() {
   const supabase = await createServerClient();
   const { data, error } = await supabase
-    .from("historico_credenciamentos")
-    .select("id, nome_fantasia")
-    .eq("escola_id", DEFAULT_SCHOOL_ID)
-    .order("nome_fantasia");
+    .from("companies")
+    .select("id, name")
+    .eq("ativo", true)
+    .order("name");
   if (error) throw error;
-  return (data ?? []).map((r) => ({ id: r.id as string, nomeFantasia: r.nome_fantasia as string }));
+  return (data ?? []).map((r) => ({ id: r.id as string, nomeFantasia: r.name as string }));
 }
 
 /** Anos que o aluno de fato cursou nesta escola, a partir de `matriculas` — fonte de verdade para anos internos. */
@@ -82,20 +84,20 @@ export async function listarNiveisEnsino(): Promise<NivelEnsinoRow[]> {
   const supabase = await createServerClient();
   const { data, error } = await supabase
     .from("historico_niveis_ensino")
-    .select("id, serie_id, nivel, ano_inicio, ano_fim, series(nome), historico_credenciamentos(id, nome_fantasia)")
+    .select("id, serie_id, nivel, ano_inicio, ano_fim, series(nome), companies(id, name)")
     .eq("escola_id", DEFAULT_SCHOOL_ID)
     .order("ano_inicio", { ascending: false });
   if (error) throw error;
 
   return (data ?? []).map((row) => {
     const serie = row.series as { nome?: string } | null;
-    const cred = row.historico_credenciamentos as { id?: string; nome_fantasia?: string } | null;
+    const empresa = row.companies as { id?: string; name?: string } | null;
     return {
       id: row.id as string,
       serieId: row.serie_id as string,
       serieNome: serie?.nome ?? "",
-      credenciamentoId: cred?.id ?? "",
-      credenciamentoNome: cred?.nome_fantasia ?? "",
+      companyId: empresa?.id ?? "",
+      companyNome: empresa?.name ?? "",
       nivel: row.nivel as NivelEnsino,
       anoInicio: row.ano_inicio as number,
       anoFim: row.ano_fim as number
@@ -110,7 +112,7 @@ export async function getCredenciamentoVigente(
   const supabase = await createServerClient();
   const { data, error } = await supabase
     .from("historico_niveis_ensino")
-    .select("historico_credenciamentos(*)")
+    .select("companies(*)")
     .eq("escola_id", DEFAULT_SCHOOL_ID)
     .eq("serie_id", serieId)
     .lte("ano_inicio", ano)
@@ -118,8 +120,8 @@ export async function getCredenciamentoVigente(
     .order("ano_inicio", { ascending: false })
     .limit(1);
   if (error) throw error;
-  const cred = data?.[0]?.historico_credenciamentos as unknown as Record<string, unknown> | null;
-  return cred ? mapCredenciamento(cred) : null;
+  const empresa = data?.[0]?.companies as unknown as Record<string, unknown> | null;
+  return empresa ? mapCredenciamento(empresa) : null;
 }
 
 /** Médias ao vivo de um ano interno, calculadas de notas_consolidadas. */

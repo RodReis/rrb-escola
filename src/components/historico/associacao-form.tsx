@@ -4,7 +4,7 @@ import { salvarAssociacaoAction } from "@/lib/actions/historico";
 
 type Props = {
   series: Array<{ id: string; nome: string }>;
-  credenciamentos: Array<{ id: string; nomeFantasia: string }>;
+  empresas: Array<{ id: string; nomeFantasia: string }>;
 };
 
 const NIVEIS = [
@@ -14,7 +14,7 @@ const NIVEIS = [
   { valor: "medio", rotulo: "Ensino Médio" }
 ];
 
-export function AssociacaoForm({ series, credenciamentos }: Props) {
+export function AssociacaoForm({ series, empresas }: Props) {
   const anoAtual = new Date().getFullYear();
 
   return (
@@ -31,10 +31,10 @@ export function AssociacaoForm({ series, credenciamentos }: Props) {
 
       <label className="flex flex-col gap-1 text-sm">
         Empresa
-        <select name="credenciamentoId" required className="rounded border border-line bg-surface p-2">
+        <select name="companyId" required className="rounded border border-line bg-surface p-2">
           <option value="">Selecione</option>
-          {credenciamentos.map((c) => (
-            <option key={c.id} value={c.id}>{c.nomeFantasia}</option>
+          {empresas.map((e) => (
+            <option key={e.id} value={e.id}>{e.nomeFantasia}</option>
           ))}
         </select>
       </label>

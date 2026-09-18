@@ -34,7 +34,7 @@ export function AssociacoesTabela({ associacoes }: { associacoes: NivelEnsinoRow
         {associacoes.map((a) => (
           <tr key={a.id} className="border-t border-line">
             <td className="p-2">{a.serieNome}</td>
-            <td className="p-2">{a.credenciamentoNome}</td>
+            <td className="p-2">{a.companyNome}</td>
             <td className="p-2">{NIVEL_ROTULO[a.nivel] ?? a.nivel}</td>
             <td className="p-2">{a.anoInicio} – {a.anoFim}</td>
             <td className="p-2 text-right">

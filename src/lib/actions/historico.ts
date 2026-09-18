@@ -196,11 +196,11 @@ export async function salvarNotasAnoAction(formData: FormData) {
 export async function salvarAssociacaoAction(formData: FormData) {
   await requirePermission("historico", "create");
   const serieId = formText(formData, "serieId");
-  const credenciamentoId = formText(formData, "credenciamentoId");
+  const companyId = formText(formData, "companyId");
   const nivel = formText(formData, "nivel") as NivelEnsino;
   const anoInicio = formNumber(formData, "anoInicio");
   const anoFim = formNumber(formData, "anoFim");
-  if (!serieId || !credenciamentoId || !nivel || !anoInicio || !anoFim) return;
+  if (!serieId || !companyId || !nivel || !anoInicio || !anoFim) return;
 
   const supabase = await createServerClient();
   const { data: existentes, error: erroBusca } = await supabase
@@ -223,7 +223,7 @@ export async function salvarAssociacaoAction(formData: FormData) {
   const { error } = await supabase.from("historico_niveis_ensino").insert({
     escola_id: DEFAULT_SCHOOL_ID,
     serie_id: serieId,
-    credenciamento_id: credenciamentoId,
+    company_id: companyId,
     nivel,
     ano_inicio: anoInicio,
     ano_fim: anoFim
