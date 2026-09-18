@@ -39,7 +39,17 @@ export default async function EmissaoPage({ searchParams }: Props) {
         anoLetivo={anoLetivo}
         nivel={nivel}
         series={series.map((s) => ({ id: s.id as string, nome: s.nome as string }))}
-        turmas={turmas.map((t) => ({ id: t.id as string, nome: t.nome as string }))}
+        turmas={turmas.map((t) => {
+          const serie = t.series as { nome?: string } | null;
+          return {
+            id: t.id as string,
+            nome: t.nome as string,
+            turno: t.turno as string,
+            serieId: t.serie_id as string,
+            serieNome: serie?.nome ?? "",
+            anoLetivo: t.ano_letivo as number
+          };
+        })}
         elegiveis={elegiveis}
       />
     </div>

@@ -1,19 +1,41 @@
 "use client";
 
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useState } from "react";
 import { carregarHistoricosAction } from "@/lib/actions/historico";
 import { renderHistoricos } from "@/lib/documents/historico-pdf";
 import { separarElegiveis, type AlunoElegivel } from "@/lib/historico/elegiveis";
 import type { NivelEnsino } from "@/lib/historico/tipos";
 
+type Turma = {
+  id: string;
+  nome: string;
+  turno: string;
+  serieId: string;
+  serieNome: string;
+  anoLetivo: number;
+};
+
 type Props = {
   anoLetivo: number;
   nivel: NivelEnsino;
   series: Array<{ id: string; nome: string }>;
-  turmas: Array<{ id: string; nome: string }>;
+  turmas: Turma[];
   elegiveis: AlunoElegivel[];
 };
+
+const TURNO_LABEL: Record<string, string> = {
+  matutino: "Matutino",
+  vespertino: "Vespertino",
+  integral: "Integral",
+  noturno: "Noturno"
+};
+
+function rotuloTurma(t: Turma): string {
+  const turno = TURNO_LABEL[t.turno.toLowerCase()] ?? t.turno;
+  const nome = t.nome && t.nome.toLowerCase() !== t.turno.toLowerCase() ? `${t.nome} — ` : "";
+  return `${nome}${t.serieNome} · ${turno} · ${t.anoLetivo}`;
+}
 
 async function logoParaDataUrl(): Promise<string | undefined> {
   try {
@@ -32,6 +54,12 @@ async function logoParaDataUrl(): Promise<string | undefined> {
 
 export function EmissaoForm({ anoLetivo, nivel, series, turmas, elegiveis }: Props) {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const serieSelecionada = searchParams.get("serie") ?? "";
+  const turmaSelecionada = searchParams.get("turma") ?? "";
+  const turmasDaSerie = serieSelecionada
+    ? turmas.filter((t) => t.serieId === serieSelecionada && t.anoLetivo === anoLetivo)
+    : turmas.filter((t) => t.anoLetivo === anoLetivo);
   const { prontos, pendentes } = separarElegiveis(elegiveis);
   const [selecionados, setSelecionados] = useState<string[]>([]);
   const [emitindo, setEmitindo] = useState(false);
@@ -70,6 +98,8 @@ export function EmissaoForm({ anoLetivo, nivel, series, turmas, elegiveis }: Pro
 
   function aplicarFiltro(campo: "serie" | "turma", valor: string) {
     const params = new URLSearchParams({ ano: String(anoLetivo), nivel });
+    if (campo !== "serie" && serieSelecionada) params.set("serie", serieSelecionada);
+    if (campo !== "turma" && turmaSelecionada) params.set("turma", turmaSelecionada);
     if (valor) params.set(campo, valor);
     router.push(`/historico/emissao?${params.toString()}`);
   }
@@ -91,8 +121,12 @@ export function EmissaoForm({ anoLetivo, nivel, series, turmas, elegiveis }: Pro
 
         <label className="flex flex-col gap-1 text-sm">
           Série
-          <select onChange={(e) => aplicarFiltro("serie", e.target.value)} className="rounded border border-line bg-surface p-2">
-            <option value="">Nenhum</option>
+          <select
+            value={serieSelecionada}
+            onChange={(e) => aplicarFiltro("serie", e.target.value)}
+            className="rounded border border-line bg-surface p-2"
+          >
+            <option value="">Todas as séries</option>
             {series.map((s) => (
               <option key={s.id} value={s.id}>{s.nome}</option>
             ))}
@@ -101,10 +135,15 @@ export function EmissaoForm({ anoLetivo, nivel, series, turmas, elegiveis }: Pro
 
         <label className="flex flex-col gap-1 text-sm">
           Turma
-          <select onChange={(e) => aplicarFiltro("turma", e.target.value)} className="rounded border border-line bg-surface p-2">
-            <option value="">Nenhum</option>
-            {turmas.map((t) => (
-              <option key={t.id} value={t.id}>{t.nome}</option>
+          <select
+            value={turmaSelecionada}
+            onChange={(e) => aplicarFiltro("turma", e.target.value)}
+            disabled={turmasDaSerie.length === 0}
+            className="rounded border border-line bg-surface p-2 disabled:opacity-50"
+          >
+            <option value="">Todas as turmas</option>
+            {turmasDaSerie.map((t) => (
+              <option key={t.id} value={t.id}>{rotuloTurma(t)}</option>
             ))}
           </select>
         </label>
