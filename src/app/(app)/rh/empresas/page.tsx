@@ -2,7 +2,7 @@ import { Plus, Building2 } from "lucide-react";
 import { ButtonLink } from "@/components/ui/button";
 import { PageHeader } from "@/components/ui/page-header";
 import { CompanyCard } from "@/components/rh/company-card";
-import { CompanyStatusBanner } from "@/components/rh/company-status-banner";
+import { StatusBanner } from "@/components/ui/status-banner";
 import { listCompanies, getCompanySummary } from "@/lib/data/rh";
 import { requirePermission } from "@/lib/auth/session";
 
@@ -48,7 +48,11 @@ export default async function EmpresasPage({
         ]}
       />
 
-      <CompanyStatusBanner ok={params.ok} erro={params.erro} />
+      <StatusBanner
+        ok={params.ok ? `Empresa ${params.ok} com sucesso.` : undefined}
+        erro={params.erro}
+        rota="/rh/empresas"
+      />
 
       {companies.length === 0 ? (
         <div className="flex flex-col items-center justify-center gap-2 rounded-panel border border-line bg-surface py-14 text-ink/60">

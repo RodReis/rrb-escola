@@ -7,21 +7,23 @@ import { useEffect } from "react";
 type Props = {
   ok?: string;
   erro?: string;
+  /** Rota (sem query string) para onde limpar a URL após exibir a mensagem. */
+  rota: string;
 };
 
 /**
- * Mostra a mensagem de sucesso/erro vinda do redirect da Server Action e,
- * na sequência, limpa `?ok=`/`?erro=` da URL — senão um F5 reexibe a
+ * Mostra a mensagem de sucesso/erro vinda do redirect de uma Server Action
+ * e, na sequência, limpa `?ok=`/`?erro=` da URL — senão um F5 reexibe a
  * mensagem como se a ação tivesse acabado de acontecer de novo.
  */
-export function CompanyStatusBanner({ ok, erro }: Props) {
+export function StatusBanner({ ok, erro, rota }: Props) {
   const router = useRouter();
 
   useEffect(() => {
     if (!ok && !erro) return;
-    const timeout = setTimeout(() => router.replace("/rh/empresas"), 4000);
+    const timeout = setTimeout(() => router.replace(rota), 4000);
     return () => clearTimeout(timeout);
-  }, [ok, erro, router]);
+  }, [ok, erro, rota, router]);
 
   if (!ok && !erro) return null;
 
@@ -30,7 +32,7 @@ export function CompanyStatusBanner({ ok, erro }: Props) {
       {ok ? (
         <div className="flex items-center gap-2 rounded-ui bg-success/10 p-3 text-sm font-semibold text-success">
           <CheckCircle2 size={16} />
-          Empresa {ok} com sucesso.
+          {ok}
         </div>
       ) : null}
       {erro ? (
