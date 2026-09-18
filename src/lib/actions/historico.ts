@@ -3,10 +3,11 @@
 import { revalidatePath } from "next/cache";
 import { requirePermission } from "@/lib/auth/session";
 import { DEFAULT_SCHOOL_ID } from "@/lib/constants";
+import { getHistoricoAluno } from "@/lib/data/historico";
 import { deveCongelar } from "@/lib/historico/congelamento";
 import { validarNovaAssociacao } from "@/lib/historico/associacoes";
 import { mediaAnual } from "@/lib/historico/medias";
-import type { NivelEnsino, OrigemHistorico, ResultadoHistorico } from "@/lib/historico/tipos";
+import type { HistoricoData, NivelEnsino, OrigemHistorico, ResultadoHistorico } from "@/lib/historico/tipos";
 import { createServerClient } from "@/lib/supabase/server";
 import { formNumber, formText } from "@/lib/utils";
 
@@ -248,4 +249,14 @@ export async function removerAssociacaoAction(formData: FormData) {
     .eq("escola_id", DEFAULT_SCHOOL_ID);
   if (error) throw error;
   revalidatePath("/historico/associacoes");
+}
+
+/** Carrega os HistoricoData dos alunos selecionados para o gerador de PDF no cliente. */
+export async function carregarHistoricosAction(
+  alunoIds: string[],
+  nivel: NivelEnsino
+): Promise<HistoricoData[]> {
+  await requirePermission("historico", "read");
+  const historicos = await Promise.all(alunoIds.map((id) => getHistoricoAluno(id, nivel)));
+  return historicos.filter((h): h is HistoricoData => h !== null);
 }
