@@ -11,7 +11,7 @@ type Props = {
 
 export function AbaObservacao({ alunoId, nivel, historico }: Props) {
   return (
-    <form action={salvarObservacaoAction} className="space-y-4 rounded-lg border border-border p-4">
+    <form action={salvarObservacaoAction} className="space-y-4 rounded-lg border border-line p-4">
       <input type="hidden" name="alunoId" value={alunoId} />
       <input type="hidden" name="nivel" value={nivel} />
       <label className="flex flex-col gap-1 text-sm">
@@ -20,10 +20,10 @@ export function AbaObservacao({ alunoId, nivel, historico }: Props) {
           name="observacoes"
           rows={10}
           defaultValue={historico?.observacoes ?? ""}
-          className="rounded border border-border bg-background p-2"
+          className="rounded border border-line bg-surface p-2"
         />
       </label>
-      <button type="submit" className="rounded bg-primary px-4 py-2 text-primary-foreground">
+      <button type="submit" className="rounded bg-brand px-4 py-2 text-paper">
         Gravar
       </button>
     </form>

@@ -21,7 +21,7 @@ export default async function EntradaNotasPage({ searchParams }: Props) {
     <div className="space-y-6 p-6">
       <header>
         <h1 className="text-2xl font-semibold">Histórico Escolar — Entrada de Notas</h1>
-        <p className="text-sm text-muted-foreground">
+        <p className="text-sm text-muted">
           Acadêmico / Histórico e Certificado / Histórico Escolar — Entrada de notas
         </p>
       </header>

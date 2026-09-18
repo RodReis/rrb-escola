@@ -46,7 +46,7 @@ export function HistoricoAbas({ alunos, series, alunoId, nivel, historico }: Pro
           <select
             value={alunoId}
             onChange={(e) => navegar(e.target.value, nivel)}
-            className="rounded border border-border bg-background p-2"
+            className="rounded border border-line bg-surface p-2"
           >
             <option value="">Selecione um aluno</option>
             {alunos.map((a) => (
@@ -60,7 +60,7 @@ export function HistoricoAbas({ alunos, series, alunoId, nivel, historico }: Pro
           <select
             value={nivel}
             onChange={(e) => navegar(alunoId, e.target.value)}
-            className="rounded border border-border bg-background p-2"
+            className="rounded border border-line bg-surface p-2"
           >
             {NIVEIS.map((n) => (
               <option key={n.valor} value={n.valor}>{n.rotulo}</option>
@@ -70,7 +70,7 @@ export function HistoricoAbas({ alunos, series, alunoId, nivel, historico }: Pro
       </div>
 
       {!alunoId ? (
-        <p className="rounded-lg border border-border p-6 text-center text-sm text-muted-foreground">
+        <p className="rounded-lg border border-line p-6 text-center text-sm text-muted">
           Selecione um aluno para carregar o histórico.
         </p>
       ) : (
@@ -83,8 +83,8 @@ export function HistoricoAbas({ alunos, series, alunoId, nivel, historico }: Pro
                 onClick={() => setAba(a.id)}
                 className={
                   aba === a.id
-                    ? "rounded bg-primary px-4 py-2 text-sm text-primary-foreground"
-                    : "rounded border border-border px-4 py-2 text-sm"
+                    ? "rounded bg-brand px-4 py-2 text-sm text-paper"
+                    : "rounded border border-line px-4 py-2 text-sm"
                 }
               >
                 {a.rotulo}

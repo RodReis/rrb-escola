@@ -16,7 +16,7 @@ export default async function AssociacoesPage() {
     <div className="space-y-6 p-6">
       <header>
         <h1 className="text-2xl font-semibold">Histórico Escolar — Associação Série/Turma e Empresa</h1>
-        <p className="text-sm text-muted-foreground">
+        <p className="text-sm text-muted">
           Define qual empresa e credenciamento aparecem no histórico de cada série, e em que período.
         </p>
       </header>

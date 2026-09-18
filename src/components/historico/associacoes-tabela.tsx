@@ -13,7 +13,7 @@ const NIVEL_ROTULO: Record<string, string> = {
 export function AssociacoesTabela({ associacoes }: { associacoes: NivelEnsinoRow[] }) {
   if (associacoes.length === 0) {
     return (
-      <p className="rounded-lg border border-border p-6 text-center text-sm text-muted-foreground">
+      <p className="rounded-lg border border-line p-6 text-center text-sm text-muted">
         Não há nada para mostrar aqui
       </p>
     );
@@ -32,7 +32,7 @@ export function AssociacoesTabela({ associacoes }: { associacoes: NivelEnsinoRow
       </thead>
       <tbody>
         {associacoes.map((a) => (
-          <tr key={a.id} className="border-t border-border">
+          <tr key={a.id} className="border-t border-line">
             <td className="p-2">{a.serieNome}</td>
             <td className="p-2">{a.credenciamentoNome}</td>
             <td className="p-2">{NIVEL_ROTULO[a.nivel] ?? a.nivel}</td>
@@ -40,7 +40,7 @@ export function AssociacoesTabela({ associacoes }: { associacoes: NivelEnsinoRow
             <td className="p-2 text-right">
               <form action={removerAssociacaoAction}>
                 <input type="hidden" name="id" value={a.id} />
-                <button type="submit" className="text-sm text-destructive">Remover</button>
+                <button type="submit" className="text-sm text-clay">Remover</button>
               </form>
             </td>
           </tr>

@@ -18,10 +18,10 @@ export function AssociacaoForm({ series, credenciamentos }: Props) {
   const anoAtual = new Date().getFullYear();
 
   return (
-    <form action={salvarAssociacaoAction} className="grid gap-4 rounded-lg border border-border p-4 md:grid-cols-5">
+    <form action={salvarAssociacaoAction} className="grid gap-4 rounded-lg border border-line p-4 md:grid-cols-5">
       <label className="flex flex-col gap-1 text-sm">
         Série
-        <select name="serieId" required className="rounded border border-border bg-background p-2">
+        <select name="serieId" required className="rounded border border-line bg-surface p-2">
           <option value="">Selecione</option>
           {series.map((s) => (
             <option key={s.id} value={s.id}>{s.nome}</option>
@@ -31,7 +31,7 @@ export function AssociacaoForm({ series, credenciamentos }: Props) {
 
       <label className="flex flex-col gap-1 text-sm">
         Empresa
-        <select name="credenciamentoId" required className="rounded border border-border bg-background p-2">
+        <select name="credenciamentoId" required className="rounded border border-line bg-surface p-2">
           <option value="">Selecione</option>
           {credenciamentos.map((c) => (
             <option key={c.id} value={c.id}>{c.nomeFantasia}</option>
@@ -41,7 +41,7 @@ export function AssociacaoForm({ series, credenciamentos }: Props) {
 
       <label className="flex flex-col gap-1 text-sm">
         Nível de ensino
-        <select name="nivel" required className="rounded border border-border bg-background p-2">
+        <select name="nivel" required className="rounded border border-line bg-surface p-2">
           {NIVEIS.map((n) => (
             <option key={n.valor} value={n.valor}>{n.rotulo}</option>
           ))}
@@ -51,16 +51,16 @@ export function AssociacaoForm({ series, credenciamentos }: Props) {
       <label className="flex flex-col gap-1 text-sm">
         Ano início
         <input type="number" name="anoInicio" required defaultValue={anoAtual}
-          className="rounded border border-border bg-background p-2" />
+          className="rounded border border-line bg-surface p-2" />
       </label>
 
       <label className="flex flex-col gap-1 text-sm">
         Ano final
         <input type="number" name="anoFim" required defaultValue={anoAtual}
-          className="rounded border border-border bg-background p-2" />
+          className="rounded border border-line bg-surface p-2" />
       </label>
 
-      <button type="submit" className="md:col-span-5 rounded bg-primary px-4 py-2 text-primary-foreground">
+      <button type="submit" className="md:col-span-5 rounded bg-brand px-4 py-2 text-paper">
         Gravar
       </button>
     </form>

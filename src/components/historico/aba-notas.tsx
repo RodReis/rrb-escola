@@ -11,7 +11,7 @@ export function AbaNotas({ historico }: { historico: HistoricoData | null }) {
 
   if (anos.length === 0) {
     return (
-      <p className="rounded-lg border border-border p-6 text-sm text-muted-foreground">
+      <p className="rounded-lg border border-line p-6 text-sm text-muted">
         Cadastre um ano na aba “Escolas anteriores” antes de lançar notas.
       </p>
     );
@@ -26,7 +26,7 @@ export function AbaNotas({ historico }: { historico: HistoricoData | null }) {
         <select
           value={anoId}
           onChange={(e) => setAnoId(e.target.value)}
-          className="rounded border border-border bg-background p-2"
+          className="rounded border border-line bg-surface p-2"
         >
           {anos.map((a) => (
             <option key={a.id} value={a.id}>{a.ano} — {a.serieNome}</option>
@@ -35,7 +35,7 @@ export function AbaNotas({ historico }: { historico: HistoricoData | null }) {
       </label>
 
       {somenteLeitura && (
-        <p className="rounded border border-border bg-muted p-3 text-sm text-muted-foreground">
+        <p className="rounded border border-line bg-muted p-3 text-sm text-muted">
           Notas calculadas das avaliações da EPG. Congelam quando este ano receber um resultado final.
         </p>
       )}
@@ -51,9 +51,9 @@ export function AbaNotas({ historico }: { historico: HistoricoData | null }) {
         </thead>
         <tbody>
           {(ano?.notas ?? []).map((n, i) => (
-            <tr key={`${n.disciplinaNome}-${i}`} className="border-t border-border">
+            <tr key={`${n.disciplinaNome}-${i}`} className="border-t border-line">
               <td className="p-2">{n.disciplinaNome}</td>
-              <td className={somenteLeitura ? "p-2 text-muted-foreground" : "p-2"}>
+              <td className={somenteLeitura ? "p-2 text-muted" : "p-2"}>
                 {n.nota === null ? "—" : n.nota.toFixed(1).replace(".", ",")}
               </td>
               <td className="p-2">{n.cargaHoraria ?? "—"}</td>
@@ -67,7 +67,7 @@ export function AbaNotas({ historico }: { historico: HistoricoData | null }) {
         <form action={salvarNotasAnoAction} className="space-y-2">
           <input type="hidden" name="historicoAnoId" value={ano.id} />
           <input type="hidden" name="notas" value={JSON.stringify(ano.notas)} />
-          <button type="submit" className="rounded bg-primary px-4 py-2 text-primary-foreground">
+          <button type="submit" className="rounded bg-brand px-4 py-2 text-paper">
             Gravar notas
           </button>
         </form>
