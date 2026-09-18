@@ -2,6 +2,7 @@
 
 import { useRouter, useSearchParams } from "next/navigation";
 import { useState } from "react";
+import { StudentCombobox } from "@/components/matriculas/student-combobox";
 import { carregarHistoricosAction } from "@/lib/actions/historico";
 import { renderHistoricos } from "@/lib/documents/historico-pdf";
 import { separarElegiveis, type AlunoElegivel } from "@/lib/historico/elegiveis";
@@ -16,11 +17,14 @@ type Turma = {
   anoLetivo: number;
 };
 
+type Aluno = { id: string; nome: string; matricula_codigo: string };
+
 type Props = {
   anoLetivo: number;
   nivel: NivelEnsino;
   series: Array<{ id: string; nome: string }>;
   turmas: Turma[];
+  alunos: Aluno[];
   elegiveis: AlunoElegivel[];
 };
 
@@ -52,11 +56,15 @@ async function logoParaDataUrl(): Promise<string | undefined> {
   }
 }
 
-export function EmissaoForm({ anoLetivo, nivel, series, turmas, elegiveis }: Props) {
+export function EmissaoForm({ anoLetivo, nivel, series, turmas, alunos, elegiveis }: Props) {
   const router = useRouter();
   const searchParams = useSearchParams();
   const serieSelecionada = searchParams.get("serie") ?? "";
   const turmaSelecionada = searchParams.get("turma") ?? "";
+  const alunoSelecionado = searchParams.get("aluno") ?? "";
+  // O modo e estado proprio: inferir de `aluno` fazia a combo voltar para
+  // "Serie / Turma" enquanto nenhum aluno tivesse sido escolhido ainda.
+  const porAluno = searchParams.get("modo") === "aluno";
   const turmasDaSerie = serieSelecionada
     ? turmas.filter((t) => t.serieId === serieSelecionada && t.anoLetivo === anoLetivo)
     : turmas.filter((t) => t.anoLetivo === anoLetivo);
@@ -104,49 +112,89 @@ export function EmissaoForm({ anoLetivo, nivel, series, turmas, elegiveis }: Pro
     router.push(`/historico/emissao?${params.toString()}`);
   }
 
+  function filtrarPorAluno(id: string) {
+    const params = new URLSearchParams({ ano: String(anoLetivo), nivel, modo: "aluno" });
+    if (id) params.set("aluno", id);
+    router.push(`/historico/emissao?${params.toString()}`);
+  }
+
+  /** Trocar o tipo de pesquisa descarta o filtro do modo anterior. */
+  function trocarModo(modo: "serie" | "aluno") {
+    const params = new URLSearchParams({ ano: String(anoLetivo), nivel });
+    if (modo === "aluno") params.set("modo", "aluno");
+    router.push(`/historico/emissao?${params.toString()}`);
+  }
+
   return (
     <div className="space-y-4">
-      <div className="grid gap-4 rounded-lg border border-line p-4 md:grid-cols-3">
+      <div className="grid gap-4 rounded-lg border border-line p-4 md:grid-cols-4">
         <label className="flex flex-col gap-1 text-sm">
           Ano de referência
           <input
             type="number"
             defaultValue={anoLetivo}
             onBlur={(e) =>
-              router.push(`/historico/emissao?ano=${e.target.value}&nivel=${nivel}`)
+              router.push(
+                `/historico/emissao?ano=${e.target.value}&nivel=${nivel}${porAluno ? "&modo=aluno" : ""}`
+              )
             }
             className="rounded border border-line bg-surface p-2"
           />
         </label>
 
         <label className="flex flex-col gap-1 text-sm">
-          Série
+          Pesquisa por
           <select
-            value={serieSelecionada}
-            onChange={(e) => aplicarFiltro("serie", e.target.value)}
+            value={porAluno ? "aluno" : "serie"}
+            onChange={(e) => trocarModo(e.target.value as "serie" | "aluno")}
             className="rounded border border-line bg-surface p-2"
           >
-            <option value="">Todas as séries</option>
-            {series.map((s) => (
-              <option key={s.id} value={s.id}>{s.nome}</option>
-            ))}
+            <option value="serie">Série / Turma</option>
+            <option value="aluno">Aluno</option>
           </select>
         </label>
 
-        <label className="flex flex-col gap-1 text-sm">
-          Turma
-          <select
-            value={turmaSelecionada}
-            onChange={(e) => aplicarFiltro("turma", e.target.value)}
-            disabled={turmasDaSerie.length === 0}
-            className="rounded border border-line bg-surface p-2 disabled:opacity-50"
-          >
-            <option value="">Todas as turmas</option>
-            {turmasDaSerie.map((t) => (
-              <option key={t.id} value={t.id}>{rotuloTurma(t)}</option>
-            ))}
-          </select>
-        </label>
+        {porAluno ? (
+          <label className="flex flex-col gap-1 text-sm md:col-span-2">
+            Aluno
+            <StudentCombobox
+              alunos={alunos}
+              defaultValue={alunos.find((a) => a.id === alunoSelecionado)}
+              onSelect={(aluno) => filtrarPorAluno(aluno?.id ?? "")}
+            />
+          </label>
+        ) : (
+          <>
+            <label className="flex flex-col gap-1 text-sm">
+              Série
+              <select
+                value={serieSelecionada}
+                onChange={(e) => aplicarFiltro("serie", e.target.value)}
+                className="rounded border border-line bg-surface p-2"
+              >
+                <option value="">Todas as séries</option>
+                {series.map((s) => (
+                  <option key={s.id} value={s.id}>{s.nome}</option>
+                ))}
+              </select>
+            </label>
+
+            <label className="flex flex-col gap-1 text-sm">
+              Turma
+              <select
+                value={turmaSelecionada}
+                onChange={(e) => aplicarFiltro("turma", e.target.value)}
+                disabled={turmasDaSerie.length === 0}
+                className="rounded border border-line bg-surface p-2 disabled:opacity-50"
+              >
+                <option value="">Todas as turmas</option>
+                {turmasDaSerie.map((t) => (
+                  <option key={t.id} value={t.id}>{rotuloTurma(t)}</option>
+                ))}
+              </select>
+            </label>
+          </>
+        )}
       </div>
 
       {erro && <p className="rounded border border-clay p-3 text-sm text-clay">{erro}</p>}
@@ -163,7 +211,9 @@ export function EmissaoForm({ anoLetivo, nivel, series, turmas, elegiveis }: Pro
 
       {elegiveis.length === 0 ? (
         <p className="rounded-lg border border-line p-6 text-center text-sm text-muted">
-          Selecione uma série ou turma para listar os alunos.
+          {porAluno
+            ? "Busque um aluno para listar."
+            : "Selecione uma série ou turma para listar os alunos."}
         </p>
       ) : (
         <table className="w-full text-sm">

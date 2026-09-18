@@ -5,24 +5,31 @@ import { getAcademicData } from "@/lib/data/lookups";
 import type { NivelEnsino } from "@/lib/historico/tipos";
 
 type Props = {
-  searchParams: Promise<{ ano?: string; nivel?: string; serie?: string; turma?: string }>;
+  searchParams: Promise<{
+    ano?: string;
+    nivel?: string;
+    serie?: string;
+    turma?: string;
+    aluno?: string;
+  }>;
 };
 
 export default async function EmissaoPage({ searchParams }: Props) {
   await requirePermission("historico", "read");
   const params = await searchParams;
-  const { series, turmas } = await getAcademicData();
+  const { series, turmas, alunos } = await getAcademicData();
 
   const anoLetivo = Number(params.ano ?? new Date().getFullYear());
   const nivel = (params.nivel ?? "fund1") as NivelEnsino;
-  const temFiltro = Boolean(params.serie || params.turma);
+  const temFiltro = Boolean(params.serie || params.turma || params.aluno);
 
   const elegiveis = temFiltro
     ? await listarElegiveis({
         anoLetivo,
         nivel,
         serieId: params.serie,
-        turmaId: params.turma
+        turmaId: params.turma,
+        alunoId: params.aluno
       })
     : [];
 
@@ -50,6 +57,11 @@ export default async function EmissaoPage({ searchParams }: Props) {
             anoLetivo: t.ano_letivo as number
           };
         })}
+        alunos={alunos.map((a) => ({
+          id: a.id as string,
+          nome: a.nome as string,
+          matricula_codigo: a.matricula_codigo as string
+        }))}
         elegiveis={elegiveis}
       />
     </div>

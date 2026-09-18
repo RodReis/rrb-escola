@@ -19,6 +19,8 @@ import { PDFParse } from "pdf-parse";
 import { existsSync, readFileSync, readdirSync, statSync } from "node:fs";
 import { join, resolve } from "node:path";
 import { parsearPdf } from "./lib/historico-pdf.mjs";
+// Regra unica de congelamento do projeto — nao duplicar aqui.
+import { deveCongelar } from "../src/lib/historico/congelamento.ts";
 
 const ESCOLA_ID = "00000000-0000-0000-0000-000000000001";
 
@@ -214,19 +216,25 @@ async function main() {
         totNotas += aGravar.reduce((s, a) => s + a.notas.length, 0);
         if (!apply || aGravar.length === 0) continue;
 
-        const linhasAno = aGravar.map((ano) => ({
-          historico_id: historicoId,
-          ano: ano.ano,
-          serie_nome: ano.serieNome,
-          origem: /EPG/i.test(ano.instituicao ?? "") ? "interna" : "externa",
-          instituicao: ano.instituicao,
-          cidade: ano.cidade,
-          uf: ano.uf,
-          resultado: ano.resultado,
-          carga_horaria: ano.cargaHoraria,
-          dias_letivos: ano.diasLetivos,
-          congelado: false
-        }));
+        const linhasAno = aGravar.map((ano) => {
+          const origem = /EPG/i.test(ano.instituicao ?? "") ? "interna" : "externa";
+          return {
+            historico_id: historicoId,
+            ano: ano.ano,
+            serie_nome: ano.serieNome,
+            origem,
+            instituicao: ano.instituicao,
+            cidade: ano.cidade,
+            uf: ano.uf,
+            resultado: ano.resultado,
+            carga_horaria: ano.cargaHoraria,
+            dias_letivos: ano.diasLetivos,
+            // Ano ja encerrado precisa nascer congelado: sem isso a emissao
+            // ignora a nota importada e vai buscar em notas_consolidadas, que
+            // so tem o ano corrente — as colunas saiam vazias no PDF.
+            congelado: deveCongelar(ano.resultado, origem)
+          };
+        });
 
         const anosGravados = await comRetry(`grava anos ${base.nome}`, async () => {
           const { data, error } = await db
