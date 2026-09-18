@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { maskCNPJ } from "@/lib/format/masks";
+import { maskCNPJ, maskPhone } from "@/lib/format/masks";
 import type { Company } from "@/lib/data/rh";
 
 type Props = {
@@ -13,6 +13,7 @@ type Props = {
 
 export function CompanyForm({ action, company, submitLabel = "Salvar" }: Props) {
   const [cnpj, setCnpj] = useState(maskCNPJ(company?.cnpj ?? ""));
+  const [telefones, setTelefones] = useState(maskPhone(company?.telefones ?? ""));
 
   return (
     <form action={action} className="grid gap-4 md:grid-cols-2">
@@ -84,8 +85,13 @@ export function CompanyForm({ action, company, submitLabel = "Salvar" }: Props) 
           </label>
 
           <label>
-            Telefones
-            <input name="telefones" defaultValue={company.telefones ?? ""} />
+            Telefone
+            <input
+              name="telefones"
+              value={telefones}
+              onChange={(e) => setTelefones(maskPhone(e.target.value))}
+              placeholder="(00) 00000-0000"
+            />
           </label>
 
           <label>
