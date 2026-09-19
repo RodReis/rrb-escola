@@ -176,13 +176,56 @@ corte. Passa a aplicar `mês ≥ 9 → ano + 1` como base do cálculo, e o campo
 **Fora de escopo:** a RPC de rematrícula em lote já recebe `p_ano_dest` explícito e está
 correta — foi ela que produziu as 25 matrículas de 2027 com o ano certo. Não muda.
 
-## Execução
+## Revisão de 18/09: produção já foi corrigida
 
-O script roda com **dry-run por padrão**, imprimindo o que faria. Ordem:
+Ao levantar o plano de implementação, descobriu-se o commit `14008cf3` de **10/09/2026**
+— `fix(matriculas): corrige ano letivo deslocado e remove duplicatas` — que ataca este
+mesmo defeito com a mesma causa raiz (`fix_matriculas.py:119`), por estratégia diferente:
+reconstrói o ano pela **progressão de séries ancorada em 2026**, não pela data.
 
-1. Dry-run local → conferir relatório de aderência.
-2. Aplicar local → conferir aluno 1259 e a ALÍCIA na tela.
-3. Aplicar em produção com o mesmo script, apontando a env de lá.
+Ele foi aplicado em produção. Consulta somente-leitura confirma:
+
+| | Local | Produção |
+|---|---|---|
+| Total matrículas | 2.657 | 2.284 |
+| Colisões `(aluno, ano)` | 329 | **0** |
+| Séries repetidas | 377 | 17 |
+| Aderência aos PDFs | 21,8% | **63,9%** |
+
+**Produção está saudável, mas não correta.** Restam **132 matrículas** em conflito com o
+PDF, e o padrão é uniforme — a base está sempre *exatamente uma série à frente*:
+
+```
+ 23  3º ANO -> 2º ANO      11  7º ANO -> 6º ANO
+ 23  2º ANO -> 1º ANO       8  8º ANO -> 7º ANO
+ 22  4º ANO -> 3º ANO       6  9º ANO -> 8º ANO
+ 20  5º ANO -> 4º ANO       4  1ª SÉRIE -> 9º ANO
+ 15  6º ANO -> 5º ANO
+```
+
+É o mesmo deslocamento de um ano, sobrevivente onde a estratégia de progressão falhou:
+alunos com buraco na sequência (ano sem matrícula, repetência) não têm como ser ancorados
+caminhando para trás.
+
+O **local** está pior que produção porque a importação de histórico de 18/09 reintroduziu
+linhas. Ele não reflete nenhum estado real.
+
+### Execução revisada
+
+O deslocamento em massa descrito nos passos 2–5 **não se aplica a produção** — ela já
+passou por correção equivalente. Aplicá-lo de novo deslocaria um segundo ano.
+
+1. **Alinhar o local**: restaurar dump de produção, reaplicar por cima só o histórico
+   importado em 18/09. Passa a testar contra o que existe de verdade. Não usar
+   `supabase db reset --local`.
+2. **Correção cirúrgica**: script que compara a base com os 3.139 pares dos PDFs e corrige
+   **apenas** onde há conflito, com o PDF como fonte de verdade. Diff mínimo, cada
+   alteração rastreável a um documento oficial.
+3. Dry-run local → conferir → aplicar local → conferir na tela → aplicar em produção.
+
+A regra do corte 01/09 permanece válida para a **tela de nova matrícula** (prevenção), que
+é o que impede o defeito de voltar. O que muda é o método de correção do histórico: em vez
+de deslocar em massa, corrigir por confronto com o documento.
 
 ## Ressalvas
 
