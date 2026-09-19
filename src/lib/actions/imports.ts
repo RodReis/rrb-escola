@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { requirePermission } from "@/lib/auth/session";
 import { DEFAULT_SCHOOL_ID } from "@/lib/constants";
+import { normalizeNome } from "@/lib/format/normalize-nome";
 import { generateChargesForEnrollment } from "@/lib/server/generate-charges";
 import { parsePdfStudents, parseSpreadsheetStudents, type StudentImportData } from "@/lib/server/student-import-parser";
 import { createServerClient } from "@/lib/supabase/server";
@@ -27,14 +28,6 @@ function isPdf(file: File) {
   return file.type === "application/pdf" || file.name.toLowerCase().endsWith(".pdf");
 }
 
-function normalize(value: string | null | undefined) {
-  return String(value ?? "")
-    .normalize("NFD")
-    .replace(/[\u0300-\u036f]/g, "")
-    .trim()
-    .toLowerCase();
-}
-
 async function validateImportRows(
   supabase: Awaited<ReturnType<typeof createServerClient>>,
   rows: Array<{ line: number; data: StudentImportData }>
@@ -51,9 +44,9 @@ async function validateImportRows(
   if (turmas.error) throw turmas.error;
   if (planos.error) throw planos.error;
 
-  const existingCodes = new Set((students.data ?? []).map((item) => normalize(item.matricula_codigo)));
-  const seriesByName = new Map((series.data ?? []).map((item) => [normalize(item.nome), item]));
-  const plansByName = new Map((planos.data ?? []).map((item) => [normalize(item.nome), item]));
+  const existingCodes = new Set((students.data ?? []).map((item) => normalizeNome(item.matricula_codigo)));
+  const seriesByName = new Map((series.data ?? []).map((item) => [normalizeNome(item.nome), item]));
+  const plansByName = new Map((planos.data ?? []).map((item) => [normalizeNome(item.nome), item]));
 
   return rows.map((row) => {
     const errors: string[] = [];
@@ -64,19 +57,19 @@ async function validateImportRows(
 
     if (!data.matricula_codigo) errors.push("Matricula obrigatoria.");
     if (!data.nome) errors.push("Nome obrigatorio.");
-    if (data.matricula_codigo && existingCodes.has(normalize(data.matricula_codigo))) errors.push("Matricula ja cadastrada.");
+    if (data.matricula_codigo && existingCodes.has(normalizeNome(data.matricula_codigo))) errors.push("Matricula ja cadastrada.");
 
-    const serie = data.serie ? seriesByName.get(normalize(data.serie)) : null;
+    const serie = data.serie ? seriesByName.get(normalizeNome(data.serie)) : null;
     if (!serie) errors.push("Serie nao localizada.");
 
     const turma = serie
       ? (turmas.data ?? []).find(
-          (item) => item.serie_id === serie.id && normalize(item.nome) === normalize(data.turma) && Number(item.ano_letivo) === Number(data.ano_letivo)
+          (item) => item.serie_id === serie.id && normalizeNome(item.nome) === normalizeNome(data.turma) && Number(item.ano_letivo) === Number(data.ano_letivo)
         )
       : null;
     if (!turma) errors.push("Turma nao localizada para a serie e ano letivo.");
 
-    if (data.plano && !plansByName.has(normalize(data.plano))) errors.push("Plano nao localizado.");
+    if (data.plano && !plansByName.has(normalizeNome(data.plano))) errors.push("Plano nao localizado.");
 
     return {
       linha: row.line,
@@ -231,18 +224,18 @@ export async function processImportStudentBatchAction(formData: FormData) {
   if (turmas.error) throw turmas.error;
   if (planos.error) throw planos.error;
 
-  const seriesByName = new Map((series.data ?? []).map((item) => [normalize(item.nome), item]));
-  const plansByName = new Map((planos.data ?? []).map((item) => [normalize(item.nome), item]));
+  const seriesByName = new Map((series.data ?? []).map((item) => [normalizeNome(item.nome), item]));
+  const plansByName = new Map((planos.data ?? []).map((item) => [normalizeNome(item.nome), item]));
 
   for (const row of rows ?? []) {
     const data = row.dados as StudentImportData;
-    const serie = data.serie ? seriesByName.get(normalize(data.serie)) : null;
+    const serie = data.serie ? seriesByName.get(normalizeNome(data.serie)) : null;
     const turma = serie
       ? (turmas.data ?? []).find(
-          (item) => item.serie_id === serie.id && normalize(item.nome) === normalize(data.turma) && Number(item.ano_letivo) === Number(data.ano_letivo)
+          (item) => item.serie_id === serie.id && normalizeNome(item.nome) === normalizeNome(data.turma) && Number(item.ano_letivo) === Number(data.ano_letivo)
         )
       : null;
-    const plano = data.plano ? plansByName.get(normalize(data.plano)) : null;
+    const plano = data.plano ? plansByName.get(normalizeNome(data.plano)) : null;
 
     if (!serie || !turma) {
       await supabase
