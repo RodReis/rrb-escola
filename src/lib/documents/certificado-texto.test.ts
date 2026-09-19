@@ -98,6 +98,42 @@ describe("montarCorpo", () => {
     expect(texto).not.toContain(" ,");
   });
 
+  it("não deixa vírgula órfã entre o nome e o verbo", () => {
+    // Aluno só com nome: "certifica que ANA, concluiu" separaria sujeito e
+    // verbo por vírgula. A vírgula só existe para fechar a aposição.
+    const soNome = montarCorpo(
+      {
+        escola,
+        aluno: {
+          ...aluno,
+          filiacao: null,
+          dataNascimento: null,
+          naturalidade: null,
+          nacionalidade: null,
+          rg: null
+        }
+      },
+      opts
+    );
+
+    const texto = juntar(soNome);
+    expect(texto).toContain("certifica que VITÓRIA VIEIRA VÍTOR concluiu no ano letivo de");
+    expect(texto).not.toContain("VÍTOR, concluiu");
+  });
+
+  it("mantém a vírgula quando há aposição a fechar", () => {
+    const comNacionalidade = juntar(
+      montarCorpo(
+        {
+          escola,
+          aluno: { ...aluno, filiacao: null, dataNascimento: null, naturalidade: null, rg: null }
+        },
+        opts
+      )
+    );
+    expect(comNacionalidade).toContain("de nacionalidade BRASILEIRA, concluiu");
+  });
+
   it("sobrevive a um aluno sem nenhum dado além do nome", () => {
     const texto = juntar(
       montarCorpo(

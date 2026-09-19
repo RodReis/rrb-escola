@@ -153,6 +153,9 @@ export function montarCorpo(data: CertificadoData, opts: CertificadoOptions): Se
     { texto: ", certifica que ", negrito: false },
     { texto: aluno.nome, negrito: true }
   ];
+  // Quantos segmentos existem antes dos dados opcionais do aluno. Serve para
+  // saber, adiante, se a aposição ficou vazia.
+  const segsAntesDaAposicao = segs.length;
 
   if (aluno.nacionalidade?.trim()) {
     segs.push({ texto: " de nacionalidade ", negrito: false });
@@ -181,7 +184,14 @@ export function montarCorpo(data: CertificadoData, opts: CertificadoOptions): Se
     segs.push({ texto: aluno.rg.trim(), negrito: false });
   }
 
-  segs.push({ texto: ", concluiu no ano letivo de ", negrito: false });
+  // A vírgula antes de "concluiu" fecha a aposição dos dados do aluno. Sem
+  // nenhum dado opcional, a frase é "certifica que NOME concluiu…": a vírgula
+  // ficaria pendurada no nome, separando sujeito de verbo.
+  const temAposicao = segs.length > segsAntesDaAposicao;
+  segs.push({
+    texto: temAposicao ? ", concluiu no ano letivo de " : " concluiu no ano letivo de ",
+    negrito: false
+  });
   segs.push({ texto: String(opts.anoConclusao), negrito: true });
   segs.push({ texto: " o ", negrito: false });
   segs.push({ texto: opts.descricaoCurso, negrito: true });
