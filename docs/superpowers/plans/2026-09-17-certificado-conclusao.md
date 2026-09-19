@@ -1,5 +1,19 @@
 # Certificado de Conclusão — Implementation Plan
 
+> ⚠️ **OBSOLETO — NÃO EXECUTAR.** Substituído por
+> [2026-09-19-certificado-conclusao.md](2026-09-19-certificado-conclusao.md).
+>
+> Este plano foi escrito em 17/09, um dia antes do módulo **Histórico Escolar**
+> ser especificado e implementado. Ele modela o histórico como snapshot jsonb
+> próprio do certificado (`certificado_historico`), recriando do zero o que hoje
+> existe em produção em 4 tabelas normalizadas. A spec do histórico já declarou
+> essa parte obsoleta em 18/09
+> ([2026-09-18-historico-escolar-design.md:26-33](../specs/2026-09-18-historico-escolar-design.md)).
+>
+> As Tasks 1 (parte de histórico), 5, 6 (parcial) e 9 duplicam código existente.
+> Mantido como registro; o montador do texto (Task 3) e o gerador da página 1
+> (Task 4) foram aproveitados no plano novo.
+
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
 **Goal:** Tela de parâmetros com preview onde a secretária configura o certificado de conclusão e emite, num PDF único, para a turma inteira — com o histórico escolar no verso.
