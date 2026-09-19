@@ -92,6 +92,26 @@ export function extrairParesDePdfParsed(registros) {
   return pares;
 }
 
+/**
+ * Deduplica pares: mantém apenas a primeira ocorrência de cada
+ * mat|ano|serie (normalizada). Usado quando o mesmo aluno aparece em
+ * múltiplos PDFs (transferência, rematrícula, etc).
+ *
+ * Nota: mesmo mat|ano com SÉRIES DIFERENTES não são deduplicados —
+ * são pares distintos, e conflitos são detectados por construirIndiceComConflitos.
+ */
+export function deduplicarPares(pares) {
+  const vistos = new Set();
+  const dedupados = [];
+  for (const p of pares) {
+    const chave = `${p.mat}|${p.ano}|${normalizarSerie(p.serie)}`;
+    if (vistos.has(chave)) continue;
+    vistos.add(chave);
+    dedupados.push(p);
+  }
+  return dedupados;
+}
+
 export async function extrairParesDeArquivo(caminho) {
   const { pages } = await new PDFParse({ data: readFileSync(caminho) }).getText();
   return extrairParesDePdfParsed(parsearPdf(pages));
@@ -99,17 +119,11 @@ export async function extrairParesDeArquivo(caminho) {
 
 /** Varre <raiz>/<ano>/*.pdf. Deduplica: o mesmo aluno aparece em varios PDFs. */
 export async function extrairParesDePasta(raiz) {
-  const vistos = new Set();
   const pares = [];
   for (const pasta of readdirSync(raiz).filter((d) => /^\d{4}$/.test(d))) {
     for (const arquivo of readdirSync(join(raiz, pasta)).filter((f) => f.endsWith(".pdf"))) {
-      for (const p of await extrairParesDeArquivo(join(raiz, pasta, arquivo))) {
-        const chave = `${p.mat}|${p.ano}|${normalizarSerie(p.serie)}`;
-        if (vistos.has(chave)) continue;
-        vistos.add(chave);
-        pares.push(p);
-      }
+      pares.push(...(await extrairParesDeArquivo(join(raiz, pasta, arquivo))));
     }
   }
-  return pares;
+  return deduplicarPares(pares);
 }

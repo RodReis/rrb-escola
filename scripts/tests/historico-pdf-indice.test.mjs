@@ -1,6 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { chaveIndice, normalizarSerie, construirIndice, construirIndiceComConflitos, extrairParesDePdfParsed } from "../lib/historico-pdf-indice.mjs";
+import { chaveIndice, normalizarSerie, construirIndice, construirIndiceComConflitos, extrairParesDePdfParsed, deduplicarPares } from "../lib/historico-pdf-indice.mjs";
 
 test("normalizarSerie tira acento e padroniza espacos", () => {
   assert.equal(normalizarSerie("1ª Série"), "1A SERIE");
@@ -108,20 +108,48 @@ test("extrairParesDePdfParsed prefere serie sobre coluna", () => {
   assert.equal(pares[0].serie, "1º ANO");
 });
 
-test("extrairParesDePdfParsed deduplica multi-arquivo (simulado)", () => {
-  // Simula dois arquivos com mesmo aluno
-  const registros1 = [
-    { aluno: { matricula: "4000" }, anos: [{ ano: 2025, serie: "1º ANO" }] }
-  ];
-  const registros2 = [
-    { aluno: { matricula: "4000" }, anos: [{ ano: 2025, serie: "1º ANO" }] }
-  ];
+test("deduplicarPares elimina duplicatas exatas", () => {
   const pares = [
-    ...extrairParesDePdfParsed(registros1),
-    ...extrairParesDePdfParsed(registros2)
+    { mat: "5000", ano: 2025, serie: "1º ANO" },
+    { mat: "5000", ano: 2025, serie: "1º ANO" },
+    { mat: "5000", ano: 2025, serie: "1º ANO" }
   ];
-  // Nota: deduplicacao acontece em extrairParesDePasta, nao aqui
-  // Aqui verificamos que a logica de extracao e consistente entre chamadas
-  assert.equal(pares.length, 2);
-  assert.deepEqual(pares[0], pares[1]);
+  const dedupados = deduplicarPares(pares);
+  assert.equal(dedupados.length, 1);
+  assert.deepEqual(dedupados[0], { mat: "5000", ano: 2025, serie: "1º ANO" });
+});
+
+test("deduplicarPares NAO deduplica series diferentes (mesmo mat|ano)", () => {
+  const pares = [
+    { mat: "5001", ano: 2025, serie: "1º ANO" },
+    { mat: "5001", ano: 2025, serie: "2º ANO" }
+  ];
+  const dedupados = deduplicarPares(pares);
+  assert.equal(dedupados.length, 2);
+  assert.deepEqual(dedupados[0].serie, "1º ANO");
+  assert.deepEqual(dedupados[1].serie, "2º ANO");
+});
+
+test("deduplicarPares NAO deduplica anos diferentes", () => {
+  const pares = [
+    { mat: "5002", ano: 2025, serie: "1º ANO" },
+    { mat: "5002", ano: 2026, serie: "1º ANO" }
+  ];
+  const dedupados = deduplicarPares(pares);
+  assert.equal(dedupados.length, 2);
+  assert.equal(dedupados[0].ano, 2025);
+  assert.equal(dedupados[1].ano, 2026);
+});
+
+test("deduplicarPares normaliza serie antes de deduplica", () => {
+  const pares = [
+    { mat: "5003", ano: 2025, serie: "1ª SÉRIE" },
+    { mat: "5003", ano: 2025, serie: "1a serie" },
+    { mat: "5003", ano: 2025, serie: "1º ANO" }
+  ];
+  const dedupados = deduplicarPares(pares);
+  // Primeira ocorrência é mantida (1ª SÉRIE)
+  assert.equal(dedupados.length, 2);
+  assert.equal(dedupados[0].serie, "1ª SÉRIE");
+  assert.equal(dedupados[1].serie, "1º ANO");
 });
