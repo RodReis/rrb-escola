@@ -25,3 +25,15 @@ export function montarFiltroAlunosAtivos(filtro: {
     nomeNormalizado: filtro.nome ? normalizeNome(filtro.nome) : undefined,
   };
 }
+
+/**
+ * true quando o aluno NAO tem matricula `ativa` no ano informado — universo
+ * do combo de nova matricula/rematricula (quem ainda pode ser matriculado
+ * nesse ano). Contexto oposto ao de `getAlunosAtivosAnoCorrente`.
+ */
+export function alunoSemMatriculaAtivaNoAno(
+  matriculas: { ano_letivo: number; status: string }[],
+  anoLetivo: number
+): boolean {
+  return !matriculas.some((m) => m.ano_letivo === anoLetivo && m.status === "ativa");
+}

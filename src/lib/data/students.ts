@@ -1,7 +1,11 @@
 import { createServerClient } from "@/lib/supabase/server";
 import { DEFAULT_SCHOOL_ID } from "@/lib/constants";
 import type { StudentSheet } from "@/lib/types";
-import { montarFiltroAlunosAtivos, type FiltroAlunosAtivosResolvido } from "./students-shared-constants";
+import {
+  alunoSemMatriculaAtivaNoAno,
+  montarFiltroAlunosAtivos,
+  type FiltroAlunosAtivosResolvido,
+} from "./students-shared-constants";
 
 /** "ativos" (padrao) | "inativos" | "todos" — ver `situacao` em runStudentsQuery. */
 export type SituacaoAluno = "ativos" | "inativos" | "todos";
@@ -394,4 +398,37 @@ export async function contarAlunosAtivos(
   const { count, error } = await buildAlunosAtivosQuery(supabase, resolvido, { countOnly: true });
   if (error) throw error;
   return count ?? 0;
+}
+
+/**
+ * Universo do combo de NOVA matrícula/rematrícula: alunos `ativo=true` que
+ * NÃO têm matrícula `status='ativa'` no ano letivo informado — quem ainda
+ * pode ser matriculado nesse ano. Sem esta função, o combo alinhado à regra
+ * 527 ficaria vazio para quem ainda não tem matrícula no ano (caso comum:
+ * matricular aluno novo ou reativar aluno com lacuna de anos).
+ */
+export async function getAlunosSemMatriculaNoAno(
+  anoLetivo: number = new Date().getFullYear()
+): Promise<{ id: string; nome: string; matriculaCodigo: string | null }[]> {
+  const supabase = await createServerClient();
+  const { data, error } = await supabase
+    .from("alunos")
+    .select("id, nome, matricula_codigo, matriculas(ano_letivo, status)")
+    .eq("escola_id", DEFAULT_SCHOOL_ID)
+    .eq("ativo", true)
+    .order("nome");
+  if (error) throw error;
+
+  return (data ?? [])
+    .filter((row) =>
+      alunoSemMatriculaAtivaNoAno(
+        (row.matriculas ?? []) as { ano_letivo: number; status: string }[],
+        anoLetivo
+      )
+    )
+    .map((row) => ({
+      id: row.id,
+      nome: row.nome,
+      matriculaCodigo: row.matricula_codigo,
+    }));
 }

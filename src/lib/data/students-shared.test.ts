@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { montarFiltroAlunosAtivos } from "./students-shared-constants";
+import { alunoSemMatriculaAtivaNoAno, montarFiltroAlunosAtivos } from "./students-shared-constants";
 import { buildAlunosAtivosQuery } from "./students";
 
 /**
@@ -105,5 +105,29 @@ describe("buildAlunosAtivosQuery", () => {
       expect(eqCalls).toContainEqual({ method: "eq", args: ["matriculas.status", "ativa"] });
       expect(eqCalls).toContainEqual({ method: "eq", args: ["matriculas.ano_letivo", 2026] });
     }
+  });
+});
+
+describe("alunoSemMatriculaAtivaNoAno", () => {
+  it("aluno sem nenhuma matricula -> true (entra no combo)", () => {
+    expect(alunoSemMatriculaAtivaNoAno([], 2026)).toBe(true);
+  });
+
+  it("aluno com matricula concluida no ano (nao ativa) -> true", () => {
+    expect(
+      alunoSemMatriculaAtivaNoAno([{ ano_letivo: 2026, status: "concluida" }], 2026)
+    ).toBe(true);
+  });
+
+  it("aluno com matricula ativa no ano -> false (ja matriculado, sai do combo)", () => {
+    expect(
+      alunoSemMatriculaAtivaNoAno([{ ano_letivo: 2026, status: "ativa" }], 2026)
+    ).toBe(false);
+  });
+
+  it("aluno com matricula ativa em outro ano -> true (ano corrente livre)", () => {
+    expect(
+      alunoSemMatriculaAtivaNoAno([{ ano_letivo: 2025, status: "ativa" }], 2026)
+    ).toBe(true);
   });
 });
