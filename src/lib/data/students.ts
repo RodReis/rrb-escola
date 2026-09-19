@@ -87,21 +87,53 @@ export async function listStudents(filters?: StudentFilters): Promise<PaginatedS
   return { rows: data ?? [], total: count ?? 0, page, pageSize };
 }
 
-export async function getStudentSegmentCounts(anoLetivo: number = new Date().getFullYear()) {
+type SegmentCountFilters = Pick<StudentFilters, "situacao" | "serieId" | "turmaId" | "anoLetivo">;
+
+/**
+ * Conta por segmento com os mesmos filtros de `listStudents` (exceto `segmento`,
+ * que é o próprio eixo contado) — senão as abas ficam travadas num total que
+ * ignora Situação/Série/Turma escolhidos nos combos ao lado.
+ */
+export async function getStudentSegmentCounts(filters?: SegmentCountFilters) {
   const supabase = await createServerClient();
-  const { data, error } = await supabase
+  const situacao = filters?.situacao ?? "ativos";
+  const querInativos = situacao !== "ativos";
+  const anoLetivo = filters?.anoLetivo ?? new Date().getFullYear();
+
+  let query = supabase
     .from("alunos")
-    .select("id, matriculas(status, ano_letivo, series(segmento))")
+    .select("id, ativo, matriculas(status, ano_letivo, serie_id, turma_id, series(segmento))")
     .eq("escola_id", DEFAULT_SCHOOL_ID);
+  if (situacao === "ativos") query = query.eq("ativo", true);
+  if (situacao === "inativos") query = query.eq("ativo", false);
+
+  const { data, error } = await query;
   if (error) throw error;
+
   const counts = { all: 0, infantil: 0, fund1: 0, fund2: 0, medio: 0 };
   for (const row of data ?? []) {
-    const matriculasDoAno = (row.matriculas ?? []).filter(
-      (m: { ano_letivo?: number | null }) => m.ano_letivo === anoLetivo
-    );
-    if (matriculasDoAno.length === 0) continue;
+    // Ex-aluno sem matrícula (inativo) ainda deve ser contado em "Todos" ao
+    // filtrar por Situação — só matrícula filtra por ano quando ela existe.
+    const matriculas = (row.matriculas ?? []) as {
+      status?: string | null;
+      ano_letivo?: number | null;
+      serie_id?: string | null;
+      turma_id?: string | null;
+      series?: { segmento?: string | null } | { segmento?: string | null }[] | null;
+    }[];
+    let matriculasDoAno = matriculas.filter((m) => m.ano_letivo === anoLetivo);
+    if (filters?.serieId) matriculasDoAno = matriculasDoAno.filter((m) => m.serie_id === filters.serieId);
+    if (filters?.turmaId) matriculasDoAno = matriculasDoAno.filter((m) => m.turma_id === filters.turmaId);
+    if (!querInativos) {
+      matriculasDoAno = matriculasDoAno.filter((m) => ["ativa", "concluida"].includes(m.status ?? ""));
+    }
+
+    if (matriculasDoAno.length === 0) {
+      if (querInativos && matriculas.length === 0) counts.all += 1;
+      continue;
+    }
     counts.all += 1;
-    const enr = matriculasDoAno.find((m: { status?: string | null }) => m.status === "ativa") ?? matriculasDoAno[0];
+    const enr = matriculasDoAno.find((m) => m.status === "ativa") ?? matriculasDoAno[0];
     const series = enr ? (Array.isArray(enr.series) ? enr.series[0] : enr.series) : null;
     const seg = (series as { segmento?: string | null } | null)?.segmento ?? null;
     if (seg === "INFANTIL") counts.infantil += 1;

@@ -62,7 +62,12 @@ export default async function StudentsPage({
     await Promise.all([
       listStudents(filters),
       getStudentsReport(),
-      getStudentSegmentCounts(anoLetivo),
+      getStudentSegmentCounts({
+        situacao: filters.situacao,
+        serieId: filters.serieId,
+        turmaId: filters.turmaId,
+        anoLetivo
+      }),
       getStudentFilterOptions(anoLetivo),
       getStudentAvailableYears()
     ]);
