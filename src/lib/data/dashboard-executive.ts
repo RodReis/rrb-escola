@@ -286,11 +286,21 @@ export async function getOcupacao(
     .eq("ano_letivo", anoLetivo)
     .eq("ativo", true);
 
+  // Não dá para usar contarAlunosAtivos aqui: esta função agrega por
+  // turma_id/tipo_vaga (ocupação por etapa, pagantes vs. bolsistas), dado que
+  // a fonte única só devolve linhas/contagem, não esse detalhamento. Para não
+  // duplicar a regra 527 em duas queries que podem divergir, a query abaixo
+  // aplica a MESMA regra (alunos.ativo=true AND matriculas.status='ativa' AND
+  // matriculas.ano_letivo=:anoLetivo) via inner join em `alunos`. `ano_letivo`
+  // antes era implícito via turma_id (só turmas do ano entravam no map) —
+  // agora explícito na própria query de matrículas.
   const { data: matriculas } = await supabase
     .from("matriculas")
-    .select("turma_id, tipo_vaga")
+    .select("turma_id, tipo_vaga, alunos!inner(ativo)")
     .eq("escola_id", escolaId)
-    .eq("status", "ativa");
+    .eq("status", "ativa")
+    .eq("ano_letivo", anoLetivo)
+    .eq("alunos.ativo", true);
 
   type MatriculaCount = { total: number; bolsistas: number };
   const matriculasPorTurma = new Map<string, MatriculaCount>();

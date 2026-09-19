@@ -1,5 +1,6 @@
 import { createServerClient } from "@/lib/supabase/server";
 import { DEFAULT_SCHOOL_ID } from "@/lib/constants";
+import { contarAlunosAtivos } from "./students";
 
 export type EvasaoData = {
   ativos: number;
@@ -65,12 +66,15 @@ export async function getEvasao(
     .eq("escola_id", escolaId)
     .eq("ano_letivo", anoLetivo);
 
-  let ativos = 0, cancelados = 0, transferidos = 0, concluidos = 0;
+  // "ativos" agora vem da fonte única (regra 527: alunos.ativo=true AND
+  // matriculas.status='ativa'), não mais do loop abaixo — que precisa
+  // continuar somando cancelada/transferida/concluida (evasão exige os
+  // status não-ativos, que contarAlunosAtivos não devolve).
+  let cancelados = 0, transferidos = 0, concluidos = 0;
   const porMesMap = new Map<string, { cancelados: number; transferidos: number }>();
 
   for (const r of (data ?? []) as Array<{ status: string; updated_at: string }>) {
-    if (r.status === "ativa") ativos++;
-    else if (r.status === "cancelada") cancelados++;
+    if (r.status === "cancelada") cancelados++;
     else if (r.status === "transferida") transferidos++;
     else if (r.status === "concluida") concluidos++;
 
@@ -83,6 +87,7 @@ export async function getEvasao(
     }
   }
 
+  const ativos = await contarAlunosAtivos({ anoLetivo });
   const total = ativos + cancelados + transferidos + concluidos;
   const evasivos = cancelados + transferidos;
 
@@ -878,17 +883,12 @@ export async function getPedagogicoOverview(
   const supabase = await createServerClient();
 
   const [
-    { count: totalAlunos },
+    totalAlunos,
     { data: turmas },
     { count: totalSeries },
     { data: matriculasEtapa },
   ] = await Promise.all([
-    supabase
-      .from("matriculas")
-      .select("id", { count: "exact", head: true })
-      .eq("escola_id", escolaId)
-      .eq("status", "ativa")
-      .eq("ano_letivo", anoLetivo),
+    contarAlunosAtivos({ anoLetivo }),
     supabase
       .from("turmas")
       .select("id, turno")
@@ -919,7 +919,7 @@ export async function getPedagogicoOverview(
     porEtapaMap.set(etapa, (porEtapaMap.get(etapa) ?? 0) + 1);
   }
 
-  const total = totalAlunos ?? 0;
+  const total = totalAlunos;
   const ordem = ["INFANTIL", "FUNDAMENTAL1", "FUNDAMENTAL2", "MEDIO"];
   const porEtapa = ordem.map((etapa) => {
     const count = porEtapaMap.get(etapa) ?? 0;
