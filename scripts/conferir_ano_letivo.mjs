@@ -87,6 +87,12 @@ async function main() {
   console.log(producao ? "*** PRODUCAO (somente leitura) ***\n" : "Local\n");
 
   const indice = construirIndice(await extrairParesDePasta(pastaPdfs));
+  if (indice.size === 0) {
+    throw new Error(
+      `Nenhum par lido dos PDFs. A pasta "${pastaPdfs}" nao contem subpastas ` +
+      `no formato <ano> com arquivos .pdf dentro. Verifique o caminho.`
+    );
+  }
   const matriculasNoPdf = new Set([...indice.keys()].map((k) => k.split("|")[0]));
   console.log(`PDFs: ${indice.size} pares, ${matriculasNoPdf.size} alunos\n`);
 
@@ -121,9 +127,10 @@ async function main() {
 
   const comparaveis = matriculas.length - (contagem["aluno-fora-do-pdf"] ?? 0);
   const confere = contagem["confere"] ?? 0;
+  const pctConfere = comparaveis > 0 ? (100 * confere / comparaveis).toFixed(1) : "0.0";
   console.log(`total de matriculas      : ${matriculas.length}`);
   console.log(`comparaveis com o PDF    : ${comparaveis}`);
-  console.log(`  conferem               : ${confere} (${(100 * confere / comparaveis).toFixed(1)}%)`);
+  console.log(`  conferem               : ${confere} (${pctConfere}%)`);
   console.log(`  conflito de serie      : ${contagem["conflito"] ?? 0}`);
   console.log(`  ausente (infantil)     : ${contagem["ausente-infantil"] ?? 0}  [PDF nao cobre o nivel]`);
   console.log(`  ausente (outro nivel)  : ${contagem["ausente-outro"] ?? 0}`);
