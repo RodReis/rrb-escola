@@ -1,6 +1,7 @@
 import { createServerClient } from "@/lib/supabase/server";
 import { DEFAULT_SCHOOL_ID } from "@/lib/constants";
 import type { StudentSheet } from "@/lib/types";
+import { normalizeNome } from "@/lib/format/normalize-nome";
 import {
   alunoSemMatriculaAtivaNoAno,
   montarFiltroAlunosAtivos,
@@ -64,7 +65,10 @@ function runStudentsQuery(
     .order("nome")
     .range(from, to);
 
-  if (filters?.nome) query = query.ilike("nome", `%${filters.nome}%`);
+  // Busca ignora acento/caixa (mesma regra do combo/fonte única): compara
+  // contra `nome_normalizado` em vez de `nome` — ver `docs/superpowers/specs/
+  // 2026-09-19-fonte-unica-alunos-design.md`.
+  if (filters?.nome) query = query.ilike("nome_normalizado", `%${normalizeNome(filters.nome)}%`);
   if (situacao === "ativos") query = query.eq("ativo", true);
   if (situacao === "inativos") query = query.eq("ativo", false);
   // Filtrar por ano é visão histórica: quem foi re-matriculado fica "concluida"
