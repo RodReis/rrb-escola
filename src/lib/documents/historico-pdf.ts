@@ -1,5 +1,6 @@
 import { jsPDF } from "jspdf";
 import { montarGrade } from "@/lib/historico/grade";
+import { formatarDataCurta } from "./certificado-texto";
 import {
   NIVEL_EXIBE_CH,
   NIVEL_LABEL,
@@ -112,18 +113,6 @@ function inteiro(valor: number | null): string {
   return valor === null ? TRACO : String(valor);
 }
 
-/**
- * Datas de `alunos` são colunas `date`: chegam em ISO e precisam sair dd/mm/aaaa.
- * O parse é por regex porque `new Date("2017-01-01")` é lido como UTC e, em fuso
- * negativo, imprime o dia anterior. Data ausente ou fora do formato vira vazio,
- * não "Invalid Date".
- */
-function dataCurta(iso: string | null): string {
-  if (!iso) return "";
-  const partes = /^(\d{4})-(\d{2})-(\d{2})/.exec(iso);
-  // Já formatada (base importada trazia dd/mm/aaaa) passa direto.
-  return partes ? `${partes[3]}/${partes[2]}/${partes[1]}` : iso;
-}
 
 const RESULTADO_LABEL: Record<HistoricoAno["resultado"], string> = {
   aprovado: "Aprovado",
@@ -184,12 +173,12 @@ function desenharIdentificacao(doc: jsPDF, dados: HistoricoData): number {
 
   // Faixa de documentos: colunas de largura desigual, como no modelo.
   const docs: Array<[string, string | null, number]> = [
-    ["Data de Nascimento:", dataCurta(a.dataNascimento), MARGEM_ESQ],
+    ["Data de Nascimento:", formatarDataCurta(a.dataNascimento), MARGEM_ESQ],
     ["Naturalidade:", a.naturalidade, 101.3],
     ["Nacionalidade:", a.nacionalidade, 259.9],
     ["RG:", a.rg, 339.1],
     ["Orgão Expedidor:", a.orgaoExpedidor, xCpf],
-    ["Data Expedição:", dataCurta(a.dataExpedicao), xMatricula]
+    ["Data Expedição:", formatarDataCurta(a.dataExpedicao), xMatricula]
   ];
   docs.forEach(([rotulo, valor, x], i) => {
     if (i > 0) linhaV(doc, x, faixa2, base);
