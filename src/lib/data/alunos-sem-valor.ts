@@ -33,15 +33,26 @@ export {
 } from "./alunos-sem-valor-constants";
 
 /**
- * Fetches active students and their 2026 active matrícula (if any), keeping only
- * those who have no normal matrícula value: no 2026 matrícula at all, an
+ * Fetches active students and their active matrícula do ano (if any), keeping only
+ * those who have no normal matrícula value: no matrícula no ano at all, an
  * incomplete registration (no plan / value 0), or a non-paying vaga.
  * Sorted by série order, then student name.
+ *
+ * Não usa `getAlunosAtivosAnoCorrente` (Task 3) como base: essa fonte única só
+ * devolve quem JÁ tem matrícula ativa no ano (regra 527), mas o universo
+ * primário aqui é o oposto — todo aluno `ativo=true`, tenha ou não matrícula,
+ * pois "sem matrícula no ano" é um dos motivos válidos desta tela. Reconstruir
+ * isso a partir de duas fontes (ativos-com-matricula + sem-matricula) mais uma
+ * query extra para os campos de plano/valor que a fonte única não expõe
+ * substituiria um único left join por 3 round-trips sem ganho de correção —
+ * ver lição da Task 7 sobre não forçar a fonte única quando a granularidade
+ * não cabe.
  */
 export async function getAlunosSemValor(
   filters: AlunosSemValorFilters
 ): Promise<AlunoSemValorRow[]> {
   const supabase = await createServerClient();
+  const anoLetivo = filters.anoLetivo ?? new Date().getFullYear();
 
   let query = supabase
     .from("alunos")
@@ -65,7 +76,7 @@ export async function getAlunosSemValor(
   const rows: AlunoSemValorRow[] = [];
   for (const item of data ?? []) {
     const rec = item as Record<string, unknown>;
-    // matriculas comes back as an array; keep only the active 2026 one.
+    // matriculas comes back as an array; keep only the active one do ano.
     const allMatriculas = (rec.matriculas as unknown as Array<{
       id: string;
       tipo_vaga: string;
@@ -81,14 +92,14 @@ export async function getAlunosSemValor(
         series: { id: string; nome: string; ordem: number } | null;
       } | null;
     }>) ?? [];
-    const matricula2026 = allMatriculas.filter(
-      (m) => m.ano_letivo === 2026 && m.status === "ativa"
+    const matriculaDoAno = allMatriculas.filter(
+      (m) => m.ano_letivo === anoLetivo && m.status === "ativa"
     );
 
     const raw: RawAluno = {
       id: rec.id as string,
       nome: rec.nome as string,
-      matriculas: matricula2026.map((m) => ({
+      matriculas: matriculaDoAno.map((m) => ({
         id: m.id,
         tipo_vaga: m.tipo_vaga as RawAluno["matriculas"][number]["tipo_vaga"],
         plano_id: m.plano_id,

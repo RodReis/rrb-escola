@@ -1,6 +1,7 @@
 import { createServerClient } from "@/lib/supabase/server";
 import { DEFAULT_SCHOOL_ID } from "@/lib/constants";
 import { getSignedFotoUrls } from "@/lib/storage/photos";
+import { getAlunosAtivosAnoCorrente } from "./students";
 
 export type GestaoFinanceira = "propria" | "terceirizada";
 
@@ -616,6 +617,11 @@ export type DevedorRow = {
   diasVencimento: number;
 };
 
+// Task 7: NÃO migrada para `getAlunosAtivosAnoCorrente` (Task 3) — de
+// propósito. A base aqui é `cobrancas` vencidas/parciais, sem filtro de
+// `alunos.ativo` nem `ano_letivo`: um aluno que ficou inativo (ex.:
+// transferido) ainda devendo continua devedor e deve aparecer nesta lista.
+// Aplicar a regra 527 esconderia dívidas reais. Manter query própria.
 export async function getTopDevedores(
   limit: number = 5,
   escolaId: string = DEFAULT_SCHOOL_ID
@@ -707,12 +713,18 @@ export async function getRenovacoesPendentes(
   const anoLetivo = hoje.getFullYear();
   const hojeUTC = Date.UTC(hoje.getFullYear(), hoje.getMonth(), hoje.getDate());
 
+  // Não usa `getAlunosAtivosAnoCorrente` (Task 3) diretamente: esta função
+  // precisa de `data_matricula` (não exposto pela fonte única) para calcular
+  // `diasRestantes`, e já ordena/pagina no banco. A query abaixo aplica a
+  // MESMA regra 527 via inner join em alunos (antes ausente aqui — matrícula
+  // ativa com aluno.ativo=false entrava incorretamente na lista).
   const { data } = await supabase
     .from("matriculas")
-    .select("id, aluno_id, ano_letivo, data_matricula, alunos(nome, foto_url)")
+    .select("id, aluno_id, ano_letivo, data_matricula, alunos!inner(nome, foto_url, ativo)")
     .eq("escola_id", escolaId)
     .eq("status", "ativa")
     .eq("ano_letivo", anoLetivo)
+    .eq("alunos.ativo", true)
     .order("data_matricula", { ascending: true })
     .limit(limit);
 
@@ -965,12 +977,18 @@ export async function getAniversariantes(
   const mesAtual = hoje.getMonth() + 1;
   const diaHoje = hoje.getDate();
 
-  // alunos com matricula ativa
+  // alunos com matricula ativa. Não usa `getAlunosAtivosAnoCorrente` (Task 3)
+  // diretamente: esta função não filtra por ano_letivo (aniversariante conta
+  // com QUALQUER matrícula ativa, cobrindo o caso de mais de uma matrícula
+  // ativa em anos diferentes) e precisa de `data_nascimento`, ausente na
+  // fonte única. A query abaixo aplica a MESMA regra alunos.ativo=true via
+  // inner join (antes ausente aqui).
   const { data: matriculas } = await supabase
     .from("matriculas")
-    .select("aluno_id, alunos(id, nome, data_nascimento)")
+    .select("aluno_id, alunos!inner(id, nome, data_nascimento, ativo)")
     .eq("escola_id", escolaId)
-    .eq("status", "ativa");
+    .eq("status", "ativa")
+    .eq("alunos.ativo", true);
 
   const vistos = new Set<string>();
   const rows: AniversarianteRow[] = [];
@@ -1301,11 +1319,16 @@ export async function getAniversariantesSemana(
     });
   }
 
+  // Não usa `getAlunosAtivosAnoCorrente` (Task 3) diretamente: esta função não
+  // filtra por ano_letivo (mesma razão de `getAniversariantes` acima) e
+  // precisa de `data_nascimento`/`foto_url`, ausentes na fonte única. Aplica
+  // a MESMA regra alunos.ativo=true via inner join (antes ausente aqui).
   const { data: matriculas } = await supabase
     .from("matriculas")
-    .select("aluno_id, turmas(nome, series(nome)), alunos(id, nome, data_nascimento, foto_url)")
+    .select("aluno_id, turmas(nome, series(nome)), alunos!inner(id, nome, data_nascimento, foto_url, ativo)")
     .eq("escola_id", escolaId)
-    .eq("status", "ativa");
+    .eq("status", "ativa")
+    .eq("alunos.ativo", true);
 
   const vistos = new Set<string>();
   const rows: AniversarioSemanaRow[] = [];
@@ -1408,17 +1431,13 @@ export async function getAniversariantesMatricula(
     }
   }
 
-  // Verifica quem tem matricula ATIVA (so listar quem ainda esta na escola)
-  const { data: ativasRaw } = await supabase
-    .from("matriculas")
-    .select("aluno_id")
-    .eq("escola_id", escolaId)
-    .eq("status", "ativa")
-    .eq("ano_letivo", anoLetivo);
-
-  const ativos = new Set<string>(
-    (ativasRaw ?? []).map((m: { aluno_id: string }) => m.aluno_id)
-  );
+  // Verifica quem tem matricula ATIVA (so listar quem ainda esta na escola).
+  // Usa a fonte única (Task 3): aqui só precisamos do conjunto de alunoIds
+  // válidos pela regra 527, que é exatamente o que ela devolve — substitui a
+  // query própria antiga, que checava `matriculas.status=ativa` sem exigir
+  // `alunos.ativo=true` (mesmo gap de regra 527 das demais funções acima).
+  const alunosAtivos = await getAlunosAtivosAnoCorrente({ anoLetivo });
+  const ativos = new Set<string>(alunosAtivos.map((a) => a.id));
 
   const rows: AniversarioMatriculaRow[] = [];
   for (const [alunoId, info] of Array.from(primeira.entries())) {
