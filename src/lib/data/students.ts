@@ -320,17 +320,23 @@ type AlunoAtivoRow = {
     | null;
 };
 
-function buildAlunosAtivosQuery(
+// Exportada (apenas para teste) para permitir cobrir a regra 527 com um fake
+// mínimo de query builder, sem mockar o client Supabase inteiro — ver
+// students-shared.test.ts.
+export function buildAlunosAtivosQuery(
   supabase: Awaited<ReturnType<typeof createServerClient>>,
   filtro: FiltroAlunosAtivosResolvido,
   opts: { countOnly: boolean }
 ) {
+  // A select string precisa ser IDENTICA nos dois modos: no PostgREST o join
+  // com `matriculas` e declarado no proprio select, entao se countOnly trocar
+  // o select para "id" os .eq("matriculas.*", ...) abaixo ficam sem relacao a
+  // que se aplicar e a regra 527 (status='ativa' + ano_letivo) e ignorada.
+  // `opts.countOnly` deve afetar apenas `head`, nunca o conteudo do select.
   let query = supabase
     .from("alunos")
     .select(
-      opts.countOnly
-        ? "id"
-        : "id, nome, matricula_codigo, cpf, matriculas!inner(id, serie_id, turma_id, ano_letivo, status)",
+      "id, nome, matricula_codigo, cpf, matriculas!inner(id, serie_id, turma_id, ano_letivo, status)",
       { count: "exact", head: opts.countOnly }
     )
     .eq("escola_id", DEFAULT_SCHOOL_ID)
@@ -341,6 +347,7 @@ function buildAlunosAtivosQuery(
   if (filtro.serieId) query = query.eq("matriculas.serie_id", filtro.serieId);
   if (filtro.turmaId) query = query.eq("matriculas.turma_id", filtro.turmaId);
   if (filtro.nomeNormalizado) query = query.ilike("nome_normalizado", `%${filtro.nomeNormalizado}%`);
+  if (!opts.countOnly) query = query.order("nome");
 
   return query;
 }
