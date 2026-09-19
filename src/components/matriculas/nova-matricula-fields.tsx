@@ -69,6 +69,10 @@ export function NovaMatriculaFields({
   function selecionarAluno(proximo: Aluno | null) {
     setAluno(proximo);
     setSerieId(proximaSerieSugerida(proximo, series));
+    // Trocar de aluno recalcula a sugestão do ano, como já acontece com a série:
+    // cada aluno tem anos ocupados diferentes, e manter o ano digitado para o
+    // aluno anterior gravaria a matrícula no ano errado sem aviso.
+    setAnoTocado(false);
   }
 
   const anoSugerido = useMemo(() => {
