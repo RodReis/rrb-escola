@@ -26,7 +26,6 @@ export function LoginFields() {
             name="email"
             type="email"
             required
-            defaultValue="admin@rrbescola.local"
             className="rb-input has-icon"
             autoComplete="email"
           />
@@ -57,7 +56,6 @@ export function LoginFields() {
             name="password"
             type={show ? "text" : "password"}
             required
-            defaultValue="rrb123456"
             className="rb-input has-icon"
             style={{ paddingRight: 44 }}
             autoComplete="current-password"

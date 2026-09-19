@@ -235,3 +235,63 @@ de deslocar em massa, corrigir por confronto com o documento.
 - Os PDFs de 2026 não são necessários: os de 2025 já trazem o ano seguinte (o histórico
   lista a trajetória inteira), rendendo 259 pares de 2026. Gerá-los depois serviria como
   conferência pós-deploy das 112 divergências do Médio.
+
+## Execução final (19/09/2026)
+
+Executado via Subagent-Driven Development, plano
+`docs/superpowers/plans/2026-09-18-ano-letivo-correcao-cirurgica.md` (8 tasks).
+Ferramentas criadas:
+
+- `scripts/lib/historico-pdf-indice.mjs` — indexa os 3.139 pares
+  `(matrícula, ano, série)` dos 136 PDFs como fonte de verdade.
+- `scripts/conferir_ano_letivo.mjs` — relatório somente-leitura, base × PDF.
+- `scripts/corrigir_ano_letivo_pelo_pdf.mjs` — remove duplicatas (grupo B, ver
+  abaixo), com guarda contra apagar matrícula com vínculo financeiro
+  (`idsComVinculo` em cobranças/pagamentos/notas/frequências).
+- `src/lib/matriculas/ano-letivo.ts` — regra do corte 01/09, usada pela tela de
+  nova matrícula (prevenção; `81cef19f`, `6e5fd111`, `3df7f07e`).
+- Migração `202609190001_matriculas_aluno_ano_unico.sql` — `UNIQUE (escola_id,
+  aluno_id, ano_letivo)`, aplicada em produção após a limpeza.
+
+### Incidente e recuperação
+
+Na Task 3, um `DELETE FROM matriculas` sem filtro (violação da regra
+inviolável do projeto) rodou contra o banco **local**, cascateando para 5
+tabelas (cobranças, pagamentos, notas, frequências, histórico). Produção foi
+verificada intacta. O local foi reconstruído do zero a partir de um dump de
+produção (UPSERT com remapeamento de id para 29 turmas, 236 disciplinas e 1
+aluno em colisão de chave única) e depois recebeu de volta só a importação de
+histórico de 18/09. Detalhe completo no ledger preservado em
+`ledger-ano-letivo-2026-09-19.md` (fora do git).
+
+### Classificação final dos 132 conflitos restantes
+
+Os conflitos de série (produção estava uma série à frente do PDF) formam
+cadeias, não casos independentes — corrigir um extremo da cadeia sem os
+demais não elimina a colisão. Classificados em três grupos; **só o grupo B
+foi corrigido**, por decisão do usuário:
+
+| Grupo | Descrição | Qtd | Ação |
+|---|---|---|---|
+| A | Cadeia inteira deslocada (nenhuma ponta bate com o PDF sem gerar 2027 para ex-aluno) | — | Fora de escopo, decisão explícita |
+| **B** | **Duplicata simples: uma ocorrência já bate com o ano do PDF** | **14** | **Removida** |
+| C | Cadeia cujo topo é série de Médio ausente do PDF | — | Fora de escopo |
+
+3 casos (matrículas 33, 500, 949) não se encaixam em nenhum grupo — série de
+Médio repetida sem cobertura no PDF — e ficaram sinalizados para a secretaria
+resolver pela própria tela.
+
+### Resultado em produção (autorizado, aplicado 19/09/2026)
+
+| Métrica | Antes | Depois |
+|---|---|---|
+| Total de matrículas | 2.284 | 2.270 |
+| Aderência aos PDFs | 63,9% | 64,4% |
+| Cobranças / pagamentos / notas | 6.032 / 6.032 / 9.465 | inalterados |
+| Constraint `matriculas_aluno_ano_unico` | ausente | aplicada (testada com `BEGIN/ROLLBACK` antes) |
+
+Local e produção ficaram idênticos após a correção. 389 testes verdes.
+Mergeado em `main` (`f12d8bc0`), branch de trabalho `worktree-ano-letivo-correcao`
+removida. Os 119 conflitos dos grupos A e C permanecem em ambas as bases —
+efeito colateral visível: os 302 anos de histórico órfãos documentados em
+`[[project_historico_escolar]]`.

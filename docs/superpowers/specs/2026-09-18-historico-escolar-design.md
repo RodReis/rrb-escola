@@ -290,3 +290,102 @@ Vitest, padrão do repositório.
 - Educação Infantil: o enum `nivel_ensino` a prevê e o modelo a suporta, mas não
   há layout desenhado para ela. O modelo de referência é do Fundamental.
 - Transferência e declaração de escolaridade.
+
+## Execução real (18–19/09/2026)
+
+O módulo foi construído conforme o plano (migração, telas, gerador de PDF) e
+depois estendido para dois problemas que só apareceram em uso: o layout do PDF
+não batia com o modelo oficial em detalhe, e a base não tinha histórico algum
+anterior a 2026 nem os alunos que já haviam saído da escola.
+
+### Correções de layout (fidelidade ao modelo)
+
+- **`c56e2f6c`** — a grade saía sem bordas e o rodapé (resultado final, carga
+  horária, dias letivos) sobrepunha a última linha de disciplina em turmas com
+  muitas disciplinas (Fund2/Médio, ≥15 linhas). Reescrito o cálculo de altura
+  da grade em `src/lib/documents/historico-pdf.ts` para reservar o espaço do
+  rodapé antes de desenhar as linhas, e adicionadas as linhas de grade
+  (`historico-coordenadas.ts`). Teste de fidelidade adicionado para o caso
+  denso (21 disciplinas).
+- **`d66754ea`** — cabeçalho (mantenedora, logo), filiação e as duas
+  assinaturas estavam faltando no PDF gerado; só a grade e a tabela de
+  estabelecimentos saíam. Corrigido em `historico-pdf.ts`; extraída
+  `src/lib/historico/filiacao.ts` para decidir pai/mãe/responsável a partir dos
+  dados de `responsaveis_aluno`.
+
+Resultado: **7 testes de layout** em
+`src/lib/documents/historico-layout.test.ts`, incluindo o caso denso.
+
+### Importação em massa dos PDFs históricos (2009–2025)
+
+`scripts/importar_historico_pdf.mjs` (criado em `19c0309b`, evoluído em
+`c9c6259b`, `03ae80e1`, `9d9895c4`) lê os 136 PDFs oficiais em
+`~/OneDrive/Desktop/histo/<ano>/*.pdf` — a mesma fonte usada depois para a
+correção do ano letivo (`[[project_ano_letivo_correcao]]`) — e faz upsert em
+`historico_escolar`/`historico_anos`/`historico_notas` por
+`(historico_id, ano)`, então rodar de novo não duplica.
+
+Problemas encontrados e corrigidos durante a importação, cada um só visível
+depois de rodar contra os PDFs reais:
+
+1. **`c9c6259b`** — ano importado nascia sem `congelado = true`, então a regra
+   de "ano ao vivo recalcula, ano fechado não" fazia esses anos históricos
+   desaparecerem do PDF na primeira leitura seguinte.
+2. **`03ae80e1`** — `listarElegiveis` (`src/lib/data/historico-elegiveis.ts`)
+   filtrava só `status = 'ativa'`. Um ano letivo encerrado tem toda matrícula
+   como `'concluida'`, então pedir a emissão de qualquer ano passado voltava
+   vazia — só 2026 funcionava. Passou a aceitar `'ativa'` e `'concluida'`.
+   Nessa mesma correção, a importação passou a aceitar a pasta raiz
+   `histo/` inteira (descendo um nível por `<ano>/`), em vez de uma pasta por
+   vez.
+3. **`65cdfeb8`** — as associações série↔empresa (tela de Associações) só
+   cobriam 2026. Sem associação para o ano, a emissão não achava a empresa
+   credenciada e o PDF saía sem cabeçalho, cidade ou assinaturas para
+   qualquer ano anterior. `scripts/associacoes_retroativas.mjs` criou uma
+   faixa por série cobrindo o período real de cada uma (ex.: 1º ANO
+   2015–2025), sem duplicar as 5 associações de 2026 já existentes. A empresa
+   nunca é adivinhada pelo nome (o PDF diz "EPG TRINDADE", o cadastro guarda
+   a razão social) — resolvida por `--empresa` explícito, pela empresa já
+   usada nas associações existentes, ou pela única ativa.
+4. **`9d9895c4`** — 163 pessoas dos PDFs não casavam com nenhum aluno da
+   base porque a base só continha alunos ativos: ex-alunos nunca haviam sido
+   migrados, não estavam escondidos, não existiam como registro. A importação
+   passou a cadastrar automaticamente quem aparece no PDF mas não existe na
+   base, como aluno **inativo** (`ativo = false`), preenchendo nome, CPF,
+   matrícula, nascimento, naturalidade, nacionalidade, RG, órgão expedidor,
+   data de expedição e filiação (`responsaveis_aluno`, sem inferir
+   parentesco — o documento não distingue pai/mãe e a ordem varia). Sem
+   matrícula: a tabela `matriculas` exige `turma_id`, plano e valor, que o
+   histórico não informa e que não deveria ser inventado sob risco de sujar
+   relatórios financeiros. Matrícula já ocupada por outro aluno vira
+   `EX-<cpf>` para não colidir. A tela de Lista de Alunos ganhou filtro
+   **Situação** (Ativos / Ex-alunos / Todos).
+
+### Números finais (base local, `histo/` completa reimportada)
+
+| Métrica | Valor |
+|---|---|
+| Alunos com histórico | 445 |
+| Anos de histórico (`historico_anos`) | 1.729 |
+| Notas (`historico_notas`) | 15.203 |
+| Anos internos resolvendo empresa credenciada | 1.327 / 1.327 |
+| Ex-alunos cadastrados a partir do PDF (`ativo = false`) | **68** |
+| Anos cobertos | 2009–2026 (2026 vem embutido nos PDFs de 2025, que trazem a trajetória completa do aluno) |
+
+### Pendência conhecida: 302 anos de histórico órfãos
+
+Consulta pós-incidente encontrou 302 registros em `historico_anos` (origem
+`'interna'`) sem matrícula correspondente em `ano_letivo` igual. **Não é
+efeito colateral da correção do ano letivo nem das 14 remoções de duplicata**
+— é o grupo A do defeito de ano letivo (`[[project_ano_letivo_correcao]]`),
+deliberadamente fora de escopo: para esses alunos o histórico (fonte de
+verdade) está sempre um ano à frente da matrícula. Ex.: aluno 1131 tem
+histórico `2021/2º ANO` mas matrícula `2020/2º ANO`; só 2026 coincide nos
+dois, e coincide justamente porque a duplicata de 2025 desse aluno foi
+removida na correção cirúrgica.
+
+Efeito prático: a emissão por ano letivo não encontra esses alunos no ano que
+o histórico registra (achar a matrícula pelo `ano_letivo` da UI falha; o PDF
+em si, quando gerado, sai correto porque lê direto do histórico). Corrigir
+exigiria revisitar o grupo A, o que o usuário decidiu não fazer por criar
+matrículas fantasma em 2027 para ex-alunos já formados.
