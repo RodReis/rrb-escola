@@ -31,15 +31,20 @@ function runStudentsQuery(
   from: number,
   to: number
 ) {
-  // Filtro por matrícula (segmento/série/turma/ano) exige inner join na relação;
+  // Filtro por matrícula (segmento/série/turma) exige inner join na relação;
   // sem esses filtros usamos left join para não perder alunos sem matrícula.
   // Ex-aluno nao tem matricula: o inner join abaixo o excluiria sempre, entao
   // ao pedir inativos (ou todos) o join volta a ser left.
+  //
+  // `anoLetivo` de proposito NAO entra aqui: a tela sempre manda um (o ano
+  // corrente por padrao), entao inclui-lo tornava o inner join permanente e
+  // escondia da lista o aluno ativo sem matricula no ano — justamente quem a
+  // secretaria precisa achar para rematricular. O ano volta a filtrar assim que
+  // ha serie/turma/segmento escolhidos.
   const situacao = filters?.situacao ?? "ativos";
   const querInativos = situacao !== "ativos";
   const hasEnrollmentFilter =
-    !querInativos &&
-    Boolean(filters?.serieId || filters?.turmaId || filters?.segmento || filters?.anoLetivo);
+    !querInativos && Boolean(filters?.serieId || filters?.turmaId || filters?.segmento);
   const matriculaSelect = hasEnrollmentFilter
     ? "matriculas!inner(status, serie_id, turma_id, ano_letivo, series!inner(id, nome, segmento), turmas(id, nome), planos(nome))"
     : "matriculas(status, serie_id, turma_id, ano_letivo, series(id, nome, segmento), turmas(id, nome), planos(nome))";
@@ -129,7 +134,11 @@ export async function getStudentSegmentCounts(filters?: SegmentCountFilters) {
     }
 
     if (matriculasDoAno.length === 0) {
-      if (querInativos && matriculas.length === 0) counts.all += 1;
+      // Sem matrícula no ano não há segmento a atribuir, mas o aluno ainda
+      // existe: "Todos" precisa bater com o contador do título, que vem de
+      // listStudents. Série/turma são exigências reais (inner join lá), então
+      // só nesses casos o aluno sai da conta.
+      if (!filters?.serieId && !filters?.turmaId) counts.all += 1;
       continue;
     }
     counts.all += 1;
