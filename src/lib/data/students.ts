@@ -413,11 +413,19 @@ export async function contarAlunosAtivos(
  */
 export async function getAlunosSemMatriculaNoAno(
   anoLetivo: number = new Date().getFullYear()
-): Promise<{ id: string; nome: string; matriculaCodigo: string | null }[]> {
+): Promise<
+  {
+    id: string;
+    nome: string;
+    matriculaCodigo: string | null;
+    dataNascimento: string | null;
+    matriculas: { ano_letivo: number; status: string; serie_id: string | null }[];
+  }[]
+> {
   const supabase = await createServerClient();
   const { data, error } = await supabase
     .from("alunos")
-    .select("id, nome, matricula_codigo, matriculas(ano_letivo, status)")
+    .select("id, nome, matricula_codigo, data_nascimento, matriculas(ano_letivo, status, serie_id)")
     .eq("escola_id", DEFAULT_SCHOOL_ID)
     .eq("ativo", true)
     .order("nome");
@@ -434,5 +442,7 @@ export async function getAlunosSemMatriculaNoAno(
       id: row.id,
       nome: row.nome,
       matriculaCodigo: row.matricula_codigo,
+      dataNascimento: row.data_nascimento,
+      matriculas: (row.matriculas ?? []) as { ano_letivo: number; status: string; serie_id: string | null }[],
     }));
 }

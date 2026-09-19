@@ -1051,11 +1051,16 @@ export async function getRankingTurmas(
     .eq("ano_letivo", anoLetivo)
     .eq("ativo", true);
 
+  // Mesma regra 527 de getOcupacao (sibling exato, mesmo Promise.all em
+  // src/app/(app)/page.tsx): alunos.ativo=true + ano_letivo, via inner join
+  // declarado no select antes dos .eq() correlacionados (Important I1).
   const { data: matriculas } = await supabase
     .from("matriculas")
-    .select("turma_id")
+    .select("turma_id, alunos!inner(ativo)")
     .eq("escola_id", escolaId)
-    .eq("status", "ativa");
+    .eq("status", "ativa")
+    .eq("ano_letivo", anoLetivo)
+    .eq("alunos.ativo", true);
 
   const countPorTurma = new Map<string, number>();
   for (const m of matriculas ?? []) {

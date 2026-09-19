@@ -12,6 +12,15 @@ describe("anoLetivoDaData", () => {
     expect(anoLetivoDaData(new Date(2025, 0, 10))).toBe(2025);  // 10/01
     expect(anoLetivoDaData(new Date(2025, 7, 31))).toBe(2025);  // 31/08
   });
+
+  // Trava C1: combo de nova matrícula (matriculas/page.tsx) precisa buscar
+  // "sem matrícula" no MESMO ano que o formulário sugere — se page.tsx voltar
+  // a usar o default de getAlunosSemMatriculaNoAno (getFullYear() puro), este
+  // teste não pega a regressão sozinho, mas documenta a regra que os dois
+  // lados (query e form) têm que respeitar.
+  it("na janela de rematricula (setembro em diante) sugere o ano seguinte, nao o corrente", () => {
+    expect(anoLetivoDaData(new Date(2026, 8, 19))).toBe(2027); // 19/09/2026, mesma data do fix
+  });
 });
 
 describe("anoLetivoSugerido", () => {

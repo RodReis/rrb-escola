@@ -10,6 +10,7 @@ import { NovaMatriculaFields } from "@/components/matriculas/nova-matricula-fiel
 import { MatriculasTable } from "@/components/matriculas/matriculas-table";
 import { MatriculasFilters } from "@/components/matriculas/matriculas-filters";
 import { requirePermission } from "@/lib/auth/session";
+import { anoLetivoDaData } from "@/lib/matriculas/ano-letivo";
 
 export default async function MatriculasPage({
   searchParams,
@@ -21,17 +22,24 @@ export default async function MatriculasPage({
 
   const [{ alunos, series, turmas, planos }, alunosDisponiveis, all, filtered] = await Promise.all([
     getAcademicData(),
-    getAlunosSemMatriculaNoAno(),
+    // Mesmo ano que o formulário sugere (setembro em diante = ano seguinte),
+    // senão o combo busca "sem matrícula" no ano errado e some com quem a
+    // secretaria precisa achar para rematricular (Critical C1).
+    getAlunosSemMatriculaNoAno(anoLetivoDaData(new Date())),
     getEnrollments(),
     getEnrollments({ status: status || undefined, nome: nome || undefined }),
   ]);
 
   // Combo de nova matrícula: só alunos ativos sem matrícula no ano corrente
   // (fonte única, Task 4) — evita listar quem já está matriculado.
+  // `matriculas`/`data_nascimento` propagados: NovaMatriculaFields usa para
+  // sugerir série/ano e calcular idade/repetência (Critical C2).
   const alunosParaCombo = alunosDisponiveis.map((a) => ({
     id: a.id,
     nome: a.nome,
     matricula_codigo: a.matriculaCodigo ?? "",
+    data_nascimento: a.dataNascimento,
+    matriculas: a.matriculas,
   }));
 
   // alunoPre (link "matricular" vindo de outra tela) pode apontar para um
