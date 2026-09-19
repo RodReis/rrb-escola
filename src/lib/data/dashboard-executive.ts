@@ -825,12 +825,18 @@ export async function getBeneficios(
 ): Promise<BeneficiosData> {
   const supabase = await createServerClient();
 
+  // Mesma populacao de listBolsistas (bolsistas.ts): regra 527 aplicada via
+  // inner join em alunos — o `!inner` e o `.eq("alunos.ativo", true)` precisam
+  // estar juntos (embed so filtra com .eq quando declarado no select, ver
+  // licao da Task 3). Sem isso o card do dashboard home diverge do total da
+  // tela /bolsistas (Task 7, fix round 1).
   const { data: matriculas } = await supabase
     .from("matriculas")
-    .select("tipo_vaga, percentual_bolsa, series(segmento), planos(valor_mensalidade)")
+    .select("tipo_vaga, percentual_bolsa, series(segmento), planos(valor_mensalidade), alunos!inner(ativo)")
     .eq("escola_id", escolaId)
     .eq("ano_letivo", anoLetivo)
     .eq("status", "ativa")
+    .eq("alunos.ativo", true)
     .in("tipo_vaga", BENEFICIARIO_TIPOS);
 
   // Carrega valores praticados do ano corrente (ordem_filho = 1)
