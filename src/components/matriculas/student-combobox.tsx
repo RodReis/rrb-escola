@@ -2,6 +2,7 @@
 
 import { useState, useRef, useEffect } from "react";
 import { Search } from "lucide-react";
+import { normalizeNome } from "@/lib/format/normalize-nome";
 
 type Aluno = {
   id: string;
@@ -25,11 +26,12 @@ export function StudentCombobox({
   const [selected, setSelected] = useState<Aluno | null>(defaultValue ?? null);
   const containerRef = useRef<HTMLDivElement>(null);
 
+  const queryNormalizada = normalizeNome(query);
   const filtered = query.length < 1
     ? []
     : alunos
         .filter((a) =>
-          a.nome.toLowerCase().includes(query.toLowerCase()) ||
+          normalizeNome(a.nome).includes(queryNormalizada) ||
           a.matricula_codigo.includes(query)
         )
         .slice(0, 10);

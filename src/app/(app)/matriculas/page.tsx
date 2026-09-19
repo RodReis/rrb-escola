@@ -2,6 +2,7 @@ import { CheckCircle2, Plus, RefreshCcw, UserPlus } from "lucide-react";
 import { createEnrollmentAction } from "@/lib/actions/academics";
 import { getEnrollments } from "@/lib/data/enrollments";
 import { getAcademicData } from "@/lib/data/lookups";
+import { getAlunosSemMatriculaNoAno } from "@/lib/data/students";
 import { PageHeader } from "@/components/ui/page-header";
 import { Panel } from "@/components/ui/card";
 import { ButtonLink } from "@/components/ui/button";
@@ -18,12 +19,24 @@ export default async function MatriculasPage({
   await requirePermission("matriculas", "read");
   const { status = "", nome = "", aluno_id = "", sucesso = "", erro = "" } = await searchParams;
 
-  const [{ alunos, series, turmas, planos }, all, filtered] = await Promise.all([
+  const [{ alunos, series, turmas, planos }, alunosDisponiveis, all, filtered] = await Promise.all([
     getAcademicData(),
+    getAlunosSemMatriculaNoAno(),
     getEnrollments(),
     getEnrollments({ status: status || undefined, nome: nome || undefined }),
   ]);
 
+  // Combo de nova matrícula: só alunos ativos sem matrícula no ano corrente
+  // (fonte única, Task 4) — evita listar quem já está matriculado.
+  const alunosParaCombo = alunosDisponiveis.map((a) => ({
+    id: a.id,
+    nome: a.nome,
+    matricula_codigo: a.matriculaCodigo ?? "",
+  }));
+
+  // alunoPre (link "matricular" vindo de outra tela) pode apontar para um
+  // aluno fora do universo "sem matrícula": busca no universo completo para
+  // não quebrar o preenchimento, mas o combo em si usa alunosParaCombo.
   const alunoPre = aluno_id
     ? alunos.find((a) => a.id === aluno_id) ?? null
     : null;
@@ -77,7 +90,7 @@ export default async function MatriculasPage({
         ) : null}
         <form action={createEnrollmentAction} className="grid gap-5">
           <div className="grid gap-4 md:grid-cols-4">
-            <NovaMatriculaFields alunos={alunos} series={series} turmas={turmas} alunoPre={alunoPre} />
+            <NovaMatriculaFields alunos={alunosParaCombo} series={series} turmas={turmas} alunoPre={alunoPre} />
             <label className="self-start">Plano
               <select name="plano_id">
                 <option value="">Sem plano</option>
