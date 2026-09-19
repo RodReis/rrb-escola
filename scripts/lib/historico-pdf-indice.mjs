@@ -27,20 +27,61 @@ export function chaveIndice(matricula, ano) {
   return `${String(matricula)}|${ano}`;
 }
 
-/** Map "mat|ano" -> serie normalizada. Pares incompletos sao descartados. */
+/**
+ * Map "mat|ano" -> serie normalizada. Pares incompletos sao descartados.
+ * Conflitos (mesmo mat|ano com series diferentes) sao detectados via
+ * construirIndiceComConflitos; este metodo delega a ele.
+ */
 export function construirIndice(pares) {
-  const indice = new Map();
-  for (const p of pares) {
-    if (!p.mat || !p.ano || !p.serie) continue;
-    indice.set(chaveIndice(p.mat, p.ano), normalizarSerie(p.serie));
-  }
+  const { indice } = construirIndiceComConflitos(pares);
   return indice;
 }
 
-export async function extrairParesDeArquivo(caminho) {
-  const { pages } = await new PDFParse({ data: readFileSync(caminho) }).getText();
+/**
+ * Constroi o indice e reporta conflitos encontrados.
+ * Conflito = dois pares com mesmo mat|ano mas series normalizadas diferentes.
+ *
+ * Devolve { indice: Map<string, string>, conflitos: Array<{chave, series}> }
+ * onde cada conflito lista as series distintas encontradas para a mesma chave.
+ */
+export function construirIndiceComConflitos(pares) {
+  const indice = new Map();
+  const conflituosos = new Map(); // mat|ano -> Set de series normalizadas
+  const conflitos = [];
+
+  for (const p of pares) {
+    if (!p.mat || !p.ano || !p.serie) continue;
+    const chave = chaveIndice(p.mat, p.ano);
+    const seriNorm = normalizarSerie(p.serie);
+
+    if (!indice.has(chave)) {
+      // Primeira vez que vemos essa chave
+      indice.set(chave, seriNorm);
+      conflituosos.set(chave, new Set([seriNorm]));
+    } else {
+      // Ja temos essa chave: verifica se serie e a mesma
+      const seriesVistas = conflituosos.get(chave);
+      if (!seriesVistas.has(seriNorm)) {
+        // Nova serie para essa chave = conflito
+        seriesVistas.add(seriNorm);
+        if (!conflitos.some((c) => c.chave === chave)) {
+          conflitos.push({ chave, series: Array.from(seriesVistas) });
+        }
+      }
+      // Segue com o primeiro valor que achou (nao sobrescreve)
+    }
+  }
+
+  return { indice, conflitos };
+}
+
+/**
+ * Extrai pares mat|ano|serie de registros parseados (formato parsearPdf).
+ * Testavel: nao acessa filesystem.
+ */
+export function extrairParesDePdfParsed(registros) {
   const pares = [];
-  for (const registro of parsearPdf(pages)) {
+  for (const registro of registros) {
     const mat = registro.aluno?.matricula;
     if (!mat) continue;
     for (const ano of registro.anos ?? []) {
@@ -49,6 +90,11 @@ export async function extrairParesDeArquivo(caminho) {
     }
   }
   return pares;
+}
+
+export async function extrairParesDeArquivo(caminho) {
+  const { pages } = await new PDFParse({ data: readFileSync(caminho) }).getText();
+  return extrairParesDePdfParsed(parsearPdf(pages));
 }
 
 /** Varre <raiz>/<ano>/*.pdf. Deduplica: o mesmo aluno aparece em varios PDFs. */
