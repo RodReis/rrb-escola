@@ -60,16 +60,23 @@ export async function getEvasao(
 ): Promise<EvasaoData> {
   const supabase = await createServerClient();
 
+  // Mesma regra 527 de contarAlunosAtivos (alunos!inner + alunos.ativo=true),
+  // para que os 4 subtotais (ativos/cancelados/transferidos/concluidos) usem
+  // a mesma convenção de filtro — senão total = soma dos 4 sub-conta a
+  // população real e infla taxaEvasao (denominador menor, mesmo numerador).
   const { data } = await supabase
     .from("matriculas")
-    .select("status, updated_at")
+    .select("status, updated_at, alunos!inner(ativo)")
     .eq("escola_id", escolaId)
-    .eq("ano_letivo", anoLetivo);
+    .eq("ano_letivo", anoLetivo)
+    .eq("alunos.ativo", true);
 
-  // "ativos" agora vem da fonte única (regra 527: alunos.ativo=true AND
-  // matriculas.status='ativa'), não mais do loop abaixo — que precisa
-  // continuar somando cancelada/transferida/concluida (evasão exige os
-  // status não-ativos, que contarAlunosAtivos não devolve).
+  // "ativos" vem da fonte única (contarAlunosAtivos), não do loop abaixo —
+  // que soma apenas cancelada/transferida/concluida (evasão exige os
+  // status não-ativos, que contarAlunosAtivos não devolve). A aritmética de
+  // total = ativos + cancelados + transferidos + concluidos depende da
+  // constraint UNIQUE(escola_id, aluno_id, ano_letivo) — uma matrícula por
+  // aluno por ano — para que contar alunos e contar matrículas coincidam.
   let cancelados = 0, transferidos = 0, concluidos = 0;
   const porMesMap = new Map<string, { cancelados: number; transferidos: number }>();
 
@@ -899,12 +906,16 @@ export async function getPedagogicoOverview(
       .from("series")
       .select("id", { count: "exact", head: true })
       .eq("escola_id", escolaId),
+    // Mesma regra 527 de contarAlunosAtivos (alunos!inner + alunos.ativo=true),
+    // para que numerador (porEtapa.count) e denominador (totalAlunos) usem a
+    // mesma população — senão os percentuais podem somar mais de 100%.
     supabase
       .from("matriculas")
-      .select("series(segmento)")
+      .select("series(segmento), alunos!inner(ativo)")
       .eq("escola_id", escolaId)
       .eq("status", "ativa")
-      .eq("ano_letivo", anoLetivo),
+      .eq("ano_letivo", anoLetivo)
+      .eq("alunos.ativo", true),
   ]);
 
   const turnosSet = new Set<string>();
