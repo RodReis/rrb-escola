@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { formatarDataCurta, formatarDataExtenso, montarCorpo } from "./certificado-texto";
+import { dataLocalDeIso, formatarDataCurta, formatarDataExtenso, montarCorpo } from "./certificado-texto";
 import { CERTIFICADO_DEFAULTS } from "./certificado-tipos";
 import type { CertificadoData, CertificadoOptions } from "./certificado-tipos";
 
@@ -180,5 +180,21 @@ describe("formatarDataCurta", () => {
 
   it("deixa passar valor já formatado da base importada", () => {
     expect(formatarDataCurta("28/08/2017")).toBe("28/08/2017");
+  });
+});
+
+describe("dataLocalDeIso", () => {
+  it("não desloca o dia em fuso negativo", () => {
+    // `new Date("2026-09-19")` é meia-noite UTC e daria 18 em GMT-3.
+    const d = dataLocalDeIso("2026-09-19");
+    expect(d.getDate()).toBe(19);
+    expect(d.getMonth()).toBe(8);
+    expect(d.getFullYear()).toBe(2026);
+  });
+
+  it("preserva a virada do ano", () => {
+    const d = dataLocalDeIso("2026-01-01");
+    expect(d.getDate()).toBe(1);
+    expect(d.getMonth()).toBe(0);
   });
 });

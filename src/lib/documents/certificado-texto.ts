@@ -50,6 +50,16 @@ export function formatarDataCurta(iso: string | null): string {
 }
 
 /**
+ * ISO → `Date` no fuso local, para quem exige um `Date` (o gerador do
+ * histórico). `new Date("2026-09-19")` devolveria 18/09 em GMT-3, porque o
+ * construtor lê a string como meia-noite UTC. Data inválida devolve hoje.
+ */
+export function dataLocalDeIso(iso: string): Date {
+  const p = partesData(iso);
+  return p ? new Date(p.ano, p.mes - 1, p.dia) : new Date();
+}
+
+/**
  * Junta segmentos e normaliza espaços, para que campo ausente não deixe buraco.
  * Também remove o espaço que sobra antes de pontuação quando o trecho anterior
  * cai (ex.: aluno sem RG deixaria "… GOIÂNIA-GO , concluiu …").
