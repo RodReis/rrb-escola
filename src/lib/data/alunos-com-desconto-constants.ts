@@ -58,6 +58,7 @@ export type AlunosComDescontoFilters = {
   nome: string | null;
   serieId: string | null;
   turmaId: string | null;
+  anoLetivo?: number;
 };
 
 export const ORIGEM_LABEL: Record<OrigemDesconto, string> = {

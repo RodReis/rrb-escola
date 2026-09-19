@@ -34,6 +34,7 @@ export async function getAlunosComDesconto(
   filters: AlunosComDescontoFilters
 ): Promise<AlunoComDescontoRow[]> {
   const supabase = await createServerClient();
+  const anoLetivo = filters.anoLetivo ?? new Date().getFullYear();
 
   let query = supabase
     .from("matriculas")
@@ -45,7 +46,7 @@ export async function getAlunosComDesconto(
       planos!inner(valor_mensalidade)
     `)
     .eq("escola_id", DEFAULT_SCHOOL_ID)
-    .eq("ano_letivo", 2026)
+    .eq("ano_letivo", anoLetivo)
     .eq("status", "ativa")
     .in("tipo_vaga", ["paga", "bolsa_parcial"]);
 
@@ -59,7 +60,7 @@ export async function getAlunosComDesconto(
       .from("valores_praticados")
       .select("segmento, ordem_filho, valor_mensalidade")
       .eq("escola_id", DEFAULT_SCHOOL_ID)
-      .eq("ano_letivo", 2026)
+      .eq("ano_letivo", anoLetivo)
       .order("ordem_filho", { ascending: true }),
   ]);
   if (error) throw error;
