@@ -1,9 +1,10 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { StudentCombobox } from "@/components/matriculas/student-combobox";
 import { FieldNote } from "@/components/ui/field-note";
+import { anoLetivoSugerido } from "@/lib/matriculas/ano-letivo";
 
 type Aluno = {
   id: string;
@@ -49,16 +50,6 @@ function proximaSerieSugerida(aluno: Aluno | null, series: Serie[]): string {
   return ordenadas[indiceAtual + 1]?.id ?? "";
 }
 
-function proximoAnoDisponivel(aluno: Aluno | null, anoAtual: number): number {
-  if (!aluno?.matriculas) return anoAtual;
-  const anosOcupados = new Set(
-    aluno.matriculas.filter((m) => m.status === "ativa" || m.status === "concluida").map((m) => m.ano_letivo)
-  );
-  let ano = anoAtual;
-  while (anosOcupados.has(ano)) ano += 1;
-  return ano;
-}
-
 export function NovaMatriculaFields({
   alunos,
   series,
@@ -70,16 +61,35 @@ export function NovaMatriculaFields({
   turmas: Turma[];
   alunoPre?: Aluno | null;
 }) {
-  const anoAtual = new Date().getFullYear();
+  const hoje = useMemo(() => new Date(), []);
+  const anoAtual = hoje.getFullYear();
   const [aluno, setAluno] = useState<Aluno | null>(alunoPre ?? null);
   const [serieId, setSerieId] = useState(() => proximaSerieSugerida(alunoPre ?? null, series));
 
   function selecionarAluno(proximo: Aluno | null) {
     setAluno(proximo);
     setSerieId(proximaSerieSugerida(proximo, series));
+    // Trocar de aluno recalcula a sugestão do ano, como já acontece com a série:
+    // cada aluno tem anos ocupados diferentes, e manter o ano digitado para o
+    // aluno anterior gravaria a matrícula no ano errado sem aviso.
+    setAnoTocado(false);
   }
 
-  const anoLetivo = useMemo(() => proximoAnoDisponivel(aluno, anoAtual), [aluno, anoAtual]);
+  const anoSugerido = useMemo(() => {
+    const ocupados = (aluno?.matriculas ?? [])
+      .filter((m) => m.status === "ativa" || m.status === "concluida")
+      .map((m) => m.ano_letivo);
+    return anoLetivoSugerido(hoje, ocupados);
+  }, [aluno, hoje]);
+
+  const [anoLetivo, setAnoLetivo] = useState(anoSugerido);
+  const [anoTocado, setAnoTocado] = useState(false);
+
+  // Enquanto a secretaria não editar o campo, ele acompanha a troca de aluno.
+  useEffect(() => {
+    if (!anoTocado) setAnoLetivo(anoSugerido);
+  }, [anoSugerido, anoTocado]);
+
   const idade = useMemo(() => {
     if (!aluno?.data_nascimento) return "";
     return calcularIdade(aluno.data_nascimento, new Date(anoLetivo, new Date().getMonth(), new Date().getDate()));
@@ -130,9 +140,16 @@ export function NovaMatriculaFields({
         ) : null}
       </div>
       <label className="self-start">Ano letivo
-        <input name="ano_letivo" type="number" value={anoLetivo} readOnly />
-        {aluno && anoLetivo !== anoAtual ? (
-          <FieldNote>Já matriculado em {anoAtual}.</FieldNote>
+        <input
+          name="ano_letivo"
+          type="number"
+          value={anoLetivo}
+          onChange={(e) => { setAnoTocado(true); setAnoLetivo(Number(e.target.value)); }}
+        />
+        {anoLetivo !== anoAtual ? (
+          <FieldNote>
+            Matrícula a partir de setembro vale para {anoLetivo}.
+          </FieldNote>
         ) : null}
       </label>
       <label className="self-start">Idade<input name="idade_na_matricula" type="number" value={idade} readOnly /></label>
