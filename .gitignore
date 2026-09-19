@@ -42,3 +42,12 @@ docs/pdfs/*.txt
 __pycache__/
 *.pyc
 .gstack/
+
+# Dumps e backups de banco — contêm dados pessoais de alunos, nunca versionar
+.db-backups/
+backup-prod-*.json
+*.dump
+*.sql.gz
+
+# Extrações pontuais com dados pessoais (CPF/nome/matrícula)
+ref.json
