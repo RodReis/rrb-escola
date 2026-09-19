@@ -1,6 +1,7 @@
 import { createServerClient } from "@/lib/supabase/server";
 import { DEFAULT_SCHOOL_ID } from "@/lib/constants";
 import type { StudentSheet } from "@/lib/types";
+import { montarFiltroAlunosAtivos, type FiltroAlunosAtivosResolvido } from "./students-shared-constants";
 
 /** "ativos" (padrao) | "inativos" | "todos" — ver `situacao` em runStudentsQuery. */
 export type SituacaoAluno = "ativos" | "inativos" | "todos";
@@ -288,4 +289,102 @@ export async function getStudentsReport() {
       statusMatricula: activeEnrollment?.status ?? ""
     };
   });
+}
+
+export type AlunoAtivoAnoCorrente = {
+  id: string;
+  nome: string;
+  matriculaCodigo: string | null;
+  cpf: string | null;
+  matriculaId: string;
+  serieId: string;
+  turmaId: string;
+  anoLetivo: number;
+};
+
+export type FiltroAlunosAtivos = {
+  anoLetivo?: number;
+  serieId?: string;
+  turmaId?: string;
+  nome?: string;
+};
+
+type AlunoAtivoRow = {
+  id: string;
+  nome: string;
+  matricula_codigo: string | null;
+  cpf: string | null;
+  matriculas:
+    | { id: string; serie_id: string; turma_id: string; ano_letivo: number; status: string }
+    | { id: string; serie_id: string; turma_id: string; ano_letivo: number; status: string }[]
+    | null;
+};
+
+function buildAlunosAtivosQuery(
+  supabase: Awaited<ReturnType<typeof createServerClient>>,
+  filtro: FiltroAlunosAtivosResolvido,
+  opts: { countOnly: boolean }
+) {
+  let query = supabase
+    .from("alunos")
+    .select(
+      opts.countOnly
+        ? "id"
+        : "id, nome, matricula_codigo, cpf, matriculas!inner(id, serie_id, turma_id, ano_letivo, status)",
+      { count: "exact", head: opts.countOnly }
+    )
+    .eq("escola_id", DEFAULT_SCHOOL_ID)
+    .eq("ativo", true)
+    .eq("matriculas.status", "ativa")
+    .eq("matriculas.ano_letivo", filtro.anoLetivo);
+
+  if (filtro.serieId) query = query.eq("matriculas.serie_id", filtro.serieId);
+  if (filtro.turmaId) query = query.eq("matriculas.turma_id", filtro.turmaId);
+  if (filtro.nomeNormalizado) query = query.ilike("nome_normalizado", `%${filtro.nomeNormalizado}%`);
+
+  return query;
+}
+
+/**
+ * Fonte única: alunos com `ativo=true` e matrícula `status='ativa'` no ano
+ * letivo informado (ou corrente). Base de todo KPI/contagem "oficial" do
+ * sistema — a regra "527". Não usar para telas que precisam ver aluno ativo
+ * sem matrícula no ano (ver `listStudents`) nem para o combo de nova
+ * matrícula (ver `getAlunosSemMatriculaNoAno`).
+ */
+export async function getAlunosAtivosAnoCorrente(
+  filtro?: FiltroAlunosAtivos
+): Promise<AlunoAtivoAnoCorrente[]> {
+  const supabase = await createServerClient();
+  const resolvido = montarFiltroAlunosAtivos(filtro ?? {});
+  const { data, error } = await buildAlunosAtivosQuery(supabase, resolvido, { countOnly: false });
+  if (error) throw error;
+
+  return ((data ?? []) as unknown as AlunoAtivoRow[]).map((row) => {
+    const matricula = Array.isArray(row.matriculas) ? row.matriculas[0] : row.matriculas;
+    return {
+      id: row.id,
+      nome: row.nome,
+      matriculaCodigo: row.matricula_codigo,
+      cpf: row.cpf,
+      matriculaId: matricula?.id ?? "",
+      serieId: matricula?.serie_id ?? "",
+      turmaId: matricula?.turma_id ?? "",
+      anoLetivo: matricula?.ano_letivo ?? resolvido.anoLetivo,
+    };
+  });
+}
+
+/**
+ * Mesma base de `getAlunosAtivosAnoCorrente`, mas devolve só a contagem
+ * (`head: true`) — evita trazer linhas quando só o número importa.
+ */
+export async function contarAlunosAtivos(
+  filtro?: Omit<FiltroAlunosAtivos, "nome">
+): Promise<number> {
+  const supabase = await createServerClient();
+  const resolvido = montarFiltroAlunosAtivos(filtro ?? {});
+  const { count, error } = await buildAlunosAtivosQuery(supabase, resolvido, { countOnly: true });
+  if (error) throw error;
+  return count ?? 0;
 }
