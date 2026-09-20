@@ -53,6 +53,12 @@ docker exec -i "$CONTAINER" psql -U postgres -d postgres -q \
   --set=session_replication_role=replica < "$DATA_FIXED"
 
 echo ""
+echo "=== Garante o admin de teste local ==="
+# O espelho traz os usuarios de producao, onde admin@rrb.local nao tem perfil.
+# Sem isso o login local falha com "Sem perfil ativo".
+npm run seed:auth
+
+echo ""
 echo "=== Contagens ==="
 docker exec -i "$CONTAINER" psql -U postgres -d postgres -c "
 select 'alunos' tabela, count(*) from alunos

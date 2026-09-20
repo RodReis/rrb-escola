@@ -32,6 +32,30 @@ Com o snapshot, o reset restaura os dados **antigos** (509 alunos, capturados em
 2026-05-17), não os de produção. Ou seja: `db reset --local` serve para validar
 a cadeia de migrations, não para espelhar prod. Para espelhar, use o script acima.
 
+### Login local depois de espelhar prod
+
+O espelho traz os usuários de produção, e **`admin@rrb.local` não tem perfil em
+produção** — ele só existia no snapshot local. Sem perfil, o login falha com
+"Sem perfil ativo. Solicite acesso ao administrador."
+
+O `sync_local_from_prod.sh` já roda `npm run seed:auth` no final, que cria o
+perfil e reaplica a senha do `.env.local` (`APP_DEFAULT_ADMIN_*`). Se o login
+falhar em qualquer outro cenário, rode:
+
+```bash
+npm run seed:auth
+```
+
+O script é idempotente e recusa rodar contra banco remoto (sobrescreveria a senha
+de um admin real de produção).
+
+Detalhe que explica por que o problema voltava a cada reconstrução: o perfil
+`22222222-2222-2222-2222-222222222222` pertence a **usuários diferentes** nos dois
+mundos — a `admin@rrb.local` no snapshot local e a `admin@rrbescola.local` em
+produção. Qualquer mistura das duas fontes deixa o perfil apontando para o user
+errado ou inativo. Corrigir por INSERT manual no banco não resolve: some na
+próxima reconstrução. A correção tem que passar pelo `seed:auth`.
+
 ### Gotcha: search_path nos dumps de prod
 
 `pg_dump` emite `set_config('search_path', '', false)`. Com o search_path vazio,

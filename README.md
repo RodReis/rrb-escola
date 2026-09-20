@@ -31,7 +31,10 @@ npx supabase start
 # 3. Aplica migrations + restaura snapshot completo de dados reais
 npx supabase db reset --local
 
-# 4. Sobe Next dev
+# 4. Garante o admin de teste local
+npm run seed:auth
+
+# 5. Sobe Next dev
 npm run dev
 ```
 
@@ -39,6 +42,13 @@ Abra `http://localhost:3000` e logue com:
 
 - **Email**: `admin@rrb.local`
 - **Senha**: `admin123`
+
+Para trabalhar com os dados atuais de produção em vez do snapshot, use
+`bash scripts/sync_local_from_prod.sh` (ver [docs/db-seed-workflow.md](docs/db-seed-workflow.md)).
+
+**Login falhou com "Sem perfil ativo"?** Rode `npm run seed:auth`. O usuário existe
+no `auth`, mas sem linha em `perfis` — acontece sempre que o banco local é
+reconstruído a partir de produção, onde `admin@rrb.local` não tem perfil.
 
 Supabase Studio (admin DB): `http://127.0.0.1:55423`
 

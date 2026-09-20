@@ -25,6 +25,16 @@ if (!url || !serviceKey) {
   process.exit(1);
 }
 
+// O script reaplica a senha de um admin existente. Contra o banco remoto isso
+// sobrescreveria a senha de um usuário real de produção.
+const isLocal = /(127\.0\.0\.1|localhost)/.test(url);
+if (!isLocal && process.env.SEED_ADMIN_ALLOW_REMOTE !== "1") {
+  console.error(`Recusado: ${url} não é local.`);
+  console.error("Ative o bloco 'Supabase Local Docker' no .env.local.");
+  console.error("Para rodar mesmo assim: SEED_ADMIN_ALLOW_REMOTE=1 npm run seed:auth");
+  process.exit(1);
+}
+
 const supabase = createClient(url, serviceKey, {
   auth: { persistSession: false, autoRefreshToken: false, detectSessionInUrl: false }
 });
@@ -50,7 +60,17 @@ if (!user) {
   user = created.user;
   console.log("Admin criado:", email);
 } else {
-  console.log("Admin já existe:", email);
+  // O usuario pode ter vindo do espelho de producao, com outra senha. Reaplica a
+  // senha local para o login documentado no README continuar valendo.
+  const { error: updateError } = await supabase.auth.admin.updateUserById(user.id, {
+    password,
+    email_confirm: true
+  });
+  if (updateError) {
+    console.error("Falha ao atualizar senha do admin:", updateError.message);
+    process.exit(1);
+  }
+  console.log("Admin já existe, senha reaplicada:", email);
 }
 
 if (user) {
