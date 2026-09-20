@@ -2,6 +2,45 @@
 
 Como preservar e restaurar o estado do banco local.
 
+## Espelhar produção (recomendado desde 2026-09-20)
+
+Para deixar o banco local idêntico ao de produção — mesma estrutura e mesmos dados:
+
+```bash
+bash scripts/sync_local_from_prod.sh
+```
+
+O script faz backup do local, baixa schema + dados de prod via `supabase db dump --linked`,
+recria o schema `public`, limpa `auth.users` e carrega tudo. Os dumps ficam em
+`backups/prod/` (fora do git: contêm dados pessoais de alunos).
+
+Depois rode com o bloco **Local Docker** ativo no `.env.local` — senão `npm run dev`
+escreve direto em produção.
+
+### Por que não usar `db reset --local` para isso
+
+O reset reaplica as migrations, e ~65 delas são migrations de dados (boletins,
+rematrículas, correções) que referenciam UUIDs vindos do snapshot
+`202605270002_seed_real_data.sql`. Sem o snapshot elas quebram com erro de FK:
+
+```
+insert or update on table "disciplinas" violates foreign key constraint
+"disciplinas_serie_id_fkey"
+```
+
+Com o snapshot, o reset restaura os dados **antigos** (509 alunos, capturados em
+2026-05-17), não os de produção. Ou seja: `db reset --local` serve para validar
+a cadeia de migrations, não para espelhar prod. Para espelhar, use o script acima.
+
+### Gotcha: search_path nos dumps de prod
+
+`pg_dump` emite `set_config('search_path', '', false)`. Com o search_path vazio,
+`immutable_unaccent()` (que chama `unaccent('unaccent', $1)` sem qualificar o schema)
+falha, a coluna gerada `alunos.nome_normalizado` não é criada, a tabela `alunos` não
+existe e ~30 objetos dependentes quebram em cascata. O script já corrige isso, trocando
+por `'public, extensions, pg_catalog'`. É o mesmo gotcha descrito em
+[search_path](#search_path) mais abaixo.
+
 ## Por que existe
 
 O Supabase CLI tem `npx supabase db reset --local` que **apaga tudo** e reaplica migrations. Antes desta solução, qualquer reset destruía dados cadastrados manualmente.

@@ -53,6 +53,7 @@
     "eslint-config-next": "^14.2.35",
     "pixelmatch": "^7.2.0",
     "pngjs": "^7.0.0",
+    "supabase": "^2.117.0",
     "vitest": "^4.1.7"
   },
   "overrides": {
