@@ -56,6 +56,8 @@ Supabase Studio (admin DB): `http://127.0.0.1:55423`
 
 Roda todas migrations em `supabase/migrations/` em ordem. A última migration (`202605270002_seed_real_data.sql`) é um snapshot completo do banco com **~23 mil INSERTs** (alunos, matrículas, cobranças, payroll etc). Sai com banco populado pronto pra usar.
 
+Atenção: esse snapshot foi capturado em **2026-05-17** e tem 509 alunos, contra 789 em produção. Para trabalhar com os dados atuais, use `bash scripts/sync_local_from_prod.sh` — ver [docs/db-seed-workflow.md](docs/db-seed-workflow.md), que compara as duas fontes.
+
 **Login pós-reset**: o navegador pode ter cookie de sessão stale apontando para auth user antigo. Se aparecer `Invalid Refresh Token`: limpe cookies do site (DevTools → Application → Cookies → delete `sb-*`) ou faça logout/login.
 
 ## Atualizando o snapshot

@@ -25,7 +25,7 @@ Não há Railway, nem repositório separado para "a API".
 | Branch que dispara | `main` — confirmado por screenshot. | N/A |
 | Env vars exigidas | **Confirmado por screenshot da aba Variables** (nomes e escopo; valores nunca expostos — todas marcadas "Sensitive"). Ver tabela detalhada abaixo — a captura mostra 11 vars, pode haver mais fora da rolagem visível (**[NÃO VERIFICADO]** se a lista é exaustiva). | N/A do lado do app; Supabase tem suas próprias chaves (`anon`, `service_role`) que são consumidas como env vars no lado Vercel |
 | Build/start | `buildCommand: npm run build`, `outputDirectory: .next`, framework Next.js (`vercel.json`). Cron interno: `POST /api/jobs/dispatch` às 07:00 UTC diariamente (`vercel.json` → `crons`). | N/A |
-| Último deploy confirmado | Jul 3 (2026), commit `6a1c4d0` "RRb para CRm", status **Ready** — confirmado por screenshot da página Production Deployment. | **[NÃO VERIFICADO]** — última migration aplicada em produção não confirmada nesta sessão; ver `docs/DEPLOY_PENDENTE_PROD.md` para migrations conhecidas como pendentes de aplicar. |
+| Último deploy confirmado | Jul 3 (2026), commit `6a1c4d0` "RRb para CRm", status **Ready** — confirmado por screenshot da página Production Deployment. | Em 2026-09-20, `npx supabase migration list --linked` mostrou as 125 migrations aplicadas (`local` = `remote`), sem pendências. |
 | Rollback disponível | **"Instant Rollback"** — botão visível no topo da página Production Deployment do dashboard. | Não há "rollback" de schema — mudanças de banco são incrementais via novas migrations (ver seção Rollback abaixo). |
 
 ### Env vars de produção (Vercel) — confirmadas por screenshot
@@ -80,7 +80,7 @@ Checklist:
 - [ ] Confirmar se há mais env vars de Production fora da rolagem capturada (rolar a aba Variables até o fim).
 - [ ] Investigar por que `ASAAS_*`, `GATE_MATCH_THRESHOLD`/`GATE_EVENT_COOLDOWN_SECONDS`, `META_TEMPLATE_*` não apareceram — feature desativada em prod, valor default no código, ou var realmente faltando.
 - [ ] Confirmar nome/ref do projeto Supabase de produção e se há mais de um ambiente (staging/prod) configurado.
-- [ ] Cruzar `docs/DEPLOY_PENDENTE_PROD.md` (migrations Supabase pendentes de aplicar em produção, conhecidas em 2026-06) com o estado atual — pode já estar desatualizado.
+- [x] Cruzar `docs/DEPLOY_PENDENTE_PROD.md` (migrations Supabase pendentes de aplicar em produção, conhecidas em 2026-06) com o estado atual — feito em 2026-09-20: todas aplicadas, o documento virou registro histórico.
 
 ## Passo a passo de deploy
 
@@ -110,7 +110,7 @@ Motivo: o deploy da Vercel é automático no push a `main` — não há uma etap
 ### Deploy do banco (Supabase)
 
 1. Escrever a migration em `supabase/migrations/`.
-2. Testar localmente: `supabase db reset` (local) — nunca em produção.
+2. Testar localmente: `supabase db reset` (local) — nunca em produção. Para testar contra os dados atuais de produção, espelhe o banco com `bash scripts/sync_local_from_prod.sh` e rode `npx supabase migration up --local` (ver `docs/db-seed-workflow.md`).
 3. Aplicar em produção: `npx supabase db push --linked`.
 4. Seguir o checklist específico de migrations destrutivas/sensíveis quando aplicável (ver `docs/DEPLOY_PENDENTE_PROD.md`, que já documenta pendências e um caso de drop irreversível com checklist próprio).
 

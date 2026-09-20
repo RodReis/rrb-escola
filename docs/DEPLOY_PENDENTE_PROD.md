@@ -1,6 +1,10 @@
-# Aplicar em produção — pendente
+# Aplicar em produção — RESOLVIDO
 
-Migrations e correções aplicadas no Docker local (`db reset` OK, 66 migrations). **Falta aplicar em produção.**
+> **Status em 2026-09-20: não há mais pendência.** `npx supabase migration list --linked`
+> mostra as 125 migrations com `local` = `remote`, incluindo todas as listadas abaixo.
+> O documento fica como registro histórico da rodada folha-v2.
+
+Migrations e correções aplicadas no Docker local (`db reset` OK, 66 migrations). ~~Falta aplicar em produção.~~
 
 ## Como aplicar
 
