@@ -4,33 +4,10 @@ import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
 import { FileText } from "lucide-react";
 import type { BoletimData } from "@/lib/data/pedagogico";
+import { imgFitInBox, urlToDataUrl } from "@/lib/documents/pdf-utils";
 
 function fmt(n: number | null): string {
   return n === null ? "—" : n.toFixed(1);
-}
-
-async function urlToDataUrl(url: string | null): Promise<{ data: string; w: number; h: number } | null> {
-  if (!url) return null;
-  try {
-    const res = await fetch(url, { cache: "no-store" });
-    if (!res.ok) return null;
-    const blob = await res.blob();
-    const data: string = await new Promise((resolve, reject) => {
-      const r = new FileReader();
-      r.onload = () => resolve(r.result as string);
-      r.onerror = reject;
-      r.readAsDataURL(blob);
-    });
-    const dims: { w: number; h: number } = await new Promise((resolve) => {
-      const img = new Image();
-      img.onload = () => resolve({ w: img.naturalWidth, h: img.naturalHeight });
-      img.onerror = () => resolve({ w: 100, h: 100 });
-      img.src = data;
-    });
-    return { data, w: dims.w, h: dims.h };
-  } catch {
-    return null;
-  }
 }
 
 function formatEndereco(e: BoletimData["escola"]): string {
@@ -40,11 +17,6 @@ function formatEndereco(e: BoletimData["escola"]): string {
     e.cep ? `CEP ${e.cep}` : null,
   ].filter(Boolean);
   return parts.join(" · ");
-}
-
-function imgFitInBox(orig: { w: number; h: number }, maxW: number, maxH: number) {
-  const ratio = Math.min(maxW / orig.w, maxH / orig.h);
-  return { w: orig.w * ratio, h: orig.h * ratio };
 }
 
 export function ExportBoletimButton({

@@ -12,6 +12,12 @@ const cspDirectives = [
   `img-src 'self' data: blob: https://*.supabase.co${isDev ? " http://127.0.0.1:55421" : ""}`,
   "font-src 'self' data:",
   `connect-src 'self' https://*.supabase.co wss://*.supabase.co${localSupabase}`,
+  // Pré-visualização de PDF gerado no cliente (certificado, histórico) roda num
+  // iframe com blob URL. Sem esta diretiva o `default-src 'self'` bloqueia o
+  // frame e o preview aparece em branco. Só blob da própria origem — nada de
+  // enquadrar site externo. `frame-ancestors 'none'` abaixo continua impedindo
+  // que a aplicação seja enquadrada por terceiros.
+  "frame-src 'self' blob:",
   "frame-ancestors 'none'",
   "object-src 'none'",
   "base-uri 'self'",

@@ -1,5 +1,6 @@
 import { jsPDF } from "jspdf";
 import { montarGrade } from "@/lib/historico/grade";
+import { formatarDataCurta } from "./certificado-texto";
 import {
   NIVEL_EXIBE_CH,
   NIVEL_LABEL,
@@ -112,6 +113,7 @@ function inteiro(valor: number | null): string {
   return valor === null ? TRACO : String(valor);
 }
 
+
 const RESULTADO_LABEL: Record<HistoricoAno["resultado"], string> = {
   aprovado: "Aprovado",
   reprovado: "Reprovado",
@@ -171,12 +173,12 @@ function desenharIdentificacao(doc: jsPDF, dados: HistoricoData): number {
 
   // Faixa de documentos: colunas de largura desigual, como no modelo.
   const docs: Array<[string, string | null, number]> = [
-    ["Data de Nascimento:", a.dataNascimento, MARGEM_ESQ],
+    ["Data de Nascimento:", formatarDataCurta(a.dataNascimento), MARGEM_ESQ],
     ["Naturalidade:", a.naturalidade, 101.3],
     ["Nacionalidade:", a.nacionalidade, 259.9],
     ["RG:", a.rg, 339.1],
     ["Orgão Expedidor:", a.orgaoExpedidor, xCpf],
-    ["Data Expedição:", a.dataExpedicao, xMatricula]
+    ["Data Expedição:", formatarDataCurta(a.dataExpedicao), xMatricula]
   ];
   docs.forEach(([rotulo, valor, x], i) => {
     if (i > 0) linhaV(doc, x, faixa2, base);
@@ -402,15 +404,26 @@ function desenharRodape(doc: jsPDF, dados: HistoricoData, opts: HistoricoPdfOpti
  * Preview e emissão chamam esta mesma função: o que se vê é o que sai.
  * Uma página por aluno. Os blocos encadeiam pela base do anterior, então uma
  * grade longa empurra o resto para baixo em vez de escrever por cima dele.
+ *
+ * `docExterno` permite anexar o histórico a um documento que já tem páginas —
+ * é como o certificado de conclusão imprime o histórico no verso. Nesse modo
+ * cada aluno abre a própria página retrato, inclusive o primeiro, porque a
+ * página corrente pertence a quem chamou.
+ *
+ * O documento precisa estar em `pt`: as coordenadas abaixo vêm do modelo de
+ * referência em pontos (x até 573, y até 842) e num documento em milímetros
+ * seriam lidas como 573mm, três vezes fora da página.
  */
 export function renderHistoricos(
   alunos: HistoricoData[],
-  opts: HistoricoPdfOptions = {}
+  opts: HistoricoPdfOptions = {},
+  docExterno?: jsPDF
 ): jsPDF {
-  const doc = new jsPDF({ unit: "pt", format: "a4", orientation: "portrait" });
+  const doc = docExterno ?? new jsPDF({ unit: "pt", format: "a4", orientation: "portrait" });
 
   alunos.forEach((dados, i) => {
-    if (i > 0) doc.addPage();
+    // Sem doc externo a primeira página já existe (o construtor a cria).
+    if (docExterno || i > 0) doc.addPage("a4", "portrait");
     desenharCabecalho(doc, dados, opts);
     const yIdentificacao = desenharIdentificacao(doc, dados);
     const yGrade = desenharGrade(doc, dados, yIdentificacao - 10);

@@ -109,6 +109,9 @@ export function modulosDoGrupo(grupo: Grupo): ModuloCodigo[] {
 export const ROTA_PARA_MODULO: Record<string, ModuloCodigo> = {
   "/alunos": "alunos",
   "/historico": "historico",
+  // Redundante com o prefixo acima, mas explícito: o certificado de conclusão
+  // consome o histórico e reusa o módulo dele, sem módulo RBAC próprio.
+  "/historico/certificado": "historico",
   "/eventos": "eventos",
   "/comercial/produtos": "comercial.produtos",
   "/comercial/vendas": "comercial.vendas",

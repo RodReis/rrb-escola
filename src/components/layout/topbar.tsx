@@ -72,6 +72,7 @@ const SECRETARIA_ITEMS: DropdownItem[] = [
       { href: "/historico/associacoes", label: "Associações", iconName: "FileText" },
       { href: "/historico/notas", label: "Entrada de Notas", iconName: "FileText" },
       { href: "/historico/emissao", label: "Emissão", iconName: "FileText" },
+      { href: "/historico/certificado", label: "Certificado", iconName: "FileText" },
     ],
   },
   { href: "/portaria", label: "Portaria", iconName: "DoorOpen" },

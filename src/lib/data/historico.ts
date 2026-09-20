@@ -176,8 +176,6 @@ export async function getHistoricoAluno(
   if (erroHistorico) throw erroHistorico;
   if (!historico) return null;
 
-  // Nota: `nacionalidade`, `orgao_expedidor` e `data_expedicao` não existem em
-  // `alunos` (ver 202605130001_initial_schema.sql). Mapeados como null abaixo.
   // A filiação do histórico vem dos responsáveis com parentesco de pai/mãe.
   const [
     { data: aluno, error: erroAluno },
@@ -186,7 +184,9 @@ export async function getHistoricoAluno(
   ] = await Promise.all([
     supabase
       .from("alunos")
-      .select("id, nome, cpf, matricula_codigo, data_nascimento, naturalidade, rg")
+      .select(
+        "id, nome, cpf, matricula_codigo, data_nascimento, naturalidade, rg, nacionalidade, orgao_expedidor, data_expedicao"
+      )
       .eq("escola_id", DEFAULT_SCHOOL_ID)
       .eq("id", alunoId)
       .maybeSingle(),
@@ -265,10 +265,10 @@ export async function getHistoricoAluno(
       filiacao,
       dataNascimento: (aluno.data_nascimento as string) ?? null,
       naturalidade: (aluno.naturalidade as string) ?? null,
-      nacionalidade: null,
+      nacionalidade: (aluno.nacionalidade as string) ?? null,
       rg: (aluno.rg as string) ?? null,
-      orgaoExpedidor: null,
-      dataExpedicao: null
+      orgaoExpedidor: (aluno.orgao_expedidor as string) ?? null,
+      dataExpedicao: (aluno.data_expedicao as string) ?? null
     },
     nivel,
     credenciamento: credenciamento ?? {

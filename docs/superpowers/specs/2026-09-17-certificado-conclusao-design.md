@@ -1,7 +1,17 @@
 # Certificado de conclusão — design
 
 Data: 2026-09-17
-Status: aprovado, pronto para plano de implementação
+Status: ⚠️ **parcialmente obsoleta.** Ver
+[2026-09-19-certificado-conclusao-replanejamento.md](2026-09-19-certificado-conclusao-replanejamento.md)
+
+> A seção **Dados** (tabela `certificado_historico`, snapshot jsonb da grade) e o
+> **Pré-preenchimento** ficaram obsoletos quando o módulo Histórico Escolar foi
+> implementado em 18/09 — decisão registrada em
+> [2026-09-18-historico-escolar-design.md:26-33](2026-09-18-historico-escolar-design.md).
+> O certificado passa a ler `historico_escolar`.
+>
+> Continuam válidos: o problema, o objetivo, a arquitetura em 3 camadas, a
+> invariante preview/emissão, o desenho da tela e o tratamento de erros.
 
 ## Problema
 
