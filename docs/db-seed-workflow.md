@@ -17,20 +17,39 @@ recria o schema `public`, limpa `auth.users` e carrega tudo. Os dumps ficam em
 Depois rode com o bloco **Local Docker** ativo no `.env.local` — senão `npm run dev`
 escreve direto em produção.
 
-### Por que não usar `db reset --local` para isso
+### O script substitui o `db reset --local`
 
-O reset reaplica as migrations, e ~65 delas são migrations de dados (boletins,
-rematrículas, correções) que referenciam UUIDs vindos do snapshot
-`202605270002_seed_real_data.sql`. Sem o snapshot elas quebram com erro de FK:
+Depois do sync, o banco local fica no mesmo ponto que produção **e com a tabela de
+controle em dia**: o script marca as 125 migrations como aplicadas. O `db dump` do
+CLI não traz `supabase_migrations`, então sem essa marcação o CLI acharia que
+nenhuma migration rodou.
+
+Na prática, o fluxo do dia a dia passa a ser:
+
+```bash
+bash scripts/sync_local_from_prod.sh   # espelha prod (quando quiser dados atuais)
+npx supabase migration up --local      # aplica migrations novas por cima
+```
+
+### Por que `db reset --local` não espelha produção
+
+O reset apaga tudo e reaplica a cadeia desde o zero. Duas coisas impedem que ele
+termine com os dados de produção:
+
+1. Ele restaura o snapshot `202605270002_seed_real_data.sql`, que tem os dados
+   **antigos** (509 alunos, capturados em 2026-05-17) em vez dos 789 de produção.
+2. ~28 migrations de dados (boletins, rematrículas, correções) chumbam UUIDs de
+   séries e turmas em vez de resolvê-los por consulta. Num banco vazio elas quebram:
 
 ```
 insert or update on table "disciplinas" violates foreign key constraint
 "disciplinas_serie_id_fkey"
 ```
 
-Com o snapshot, o reset restaura os dados **antigos** (509 alunos, capturados em
-2026-05-17), não os de produção. Ou seja: `db reset --local` serve para validar
-a cadeia de migrations, não para espelhar prod. Para espelhar, use o script acima.
+Essas migrations funcionam sobre um banco já povoado — o erro só aparece no reset
+do zero. Torná-las reexecutáveis exigiria reescrever cada uma para resolver os
+UUIDs dinamicamente; até lá, `db reset --local` serve para validar a cadeia de
+migrations num banco descartável, e o script acima para trabalhar com dados reais.
 
 ### Login local depois de espelhar prod
 

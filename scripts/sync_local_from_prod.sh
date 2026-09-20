@@ -52,6 +52,24 @@ echo "=== Carrega dados de producao ==="
 docker exec -i "$CONTAINER" psql -U postgres -d postgres -q \
   --set=session_replication_role=replica < "$DATA_FIXED"
 
+echo "=== Marca as migrations como aplicadas ==="
+# O dump traz o schema de producao pronto, mas nao a tabela de controle
+# (supabase_migrations nao entra no `db dump`). Sem isso, um `migration up`
+# posterior tentaria reaplicar tudo sobre um schema que ja existe.
+# As versoes vem dos arquivos: o espelho acabou de reproduzir o schema de prod,
+# onde todas elas estao aplicadas.
+docker exec -i "$CONTAINER" psql -U postgres -d postgres -q <<'SQL' > /dev/null
+create schema if not exists supabase_migrations;
+create table if not exists supabase_migrations.schema_migrations (version text primary key);
+truncate supabase_migrations.schema_migrations;
+SQL
+
+for f in supabase/migrations/*.sql; do
+  basename "$f" | sed 's/_.*//'
+done | sort -u | while read -r version; do
+  echo "insert into supabase_migrations.schema_migrations (version) values ('$version') on conflict do nothing;"
+done | docker exec -i "$CONTAINER" psql -U postgres -d postgres -q > /dev/null
+
 echo ""
 echo "=== Garante o admin de teste local ==="
 # O espelho traz os usuarios de producao, onde admin@rrb.local nao tem perfil.
