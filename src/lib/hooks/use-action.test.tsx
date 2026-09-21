@@ -116,4 +116,19 @@ describe("useAction", () => {
       expect(onSuccess).toHaveBeenCalledWith({ senha: "abc123" })
     );
   });
+
+  it("nao mostra toast de sucesso quando silent e true", async () => {
+    const action = vi.fn().mockResolvedValue({ ok: true, data: undefined });
+    render(<Harness action={action} opts={{ silent: true }} />);
+    screen.getByRole("button").click();
+    await waitFor(() => expect(action).toHaveBeenCalledOnce());
+    expect(toastSuccess).not.toHaveBeenCalled();
+  });
+
+  it("mostra toast de erro mesmo com silent true", async () => {
+    const action = vi.fn().mockResolvedValue({ ok: false, error: "Falhou." });
+    render(<Harness action={action} opts={{ silent: true }} />);
+    screen.getByRole("button").click();
+    await waitFor(() => expect(toastError).toHaveBeenCalledWith("Falhou."));
+  });
 });

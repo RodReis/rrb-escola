@@ -21,6 +21,9 @@ export type UseActionOptions = {
   success?: string;
   /** Mensagem do toast de erro, quando a action nao fornece uma. */
   error?: string;
+  /** Suprime o toast de sucesso (ex.: login, onde a navegacao ja e o
+   * feedback). O toast de erro nunca e suprimido. */
+  silent?: boolean;
   /** Pede confirmacao antes de executar. String = a mensagem. */
   confirm?: ConfirmOption;
   /** Roda depois do sucesso (fechar modal, limpar formulario). Recebe o
@@ -66,7 +69,7 @@ export function useAction<Args extends unknown[]>(
           }
         }
 
-        if (instruction.toast === "success") toast.success(instruction.message);
+        if (instruction.toast === "success" && !opts.silent) toast.success(instruction.message);
         if (instruction.toast === "error") toast.error(instruction.message);
 
         setBusy(false);

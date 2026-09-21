@@ -9,6 +9,8 @@ import { LoginFields } from "./login-fields";
 export function LoginForm() {
   const { run, pending } = useAction(loginAction, {
     error: "Credenciais inválidas.",
+    // A navegacao para o dashboard ja e o feedback de sucesso.
+    silent: true,
   });
 
   function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
