@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import { statusParaContagemDeSegmento } from "./students";
 
 /**
  * O filtro de situacao muda o tipo de join: ex-aluno nao tem matricula, e o
@@ -42,5 +43,62 @@ describe("filtro de situação na lista de alunos", () => {
 
   it("padrão é ativos", () => {
     expect(decidir({}).situacao).toBe("ativos");
+  });
+});
+
+/**
+ * As abas de segmento precisam somar o mesmo total de matriculados que o
+ * organograma e os KPIs do dashboard mostram (fonte única, `contarAlunosAtivos`).
+ * Aceitar `concluida` no ano corrente contava aluno que já saiu da escola e
+ * fazia a soma das abas estourar o número oficial.
+ */
+describe("status contados nas abas de segmento", () => {
+  const CORRENTE = 2026;
+
+  it("no ano corrente conta só matrícula ativa", () => {
+    expect(statusParaContagemDeSegmento(2026, CORRENTE)).toEqual(["ativa"]);
+  });
+
+  it("quem concluiu no ano corrente não é contado", () => {
+    expect(statusParaContagemDeSegmento(2026, CORRENTE)).not.toContain("concluida");
+  });
+
+  it("em ano encerrado conta também quem concluiu", () => {
+    expect(statusParaContagemDeSegmento(2025, CORRENTE)).toEqual(["ativa", "concluida"]);
+  });
+
+  it("ano futuro segue a regra do corrente", () => {
+    expect(statusParaContagemDeSegmento(2027, CORRENTE)).toEqual(["ativa"]);
+  });
+});
+
+/**
+ * Aluno sem matrícula no ano não tem segmento. Quem entra na aba "Todos"
+ * depende da situação pedida: listando ativos ela conta só matriculados (bate
+ * com o título e com a soma das abas); listando inativos/todos precisa contar
+ * o ex-aluno, que não tem matrícula nenhuma e sumiria da aba.
+ */
+function contaEmTodosSemMatricula(filtros: {
+  situacao?: "ativos" | "inativos" | "todos";
+  serieId?: string;
+  turmaId?: string;
+}) {
+  const querInativos = (filtros.situacao ?? "ativos") !== "ativos";
+  return querInativos && !filtros.serieId && !filtros.turmaId;
+}
+
+describe('aba "Todos" com aluno sem matrícula no ano', () => {
+  it("não conta ao listar ativos — título e abas mostram matriculados", () => {
+    expect(contaEmTodosSemMatricula({})).toBe(false);
+  });
+
+  it("conta ex-aluno ao listar inativos, que nunca tem matrícula ativa", () => {
+    expect(contaEmTodosSemMatricula({ situacao: "inativos" })).toBe(true);
+    expect(contaEmTodosSemMatricula({ situacao: "todos" })).toBe(true);
+  });
+
+  it("filtro de série ou turma exige matrícula e exclui quem não tem", () => {
+    expect(contaEmTodosSemMatricula({ situacao: "inativos", serieId: "s1" })).toBe(false);
+    expect(contaEmTodosSemMatricula({ situacao: "inativos", turmaId: "t1" })).toBe(false);
   });
 });

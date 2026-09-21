@@ -7,6 +7,10 @@ const variants = {
   accent: "ds-button-accent",
   secondary: "ds-button-secondary",
   warn: "ds-button-warn",
+  // Emissões de documento do aluno — um matiz fixo por tipo.
+  boletim: "ds-button-doc ds-button-boletim",
+  historico: "ds-button-doc ds-button-historico",
+  certificado: "ds-button-doc ds-button-certificado",
   ghost: "border-transparent bg-transparent text-ink hover:bg-muted"
 };
 

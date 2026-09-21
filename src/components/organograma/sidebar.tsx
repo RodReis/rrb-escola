@@ -19,12 +19,14 @@ export function OrganogramaSidebar({
   tree,
   totalAlunos,
   escolaNome,
-  turmaAtiva
+  turmaAtiva,
+  anoLetivo
 }: {
   tree: Segmento[];
   totalAlunos: number;
   escolaNome: string;
   turmaAtiva: string | null;
+  anoLetivo: number;
 }) {
   const router = useRouter();
 
@@ -70,7 +72,12 @@ export function OrganogramaSidebar({
         </span>
         <div className="min-w-0">
           <p className="truncate text-sm font-black text-ink">{escolaNome}</p>
-          <p className="text-xs text-ink/60">{totalAlunos} alunos · {tree.length} segmentos</p>
+          {/* Diz o que o número mede: são matriculados no ano, não cadastros
+              ativos. A Lista de Alunos mostra um total maior porque inclui
+              quem está ativo mas ainda sem matrícula neste ano. */}
+          <p className="text-xs text-ink/60">
+            {totalAlunos} matriculados em {anoLetivo} · {tree.length} segmentos
+          </p>
         </div>
       </div>
 

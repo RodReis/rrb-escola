@@ -13,7 +13,8 @@ import {
   listStudents,
   getStudentSegmentCounts,
   getStudentFilterOptions,
-  getStudentAvailableYears
+  getStudentAvailableYears,
+  contarAlunosAtivos
 } from "@/lib/data/students";
 import { getSignedFotoUrls } from "@/lib/storage/photos";
 import { requirePermission } from "@/lib/auth/session";
@@ -58,19 +59,42 @@ export default async function StudentsPage({
     page:      Number.isNaN(pageParam) ? 1 : pageParam
   };
 
-  const [{ rows: students, total, page, pageSize }, reportRows, counts, filterOptions, anosDisponiveis] =
-    await Promise.all([
-      listStudents(filters),
-      getStudentsReport(),
-      getStudentSegmentCounts({
-        situacao: filters.situacao,
-        serieId: filters.serieId,
-        turmaId: filters.turmaId,
-        anoLetivo
-      }),
-      getStudentFilterOptions(anoLetivo),
-      getStudentAvailableYears()
-    ]);
+  const [
+    { rows: students, total, page, pageSize },
+    reportRows,
+    counts,
+    filterOptions,
+    anosDisponiveis,
+    matriculadosNoAno
+  ] = await Promise.all([
+    listStudents(filters),
+    getStudentsReport(),
+    getStudentSegmentCounts({
+      situacao: filters.situacao,
+      serieId: filters.serieId,
+      turmaId: filters.turmaId,
+      anoLetivo
+    }),
+    getStudentFilterOptions(anoLetivo),
+    getStudentAvailableYears(),
+    // Fonte única (regra do sistema): aluno ativo COM matrícula ativa no ano.
+    // É o mesmo número do organograma e dos KPIs do dashboard. O `total` acima
+    // é maior porque a lista mostra de propósito o aluno ativo ainda sem
+    // matrícula no ano — quem a secretaria precisa achar para rematricular.
+    contarAlunosAtivos({ anoLetivo })
+  ]);
+
+  // Quantos aparecem na lista mas não estão matriculados neste ano letivo.
+  const semMatriculaNoAno = Math.max(0, total - matriculadosNoAno);
+
+  // Com qualquer filtro aplicado, o contador do título tem de refletir o que a
+  // lista está mostrando — senão o cabeçalho diz "519" enquanto a tela exibe
+  // ex-alunos. A regra 527 (matriculados no ano) só vale na visão padrão, que é
+  // onde o número precisa bater com o organograma e o dashboard.
+  const listaFiltrada =
+    filters.situacao !== "ativos" ||
+    Boolean(filters.nome || filters.serieId || filters.turmaId || filters.segmento);
+  const contadorTitulo = listaFiltrada ? total : matriculadosNoAno;
 
   const signedFotos = await getSignedFotoUrls(
     students.map((s) => ("foto_url" in s ? (s.foto_url as string | null) : null))
@@ -100,8 +124,32 @@ export default async function StudentsPage({
           { label: "Alunos" }
         ]}
         title="Lista de Alunos"
-        counter={total.toLocaleString("pt-BR")}
-        description="Cadastro completo dos alunos ativos e suas matrículas no ano letivo."
+        // O contador do título é o número oficial do sistema: alunos ativos
+        // COM matrícula ativa no ano (fonte única, mesmo do organograma e dos
+        // KPIs do dashboard). A lista abaixo pode mostrar linhas a mais — o
+        // aluno ativo ainda sem matrícula no ano, que a secretaria precisa
+        // achar para rematricular —, e esse excedente aparece no KPI ao lado.
+        counter={contadorTitulo.toLocaleString("pt-BR")}
+        description={`Alunos ativos e matriculados em ${anoLetivo}.`}
+        // Um número de aluno só no sistema: matriculados no ano. O alerta
+        // abaixo só aparece se sobrar cadastro ativo sem matrícula — situação
+        // a resolver (rematricular ou inativar), não um segundo total.
+        kpis={
+          semMatriculaNoAno > 0
+            ? [
+                {
+                  label: `Matriculados em ${anoLetivo}`,
+                  value: matriculadosNoAno.toLocaleString("pt-BR"),
+                  tone: "success" as const
+                },
+                {
+                  label: "Sem matrícula no ano",
+                  value: semMatriculaNoAno.toLocaleString("pt-BR"),
+                  tone: "warning" as const
+                }
+              ]
+            : undefined
+        }
         actions={
           <>
             <ExportStudentsReportButton rows={reportRows} />

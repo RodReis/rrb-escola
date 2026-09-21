@@ -4,12 +4,15 @@ import { ExportStudentsReportButton } from "@/components/pdf/export-students-rep
 import { PageHeader } from "@/components/ui/page-header";
 import { DataTableShell } from "@/components/ui/data-table";
 import { StatusPill } from "@/components/ui/status-pill";
+import { Avatar } from "@/components/ui/avatar";
 import { getStudentsReport } from "@/lib/data/students";
+import { getSignedFotoUrls } from "@/lib/storage/photos";
 import { requirePermission } from "@/lib/auth/session";
 
 export default async function RelatorioAlunosPage() {
   await requirePermission("relatorios", "read");
   const rows = await getStudentsReport();
+  const signedFotos = await getSignedFotoUrls(rows.map((item) => item.fotoUrl));
   const ativos = rows.filter((item) => item.ativo).length;
   const inativos = rows.length - ativos;
   const matriculados = rows.filter((item) => item.statusMatricula === "ativa").length;
@@ -31,7 +34,7 @@ export default async function RelatorioAlunosPage() {
       />
 
       <DataTableShell>
-        <table className="ds-dt min-w-[1040px]">
+        <table className="ds-dt min-w-[1100px]">
           <thead>
             <tr>
               <th>Matrícula</th>
@@ -59,7 +62,16 @@ export default async function RelatorioAlunosPage() {
             {rows.map((item) => (
               <tr key={item.id}>
                 <td className="font-semibold text-brand">{item.matricula}</td>
-                <td className="font-semibold text-ink">{item.nome}</td>
+                <td>
+                  <div className="flex items-center gap-2.5">
+                    <Avatar
+                      name={item.nome}
+                      src={item.fotoUrl ? signedFotos.get(item.fotoUrl) : undefined}
+                      size={30}
+                    />
+                    <span className="font-semibold text-ink">{item.nome}</span>
+                  </div>
+                </td>
                 <td className="text-ink/75">{item.cpf || "—"}</td>
                 <td className="text-ink/75">{item.responsavel || "—"}</td>
                 <td className="text-ink/75">{item.serie || "—"}</td>

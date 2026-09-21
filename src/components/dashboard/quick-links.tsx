@@ -3,11 +3,11 @@
 import { useState, useTransition } from "react";
 import Link from "next/link";
 import {
-  AlertCircle, BarChart3, BellRing, Building2, Cake, CalendarCheck,
+  AlertCircle, Award, BarChart3, BellRing, Building2, Cake, CalendarCheck,
   CalendarDays, CalendarHeart, ClipboardCheck, ClipboardList,
   CreditCard, DoorOpen, FileText, GraduationCap, HandHeart, Inbox,
-  Kanban, Layers3, Megaphone, Network, Pencil, Plus, Receipt, ReceiptText,
-  School, Settings2, ShieldCheck, SlidersHorizontal, Tags, UserCheck,
+  Kanban, Layers3, Link2, Megaphone, Network, Pencil, PenLine, Plus, Receipt, ReceiptText,
+  School, ScrollText, Settings2, ShieldCheck, SlidersHorizontal, Tags, UserCheck,
   UsersRound, Wallet, Webhook, X,
   type LucideIcon,
 } from "lucide-react";
@@ -31,6 +31,10 @@ const ALL_ROUTES: RouteItem[] = [
   { href: "/turmas",                       label: "Turmas",                group: "Secretaria",    Icon: GraduationCap },
   { href: "/disciplinas",                  label: "Disciplinas",           group: "Secretaria",    Icon: ClipboardList },
   { href: "/professores/atribuicoes",      label: "Atribuições",           group: "Secretaria",    Icon: UserCheck },
+  { href: "/historico/notas",              label: "Entrada de Notas",      group: "Secretaria",    Icon: PenLine },
+  { href: "/historico/emissao",            label: "Histórico Escolar",     group: "Secretaria",    Icon: ScrollText },
+  { href: "/historico/certificado",        label: "Certificado",           group: "Secretaria",    Icon: Award },
+  { href: "/historico/associacoes",        label: "Assoc. Histórico",      group: "Secretaria",    Icon: Link2 },
   { href: "/pipeline",                     label: "Pipeline",              group: "Secretaria",    Icon: Kanban },
   { href: "/pipeline/config",              label: "Configurar quadros",    group: "Secretaria",    Icon: Settings2 },
   { href: "/portaria",                     label: "Portaria",              group: "Secretaria",    Icon: DoorOpen },

@@ -42,6 +42,7 @@ export default async function OrganogramaPage({
             totalAlunos={totalAlunos}
             escolaNome="Colégio RRB"
             turmaAtiva={params.turma ?? null}
+            anoLetivo={anoLetivo}
           />
         </Suspense>
         <OrganogramaDrillPanel data={drillData} />

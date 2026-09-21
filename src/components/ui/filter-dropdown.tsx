@@ -26,7 +26,9 @@ export function FilterDropdown({
   hideEmpty?: boolean;
 }) {
   const [open, setOpen] = useState(false);
+  const [desvioX, setDesvioX] = useState(0);
   const ref = useRef<HTMLDivElement>(null);
+  const panelRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     if (!open) return;
@@ -35,6 +37,32 @@ export function FilterDropdown({
     }
     document.addEventListener("mousedown", onDoc);
     return () => document.removeEventListener("mousedown", onDoc);
+  }, [open]);
+
+  // O painel abre alinhado à esquerda do botão. Depois de montar, mede e
+  // desloca em X só o necessário para caber na janela — cobre tanto o filtro
+  // colado na borda direita quanto o painel mais largo que o espaço restante.
+  // Antes era `right-0` fixo, que jogava o menu para fora da tela nos filtros
+  // mais à esquerda (o caso do "Turma" na segunda linha).
+  useEffect(() => {
+    if (!open) {
+      setDesvioX(0);
+      return;
+    }
+    const botao = ref.current;
+    const painel = panelRef.current;
+    if (!botao || !painel) return;
+
+    const MARGEM = 8;
+    const esquerda = botao.getBoundingClientRect().left;
+    const largura = painel.offsetWidth;
+    const excedeDireita = esquerda + largura - (window.innerWidth - MARGEM);
+    if (excedeDireita <= 0) {
+      setDesvioX(0);
+      return;
+    }
+    // Puxa para a esquerda, sem deixar a borda esquerda sair da tela.
+    setDesvioX(-Math.min(excedeDireita, Math.max(0, esquerda - MARGEM)));
   }, [open]);
 
   const current = options.find((o) => o.value === value);
@@ -62,7 +90,11 @@ export function FilterDropdown({
         <ChevronDown size={14} strokeWidth={2.4} className="text-ink/45" />
       </button>
       {open && !disabled ? (
-        <div className="absolute right-0 z-30 mt-1.5 max-h-[320px] min-w-[180px] max-w-[320px] overflow-y-auto overflow-x-hidden rounded-ui border border-line bg-surface py-1 shadow-soft">
+        <div
+          ref={panelRef}
+          className="absolute left-0 z-30 mt-1.5 max-h-[320px] min-w-[180px] max-w-[320px] overflow-y-auto overflow-x-hidden rounded-ui border border-line bg-surface py-1 shadow-soft"
+          style={desvioX ? { transform: `translateX(${desvioX}px)` } : undefined}
+        >
           {hideEmpty ? null : (
             <button
               type="button"

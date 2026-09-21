@@ -16,10 +16,14 @@ import { getPublicUrl } from "@/lib/storage/public-urls";
 import { School } from "lucide-react";
 import { ThemeToggle } from "@/components/ui/theme-toggle";
 import { can, ROTA_PARA_MODULO, type PermissionMap } from "@/lib/auth/permissions";
+import { FEATURES } from "@/lib/config/features";
 
 const primaryItems: Array<{ href: string; label: string; icon: TopbarIconName }> = [
   { href: "/", label: "Dashboard", icon: "LayoutDashboard" },
-  { href: "/whatsapp", label: "WhatsApp", icon: "Inbox" },
+  // WhatsApp fica atrás de feature flag (NEXT_PUBLIC_FEATURE_WHATSAPP).
+  ...(FEATURES.whatsapp
+    ? ([{ href: "/whatsapp", label: "WhatsApp", icon: "Inbox" }] as const)
+    : []),
 ];
 
 const RELATORIOS_ITEMS: DropdownItem[] = [

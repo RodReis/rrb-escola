@@ -104,6 +104,26 @@ export async function listStudents(filters?: StudentFilters): Promise<PaginatedS
 type SegmentCountFilters = Pick<StudentFilters, "situacao" | "serieId" | "turmaId" | "anoLetivo">;
 
 /**
+ * Status de matrícula que as abas de segmento contam.
+ *
+ * No ano corrente conta só `ativa` — mesma regra da fonte única
+ * (`contarAlunosAtivos`), para as abas somarem o mesmo número de matriculados
+ * que o organograma e os KPIs do dashboard mostram. Quem concluiu ou saiu no
+ * meio do ano não está mais estudando e não entra.
+ *
+ * Em ano já encerrado conta também `concluida`: lá, quem foi rematriculado
+ * ficou com a matrícula daquele ano concluída e ainda precisa aparecer nele.
+ *
+ * Exportada para teste — é a regra de decisão onde um bug de contagem moraria.
+ */
+export function statusParaContagemDeSegmento(
+  anoLetivo: number,
+  anoCorrente: number = new Date().getFullYear()
+): string[] {
+  return anoLetivo < anoCorrente ? ["ativa", "concluida"] : ["ativa"];
+}
+
+/**
  * Conta por segmento com os mesmos filtros de `listStudents` (exceto `segmento`,
  * que é o próprio eixo contado) — senão as abas ficam travadas num total que
  * ignora Situação/Série/Turma escolhidos nos combos ao lado.
@@ -139,15 +159,19 @@ export async function getStudentSegmentCounts(filters?: SegmentCountFilters) {
     if (filters?.serieId) matriculasDoAno = matriculasDoAno.filter((m) => m.serie_id === filters.serieId);
     if (filters?.turmaId) matriculasDoAno = matriculasDoAno.filter((m) => m.turma_id === filters.turmaId);
     if (!querInativos) {
-      matriculasDoAno = matriculasDoAno.filter((m) => ["ativa", "concluida"].includes(m.status ?? ""));
+      const statusAceitos = statusParaContagemDeSegmento(anoLetivo);
+      matriculasDoAno = matriculasDoAno.filter((m) => statusAceitos.includes(m.status ?? ""));
     }
 
     if (matriculasDoAno.length === 0) {
-      // Sem matrícula no ano não há segmento a atribuir, mas o aluno ainda
-      // existe: "Todos" precisa bater com o contador do título, que vem de
-      // listStudents. Série/turma são exigências reais (inner join lá), então
-      // só nesses casos o aluno sai da conta.
-      if (!filters?.serieId && !filters?.turmaId) counts.all += 1;
+      // Sem matrícula no ano não há segmento a atribuir. Ao listar ativos,
+      // "Todos" conta só matriculados — assim a aba bate com a soma das abas
+      // de segmento ao lado e com o contador do título (ambos vêm da fonte
+      // única). Quem está ativo sem matrícula aparece na lista e no KPI
+      // "Sem matrícula no ano", não aqui.
+      // Ao pedir inativos/todos a regra é outra: ex-aluno não tem matrícula e
+      // ainda precisa ser contado, senão a aba zera.
+      if (querInativos && !filters?.serieId && !filters?.turmaId) counts.all += 1;
       continue;
     }
     counts.all += 1;
@@ -256,6 +280,7 @@ export async function getStudentsReport() {
       data_nascimento,
       celular,
       ativo,
+      foto_url,
       enderecos_aluno(cidade, uf, cep),
       responsaveis_aluno(nome, parentesco, celular, email, responsavel_financeiro),
       matriculas(status, ano_letivo, data_matricula, series(nome), turmas(nome))
@@ -284,6 +309,7 @@ export async function getStudentsReport() {
       dataNascimento: student.data_nascimento,
       celular: student.celular,
       ativo: student.ativo,
+      fotoUrl: student.foto_url,
       cidade: address?.cidade ?? "",
       uf: address?.uf ?? "",
       cep: address?.cep ?? "",
