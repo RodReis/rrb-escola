@@ -1,11 +1,11 @@
 import { Layers3, Plus } from "lucide-react";
-import { createSerieAction } from "@/lib/actions/academics";
 import { ButtonLink } from "@/components/ui/button";
 import { Panel } from "@/components/ui/card";
 import { PageHeader } from "@/components/ui/page-header";
 import { getAcademicData } from "@/lib/data/lookups";
 import { requirePermission } from "@/lib/auth/session";
 import { SerieCard } from "@/components/pedagogico/serie-card";
+import { NovaSerieForm } from "@/components/pedagogico/nova-serie-form";
 
 export default async function SeriesPage() {
   await requirePermission("series", "read");
@@ -40,19 +40,7 @@ export default async function SeriesPage() {
             Cadastrar etapa escolar
           </h2>
         </div>
-        <form action={createSerieAction} className="grid gap-4 md:grid-cols-[1fr_160px_150px]">
-          <label>
-            Nome
-            <input name="nome" placeholder="6 Ano" required />
-          </label>
-          <label>
-            Ordem
-            <input name="ordem" type="number" defaultValue={1} />
-          </label>
-          <button className="ds-button ds-button-primary self-end">
-            <Plus size={14} /> Adicionar
-          </button>
-        </form>
+        <NovaSerieForm />
       </Panel>
 
       <section className="grid gap-3">

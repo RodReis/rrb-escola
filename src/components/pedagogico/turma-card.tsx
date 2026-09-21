@@ -20,8 +20,9 @@ type Turma = {
   series?: { nome: string | null } | null;
 };
 
-// updateTurmaAction/toggleTurmaAction sao contrato C (void + revalidatePath
-// no sucesso) — toast ja funciona sem migrar as actions.
+// updateTurmaAction devolve ActionResult (Task 11 — precisava diferenciar
+// erro de duplicidade de outros erros). toggleTurmaAction continua contrato
+// C (void + revalidatePath no sucesso).
 export function TurmaCard({ item, series }: { item: Turma; series: Serie[] }) {
   const formRef = useRef<HTMLFormElement>(null);
   const save = useAction(updateTurmaAction, {

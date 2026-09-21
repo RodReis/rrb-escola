@@ -3,9 +3,9 @@ import { Panel } from "@/components/ui/card";
 import { PageHeader } from "@/components/ui/page-header";
 import { getAcademicData } from "@/lib/data/lookups";
 import { listDisciplinas } from "@/lib/data/pedagogico";
-import { createDisciplinaAction } from "@/lib/actions/disciplinas";
 import { requirePermission } from "@/lib/auth/session";
 import { DisciplinaListItem } from "@/components/pedagogico/disciplina-list-item";
+import { NovaDisciplinaForm } from "@/components/pedagogico/nova-disciplina-form";
 
 const SEG_LABEL: Record<string, string> = {
   INFANTIL: "Ed. Infantil",
@@ -49,28 +49,7 @@ export default async function DisciplinasPage() {
           <Plus size={16} className="text-brand" />
           Nova disciplina
         </h2>
-        <form action={createDisciplinaAction} className="grid gap-3 md:grid-cols-4">
-          <label>
-            Série
-            <select name="serie_id" required>
-              <option value="">Selecione...</option>
-              {series.map((s) => (
-                <option key={s.id} value={s.id}>{s.nome}</option>
-              ))}
-            </select>
-          </label>
-          <label className="md:col-span-2">
-            Nome
-            <input name="nome" required maxLength={80} placeholder="Ex.: Matemática" />
-          </label>
-          <label>
-            Ordem
-            <input name="ordem" type="number" defaultValue={0} />
-          </label>
-          <div className="md:col-span-4 flex justify-end">
-            <button className="ds-button ds-button-primary px-4">Adicionar</button>
-          </div>
-        </form>
+        <NovaDisciplinaForm series={series} />
       </Panel>
 
       {disciplinas.length === 0 && (

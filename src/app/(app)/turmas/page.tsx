@@ -1,24 +1,14 @@
-import { AlertCircle, GraduationCap, Plus } from "lucide-react";
+import { GraduationCap, Plus } from "lucide-react";
 import { ButtonLink } from "@/components/ui/button";
 import { Panel } from "@/components/ui/card";
 import { PageHeader } from "@/components/ui/page-header";
-import { createTurmaAction } from "@/lib/actions/academics";
 import { getAcademicData } from "@/lib/data/lookups";
 import { requirePermission } from "@/lib/auth/session";
 import { TurmaCard } from "@/components/pedagogico/turma-card";
+import { NovaTurmaForm } from "@/components/pedagogico/nova-turma-form";
 
-const ERRO_MENSAGEM: Record<string, string> = {
-  duplicada: "Já existe uma turma com essa série, nome, ano letivo e turno.",
-  turma: "Erro ao salvar turma. Tente novamente.",
-};
-
-export default async function TurmasPage({
-  searchParams,
-}: {
-  searchParams: Promise<Record<string, string>>;
-}) {
+export default async function TurmasPage() {
   await requirePermission("turmas", "read");
-  const { erro } = await searchParams;
   const { series, turmas } = await getAcademicData();
   const activeClasses = turmas.filter((item) => item.ativo).length;
   const currentYear = new Date().getFullYear();
@@ -52,46 +42,7 @@ export default async function TurmasPage({
             Cadastrar sala e turno
           </h2>
         </div>
-        {erro ? (
-          <p className="flex items-center gap-2 rounded-ui bg-clay/10 p-3 text-sm font-bold text-clay">
-            <AlertCircle size={16} />
-            {ERRO_MENSAGEM[erro] ?? ERRO_MENSAGEM.turma}
-          </p>
-        ) : null}
-        <form action={createTurmaAction} className="grid gap-4 md:grid-cols-6">
-          <label>
-            Serie
-            <select name="serie_id" required>
-              {series.map((item) => (
-                <option key={item.id} value={item.id}>{item.nome}</option>
-              ))}
-            </select>
-          </label>
-          <label>
-            Nome
-            <input name="nome" placeholder="A" required />
-          </label>
-          <label>
-            Ano letivo
-            <input name="ano_letivo" type="number" defaultValue={currentYear} />
-          </label>
-          <label>
-            Turno
-            <select name="turno">
-              <option value="matutino">Matutino</option>
-              <option value="vespertino">Vespertino</option>
-              <option value="noturno">Noturno</option>
-              <option value="integral">Integral</option>
-            </select>
-          </label>
-          <label>
-            Capacidade
-            <input name="capacidade" type="number" defaultValue={30} />
-          </label>
-          <button className="ds-button ds-button-primary self-end">
-            <Plus size={14} /> Adicionar
-          </button>
-        </form>
+        <NovaTurmaForm series={series} currentYear={currentYear} />
       </Panel>
 
       <section className="grid gap-3">

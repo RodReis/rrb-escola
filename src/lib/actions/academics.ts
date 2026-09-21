@@ -7,6 +7,7 @@ import { requirePermission } from "@/lib/auth/session";
 import { DEFAULT_SCHOOL_ID } from "@/lib/constants";
 import { createServerClient } from "@/lib/supabase/server";
 import { formBoolean, formNumber, formText } from "@/lib/utils";
+import type { ActionResult } from "@/lib/actions/types";
 
 export async function createSerieAction(formData: FormData) {
   await requirePermission("series", "create");
@@ -48,11 +49,18 @@ function turmaErrorCode(message: string): string {
   return "turma";
 }
 
-export async function createTurmaAction(formData: FormData) {
+const TURMA_ERROR_MENSAGEM: Record<string, string> = {
+  duplicada: "Já existe uma turma com essa série, nome, ano letivo e turno.",
+  turma: "Erro ao salvar turma. Tente novamente.",
+};
+
+export async function createTurmaAction(formData: FormData): Promise<ActionResult> {
   await requirePermission("turmas", "create");
   const nome = formText(formData, "nome");
   const serieId = formText(formData, "serie_id");
-  if (!nome || !serieId) return;
+  if (!nome || !serieId) {
+    return { ok: false, error: "Preencha nome e série." };
+  }
   const supabase = await createServerClient();
   const { error } = await supabase.from("turmas").insert({
     escola_id: DEFAULT_SCHOOL_ID,
@@ -62,16 +70,22 @@ export async function createTurmaAction(formData: FormData) {
     turno: formText(formData, "turno") ?? "matutino",
     capacidade: formNumber(formData, "capacidade") ?? 30
   });
-  if (error) redirect(`/turmas?erro=${turmaErrorCode(error.message)}`);
+  if (error) {
+    const code = turmaErrorCode(error.message);
+    return { ok: false, error: TURMA_ERROR_MENSAGEM[code] ?? TURMA_ERROR_MENSAGEM.turma };
+  }
   revalidatePath("/turmas");
+  return { ok: true, data: undefined };
 }
 
-export async function updateTurmaAction(formData: FormData) {
+export async function updateTurmaAction(formData: FormData): Promise<ActionResult> {
   await requirePermission("turmas", "update");
   const id = formText(formData, "id");
   const nome = formText(formData, "nome");
   const serieId = formText(formData, "serie_id");
-  if (!id || !nome || !serieId) return;
+  if (!id || !nome || !serieId) {
+    return { ok: false, error: "Preencha nome e série." };
+  }
 
   const supabase = await createServerClient();
   const { error } = await supabase
@@ -87,9 +101,13 @@ export async function updateTurmaAction(formData: FormData) {
     .eq("id", id)
     .eq("escola_id", DEFAULT_SCHOOL_ID);
 
-  if (error) redirect(`/turmas?erro=${turmaErrorCode(error.message)}`);
+  if (error) {
+    const code = turmaErrorCode(error.message);
+    return { ok: false, error: TURMA_ERROR_MENSAGEM[code] ?? TURMA_ERROR_MENSAGEM.turma };
+  }
   revalidatePath("/turmas");
   revalidatePath("/matriculas");
+  return { ok: true, data: undefined };
 }
 
 export async function createPlanAction(formData: FormData) {
