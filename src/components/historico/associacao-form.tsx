@@ -1,6 +1,8 @@
 "use client";
 
 import { salvarAssociacaoAction } from "@/lib/actions/historico";
+import { useAction } from "@/lib/hooks/use-action";
+import { Button } from "@/components/ui/button";
 
 type Props = {
   series: Array<{ id: string; nome: string }>;
@@ -16,9 +18,17 @@ const NIVEIS = [
 
 export function AssociacaoForm({ series, empresas }: Props) {
   const anoAtual = new Date().getFullYear();
+  const { run, pending } = useAction(salvarAssociacaoAction, {
+    error: "Falha ao gravar a associação.",
+  });
+
+  function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
+    e.preventDefault();
+    run(new FormData(e.currentTarget));
+  }
 
   return (
-    <form action={salvarAssociacaoAction} className="grid gap-4 rounded-lg border border-line p-4 md:grid-cols-5">
+    <form onSubmit={handleSubmit} className="grid gap-4 rounded-lg border border-line p-4 md:grid-cols-5">
       <label className="flex flex-col gap-1 text-sm">
         Série
         <select name="serieId" required className="rounded border border-line bg-surface p-2">
@@ -60,9 +70,9 @@ export function AssociacaoForm({ series, empresas }: Props) {
           className="rounded border border-line bg-surface p-2" />
       </label>
 
-      <button type="submit" className="md:col-span-5 rounded bg-brand px-4 py-2 text-paper">
+      <Button type="submit" loading={pending} className="md:col-span-5">
         Gravar
-      </button>
+      </Button>
     </form>
   );
 }

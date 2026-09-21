@@ -1,7 +1,6 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { redirect } from "next/navigation";
 import { requirePermission } from "@/lib/auth/session";
 import { DEFAULT_SCHOOL_ID } from "@/lib/constants";
 import { getHistoricoAluno } from "@/lib/data/historico";
@@ -11,6 +10,7 @@ import { agregarNotasConsolidadas } from "@/lib/historico/medias";
 import type { HistoricoData, NivelEnsino, OrigemHistorico, ResultadoHistorico } from "@/lib/historico/tipos";
 import { createServerClient } from "@/lib/supabase/server";
 import { formNumber, formText } from "@/lib/utils";
+import type { ActionResult } from "@/lib/actions/types";
 
 async function garantirHistorico(alunoId: string, nivel: NivelEnsino): Promise<string> {
   const supabase = await createServerClient();
@@ -194,14 +194,16 @@ export async function salvarNotasAnoAction(formData: FormData) {
   revalidatePath("/historico/notas");
 }
 
-export async function salvarAssociacaoAction(formData: FormData) {
+export async function salvarAssociacaoAction(formData: FormData): Promise<ActionResult> {
   await requirePermission("historico", "create");
   const serieId = formText(formData, "serieId");
   const companyId = formText(formData, "companyId");
   const nivel = formText(formData, "nivel") as NivelEnsino;
   const anoInicio = formNumber(formData, "anoInicio");
   const anoFim = formNumber(formData, "anoFim");
-  if (!serieId || !companyId || !nivel || !anoInicio || !anoFim) return;
+  if (!serieId || !companyId || !nivel || !anoInicio || !anoFim) {
+    return { ok: false, error: "Preencha todos os campos obrigatórios." };
+  }
 
   const supabase = await createServerClient();
   const { data: existentes, error: erroBusca } = await supabase
@@ -216,8 +218,10 @@ export async function salvarAssociacaoAction(formData: FormData) {
     (existentes ?? []).map((e) => ({ anoInicio: e.ano_inicio as number, anoFim: e.ano_fim as number }))
   );
   if (!validacao.ok) {
-    const msg = `Já existe associação para esta série no período ${validacao.conflito.anoInicio}–${validacao.conflito.anoFim}.`;
-    redirect(`/historico/associacoes?erro=${encodeURIComponent(msg)}`);
+    return {
+      ok: false,
+      error: `Já existe associação para esta série no período ${validacao.conflito.anoInicio}–${validacao.conflito.anoFim}.`,
+    };
   }
 
   const { error } = await supabase.from("historico_niveis_ensino").insert({
@@ -230,11 +234,11 @@ export async function salvarAssociacaoAction(formData: FormData) {
   });
   if (error) {
     const msg = error.code === "23505" ? "Já existe associação para esta série neste ano de início." : error.message;
-    redirect(`/historico/associacoes?erro=${encodeURIComponent(msg)}`);
+    return { ok: false, error: msg };
   }
 
   revalidatePath("/historico/associacoes");
-  redirect("/historico/associacoes?ok=Associação gravada com sucesso.");
+  return { ok: true, data: undefined, message: "Associação gravada com sucesso." };
 }
 
 export async function removerAssociacaoAction(formData: FormData) {
