@@ -6,12 +6,11 @@ import { createServerClient } from "@/lib/supabase/server";
 import { sendText, sendImage, sendTemplate } from "@/lib/whatsapp/meta";
 import { janelaAberta } from "@/lib/whatsapp/inbox-parser";
 import { validarPathImagem } from "@/lib/actions/whatsapp-inbox-validation";
+import type { ActionResult } from "./types";
 
 // ─── Tipo de retorno ──────────────────────────────────────────────────────────
 
-export type ActionResult<T = void> =
-  | { ok: true; data: T }
-  | { ok: false; error: string };
+export type { ActionResult } from "./types";
 
 // ─── Constantes ───────────────────────────────────────────────────────────────
 
