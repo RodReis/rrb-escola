@@ -1,4 +1,5 @@
 import { HistoricoAbas } from "@/components/historico/historico-abas";
+import { PageHeader } from "@/components/ui/page-header";
 import { requirePermission } from "@/lib/auth/session";
 import { getHistoricoAluno, listarAnosMatriculados } from "@/lib/data/historico";
 import { getAcademicData } from "@/lib/data/lookups";
@@ -19,13 +20,16 @@ export default async function EntradaNotasPage({ searchParams }: Props) {
   const anosMatriculados = alunoId ? await listarAnosMatriculados(alunoId) : [];
 
   return (
-    <div className="space-y-6 p-6">
-      <header>
-        <h1 className="text-2xl font-semibold">Histórico Escolar — Entrada de Notas</h1>
-        <p className="text-sm text-muted">
-          Acadêmico / Histórico e Certificado / Histórico Escolar — Entrada de notas
-        </p>
-      </header>
+    <div className="grid gap-8 p-6">
+      <PageHeader
+        breadcrumb={[
+          { label: "Acadêmico", href: "/" },
+          { label: "Histórico Escolar", href: "/historico/associacoes" },
+          { label: "Entrada de Notas" }
+        ]}
+        title="Entrada de Notas"
+        description="Lança e revisa as notas que compõem o histórico escolar de cada aluno."
+      />
 
       <HistoricoAbas
         alunos={alunos.map((a) => ({

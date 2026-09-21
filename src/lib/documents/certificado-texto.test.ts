@@ -12,7 +12,11 @@ const escola: CertificadoData["escola"] = {
   cidade: "TRINDADE",
   uf: "GO",
   cep: "75388-686",
-  logoPath: null
+  logoPath: null,
+  secretarioNome: "ROSSANIA BRÍGIDA RODRIGUES RIBEIRO BARBOSA",
+  secretarioCargo: "Secretário(a)",
+  diretorNome: "RAFAELA MARGARIDA BARROS",
+  diretorCargo: "Diretor(a)"
 };
 
 const aluno: CertificadoData["aluno"] = {

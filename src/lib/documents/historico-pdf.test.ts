@@ -84,11 +84,11 @@ describe("renderHistoricos", () => {
     expect(doc.getNumberOfPages()).toBe(3);
   });
 
-  it("usa A4 retrato em pontos", () => {
+  it("usa A4 paisagem em pontos", () => {
     const doc = renderHistoricos([historico("ALUNO A")]);
     const { width, height } = doc.internal.pageSize;
-    expect(Math.round(width)).toBe(595);
-    expect(Math.round(height)).toBe(842);
+    expect(Math.round(width)).toBe(842);
+    expect(Math.round(height)).toBe(595);
   });
 
   it("não lança com aluno sem nenhum ano cadastrado", () => {

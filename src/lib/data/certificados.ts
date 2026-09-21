@@ -37,6 +37,23 @@ const CONFIG_PADRAO: CertificadoConfig = {
   assinaturas: CERTIFICADO_DEFAULTS.assinaturas
 };
 
+/**
+ * Config salva antes das flags `ehAluno`/`ehSecretario`/`ehDiretor`
+ * existirem não as tem no jsonb. Recupera por palavra-chave no cargo, só
+ * quando a linha não carrega nenhuma flag — uma linha que já veio com uma
+ * marcada (config nova) nunca é remarcada por aqui.
+ */
+function comFlagsRecuperadas(assinaturas: LinhaAssinatura[]): LinhaAssinatura[] {
+  return assinaturas.map((a) => {
+    if (a.ehAluno || a.ehSecretario || a.ehDiretor) return a;
+    const cargo = a.cargo.toLowerCase();
+    if (cargo.includes("aluno")) return { ...a, ehAluno: true };
+    if (cargo.includes("secretár") || cargo.includes("secretar")) return { ...a, ehSecretario: true };
+    if (cargo.includes("diretor")) return { ...a, ehDiretor: true };
+    return a;
+  });
+}
+
 export async function getCertificadoConfig(
   escolaId: string = DEFAULT_SCHOOL_ID
 ): Promise<CertificadoConfig> {
@@ -62,7 +79,9 @@ export async function getCertificadoConfig(
     // Merge com o padrão: config salva antes de um campo novo de leiaute
     // existir não o traria, e o gerador receberia undefined.
     leiaute: { ...CERTIFICADO_DEFAULTS.leiaute, ...leiaute },
-    assinaturas: assinaturas.length > 0 ? assinaturas : CERTIFICADO_DEFAULTS.assinaturas
+    assinaturas: comFlagsRecuperadas(
+      assinaturas.length > 0 ? assinaturas : CERTIFICADO_DEFAULTS.assinaturas
+    )
   };
 }
 
@@ -88,7 +107,11 @@ export async function getEscolaCertificado(
     cidade: null,
     uf: null,
     cep: null,
-    logoPath: null
+    logoPath: null,
+    secretarioNome: null,
+    secretarioCargo: "Secretário(a)",
+    diretorNome: null,
+    diretorCargo: "Diretor(a)"
   };
 
   if (!serieId) return vazio;
@@ -105,6 +128,10 @@ export async function getEscolaCertificado(
     cidade: credenciamento.cidade,
     uf: credenciamento.uf,
     cep: credenciamento.cep,
-    logoPath: credenciamento.logoPath
+    logoPath: credenciamento.logoPath,
+    secretarioNome: credenciamento.secretarioNome,
+    secretarioCargo: credenciamento.secretarioCargo,
+    diretorNome: credenciamento.diretorNome,
+    diretorCargo: credenciamento.diretorCargo
   };
 }

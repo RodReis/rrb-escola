@@ -1,7 +1,8 @@
 "use client";
 
+import { AlertTriangle, FileText } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
-import { renderCertificados } from "@/lib/documents/certificado-pdf";
+import { renderCertificados, type ImagemCache } from "@/lib/documents/certificado-pdf";
 import type { CertificadoData, CertificadoOptions } from "@/lib/documents/certificado-tipos";
 import type { HistoricoData } from "@/lib/historico/tipos";
 
@@ -9,7 +10,7 @@ type Props = {
   aluno: CertificadoData | null;
   historico: HistoricoData | null;
   opts: CertificadoOptions;
-  logoDataUrl?: string;
+  imagens?: ImagemCache;
 };
 
 /** Espera antes de regerar: o preview acompanha digitação, não cada tecla. */
@@ -19,7 +20,7 @@ const DEBOUNCE_MS = 400;
  * Preview do certificado num iframe. Chama a **mesma** `renderCertificados` da
  * emissão: o que se vê é o que sai.
  */
-export function CertificadoPreview({ aluno, historico, opts, logoDataUrl }: Props) {
+export function CertificadoPreview({ aluno, historico, opts, imagens = new Map() }: Props) {
   const [url, setUrl] = useState<string | null>(null);
   const [erro, setErro] = useState<string | null>(null);
   // A URL anterior precisa ser revogada: sem isso cada tecla digitada deixaria
@@ -35,10 +36,6 @@ export function CertificadoPreview({ aluno, historico, opts, logoDataUrl }: Prop
     const timer = setTimeout(() => {
       try {
         const historicos = historico ? new Map([[aluno.aluno.id, historico]]) : new Map();
-        const imagens = logoDataUrl && aluno.escola.logoPath
-          ? new Map([[aluno.escola.logoPath, { data: logoDataUrl, w: 400, h: 220 }]])
-          : new Map();
-
         const blob = renderCertificados([aluno], opts, historicos, imagens).output("blob");
         const nova = URL.createObjectURL(blob);
         if (urlAnterior.current) URL.revokeObjectURL(urlAnterior.current);
@@ -51,7 +48,7 @@ export function CertificadoPreview({ aluno, historico, opts, logoDataUrl }: Prop
     }, DEBOUNCE_MS);
 
     return () => clearTimeout(timer);
-  }, [aluno, historico, opts, logoDataUrl]);
+  }, [aluno, historico, opts, imagens]);
 
   // Revoga a última URL ao desmontar: o cleanup do efeito acima só cancela o
   // timer, não libera o blob que ficou em uso.
@@ -63,17 +60,19 @@ export function CertificadoPreview({ aluno, historico, opts, logoDataUrl }: Prop
 
   if (erro) {
     return (
-      <div className="rounded-lg border border-clay p-4 text-sm text-clay">
-        <p className="font-medium">Não foi possível gerar a pré-visualização.</p>
-        <p className="mt-1">{erro}</p>
+      <div className="flex h-full min-h-[46rem] flex-col items-center justify-center gap-2 rounded-panel border border-clay/30 bg-clay/5 p-6 text-center">
+        <AlertTriangle size={24} className="text-clay" />
+        <p className="text-sm font-semibold text-clay">Não foi possível gerar a pré-visualização.</p>
+        <p className="text-xs text-clay/80">{erro}</p>
       </div>
     );
   }
 
   if (!aluno || !url) {
     return (
-      <div className="flex h-full min-h-[24rem] items-center justify-center rounded-lg border border-line p-6 text-center text-sm text-muted">
-        Selecione um aluno para ver a pré-visualização.
+      <div className="flex h-full min-h-[46rem] flex-col items-center justify-center gap-2 rounded-panel border border-dashed border-line p-6 text-center">
+        <FileText size={24} className="text-ink/30" />
+        <p className="text-sm font-medium text-ink/60">Selecione um aluno para ver a pré-visualização.</p>
       </div>
     );
   }
@@ -81,11 +80,13 @@ export function CertificadoPreview({ aluno, historico, opts, logoDataUrl }: Prop
   return (
     <iframe
       // A chave força o iframe a recarregar quando o blob troca; sem ela o
-      // Chrome mantém o PDF anterior em cache.
+      // Chrome mantém o PDF anterior em cache. Fragmentos `#zoom=`/`#view=`
+      // não têm efeito confiável em blob: URLs (só em http/https) — por isso
+      // o ajuste de largura vem do layout (ver `CertificadoForm`), não daqui.
       key={url}
       src={url}
       title="Pré-visualização do certificado"
-      className="h-full min-h-[32rem] w-full rounded-lg border border-line"
+      className="h-full min-h-[46rem] w-full rounded-panel border border-line shadow-soft"
     />
   );
 }

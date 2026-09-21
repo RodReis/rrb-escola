@@ -45,3 +45,20 @@ export function imgFitInBox(
   const ratio = Math.min(maxW / orig.w, maxH / orig.h);
   return { w: orig.w * ratio, h: orig.h * ratio };
 }
+
+/**
+ * Baixa várias imagens em paralelo e monta o cache já no formato que os
+ * geradores esperam (chave = caminho pedido). Uma imagem que falha em baixar
+ * simplesmente não entra no mapa — o gerador já trata ausência como "sem
+ * logo", não é um erro que deva travar a emissão inteira.
+ */
+export async function carregarImagens(urls: Array<string | null>): Promise<Map<string, { data: string; w: number; h: number }>> {
+  const unicas = Array.from(new Set(urls.filter((u): u is string => Boolean(u))));
+  const baixadas = await Promise.all(unicas.map((u) => urlToDataUrl(u)));
+  const cache = new Map<string, { data: string; w: number; h: number }>();
+  unicas.forEach((url, i) => {
+    const img = baixadas[i];
+    if (img) cache.set(url, img);
+  });
+  return cache;
+}

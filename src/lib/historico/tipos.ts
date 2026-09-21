@@ -2,6 +2,18 @@ export type NivelEnsino = "infantil" | "fund1" | "fund2" | "medio";
 export type OrigemHistorico = "interna" | "externa";
 export type ResultadoHistorico = "aprovado" | "reprovado" | "cursando" | "transferido";
 
+/** Valores de `series.segmento` (enum `segmento_serie` no banco). */
+export type SegmentoSerie = "INFANTIL" | "FUNDAMENTAL1" | "FUNDAMENTAL2" | "MEDIO";
+
+/** Nível do histórico correspondente ao segmento da série. Fonte única —
+ * evita reimplementar esse de-para em cada tela que precisa dele. */
+export const SEGMENTO_PARA_NIVEL: Record<SegmentoSerie, NivelEnsino> = {
+  INFANTIL: "infantil",
+  FUNDAMENTAL1: "fund1",
+  FUNDAMENTAL2: "fund2",
+  MEDIO: "medio"
+};
+
 export const NIVEL_LABEL: Record<NivelEnsino, string> = {
   infantil: "Educação Infantil",
   fund1: "Ensino Fundamental",

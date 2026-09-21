@@ -6,8 +6,21 @@ import type { HistoricoAluno, HistoricoCredenciamento } from "@/lib/historico/ti
  * dois documentos saem da mesma fonte e não podem divergir.
  */
 
-/** Uma linha de assinatura do rodapé. */
-export type LinhaAssinatura = { nome: string; cargo: string };
+/**
+ * Uma linha de assinatura do rodapé. `ehAluno` marca a linha cujo nome não é
+ * fixo na config — é preenchido por página com o nome do aluno daquele
+ * certificado, porque um lote emite vários alunos de uma vez com a mesma
+ * config de assinaturas. `ehSecretario`/`ehDiretor` marcam as linhas cujo
+ * nome, quando vazio, é sugerido a partir do cadastro da escola
+ * (`companies.secretario_nome`/`diretor_nome`) assim que ela é conhecida.
+ */
+export type LinhaAssinatura = {
+  nome: string;
+  cargo: string;
+  ehAluno?: boolean;
+  ehSecretario?: boolean;
+  ehDiretor?: boolean;
+};
 
 export type CertificadoLeiaute = {
   orientacao: "landscape" | "portrait";
@@ -60,7 +73,19 @@ export type CertificadoAluno = HistoricoAluno & {
  */
 export type CertificadoEscola = Pick<
   HistoricoCredenciamento,
-  "razaoSocial" | "nomeFantasia" | "cnpj" | "resolucao" | "endereco" | "cidade" | "uf" | "cep" | "logoPath"
+  | "razaoSocial"
+  | "nomeFantasia"
+  | "cnpj"
+  | "resolucao"
+  | "endereco"
+  | "cidade"
+  | "uf"
+  | "cep"
+  | "logoPath"
+  | "secretarioNome"
+  | "secretarioCargo"
+  | "diretorNome"
+  | "diretorCargo"
 >;
 
 export type CertificadoData = {
@@ -77,11 +102,11 @@ export const CERTIFICADO_DEFAULTS: {
     margemMm: 15,
     fonteCorpoPt: 11,
     mostrarLogos: true,
-    mostrarMoldura: false
+    mostrarMoldura: true
   },
   assinaturas: [
-    { nome: "", cargo: "Aluno(a)" },
-    { nome: "", cargo: "Secretária" },
-    { nome: "", cargo: "Diretora" }
+    { nome: "", cargo: "Aluno(a)", ehAluno: true },
+    { nome: "", cargo: "Secretária", ehSecretario: true },
+    { nome: "", cargo: "Diretora", ehDiretor: true }
   ]
 };

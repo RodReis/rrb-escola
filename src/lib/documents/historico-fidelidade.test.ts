@@ -4,9 +4,9 @@ import { COORDENADAS_REFERENCIA, SOMENTE_Y, TOLERANCIA_PT } from "./historico-co
 import { renderHistoricos } from "./historico-pdf";
 import type { HistoricoAno, HistoricoData } from "@/lib/historico/tipos";
 
-const ALTURA_A4 = 842;
+const LARGURA_A4_PAISAGEM = 842;
 
-function anoManuela(serieNome: string, ano: number, diasLetivos: number): HistoricoAno {
+function anoVitoria(serieNome: string, ano: number, diasLetivos: number): HistoricoAno {
   return {
     id: String(ano),
     ano,
@@ -24,44 +24,51 @@ function anoManuela(serieNome: string, ano: number, diasLetivos: number): Histor
     percentualFrequencia: null,
     congelado: true,
     notas: [
-      { disciplinaId: null, disciplinaNome: "CIÊNCIAS", nota: 9.9, cargaHoraria: null, faltas: null, ordem: 0 }
+      { disciplinaId: null, disciplinaNome: "MATEMÁTICA", nota: 9.4, cargaHoraria: 280, faltas: null, ordem: 0 }
     ]
   };
 }
 
-const MANUELA: HistoricoData = {
+// Aluna de nível médio: as âncoras do contrato ("1ª/2ª/3ª SÉRIE - EM") vêm do
+// verso do CERTIFICADO.pdf de referência, que é justamente um certificado de
+// conclusão do Ensino Médio.
+const VITORIA: HistoricoData = {
   aluno: {
-    id: "manuela",
-    nome: "MANUELA MARGARIDA BARROS",
+    id: "vitoria",
+    nome: "VITÓRIA VIEIRA VÍTOR",
     cpf: "116.726.301-42",
     matricula: "1041",
-    filiacao: "RODRIGO REIS BARROS e RAFAELA MACHADO MARGARIDA BARROS",
-    dataNascimento: "28/08/2017",
-    naturalidade: "GOIÂNIA / GO",
+    filiacao: "JANIRO VIEIRA DA COSTA e MARIA JOSÉ DA SILVA VITOR",
+    dataNascimento: "2006-11-22",
+    naturalidade: "GOIÂNIA-GO",
     nacionalidade: "BRASILEIRA",
-    rg: null,
-    orgaoExpedidor: null,
+    rg: "6063621",
+    orgaoExpedidor: "PC/GO",
     dataExpedicao: null
   },
-  nivel: "fund1",
+  nivel: "medio",
   credenciamento: {
-    razaoSocial: "ESCOLA PINGUINHO DE GENTE LTDA",
+    razaoSocial: "COLÉGIO INTEGRADO EPG LTDA-ME",
     nomeFantasia: "EPG TRINDADE",
-    cnpj: "11.714.876/0001-16",
-    resolucao: "RENOVAÇÃO DE RECONHECIMENTO, RESOLUÇÃO CEE/CEB Nº 518/2024",
-    endereco: "RUA EUGÊNIO JARDIM Nº 473, Q 24, L 17, CENTRO, TRINDADE - GO CEP: 75388-686",
+    cnpj: "35.027.047/0001-23",
+    resolucao: "RESOLUÇÃO CEE/CEB Nº 518/2024",
+    endereco: "RUA EUGÊNIO JARDIM, 473, SALA 02, CENTRO",
     cidade: "TRINDADE",
     uf: "GO",
     cep: "75388-686",
-    telefones: "(62)3505-1531 / (62)98650-1531",
+    telefones: "(62)3505-1531",
     email: "secretariaepgtrindade@gmail.com",
     logoPath: null,
     secretarioNome: "ROSSANIA BRÍGIDA RODRIGUES RIBEIRO BARBOSA",
     secretarioCargo: "Secretário(a)",
-    diretorNome: "RAFAELA MACHADO MARGARIDA BARROS",
+    diretorNome: "RAFAELA MARGARIDA BARROS",
     diretorCargo: "Diretor(a)"
   },
-  anos: [anoManuela("1º ANO", 2024, 213), anoManuela("2º ANO", 2025, 203)],
+  anos: [
+    anoVitoria("1ª SÉRIE", 2022, 213),
+    anoVitoria("2ª SÉRIE", 2023, 209),
+    anoVitoria("3ª SÉRIE", 2024, 214)
+  ],
   observacoes: null
 };
 
@@ -79,7 +86,7 @@ async function extrairTextos(bytes: Uint8Array) {
 
 describe("fidelidade do layout ao modelo de referência", () => {
   it("posiciona cada texto do contrato dentro da tolerância", async () => {
-    const doc = renderHistoricos([MANUELA], { dataEmissao: new Date(2026, 8, 17) });
+    const doc = renderHistoricos([VITORIA], { dataEmissao: new Date(2026, 8, 17) });
     const bytes = new Uint8Array(doc.output("arraybuffer"));
     const textos = await extrairTextos(bytes);
 
@@ -103,8 +110,8 @@ describe("fidelidade do layout ao modelo de referência", () => {
     expect(desvios).toEqual([]);
   });
 
-  it("gera a página no tamanho A4 do modelo", async () => {
-    const doc = renderHistoricos([MANUELA]);
-    expect(Math.round(doc.internal.pageSize.height)).toBe(ALTURA_A4);
+  it("gera a página no tamanho A4 paisagem do modelo", async () => {
+    const doc = renderHistoricos([VITORIA]);
+    expect(Math.round(doc.internal.pageSize.width)).toBe(LARGURA_A4_PAISAGEM);
   });
 });

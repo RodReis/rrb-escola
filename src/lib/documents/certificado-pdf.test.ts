@@ -16,7 +16,11 @@ const escola: CertificadoData["escola"] = {
   cidade: "TRINDADE",
   uf: "GO",
   cep: "75388-686",
-  logoPath: null
+  logoPath: null,
+  secretarioNome: "ROSSANIA BRÍGIDA RODRIGUES RIBEIRO BARBOSA",
+  secretarioCargo: "Secretário(a)",
+  diretorNome: "RAFAELA MARGARIDA BARROS",
+  diretorCargo: "Diretor(a)"
 };
 
 function alunoFake(n: number): CertificadoData["aluno"] {
@@ -258,15 +262,15 @@ describe("renderCertificados com histórico no verso", () => {
     expect(renderCertificados([dados(1), dados(2)], optsHist, historicos).getNumberOfPages()).toBe(4);
   });
 
-  it("alterna paisagem no certificado e retrato no histórico", () => {
+  it("mantém a mesma paisagem no certificado e no histórico do verso", () => {
     const doc = renderCertificados([dados(1)], optsHist, new Map([["a1", historicoDe(1)]]));
     const certificado = medida(doc, 1);
     const historico = medida(doc, 2);
 
     expect(certificado.largura).toBeGreaterThan(certificado.altura);
-    expect(historico.largura).toBeLessThan(historico.altura);
-    expect(historico.largura).toBe(595);
-    expect(historico.altura).toBe(842);
+    expect(historico.largura).toBeGreaterThan(historico.altura);
+    expect(historico.largura).toBe(842);
+    expect(historico.altura).toBe(595);
   });
 
   it("gera só o certificado quando o aluno não tem histórico no mapa", () => {

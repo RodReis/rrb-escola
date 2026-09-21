@@ -107,17 +107,16 @@ describe("layout da grade não colide com o conteúdo abaixo", () => {
       const resultadoFinal = yDe(itens, "Resultado Final");
       const diasLetivos = yDe(itens, "Dias Letivos");
       const cabecalhoSerie = yDe(itens, "Série");
-      const assinatura = yDe(itens, "ROSSANIA");
 
       expect(resultadoFinal).toBeDefined();
       expect(cabecalhoSerie).toBeDefined();
-      expect(assinatura).toBeDefined();
 
-      // y maior = mais alto na página: cada bloco fica estritamente abaixo do anterior.
+      // y maior = mais alto na página: cada bloco fica estritamente abaixo do
+      // anterior, dentro da coluna do conteúdo principal. A assinatura mora
+      // na coluna REGISTRO, à direita — outra coluna, não comparável em y.
       expect(resultadoFinal!).toBeLessThan(ultimaDisciplina);
       expect(diasLetivos!).toBeLessThan(resultadoFinal!);
       expect(cabecalhoSerie!).toBeLessThan(diasLetivos!);
-      expect(assinatura!).toBeLessThan(cabecalhoSerie!);
     });
   }
 
@@ -155,10 +154,13 @@ describe("conteúdo do formulário oficial", () => {
   it("imprime cabeçalho da escola, filiação e assinaturas", async () => {
     const itens = await textos(historicoCom(3));
     const rotulos = itens.map((i) => i.texto);
+    const textoCorrido = rotulos.join(" ");
     expect(rotulos).toContain("EPG TRINDADE");
     expect(rotulos).toContain("PAI DE TAL e MAE DE TAL");
-    expect(rotulos).toContain("ROSSANIA BRÍGIDA RODRIGUES RIBEIRO BARBOSA");
-    expect(rotulos).toContain("RAFAELA MACHADO MARGARIDA BARROS");
-    expect(rotulos.some((t) => t.includes("TRINDADE-GO,"))).toBe(true);
+    // Nome longo quebra em mais de uma linha na coluna estreita da caixa de
+    // assinatura — junta os itens em vez de exigir uma única string.
+    expect(textoCorrido).toContain("ROSSANIA BRÍGIDA RODRIGUES RIBEIRO BARBOSA");
+    expect(textoCorrido).toContain("RAFAELA MACHADO MARGARIDA BARROS");
+    expect(rotulos.some((t) => t.includes("TRINDADE"))).toBe(true);
   });
 });

@@ -1,8 +1,16 @@
 "use client";
 
+import { Download, Inbox } from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { useState } from "react";
+import { useCallback, useState } from "react";
 import { StudentCombobox } from "@/components/matriculas/student-combobox";
+import { Button } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
+import { DataTableShell } from "@/components/ui/data-table";
+import { FieldNote } from "@/components/ui/field-note";
+import { FilterChips } from "@/components/ui/filter-chips";
+import { FilterDropdown, type DropdownOption } from "@/components/ui/filter-dropdown";
+import { StatusPill } from "@/components/ui/status-pill";
 import { carregarHistoricosAction } from "@/lib/actions/historico";
 import { renderHistoricos } from "@/lib/documents/historico-pdf";
 import { separarElegiveis, type AlunoElegivel } from "@/lib/historico/elegiveis";
@@ -22,6 +30,7 @@ type Aluno = { id: string; nome: string; matricula_codigo: string };
 type Props = {
   anoLetivo: number;
   nivel: NivelEnsino;
+  anosDisponiveis: number[];
   series: Array<{ id: string; nome: string }>;
   turmas: Turma[];
   alunos: Aluno[];
@@ -38,7 +47,7 @@ const TURNO_LABEL: Record<string, string> = {
 function rotuloTurma(t: Turma): string {
   const turno = TURNO_LABEL[t.turno.toLowerCase()] ?? t.turno;
   const nome = t.nome && t.nome.toLowerCase() !== t.turno.toLowerCase() ? `${t.nome} — ` : "";
-  return `${nome}${t.serieNome} · ${turno} · ${t.anoLetivo}`;
+  return `${nome}${t.serieNome} · ${turno}`;
 }
 
 async function logoParaDataUrl(): Promise<string | undefined> {
@@ -56,7 +65,15 @@ async function logoParaDataUrl(): Promise<string | undefined> {
   }
 }
 
-export function EmissaoForm({ anoLetivo, nivel, series, turmas, alunos, elegiveis }: Props) {
+export function EmissaoForm({
+  anoLetivo,
+  nivel,
+  anosDisponiveis,
+  series,
+  turmas,
+  alunos,
+  elegiveis
+}: Props) {
   const router = useRouter();
   const searchParams = useSearchParams();
   const serieSelecionada = searchParams.get("serie") ?? "";
@@ -104,159 +121,168 @@ export function EmissaoForm({ anoLetivo, nivel, series, turmas, alunos, elegivei
     }
   }
 
+  const atualizar = useCallback(
+    (updates: Record<string, string | null>) => {
+      const params = new URLSearchParams(searchParams.toString());
+      for (const [k, v] of Object.entries(updates)) {
+        if (v == null || v === "") params.delete(k);
+        else params.set(k, v);
+      }
+      setSelecionados([]);
+      router.push(`/historico/emissao?${params.toString()}`);
+    },
+    [router, searchParams]
+  );
+
   function aplicarFiltro(campo: "serie" | "turma", valor: string) {
-    const params = new URLSearchParams({ ano: String(anoLetivo), nivel });
-    if (campo !== "serie" && serieSelecionada) params.set("serie", serieSelecionada);
-    if (campo !== "turma" && turmaSelecionada) params.set("turma", turmaSelecionada);
-    if (valor) params.set(campo, valor);
-    router.push(`/historico/emissao?${params.toString()}`);
+    atualizar(campo === "serie" ? { serie: valor, turma: null } : { turma: valor });
   }
 
   function filtrarPorAluno(id: string) {
-    const params = new URLSearchParams({ ano: String(anoLetivo), nivel, modo: "aluno" });
-    if (id) params.set("aluno", id);
-    router.push(`/historico/emissao?${params.toString()}`);
+    atualizar({ aluno: id || null });
   }
 
   /** Trocar o tipo de pesquisa descarta o filtro do modo anterior. */
   function trocarModo(modo: "serie" | "aluno") {
-    const params = new URLSearchParams({ ano: String(anoLetivo), nivel });
-    if (modo === "aluno") params.set("modo", "aluno");
-    router.push(`/historico/emissao?${params.toString()}`);
+    atualizar({ modo: modo === "aluno" ? "aluno" : null, serie: null, turma: null, aluno: null });
   }
 
+  const serieOptions: DropdownOption[] = series.map((s) => ({ value: s.id, label: s.nome }));
+  const turmaOptions: DropdownOption[] = turmasDaSerie.map((t) => ({ value: t.id, label: rotuloTurma(t) }));
+  const anoOptions: DropdownOption[] = anosDisponiveis.map((a) => ({ value: String(a), label: String(a) }));
+
   return (
-    <div className="space-y-4">
-      <div className="grid gap-4 rounded-lg border border-line p-4 md:grid-cols-4">
-        <label className="flex flex-col gap-1 text-sm">
-          Ano de referência
-          <input
-            type="number"
-            defaultValue={anoLetivo}
-            onBlur={(e) =>
-              router.push(
-                `/historico/emissao?ano=${e.target.value}&nivel=${nivel}${porAluno ? "&modo=aluno" : ""}`
-              )
-            }
-            className="rounded border border-line bg-surface p-2"
+    <div className="grid gap-6">
+      <Card className="flex flex-col gap-4">
+        <div className="flex flex-wrap items-center gap-3">
+          <FilterDropdown
+            label="Ano letivo"
+            value={String(anoLetivo)}
+            options={anoOptions}
+            hideEmpty
+            onChange={(v) => atualizar({ ano: v })}
           />
-        </label>
 
-        <label className="flex flex-col gap-1 text-sm">
-          Pesquisa por
-          <select
+          <FilterChips
+            items={[
+              { value: "serie", label: "Série / Turma" },
+              { value: "aluno", label: "Aluno" }
+            ]}
             value={porAluno ? "aluno" : "serie"}
-            onChange={(e) => trocarModo(e.target.value as "serie" | "aluno")}
-            className="rounded border border-line bg-surface p-2"
-          >
-            <option value="serie">Série / Turma</option>
-            <option value="aluno">Aluno</option>
-          </select>
-        </label>
+            onChange={(v) => trocarModo(v as "serie" | "aluno")}
+          />
 
-        {porAluno ? (
-          <label className="flex flex-col gap-1 text-sm md:col-span-2">
-            Aluno
-            <StudentCombobox
-              alunos={alunos}
-              defaultValue={alunos.find((a) => a.id === alunoSelecionado)}
-              onSelect={(aluno) => filtrarPorAluno(aluno?.id ?? "")}
-            />
-          </label>
-        ) : (
-          <>
-            <label className="flex flex-col gap-1 text-sm">
-              Série
-              <select
+          {porAluno ? (
+            <div className="min-w-[240px] flex-1">
+              <StudentCombobox
+                alunos={alunos}
+                defaultValue={alunos.find((a) => a.id === alunoSelecionado)}
+                onSelect={(aluno) => filtrarPorAluno(aluno?.id ?? "")}
+              />
+            </div>
+          ) : (
+            <>
+              <FilterDropdown
+                label="Série"
                 value={serieSelecionada}
-                onChange={(e) => aplicarFiltro("serie", e.target.value)}
-                className="rounded border border-line bg-surface p-2"
-              >
-                <option value="">Todas as séries</option>
-                {series.map((s) => (
-                  <option key={s.id} value={s.id}>{s.nome}</option>
-                ))}
-              </select>
-            </label>
-
-            <label className="flex flex-col gap-1 text-sm">
-              Turma
-              <select
+                options={serieOptions}
+                emptyLabel="Todas"
+                onChange={(v) => aplicarFiltro("serie", v)}
+              />
+              <FilterDropdown
+                label="Turma"
                 value={turmaSelecionada}
-                onChange={(e) => aplicarFiltro("turma", e.target.value)}
-                disabled={turmasDaSerie.length === 0}
-                className="rounded border border-line bg-surface p-2 disabled:opacity-50"
-              >
-                <option value="">Todas as turmas</option>
-                {turmasDaSerie.map((t) => (
-                  <option key={t.id} value={t.id}>{rotuloTurma(t)}</option>
-                ))}
-              </select>
-            </label>
-          </>
-        )}
-      </div>
-
-      {erro && <p className="rounded border border-clay p-3 text-sm text-clay">{erro}</p>}
-
-      {pendentes.length > 0 && (
-        <div className="rounded border border-line bg-muted p-3 text-sm">
-          <p className="font-medium">Sem histórico cadastrado ({pendentes.length}):</p>
-          <p className="text-muted">{pendentes.map((a) => a.nome).join(", ")}</p>
-          <p className="mt-1 text-muted">
-            Estes alunos não entram na emissão. Cadastre o histórico deles na tela de entrada de notas.
-          </p>
+                options={turmaOptions}
+                emptyLabel="Todas"
+                disabled={turmaOptions.length === 0}
+                onChange={(v) => aplicarFiltro("turma", v)}
+              />
+            </>
+          )}
         </div>
+      </Card>
+
+      {erro && (
+        <FieldNote tone="warn" className="text-sm">
+          {erro}
+        </FieldNote>
       )}
 
-      {elegiveis.length === 0 ? (
-        <p className="rounded-lg border border-line p-6 text-center text-sm text-muted">
-          {porAluno
-            ? "Busque um aluno para listar."
-            : "Selecione uma série ou turma para listar os alunos."}
-        </p>
-      ) : (
-        <table className="w-full text-sm">
-          <thead className="bg-muted text-left">
+      {pendentes.length > 0 && (
+        <FieldNote tone="warn" className="text-sm">
+          Sem histórico cadastrado ({pendentes.length}): {pendentes.map((a) => a.nome).join(", ")}.
+          Estes alunos não entram na emissão — cadastre o histórico deles na Entrada de Notas.
+        </FieldNote>
+      )}
+
+      <DataTableShell>
+        <table className="ds-dt min-w-[520px]">
+          <thead>
             <tr>
-              <th className="p-2">
+              <th className="w-10">
                 <input
                   type="checkbox"
+                  aria-label="Marcar todos"
                   checked={prontos.length > 0 && selecionados.length === prontos.length}
                   onChange={marcarTodos}
+                  disabled={prontos.length === 0}
                 />
               </th>
-              <th className="p-2">Aluno</th>
-              <th className="p-2">Situação</th>
+              <th>Aluno</th>
+              <th>Situação</th>
             </tr>
           </thead>
           <tbody>
-            {elegiveis.map((a) => (
-              <tr key={a.id} className="border-t border-line">
-                <td className="p-2">
-                  <input
-                    type="checkbox"
-                    disabled={!a.temHistorico}
-                    checked={selecionados.includes(a.id)}
-                    onChange={() => alternar(a.id)}
-                  />
+            {elegiveis.length === 0 ? (
+              <tr>
+                <td colSpan={3} className="py-12">
+                  <div className="flex flex-col items-center justify-center gap-2 text-ink/60">
+                    <Inbox size={28} />
+                    <p className="text-sm font-medium">
+                      {porAluno
+                        ? "Busque um aluno para listar."
+                        : "Selecione uma série ou turma para listar os alunos."}
+                    </p>
+                  </div>
                 </td>
-                <td className="p-2">{a.nome}</td>
-                <td className="p-2">{a.temHistorico ? "Pronto" : "Sem histórico"}</td>
               </tr>
-            ))}
+            ) : (
+              elegiveis.map((a) => (
+                <tr key={a.id}>
+                  <td>
+                    <input
+                      type="checkbox"
+                      aria-label={`Selecionar ${a.nome}`}
+                      disabled={!a.temHistorico}
+                      checked={selecionados.includes(a.id)}
+                      onChange={() => alternar(a.id)}
+                    />
+                  </td>
+                  <td className="font-medium text-ink">{a.nome}</td>
+                  <td>
+                    <StatusPill tone={a.temHistorico ? "success" : "neutral"}>
+                      {a.temHistorico ? "Pronto" : "Sem histórico"}
+                    </StatusPill>
+                  </td>
+                </tr>
+              ))
+            )}
           </tbody>
         </table>
-      )}
+      </DataTableShell>
 
-      <button
-        type="button"
-        onClick={emitir}
-        disabled={emitindo || selecionados.length === 0}
-        className="rounded bg-brand px-4 py-2 text-paper disabled:opacity-50"
-      >
-        {emitindo ? "Emitindo…" : `Emitir selecionados (${selecionados.length})`}
-      </button>
+      <div className="flex items-center gap-3">
+        <Button type="button" onClick={emitir} disabled={emitindo || selecionados.length === 0}>
+          {emitindo ? (
+            "Emitindo…"
+          ) : (
+            <>
+              <Download size={14} />
+              {`Emitir selecionados (${selecionados.length})`}
+            </>
+          )}
+        </Button>
+      </div>
     </div>
   );
 }

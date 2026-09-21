@@ -1,19 +1,35 @@
 "use client";
 
+import { Download, Inbox, Plus, Trash2 } from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 import { StudentCombobox } from "@/components/matriculas/student-combobox";
 import { CertificadoPreview } from "@/components/historico/certificado-preview";
+import { Button } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
+import { DataTableShell } from "@/components/ui/data-table";
+import { FieldNote } from "@/components/ui/field-note";
+import { FilterChips } from "@/components/ui/filter-chips";
+import { FilterDropdown, type DropdownOption } from "@/components/ui/filter-dropdown";
+import { StatusPill } from "@/components/ui/status-pill";
+import { Switch } from "@/components/ui/switch";
 import { salvarCertificadoConfigAction } from "@/lib/actions/certificados";
 import { carregarHistoricosAction } from "@/lib/actions/historico";
 import type { CertificadoConfig } from "@/lib/data/certificados";
-import { renderCertificados } from "@/lib/documents/certificado-pdf";
+import {
+  BRASAO_DIREITA_PATH,
+  BRASAO_ESQUERDA_PATH,
+  LOGO_PADRAO_PATH,
+  renderCertificados,
+  type ImagemCache
+} from "@/lib/documents/certificado-pdf";
 import type {
   CertificadoData,
   CertificadoEscola,
   CertificadoOptions
 } from "@/lib/documents/certificado-tipos";
+import { carregarImagens } from "@/lib/documents/pdf-utils";
 import { separarElegiveis, type AlunoElegivel } from "@/lib/historico/elegiveis";
 import type { HistoricoData, NivelEnsino } from "@/lib/historico/tipos";
 
@@ -31,6 +47,7 @@ type Aluno = { id: string; nome: string; matricula_codigo: string };
 type Props = {
   anoLetivo: number;
   nivel: NivelEnsino;
+  anosDisponiveis: number[];
   config: CertificadoConfig;
   escola: CertificadoEscola;
   series: Array<{ id: string; nome: string }>;
@@ -58,7 +75,7 @@ const TURNO_LABEL: Record<string, string> = {
 function rotuloTurma(t: Turma): string {
   const turno = TURNO_LABEL[t.turno.toLowerCase()] ?? t.turno;
   const nome = t.nome && t.nome.toLowerCase() !== t.turno.toLowerCase() ? `${t.nome} — ` : "";
-  return `${nome}${t.serieNome} · ${turno} · ${t.anoLetivo}`;
+  return `${nome}${t.serieNome} · ${turno}`;
 }
 
 /** Hoje em ISO local — `toISOString()` volta um dia em fuso negativo. */
@@ -69,12 +86,14 @@ function hojeIso(): string {
   ).padStart(2, "0")}`;
 }
 
-const CAMPO = "rounded border border-line bg-surface p-2";
-const ROTULO = "flex flex-col gap-1 text-sm";
+const CAMPO =
+  "rounded-ui border border-line bg-surface px-3 py-2 text-sm transition focus:border-brand/60 focus:outline-none focus:shadow-ring";
+const ROTULO = "flex flex-col gap-1.5 text-sm font-medium text-ink/80";
 
 export function CertificadoForm({
   anoLetivo,
   nivel,
+  anosDisponiveis,
   config,
   escola,
   series,
@@ -98,6 +117,41 @@ export function CertificadoForm({
   const [emitindo, setEmitindo] = useState(false);
   const [salvando, setSalvando] = useState(false);
   const [historicos, setHistoricos] = useState<Map<string, HistoricoData>>(new Map());
+  const [imagens, setImagens] = useState<ImagemCache>(new Map());
+
+  // Brasões (fixos) e logo da mantenedora: baixados uma vez, não a cada
+  // seleção de aluno — só mudam se `escola.logoPath` mudar entre navegações.
+  useEffect(() => {
+    let ativo = true;
+    carregarImagens([BRASAO_ESQUERDA_PATH, BRASAO_DIREITA_PATH, LOGO_PADRAO_PATH, escola.logoPath]).then((cache) => {
+      if (ativo) setImagens(cache);
+    });
+    return () => {
+      ativo = false;
+    };
+  }, [escola.logoPath]);
+
+  // Sugere o nome de secretária/diretora do cadastro da escola assim que ela
+  // é conhecida (a config vem do server antes da série ser filtrada) — só
+  // quando a linha ainda está vazia, para não sobrescrever o que a
+  // secretária já digitou ou salvou como padrão.
+  useEffect(() => {
+    setParametros((p) => {
+      let mudou = false;
+      const assinaturas = p.assinaturas.map((a) => {
+        if (a.ehSecretario && !a.nome.trim() && escola.secretarioNome) {
+          mudou = true;
+          return { ...a, nome: escola.secretarioNome };
+        }
+        if (a.ehDiretor && !a.nome.trim() && escola.diretorNome) {
+          mudou = true;
+          return { ...a, nome: escola.diretorNome };
+        }
+        return a;
+      });
+      return mudou ? { ...p, assinaturas } : p;
+    });
+  }, [escola.secretarioNome, escola.diretorNome]);
 
   const { prontos, pendentes } = separarElegiveis(elegiveis);
   const turmasDaSerie = serieSelecionada
@@ -184,27 +238,29 @@ export function CertificadoForm({
     setSelecionados(selecionados.length === prontos.length ? [] : prontos.map((a) => a.id));
   }
 
+  const atualizar = useCallback(
+    (updates: Record<string, string | null>) => {
+      const params = new URLSearchParams(searchParams.toString());
+      for (const [k, v] of Object.entries(updates)) {
+        if (v == null || v === "") params.delete(k);
+        else params.set(k, v);
+      }
+      setSelecionados([]);
+      router.push(`/historico/certificado?${params.toString()}`);
+    },
+    [router, searchParams]
+  );
+
   function aplicarFiltro(campo: "serie" | "turma", valor: string) {
-    const params = new URLSearchParams({ ano: String(anoLetivo) });
-    if (campo !== "serie" && serieSelecionada) params.set("serie", serieSelecionada);
-    if (campo !== "turma" && turmaSelecionada) params.set("turma", turmaSelecionada);
-    if (valor) params.set(campo, valor);
-    setSelecionados([]);
-    router.push(`/historico/certificado?${params.toString()}`);
+    atualizar(campo === "serie" ? { serie: valor, turma: null } : { turma: valor });
   }
 
   function filtrarPorAluno(id: string) {
-    const params = new URLSearchParams({ ano: String(anoLetivo), modo: "aluno" });
-    if (id) params.set("aluno", id);
-    setSelecionados([]);
-    router.push(`/historico/certificado?${params.toString()}`);
+    atualizar({ aluno: id || null });
   }
 
   function trocarModo(modo: "serie" | "aluno") {
-    const params = new URLSearchParams({ ano: String(anoLetivo) });
-    if (modo === "aluno") params.set("modo", "aluno");
-    setSelecionados([]);
-    router.push(`/historico/certificado?${params.toString()}`);
+    atualizar({ modo: modo === "aluno" ? "aluno" : null, serie: null, turma: null, aluno: null });
   }
 
   async function salvarPadrao() {
@@ -260,8 +316,13 @@ export function CertificadoForm({
       }
 
       const sufixo = dados[0].aluno.serie || String(anoConclusao);
-      renderCertificados(dados, opts, mapa).save(
+      renderCertificados(dados, opts, mapa, imagens).save(
         `certificados-${sufixo}-${anoConclusao}.pdf`.replace(/\s+/g, "-").toLowerCase()
+      );
+      toast.success(
+        dados.length === 1
+          ? "Certificado emitido."
+          : `${dados.length} certificados emitidos em um único PDF.`
       );
     } catch (e) {
       toast.error(e instanceof Error ? e.message : "Falha ao emitir os certificados.");
@@ -274,8 +335,12 @@ export function CertificadoForm({
     (id) => !elegiveis.find((a) => a.id === id)?.temHistorico
   );
 
+  const serieOptions: DropdownOption[] = series.map((s) => ({ value: s.id, label: s.nome }));
+  const turmaOptions: DropdownOption[] = turmasDaSerie.map((t) => ({ value: t.id, label: rotuloTurma(t) }));
+  const anoOptions: DropdownOption[] = anosDisponiveis.map((a) => ({ value: String(a), label: String(a) }));
+
   return (
-    <div className="grid gap-6 lg:grid-cols-2">
+    <div className="grid gap-8">
       <div className="space-y-4">
         <nav className="flex flex-wrap gap-1 border-b border-line" aria-label="Parâmetros">
           {ABAS.map((a) => (
@@ -286,8 +351,8 @@ export function CertificadoForm({
               aria-current={aba === a.id ? "page" : undefined}
               className={
                 aba === a.id
-                  ? "border-b-2 border-brand px-3 py-2 text-sm font-medium"
-                  : "border-b-2 border-transparent px-3 py-2 text-sm text-muted hover:text-ink"
+                  ? "border-b-2 border-brand px-4 py-3 text-sm font-black text-brand"
+                  : "border-b-2 border-transparent px-4 py-3 text-sm font-black text-ink/60 transition hover:text-ink"
               }
             >
               {a.label}
@@ -297,20 +362,53 @@ export function CertificadoForm({
 
         {aba === "filtros" && (
           <div className="space-y-4">
-            <div className="grid gap-4 rounded-lg border border-line p-4 md:grid-cols-2">
-              <label className={ROTULO}>
-                Ano de referência
-                <input
-                  type="number"
-                  defaultValue={anoLetivo}
-                  onBlur={(e) =>
-                    router.push(
-                      `/historico/certificado?ano=${e.target.value}${porAluno ? "&modo=aluno" : ""}`
-                    )
-                  }
-                  className={CAMPO}
+            <Card className="flex flex-col gap-4">
+              <div className="flex flex-wrap items-center gap-3">
+                <FilterDropdown
+                  label="Ano letivo"
+                  value={String(anoLetivo)}
+                  options={anoOptions}
+                  hideEmpty
+                  onChange={(v) => atualizar({ ano: v })}
                 />
-              </label>
+
+                <FilterChips
+                  items={[
+                    { value: "serie", label: "Série / Turma" },
+                    { value: "aluno", label: "Aluno" }
+                  ]}
+                  value={porAluno ? "aluno" : "serie"}
+                  onChange={(v) => trocarModo(v as "serie" | "aluno")}
+                />
+
+                {porAluno ? (
+                  <div className="min-w-[240px] flex-1">
+                    <StudentCombobox
+                      alunos={alunos}
+                      defaultValue={alunos.find((a) => a.id === alunoSelecionado)}
+                      onSelect={(aluno) => filtrarPorAluno(aluno?.id ?? "")}
+                    />
+                  </div>
+                ) : (
+                  <>
+                    <FilterDropdown
+                      label="Série"
+                      value={serieSelecionada}
+                      options={serieOptions}
+                      emptyLabel="Todas"
+                      onChange={(v) => aplicarFiltro("serie", v)}
+                    />
+                    <FilterDropdown
+                      label="Turma"
+                      value={turmaSelecionada}
+                      options={turmaOptions}
+                      emptyLabel="Todas"
+                      disabled={turmaOptions.length === 0}
+                      onChange={(v) => aplicarFiltro("turma", v)}
+                    />
+                  </>
+                )}
+              </div>
 
               <label className={ROTULO}>
                 Data de emissão
@@ -318,128 +416,81 @@ export function CertificadoForm({
                   type="date"
                   value={dataEmissao}
                   onChange={(e) => setDataEmissao(e.target.value)}
-                  className={CAMPO}
+                  className={`${CAMPO} w-fit`}
                 />
               </label>
-
-              <label className={ROTULO}>
-                Pesquisa por
-                <select
-                  value={porAluno ? "aluno" : "serie"}
-                  onChange={(e) => trocarModo(e.target.value as "serie" | "aluno")}
-                  className={CAMPO}
-                >
-                  <option value="serie">Série / Turma</option>
-                  <option value="aluno">Aluno</option>
-                </select>
-              </label>
-
-              {porAluno ? (
-                <label className={ROTULO}>
-                  Aluno
-                  <StudentCombobox
-                    alunos={alunos}
-                    defaultValue={alunos.find((a) => a.id === alunoSelecionado)}
-                    onSelect={(aluno) => filtrarPorAluno(aluno?.id ?? "")}
-                  />
-                </label>
-              ) : (
-                <>
-                  <label className={ROTULO}>
-                    Série
-                    <select
-                      value={serieSelecionada}
-                      onChange={(e) => aplicarFiltro("serie", e.target.value)}
-                      className={CAMPO}
-                    >
-                      <option value="">Todas as séries</option>
-                      {series.map((s) => (
-                        <option key={s.id} value={s.id}>
-                          {s.nome}
-                        </option>
-                      ))}
-                    </select>
-                  </label>
-
-                  <label className={ROTULO}>
-                    Turma
-                    <select
-                      value={turmaSelecionada}
-                      onChange={(e) => aplicarFiltro("turma", e.target.value)}
-                      disabled={turmasDaSerie.length === 0}
-                      className={`${CAMPO} disabled:opacity-50`}
-                    >
-                      <option value="">Todas as turmas</option>
-                      {turmasDaSerie.map((t) => (
-                        <option key={t.id} value={t.id}>
-                          {rotuloTurma(t)}
-                        </option>
-                      ))}
-                    </select>
-                  </label>
-                </>
-              )}
-            </div>
+            </Card>
 
             {pendentes.length > 0 && parametros.mostrarHistorico && (
-              <div className="rounded border border-line bg-muted p-3 text-sm">
-                <p className="font-medium">Sem histórico cadastrado ({pendentes.length}):</p>
-                <p className="text-muted">{pendentes.map((a) => a.nome).join(", ")}</p>
-                <p className="mt-1 text-muted">
-                  Com o histórico no verso ligado, estes alunos não entram na emissão. Cadastre na
-                  entrada de notas ou desligue o verso na aba Conteúdo.
-                </p>
-              </div>
+              <FieldNote tone="warn" className="text-sm">
+                Sem histórico cadastrado ({pendentes.length}): {pendentes.map((a) => a.nome).join(", ")}.
+                Com o histórico no verso ligado, estes alunos não entram na emissão — cadastre na
+                Entrada de Notas ou desligue o verso na aba Conteúdo.
+              </FieldNote>
             )}
 
-            {elegiveis.length === 0 ? (
-              <p className="rounded-lg border border-line p-6 text-center text-sm text-muted">
-                {porAluno
-                  ? "Busque um aluno para listar."
-                  : "Selecione uma série ou turma para listar os alunos."}
-              </p>
-            ) : (
-              <table className="w-full text-sm">
-                <thead className="bg-muted text-left">
+            <DataTableShell>
+              <table className="ds-dt min-w-[520px]">
+                <thead>
                   <tr>
-                    <th className="p-2">
+                    <th className="w-10">
                       <input
                         type="checkbox"
                         aria-label="Marcar todos"
                         checked={prontos.length > 0 && selecionados.length === prontos.length}
                         onChange={marcarTodos}
+                        disabled={prontos.length === 0}
                       />
                     </th>
-                    <th className="p-2">Aluno</th>
-                    <th className="p-2">Histórico</th>
+                    <th>Aluno</th>
+                    <th>Histórico</th>
                   </tr>
                 </thead>
                 <tbody>
-                  {elegiveis.map((a) => (
-                    <tr key={a.id} className="border-t border-line">
-                      <td className="p-2">
-                        <input
-                          type="checkbox"
-                          aria-label={`Selecionar ${a.nome}`}
-                          // Sem o verso ligado, o certificado sai sem histórico:
-                          // aluno sem histórico continua elegível.
-                          disabled={parametros.mostrarHistorico && !a.temHistorico}
-                          checked={selecionados.includes(a.id)}
-                          onChange={() => alternar(a.id)}
-                        />
+                  {elegiveis.length === 0 ? (
+                    <tr>
+                      <td colSpan={3} className="py-12">
+                        <div className="flex flex-col items-center justify-center gap-2 text-ink/60">
+                          <Inbox size={28} />
+                          <p className="text-sm font-medium">
+                            {porAluno
+                              ? "Busque um aluno para listar."
+                              : "Selecione uma série ou turma para listar os alunos."}
+                          </p>
+                        </div>
                       </td>
-                      <td className="p-2">{a.nome}</td>
-                      <td className="p-2">{a.temHistorico ? "Pronto" : "Sem histórico"}</td>
                     </tr>
-                  ))}
+                  ) : (
+                    elegiveis.map((a) => (
+                      <tr key={a.id}>
+                        <td>
+                          <input
+                            type="checkbox"
+                            aria-label={`Selecionar ${a.nome}`}
+                            // Sem o verso ligado, o certificado sai sem histórico:
+                            // aluno sem histórico continua elegível.
+                            disabled={parametros.mostrarHistorico && !a.temHistorico}
+                            checked={selecionados.includes(a.id)}
+                            onChange={() => alternar(a.id)}
+                          />
+                        </td>
+                        <td className="font-medium text-ink">{a.nome}</td>
+                        <td>
+                          <StatusPill tone={a.temHistorico ? "success" : "neutral"}>
+                            {a.temHistorico ? "Pronto" : "Sem histórico"}
+                          </StatusPill>
+                        </td>
+                      </tr>
+                    ))
+                  )}
                 </tbody>
               </table>
-            )}
+            </DataTableShell>
           </div>
         )}
 
         {aba === "conteudo" && (
-          <div className="grid gap-4 rounded-lg border border-line p-4">
+          <Card className="grid gap-4">
             <label className={ROTULO}>
               Título do certificado
               <input
@@ -451,25 +502,18 @@ export function CertificadoForm({
               />
             </label>
 
-            <label className="flex items-center gap-2 text-sm">
-              <input
-                type="checkbox"
+            <div className="flex flex-col gap-3 border-t border-line pt-4">
+              <Switch
                 checked={parametros.mostrarHistorico}
-                onChange={(e) =>
-                  setParametros((p) => ({ ...p, mostrarHistorico: e.target.checked }))
-                }
+                onChange={(checked) => setParametros((p) => ({ ...p, mostrarHistorico: checked }))}
+                label="Imprimir o histórico escolar no verso"
               />
-              Imprimir o histórico escolar no verso
-            </label>
-
-            <label className="flex items-center gap-2 text-sm">
-              <input
-                type="checkbox"
+              <Switch
                 checked={usarCustomizado}
-                onChange={(e) => setUsarCustomizado(e.target.checked)}
+                onChange={setUsarCustomizado}
+                label="Escrever o texto manualmente"
               />
-              Escrever o texto manualmente
-            </label>
+            </div>
 
             {usarCustomizado ? (
               <label className={ROTULO}>
@@ -482,11 +526,11 @@ export function CertificadoForm({
                   }
                   className={CAMPO}
                 />
-                <span className="text-xs text-muted">
+                <FieldNote tone="info">
                   Campos disponíveis: {"{{aluno}}"}, {"{{curso}}"}, {"{{ano}}"}, {"{{escola}}"},{" "}
                   {"{{serie}}"}, {"{{nascimento}}"}, {"{{naturalidade}}"}, {"{{nacionalidade}}"},{" "}
                   {"{{rg}}"}, {"{{filiacao}}"}.
-                </span>
+                </FieldNote>
               </label>
             ) : (
               <>
@@ -533,99 +577,89 @@ export function CertificadoForm({
                 </label>
               </>
             )}
-          </div>
+          </Card>
         )}
 
         {aba === "leiaute" && (
-          <div className="grid gap-4 rounded-lg border border-line p-4 md:grid-cols-2">
-            <label className={ROTULO}>
-              Orientação
-              <select
-                value={parametros.leiaute.orientacao}
-                onChange={(e) =>
-                  setParametros((p) => ({
-                    ...p,
-                    leiaute: {
-                      ...p.leiaute,
-                      orientacao: e.target.value as "landscape" | "portrait"
-                    }
-                  }))
-                }
-                className={CAMPO}
-              >
-                <option value="landscape">Paisagem</option>
-                <option value="portrait">Retrato</option>
-              </select>
-            </label>
-
-            <label className={ROTULO}>
-              Margem (mm)
-              <input
-                type="number"
-                min={5}
-                max={40}
-                value={parametros.leiaute.margemMm}
-                onChange={(e) =>
-                  setParametros((p) => ({
-                    ...p,
-                    leiaute: { ...p.leiaute, margemMm: Number(e.target.value) }
-                  }))
-                }
-                className={CAMPO}
-              />
-            </label>
-
-            <label className={ROTULO}>
-              Tamanho da fonte (pt)
-              <input
-                type="number"
-                min={7}
-                max={18}
-                step={0.5}
-                value={parametros.leiaute.fonteCorpoPt}
-                onChange={(e) =>
-                  setParametros((p) => ({
-                    ...p,
-                    leiaute: { ...p.leiaute, fonteCorpoPt: Number(e.target.value) }
-                  }))
-                }
-                className={CAMPO}
-              />
-            </label>
-
-            <div className="flex flex-col gap-2 text-sm">
-              <label className="flex items-center gap-2">
-                <input
-                  type="checkbox"
-                  checked={parametros.leiaute.mostrarLogos}
+          <Card className="grid gap-5">
+            <div className="grid gap-4 md:grid-cols-3">
+              <label className={ROTULO}>
+                Orientação
+                <select
+                  value={parametros.leiaute.orientacao}
                   onChange={(e) =>
                     setParametros((p) => ({
                       ...p,
-                      leiaute: { ...p.leiaute, mostrarLogos: e.target.checked }
+                      leiaute: {
+                        ...p.leiaute,
+                        orientacao: e.target.value as "landscape" | "portrait"
+                      }
                     }))
                   }
-                />
-                Exibir logo
+                  className={CAMPO}
+                >
+                  <option value="landscape">Paisagem</option>
+                  <option value="portrait">Retrato</option>
+                </select>
               </label>
-              <label className="flex items-center gap-2">
+
+              <label className={ROTULO}>
+                Margem (mm)
                 <input
-                  type="checkbox"
-                  checked={parametros.leiaute.mostrarMoldura}
+                  type="number"
+                  min={5}
+                  max={40}
+                  value={parametros.leiaute.margemMm}
                   onChange={(e) =>
                     setParametros((p) => ({
                       ...p,
-                      leiaute: { ...p.leiaute, mostrarMoldura: e.target.checked }
+                      leiaute: { ...p.leiaute, margemMm: Number(e.target.value) }
                     }))
                   }
+                  className={CAMPO}
                 />
-                Exibir moldura
+              </label>
+
+              <label className={ROTULO}>
+                Tamanho da fonte (pt)
+                <input
+                  type="number"
+                  min={7}
+                  max={18}
+                  step={0.5}
+                  value={parametros.leiaute.fonteCorpoPt}
+                  onChange={(e) =>
+                    setParametros((p) => ({
+                      ...p,
+                      leiaute: { ...p.leiaute, fonteCorpoPt: Number(e.target.value) }
+                    }))
+                  }
+                  className={CAMPO}
+                />
               </label>
             </div>
-          </div>
+
+            <div className="flex flex-wrap gap-6 border-t border-line pt-4">
+              <Switch
+                checked={parametros.leiaute.mostrarLogos}
+                onChange={(checked) =>
+                  setParametros((p) => ({ ...p, leiaute: { ...p.leiaute, mostrarLogos: checked } }))
+                }
+                label="Exibir logo"
+              />
+              <Switch
+                checked={parametros.leiaute.mostrarMoldura}
+                onChange={(checked) =>
+                  setParametros((p) => ({ ...p, leiaute: { ...p.leiaute, mostrarMoldura: checked } }))
+                }
+                label="Exibir moldura"
+              />
+            </div>
+          </Card>
         )}
 
         {aba === "assinatura" && (
-          <div className="space-y-3 rounded-lg border border-line p-4">
+          <Card className="space-y-3">
             {parametros.assinaturas.map((assinatura, i) => (
               <div key={i} className="grid gap-2 md:grid-cols-[1fr_1fr_auto]">
                 <label className={ROTULO}>
@@ -662,72 +696,73 @@ export function CertificadoForm({
                 </label>
                 <button
                   type="button"
+                  aria-label={`Remover assinatura ${i + 1}`}
                   onClick={() =>
                     setParametros((p) => ({
                       ...p,
                       assinaturas: p.assinaturas.filter((_, j) => j !== i)
                     }))
                   }
-                  className="rounded border border-line px-3 text-sm text-muted hover:text-clay"
+                  className="flex items-center justify-center rounded-ui border border-line px-3 text-ink/60 transition hover:border-clay/40 hover:text-clay"
                 >
-                  Remover
+                  <Trash2 size={15} />
                 </button>
               </div>
             ))}
 
-            <button
+            <Button
               type="button"
+              variant="secondary"
               onClick={() =>
                 setParametros((p) => ({
                   ...p,
                   assinaturas: [...p.assinaturas, { nome: "", cargo: "" }]
                 }))
               }
-              className="rounded border border-line px-3 py-2 text-sm"
             >
-              Adicionar assinatura
-            </button>
-          </div>
+              <Plus size={14} /> Adicionar assinatura
+            </Button>
+          </Card>
         )}
 
         <div className="flex flex-wrap items-center gap-3 border-t border-line pt-4">
-          <button
-            type="button"
-            onClick={salvarPadrao}
-            disabled={salvando}
-            className="rounded border border-line px-4 py-2 text-sm disabled:opacity-50"
-          >
+          <Button type="button" variant="secondary" onClick={salvarPadrao} disabled={salvando}>
             {salvando ? "Salvando…" : "Salvar como padrão"}
-          </button>
+          </Button>
 
-          <button
-            type="button"
-            onClick={() => emitir()}
-            disabled={emitindo || selecionados.length === 0}
-            className="rounded bg-brand px-4 py-2 text-sm text-paper disabled:opacity-50"
-          >
-            {emitindo ? "Emitindo…" : `Emitir selecionados (${selecionados.length})`}
-          </button>
+          <Button type="button" onClick={() => emitir()} disabled={emitindo || selecionados.length === 0}>
+            {emitindo ? (
+              "Emitindo…"
+            ) : (
+              <>
+                <Download size={14} />
+                {`Emitir selecionados (${selecionados.length})`}
+              </>
+            )}
+          </Button>
 
           {parametros.mostrarHistorico && pendentesSelecionados.length > 0 && (
-            <button
+            <Button
               type="button"
+              variant="secondary"
               onClick={() => emitir(true)}
               disabled={emitindo}
-              className="rounded border border-line px-4 py-2 text-sm disabled:opacity-50"
             >
-              Emitir apenas os prontos (
-              {selecionados.length - pendentesSelecionados.length})
-            </button>
+              Emitir apenas os prontos ({selecionados.length - pendentesSelecionados.length})
+            </Button>
           )}
         </div>
       </div>
 
-      <CertificadoPreview
-        aluno={primeiroSelecionado ? dadosDoAluno(primeiroSelecionado) : null}
-        historico={primeiroSelecionado ? historicos.get(primeiroSelecionado) ?? null : null}
-        opts={opts}
-      />
+      <div className="space-y-2">
+        <h2 className="text-sm font-black text-ink/60">Pré-visualização</h2>
+        <CertificadoPreview
+          aluno={primeiroSelecionado ? dadosDoAluno(primeiroSelecionado) : null}
+          historico={primeiroSelecionado ? historicos.get(primeiroSelecionado) ?? null : null}
+          opts={opts}
+          imagens={imagens}
+        />
+      </div>
     </div>
   );
 }
