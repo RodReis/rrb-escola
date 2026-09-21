@@ -25,6 +25,7 @@ type Props = {
   confirm?: UseActionOptions["confirm"];
   success?: string;
   error?: string;
+  onSuccess?: UseActionOptions["onSuccess"];
 };
 
 export function RowActionButton({
@@ -36,8 +37,9 @@ export function RowActionButton({
   confirm,
   success,
   error,
+  onSuccess,
 }: Props) {
-  const { run, pending } = useAction(action, { confirm, success, error });
+  const { run, pending } = useAction(action, { confirm, success, error, onSuccess });
 
   function handleClick() {
     const fd = new FormData();
