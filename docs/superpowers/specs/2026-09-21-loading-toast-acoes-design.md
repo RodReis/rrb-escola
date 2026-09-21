@@ -193,7 +193,14 @@ A lógica de risco fica numa função pura separada do hook, para ser testável 
 export function interpretActionResult(
   outcome: { kind: "value"; value: unknown } | { kind: "error"; error: unknown },
   opts: { success?: string; error?: string }
-): { toast: "success" | "error" | "none"; message: string; redirectTo?: string; refresh: boolean }
+): {
+  toast: "success" | "error" | "none";
+  message: string;
+  redirectTo?: string;
+  refresh: boolean;
+  /** Excecoes de controle do Next (redirect/notFound) precisam subir. */
+  rethrow: boolean;
+}
 ```
 
 - **Unitário (`interpretActionResult`) — `.test.ts`, sem React:**
@@ -203,9 +210,12 @@ export function interpretActionResult(
   - `{ok:false, error}` → `error` com a mensagem.
   - `{ok:false, reason}` → `error` (convenção legada de `sicoob`/`asaas`/`conciliacao`).
   - `{success:false, error}` → `error` (convenção legada de `anamnese-export`/`documents-generate-v2`).
+  - `{success:true}` → `success` (mesma convenção legada, ramo de sucesso).
   - `undefined` (contrato C, void) → `success` + `refresh: true`.
-  - **erro com `digest` começando em `NEXT_REDIRECT`** → `toast: "none"` e a exceção é relançada pelo hook. **Este é o teste de regressão dos três bugs atuais.**
+  - **erro com `digest` começando em `NEXT_REDIRECT`** → `toast: "none"`, `rethrow: true`, e a exceção é relançada pelo hook. **Este é o teste de regressão dos três bugs atuais.**
+  - erro com `digest === "NEXT_NOT_FOUND"` → idem (`notFound()` também é fluxo de controle do Next).
   - `Error` comum → `error` com `error.message`.
+  - exceção que não é `Error` → `error` com a mensagem padrão.
 - **Componente (`Button`) — `.test.tsx`, jsdom:** `loading` aplica `disabled` e `aria-busy="true"`; com texto o label continua visível; sem texto (botão de ícone) o spinner ocupa o lugar do ícone.
 - **Hook (`useAction`) — `.test.tsx`, jsdom:** `confirm` cancelado não chama a action; `pending` é `true` durante a execução; `redirectTo` dispara `router.push`.
 
