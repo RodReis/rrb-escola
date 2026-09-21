@@ -9,6 +9,7 @@ import {
 } from "@/lib/actions/users";
 import { readUserCreatedFlash } from "@/lib/actions/user-flash";
 import { ButtonLink } from "@/components/ui/button";
+import { RowActionButton } from "@/components/ui/row-action-button";
 import { Panel } from "@/components/ui/card";
 import { PageHeader } from "@/components/ui/page-header";
 import { DataTableShell } from "@/components/ui/data-table";
@@ -200,38 +201,47 @@ export default async function UsuariosPage({
                       >
                         <Pencil size={15} />
                       </Link>
-                      <form action={resetPasswordAction} className="inline">
-                        <input type="hidden" name="perfilId" value={p.id} />
-                        <button
-                          title="Resetar senha"
-                          aria-label="Resetar senha"
-                          className="inline-flex h-8 w-8 items-center justify-center rounded-md text-warning hover:bg-warning/10"
-                        >
-                          <KeyRound size={15} />
-                        </button>
-                      </form>
+                      <RowActionButton
+                        action={resetPasswordAction}
+                        args={{ perfilId: p.id }}
+                        icon={KeyRound}
+                        label="Resetar senha"
+                        tone="warning"
+                        confirm={{
+                          title: "Resetar senha",
+                          message: `Resetar a senha de "${p.nome}"? O usuário receberá uma senha nova.`,
+                          confirmLabel: "Resetar",
+                          variant: "warning",
+                        }}
+                        success="Senha resetada."
+                        error="Falha ao resetar a senha."
+                      />
                       {p.ativo ? (
-                        <form action={deactivateUserAction} className="inline">
-                          <input type="hidden" name="perfilId" value={p.id} />
-                          <button
-                            title="Desativar"
-                            aria-label="Desativar"
-                            className="inline-flex h-8 w-8 items-center justify-center rounded-md text-danger hover:bg-danger/10"
-                          >
-                            <UserX size={15} />
-                          </button>
-                        </form>
+                        <RowActionButton
+                          action={deactivateUserAction}
+                          args={{ perfilId: p.id }}
+                          icon={UserX}
+                          label="Desativar"
+                          tone="danger"
+                          confirm={{
+                            title: "Desativar usuário",
+                            message: `Desativar "${p.nome}"? Ele perde o acesso ao sistema.`,
+                            confirmLabel: "Desativar",
+                            variant: "danger",
+                          }}
+                          success="Usuário desativado."
+                          error="Falha ao desativar o usuário."
+                        />
                       ) : (
-                        <form action={reactivateUserAction} className="inline">
-                          <input type="hidden" name="perfilId" value={p.id} />
-                          <button
-                            title="Reativar"
-                            aria-label="Reativar"
-                            className="inline-flex h-8 w-8 items-center justify-center rounded-md text-success hover:bg-success/10"
-                          >
-                            <UserCheck size={15} />
-                          </button>
-                        </form>
+                        <RowActionButton
+                          action={reactivateUserAction}
+                          args={{ perfilId: p.id }}
+                          icon={UserCheck}
+                          label="Reativar"
+                          tone="success"
+                          success="Usuário reativado."
+                          error="Falha ao reativar o usuário."
+                        />
                       )}
                     </div>
                   </td>
