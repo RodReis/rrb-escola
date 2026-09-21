@@ -13,11 +13,12 @@ import {
   verbaContratualSchema,
 } from "@/lib/validation/folha";
 import { criarPeriodoInicial } from "@/lib/folha/aquisitivos";
+import type { ActionResult } from "@/lib/actions/types";
 
 const PERM = "rh.folha-v2" as const;
 const REVALIDATE = "/rh/folha-v2";
 
-export async function createRubricaAction(formData: FormData) {
+export async function createRubricaAction(formData: FormData): Promise<ActionResult> {
   await requirePermission(PERM, "create");
   const parsed = rubricaSchema.safeParse({
     escola_id: DEFAULT_SCHOOL_ID,
@@ -33,25 +34,19 @@ export async function createRubricaAction(formData: FormData) {
     ativa: formData.get("ativa"),
   });
   if (!parsed.success) {
-    redirect(
-      `/rh/folha-v2/rubricas/nova?erro=${encodeURIComponent(parsed.error.issues[0]?.message ?? "validacao")}`
-    );
+    return { ok: false, error: parsed.error.issues[0]?.message ?? "Dados inválidos." };
   }
   const supabase = await createServerClient();
   const { error } = await supabase.from("folha_rubricas").insert(parsed.data);
-  if (error) {
-    redirect(
-      `/rh/folha-v2/rubricas/nova?erro=${encodeURIComponent(error.message)}`
-    );
-  }
+  if (error) return { ok: false, error: error.message };
   revalidatePath(`${REVALIDATE}/rubricas`);
-  redirect("/rh/folha-v2/rubricas");
+  return { ok: true, data: undefined, redirectTo: "/rh/folha-v2/rubricas" };
 }
 
-export async function updateRubricaAction(formData: FormData) {
+export async function updateRubricaAction(formData: FormData): Promise<ActionResult> {
   await requirePermission(PERM, "update");
   const id = formText(formData, "id");
-  if (!id) redirect("/rh/folha-v2/rubricas");
+  if (!id) return { ok: false, error: "Rubrica não informada." };
   const parsed = rubricaSchema.safeParse({
     escola_id: DEFAULT_SCHOOL_ID,
     codigo: formText(formData, "codigo"),
@@ -66,9 +61,7 @@ export async function updateRubricaAction(formData: FormData) {
     ativa: formData.get("ativa"),
   });
   if (!parsed.success) {
-    redirect(
-      `/rh/folha-v2/rubricas/${id}/editar?erro=${encodeURIComponent(parsed.error.issues[0]?.message ?? "validacao")}`
-    );
+    return { ok: false, error: parsed.error.issues[0]?.message ?? "Dados inválidos." };
   }
   const supabase = await createServerClient();
   const { error } = await supabase
@@ -76,27 +69,24 @@ export async function updateRubricaAction(formData: FormData) {
     .update(parsed.data)
     .eq("id", id)
     .eq("escola_id", DEFAULT_SCHOOL_ID);
-  if (error) {
-    redirect(
-      `/rh/folha-v2/rubricas/${id}/editar?erro=${encodeURIComponent(error.message)}`
-    );
-  }
+  if (error) return { ok: false, error: error.message };
   revalidatePath(`${REVALIDATE}/rubricas`);
-  redirect("/rh/folha-v2/rubricas");
+  return { ok: true, data: undefined, redirectTo: "/rh/folha-v2/rubricas" };
 }
 
-export async function deleteRubricaAction(formData: FormData) {
+export async function deleteRubricaAction(formData: FormData): Promise<ActionResult> {
   await requirePermission(PERM, "delete");
   const id = formText(formData, "id");
-  if (!id) return;
+  if (!id) return { ok: false, error: "Rubrica não informada." };
   const supabase = await createServerClient();
   const { error } = await supabase
     .from("folha_rubricas")
     .delete()
     .eq("id", id)
     .eq("escola_id", DEFAULT_SCHOOL_ID);
-  if (error) throw error;
+  if (error) return { ok: false, error: error.message };
   revalidatePath(`${REVALIDATE}/rubricas`);
+  return { ok: true, data: undefined, redirectTo: "/rh/folha-v2/rubricas" };
 }
 
 export async function createPerfilAction(formData: FormData) {
@@ -263,10 +253,10 @@ export async function createContratoAction(formData: FormData) {
   redirect(`/rh/folha-v2/contratos/${contrato.id}/editar`);
 }
 
-export async function updateContratoAction(formData: FormData) {
+export async function updateContratoAction(formData: FormData): Promise<ActionResult> {
   await requirePermission(PERM, "update");
   const id = formText(formData, "id");
-  if (!id) redirect("/rh/folha-v2/contratos");
+  if (!id) return { ok: false, error: "Contrato não informado." };
   const parsed = contratoSchema.safeParse({
     company_id: formText(formData, "company_id"),
     funcionario_id: formText(formData, "funcionario_id"),
@@ -285,9 +275,7 @@ export async function updateContratoAction(formData: FormData) {
     janela_ferias: formText(formData, "janela_ferias"),
   });
   if (!parsed.success) {
-    redirect(
-      `/rh/folha-v2/contratos/${id}/editar?erro=${encodeURIComponent(parsed.error.issues[0]?.message ?? "validacao")}`
-    );
+    return { ok: false, error: parsed.error.issues[0]?.message ?? "Dados inválidos." };
   }
   const data_admissao = formText(formData, "data_admissao");
   const data_desligamento = formText(formData, "data_desligamento");
@@ -317,13 +305,9 @@ export async function updateContratoAction(formData: FormData) {
     })
     .eq("id", id!)
     .eq("escola_id", DEFAULT_SCHOOL_ID);
-  if (error) {
-    redirect(
-      `/rh/folha-v2/contratos/${id}/editar?erro=${encodeURIComponent(error.message)}`
-    );
-  }
+  if (error) return { ok: false, error: error.message };
   revalidatePath(`${REVALIDATE}/contratos`);
-  redirect("/rh/folha-v2/contratos");
+  return { ok: true, data: undefined, redirectTo: "/rh/folha-v2/contratos" };
 }
 
 export async function deleteContratoAction(formData: FormData) {
@@ -358,7 +342,7 @@ export async function deleteContratoAction(formData: FormData) {
   redirect("/rh/folha-v2/contratos?ok=excluido");
 }
 
-export async function createVerbaAction(formData: FormData) {
+export async function createVerbaAction(formData: FormData): Promise<ActionResult> {
   await requirePermission(PERM, "update");
   const parsed = verbaContratualSchema.safeParse({
     contrato_id: formText(formData, "contrato_id"),
@@ -368,10 +352,7 @@ export async function createVerbaAction(formData: FormData) {
     ativa: formData.get("ativa"),
   });
   if (!parsed.success) {
-    const contratoId = formText(formData, "contrato_id");
-    redirect(
-      `/rh/folha-v2/contratos/${contratoId}/editar?erro=${encodeURIComponent(parsed.error.issues[0]?.message ?? "validacao")}`
-    );
+    return { ok: false, error: parsed.error.issues[0]?.message ?? "Dados inválidos." };
   }
   const supabase = await createServerClient();
   const { error } = await supabase.from("folha_contratos_rubricas").insert({
@@ -381,12 +362,9 @@ export async function createVerbaAction(formData: FormData) {
     percentual: parsed.data.percentual ?? null,
     ativa: parsed.data.ativa,
   });
-  if (error) {
-    redirect(
-      `/rh/folha-v2/contratos/${parsed.data.contrato_id}/editar?erro=${encodeURIComponent(error.message)}`
-    );
-  }
+  if (error) return { ok: false, error: error.message };
   revalidatePath(`${REVALIDATE}/contratos`);
+  return { ok: true, data: undefined };
 }
 
 export async function updateVerbaAction(formData: FormData) {
