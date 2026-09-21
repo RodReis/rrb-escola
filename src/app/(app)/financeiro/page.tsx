@@ -1,4 +1,4 @@
-import { ChevronLeft, ChevronRight, CreditCard, Plus, Receipt } from "lucide-react";
+import { AlertCircle, ChevronLeft, ChevronRight, CreditCard, Plus, Receipt } from "lucide-react";
 import { ExportFinanceButton } from "@/components/pdf/export-finance-button";
 import { ChargeEditForm } from "@/components/finance/charge-edit-form";
 import { PaymentRow } from "@/components/finance/payment-row";
@@ -13,6 +13,7 @@ import { getFinanceData } from "@/lib/data/finance";
 import { getAcademicData } from "@/lib/data/lookups";
 import { displayStatus, isUnpaid } from "@/lib/finance/charge-status";
 import { saldoDevedor, totalPago } from "@/lib/finance/charge-totals";
+import { mensagemErroCobranca } from "@/lib/finance/erro-cobranca";
 import { requirePermission } from "@/lib/auth/session";
 import { readSicoobConfig } from "@/lib/sicoob/config";
 import { SubmitButton } from "@/components/ui/submit-button";
@@ -44,9 +45,14 @@ function adjacentMes(competencia: string, delta: number) {
   return `${d.getUTCFullYear()}-${String(d.getUTCMonth() + 1).padStart(2, "0")}`;
 }
 
-export default async function FinanceiroPage({ searchParams }: { searchParams: Promise<{ mes?: string }> }) {
+export default async function FinanceiroPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ mes?: string; erro?: string }>;
+}) {
   await requirePermission("financeiro.cobrancas", "read");
   const params = await searchParams;
+  const erroMsg = mensagemErroCobranca(params.erro);
   const now = new Date();
   const defaultMes = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`;
   const competencia = params.mes ?? defaultMes;
@@ -113,6 +119,13 @@ export default async function FinanceiroPage({ searchParams }: { searchParams: P
           { label: "Cancelado", value: money.format(cancelado) }
         ]}
       />
+
+      {erroMsg ? (
+        <Panel className="flex items-center gap-2 border-clay/40 bg-clay/5">
+          <AlertCircle size={16} className="shrink-0 text-clay" />
+          <p className="text-sm font-semibold text-clay">{erroMsg}</p>
+        </Panel>
+      ) : null}
 
       {certDias !== null && certDias <= 30 ? (
         <Panel className="border-clay/40 bg-clay/5">
