@@ -133,7 +133,7 @@ async function main() {
   const comContrato = new Set(lines(comContratoRaw));
 
   const ESCOLA = "00000000-0000-0000-0000-000000000001";
-  const HOJE = "2026-06-13";
+  const HOJE = new Date().toISOString().slice(0, 10);
 
   const toCreate = [];
   const semMatch = [];
