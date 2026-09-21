@@ -3,10 +3,9 @@
 import { useState } from "react";
 import { Mail, Lock, Eye, EyeOff } from "lucide-react";
 
-// Campos interativos do login (ícone + toggle de senha). Client component —
-// o <form action={loginAction}> permanece no Server Component da página.
-// Conversão visual: nenhuma lógica de auth nova; names "email"/"password"
-// continuam sendo lidos pela Server Action.
+// Campos interativos do login (ícone + toggle de senha). Usado dentro de
+// LoginForm (client component com useAction); names "email"/"password"
+// continuam sendo lidos pela Server Action via FormData.
 export function LoginFields() {
   const [show, setShow] = useState(false);
 

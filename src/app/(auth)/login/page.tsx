@@ -1,7 +1,6 @@
-import { loginAction } from "@/lib/actions/auth";
 import { ThemeToggle } from "@/components/ui/theme-toggle";
-import { LoginFields } from "./login-fields";
-import { ArrowRight, FileText, BarChart3, Sparkles, AlertCircle } from "lucide-react";
+import { LoginForm } from "./login-form";
+import { FileText, BarChart3, Sparkles } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 
 export const dynamic = "force-dynamic";
@@ -27,9 +26,7 @@ function BrandMark() {
   );
 }
 
-export default async function LoginPage({ searchParams }: { searchParams: { erro?: string } }) {
-  const error = searchParams.erro;
-
+export default function LoginPage() {
   return (
     <main className="relative min-h-screen bg-surface px-4 py-6 text-ink sm:px-6 lg:px-8">
       <div className="absolute right-6 top-6 z-10 lg:right-10 lg:top-8">
@@ -91,34 +88,7 @@ export default async function LoginPage({ searchParams }: { searchParams: { erro
             <h2 className="mt-2 font-display text-[30px] font-bold leading-tight text-ink">Entrar no sistema</h2>
             <p className="mt-1 text-[13px]" style={{ color: "var(--text-muted)" }}>Use suas credenciais administrativas.</p>
           </div>
-          {error ? (
-            <p className="mb-4 flex items-center gap-2 rounded-ui bg-clay/10 p-3 text-sm font-bold text-clay">
-              <AlertCircle size={16} />
-              {error === "perfil"
-                ? "Sem perfil ativo. Solicite acesso ao administrador."
-                : error === "credenciais"
-                  ? "Informe email e senha."
-                  : "Credenciais invalidas."}
-            </p>
-          ) : null}
-          <form action={loginAction} className="grid gap-4">
-            <LoginFields />
-
-            <label className="flex cursor-pointer items-center gap-2 text-[12.5px]" style={{ color: "var(--text-soft)" }}>
-              <input
-                name="manter_conectado"
-                type="checkbox"
-                defaultChecked
-                className="h-4 w-4"
-                style={{ accentColor: "var(--brand-600)" }}
-              />
-              Manter conectado neste dispositivo
-            </label>
-
-            <button className="rb-btn rb-btn-primary lg mt-1 w-full">
-              Entrar <ArrowRight size={17} />
-            </button>
-          </form>
+          <LoginForm />
 
           <p
             className="mt-6 border-t pt-4 text-center text-[12px]"
