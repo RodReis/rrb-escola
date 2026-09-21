@@ -50,6 +50,32 @@ O contrato E é internamente inconsistente: `{ok:false, error}` em `pipeline.ts`
 4. **Helper centralizado** (`useAction`) cuida de transition + toast, para não depender de disciplina manual.
 5. **Autorizado alterar Server Actions** — migrar contratos A/B/D para retorno `{ok, redirectTo}`. A regra "não alterar Server Actions" do `CLAUDE.md` pertence ao escopo da conversão visual do Design System; esta é outra frente.
 6. **Banners `?erro=` viram toast** — remover a leitura de `searchParams.erro` e o markup do banner estático nas páginas afetadas.
+7. **Permanecer em React 18.3** — `useTransition` funciona idêntico no 18.3; nada aqui precisa de React 19.
+8. **Instalar `jsdom` + `@testing-library/react`** — o projeto não tem infraestrutura de teste de componente hoje.
+
+### Por que não React 19
+
+A spec original mencionava `useTransition` como "idiomático em React 19". O projeto está em React 18.3.1 + Next 14.2.35, e a verificação mostrou que subir para React 19 **não é um upgrade isolado**:
+
+- `node_modules/next/package.json` (14.2.35) declara `peerDependencies: { "react": "^18.2.0", "react-dom": "^18.2.0" }` — sem entrada para React 19. Instalar React 19 aqui produz `ERESOLVE`; só passa com `--force`/`--legacy-peer-deps`. React 19 entrou no peer range a partir da linha do Next 15.
+- A superfície de breaking change do React 19 **neste repo é mínima**: 3 arquivos usam `useFormState` (→ `useActionState`); zero ocorrências de `forwardRef`, `propTypes`, `defaultProps`, `ReactDOM.render`/`hydrate`, string refs, `useRef()` sem argumento, `React.FC` ou `JSX.Element`.
+- Das 7 dependências que renderizam React, 6 já declaram suporte a React 19. Só `lucide-react@0.468.0` trava (`^19.0.0-rc` não satisfaz `19.x` estável), resolvido com bump de minor.
+- **O custo real é o Next 14→15**: 339 arquivos `.tsx`, 148 com `"use client"`, mais migração de `params`/`searchParams`/`cookies()`/`headers()` para async e mudança dos defaults de cache.
+- Next 16 ainda suporta React 18 (deprecado, remoção mirada para o Next 17) — não há prazo forçando a migração agora.
+
+Conclusão: o upgrade Next 15 + React 19 é uma frente separada, com spec própria. `useAction` nasce compatível com ambos, já que `useTransition` não muda no React 19.
+
+### Infraestrutura de teste
+
+`vitest.config.ts` hoje usa `environment: "node"` e `include: ["src/**/*.test.ts"]` — só `.ts`, sem `.tsx`. Não há nenhum teste de componente React no repositório, nem `jsdom`, nem `@testing-library/react`.
+
+Como o bug do `NEXT_REDIRECT` precisa de teste de regressão e o spinner do `Button` precisa de verificação de render, a Fase 1 instala:
+
+- `jsdom` (devDependency)
+- `@testing-library/react` (devDependency)
+- `@testing-library/jest-dom` (devDependency, para matchers como `toBeDisabled`)
+
+E ajusta `vitest.config.ts` para incluir `.tsx` e usar `environment: "jsdom"` nos testes de componente. Os testes `.ts` existentes (que rodam em `node`) continuam funcionando — a configuração usa `environmentMatchGlobs` para não forçar `jsdom` em tudo.
 
 ## Arquitetura
 
@@ -138,9 +164,11 @@ Como o novo padrão chama a action diretamente (sem `requestSubmit`), `ConfirmBu
 Cada fase fecha com `npm run typecheck && npm run build` verdes.
 
 **Fase 1 — Fundação (sem mudança de comportamento visível)**
+- Infra de teste: `jsdom` + `@testing-library/react` + `@testing-library/jest-dom`; `vitest.config.ts` passa a incluir `.tsx` com `environmentMatchGlobs`.
 - `ActionResult` em `src/lib/actions/types.ts`; os dois duplicados reexportam dele.
+- `interpretActionResult` (função pura) + testes, incluindo o de regressão do `NEXT_REDIRECT`.
 - `Button` com prop `loading`.
-- `useAction` com tratamento de `isRedirectError`.
+- `useAction` (casca fina sobre `interpretActionResult`).
 - `RowActionButton`.
 
 **Fase 2 — Correção dos bugs conhecidos**
@@ -158,9 +186,28 @@ Cada fase fecha com `npm run typecheck && npm run build` verdes.
 
 ## Testes
 
-- **Unitário (`useAction`):** sucesso → `toast.success`; erro retornado → `toast.error` com a mensagem; `throw` → `toast.error`; **`NEXT_REDIRECT` → tratado como sucesso, sem toast de erro** (o teste de regressão dos três bugs); `confirm` cancelado → action não é chamada; `redirectTo` → `router.push` chamado.
-- **Unitário (`Button`):** `loading` aplica `disabled` e `aria-busy`; em botão de ícone o spinner substitui o ícone.
-- **Compatibilidade de contrato:** o interpretador reconhece `{ok:false,error}`, `{ok:false,reason}` e `{success:false,error}`.
+A lógica de risco fica numa função pura separada do hook, para ser testável sem React e para manter o hook como casca fina:
+
+```ts
+// src/lib/actions/interpret-result.ts
+export function interpretActionResult(
+  outcome: { kind: "value"; value: unknown } | { kind: "error"; error: unknown },
+  opts: { success?: string; error?: string }
+): { toast: "success" | "error" | "none"; message: string; redirectTo?: string; refresh: boolean }
+```
+
+- **Unitário (`interpretActionResult`) — `.test.ts`, sem React:**
+  - `{ok:true}` → `success`, mensagem padrão.
+  - `{ok:true, message}` → `success` com a mensagem da action.
+  - `{ok:true, redirectTo}` → `success` + `redirectTo` preenchido.
+  - `{ok:false, error}` → `error` com a mensagem.
+  - `{ok:false, reason}` → `error` (convenção legada de `sicoob`/`asaas`/`conciliacao`).
+  - `{success:false, error}` → `error` (convenção legada de `anamnese-export`/`documents-generate-v2`).
+  - `undefined` (contrato C, void) → `success` + `refresh: true`.
+  - **erro com `digest` começando em `NEXT_REDIRECT`** → `toast: "none"` e a exceção é relançada pelo hook. **Este é o teste de regressão dos três bugs atuais.**
+  - `Error` comum → `error` com `error.message`.
+- **Componente (`Button`) — `.test.tsx`, jsdom:** `loading` aplica `disabled` e `aria-busy="true"`; com texto o label continua visível; sem texto (botão de ícone) o spinner ocupa o lugar do ícone.
+- **Hook (`useAction`) — `.test.tsx`, jsdom:** `confirm` cancelado não chama a action; `pending` é `true` durante a execução; `redirectTo` dispara `router.push`.
 
 ## Riscos
 
