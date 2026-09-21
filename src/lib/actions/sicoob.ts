@@ -10,7 +10,7 @@ import type { OrigemRecebimento } from "@/lib/pagamentos/provider";
 
 export type GerarPixResult =
   | { ok: true; copiaCola: string; txid: string; expiraEm: string | null }
-  | { ok: false; reason: string };
+  | { ok: false; error: string };
 
 export async function gerarPixOrigemAction(input: {
   origemTipo: OrigemRecebimento;
@@ -40,7 +40,7 @@ export async function gerarPixOrigemAction(input: {
   contaQuery = input.contaId ? contaQuery.eq("id", input.contaId) : contaQuery.limit(1);
   const { data: conta } = await contaQuery.maybeSingle();
 
-  if (!conta?.chave_pix) return { ok: false, reason: "Conta Sicoob ativa sem chave Pix" };
+  if (!conta?.chave_pix) return { ok: false, error: "Conta Sicoob ativa sem chave Pix" };
 
   const { data: existente } = input.origemId ? await supabase
     .from("pix_cobranca")
@@ -86,9 +86,9 @@ export async function gerarPixOrigemAction(input: {
       .maybeSingle();
 
     cobranca = charge.data;
-    if (!cobranca) return { ok: false, reason: "Cobrança não encontrada" };
+    if (!cobranca) return { ok: false, error: "Cobrança não encontrada" };
     if (cobranca.status === "paga" || cobranca.status === "cancelada") {
-      return { ok: false, reason: "Cobrança já está paga ou cancelada" };
+      return { ok: false, error: "Cobrança já está paga ou cancelada" };
     }
 
     const resp = await supabase
@@ -99,7 +99,7 @@ export async function gerarPixOrigemAction(input: {
       .maybeSingle();
 
     if (!resp.data?.nome || !resp.data.cpf) {
-      return { ok: false, reason: "Responsável financeiro precisa de nome e CPF" };
+      return { ok: false, error: "Responsável financeiro precisa de nome e CPF" };
     }
     responsavel = resp.data;
   } else if (input.origemTipo === "venda") {
@@ -120,8 +120,8 @@ export async function gerarPixOrigemAction(input: {
           venda_item?: { subtotal: number | string }[];
         }
       | null;
-    if (!venda) return { ok: false, reason: "Venda não encontrada" };
-    if (venda.status !== "rascunho") return { ok: false, reason: "Venda precisa estar em rascunho para gerar Pix" };
+    if (!venda) return { ok: false, error: "Venda não encontrada" };
+    if (venda.status !== "rascunho") return { ok: false, error: "Venda precisa estar em rascunho para gerar Pix" };
 
     const totalItens = (venda.venda_item ?? []).reduce((acc, item) => acc + Number(item.subtotal), 0);
     const total = totalItens - Number(venda.desconto);
@@ -156,9 +156,9 @@ export async function gerarPixOrigemAction(input: {
           contraparte: string | null;
         }
       | null;
-    if (!lancamento) return { ok: false, reason: "Lançamento não encontrado" };
-    if (lancamento.tipo !== "receita") return { ok: false, reason: "Pix só pode receber lançamento de receita" };
-    if (lancamento.status !== "aberta") return { ok: false, reason: "Lançamento precisa estar aberto" };
+    if (!lancamento) return { ok: false, error: "Lançamento não encontrado" };
+    if (lancamento.tipo !== "receita") return { ok: false, error: "Pix só pode receber lançamento de receita" };
+    if (lancamento.status !== "aberta") return { ok: false, error: "Lançamento precisa estar aberto" };
 
     cobranca = {
       id: lancamento.id,
@@ -174,7 +174,7 @@ export async function gerarPixOrigemAction(input: {
     };
   } else {
     if (!input.valor || !input.descricao) {
-      return { ok: false, reason: "Pix avulso precisa de valor e descrição" };
+      return { ok: false, error: "Pix avulso precisa de valor e descrição" };
     }
     cobranca = {
       id: input.origemId ?? crypto.randomUUID(),
@@ -184,7 +184,7 @@ export async function gerarPixOrigemAction(input: {
     };
   }
 
-  if (!cobranca) return { ok: false, reason: "Origem inválida" };
+  if (!cobranca) return { ok: false, error: "Origem inválida" };
 
   const origemValida = validarOrigemPix({
     origemTipo: input.origemTipo,
@@ -194,7 +194,7 @@ export async function gerarPixOrigemAction(input: {
     devedorNome: responsavel.nome,
     devedorDoc: responsavel.cpf,
   });
-  if (!origemValida.ok) return origemValida;
+  if (!origemValida.ok) return { ok: false, error: origemValida.reason };
 
   const pix = await sicoobProvider.criarCobranca({
     cobranca,
@@ -205,9 +205,9 @@ export async function gerarPixOrigemAction(input: {
     tipo: "pix_imediato",
   });
 
-  if (!pix.ok) return pix;
+  if (!pix.ok) return { ok: false, error: pix.reason };
   if (!pix.data.pix_copia_cola) {
-    return { ok: false, reason: "Sicoob não retornou copia-e-cola Pix" };
+    return { ok: false, error: "Sicoob não retornou copia-e-cola Pix" };
   }
 
   const { error } = await supabase.from("pix_cobranca").insert({
@@ -227,7 +227,7 @@ export async function gerarPixOrigemAction(input: {
     payload: pix.data.payload,
   });
 
-  if (error) return { ok: false, reason: error.message };
+  if (error) return { ok: false, error: error.message };
 
   revalidatePath("/financeiro/tesouraria/cobrancas-pix");
   revalidatePath("/financeiro");
@@ -261,11 +261,11 @@ export async function gerarPixCobrancaFormAction(
   return result;
 }
 
-export async function enviarPixWhatsAppAction(cobrancaId: string): Promise<{ ok: true } | { ok: false; reason: string }> {
+export async function enviarPixWhatsAppAction(cobrancaId: string): Promise<{ ok: true } | { ok: false; error: string }> {
   const session = await requirePermission("financeiro.cobrancas", "update");
   const supabase = await createServerClient();
   const templateName = process.env.META_TEMPLATE_PIX;
-  if (!templateName) return { ok: false, reason: "META_TEMPLATE_PIX ausente" };
+  if (!templateName) return { ok: false, error: "META_TEMPLATE_PIX ausente" };
 
   const pix = await gerarPixAction(cobrancaId);
   if (!pix.ok) return pix;
@@ -277,7 +277,7 @@ export async function enviarPixWhatsAppAction(cobrancaId: string): Promise<{ ok:
     .eq("escola_id", session.profile.escola_id)
     .maybeSingle();
 
-  if (!cobranca) return { ok: false, reason: "Cobrança não encontrada" };
+  if (!cobranca) return { ok: false, error: "Cobrança não encontrada" };
 
   const { data: responsavel } = await supabase
     .from("responsaveis_aluno")
@@ -287,7 +287,7 @@ export async function enviarPixWhatsAppAction(cobrancaId: string): Promise<{ ok:
     .maybeSingle();
 
   const telefone = responsavel?.celular ?? responsavel?.telefone;
-  if (!telefone) return { ok: false, reason: "Responsável financeiro sem telefone" };
+  if (!telefone) return { ok: false, error: "Responsável financeiro sem telefone" };
 
   const aluno = Array.isArray(cobranca.alunos) ? cobranca.alunos[0] : cobranca.alunos;
   const result = await enviarWhatsApp({
@@ -305,6 +305,6 @@ export async function enviarPixWhatsAppAction(cobrancaId: string): Promise<{ ok:
     referenciaId: cobranca.id,
   });
 
-  if (!result.ok) return result;
+  if (!result.ok) return { ok: false, error: result.reason };
   return { ok: true };
 }

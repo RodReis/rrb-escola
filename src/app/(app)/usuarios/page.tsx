@@ -1,18 +1,11 @@
 import Link from "next/link";
-import { Plus, Search, Pencil, KeyRound, UserX, UserCheck, CheckCircle2, AlertCircle, Users } from "lucide-react";
+import { Plus, Search } from "lucide-react";
 import { requirePermission } from "@/lib/auth/session";
 import { createServerClient } from "@/lib/supabase/server";
-import {
-  deactivateUserAction,
-  reactivateUserAction,
-  resetPasswordAction,
-} from "@/lib/actions/users";
-import { readUserCreatedFlash } from "@/lib/actions/user-flash";
 import { ButtonLink } from "@/components/ui/button";
 import { Panel } from "@/components/ui/card";
 import { PageHeader } from "@/components/ui/page-header";
-import { DataTableShell } from "@/components/ui/data-table";
-import { StatusPill } from "@/components/ui/status-pill";
+import { UsuariosGrid } from "@/components/usuarios/usuarios-grid";
 
 export const dynamic = "force-dynamic";
 
@@ -27,13 +20,6 @@ export default async function UsuariosPage({
   searchParams,
 }: {
   searchParams: Promise<{
-    criado?: string;
-    desativado?: string;
-    reativado?: string;
-    senha?: string;
-    email?: string;
-    atualizado?: string;
-    erro?: string;
     q?: string;
     perfil?: string;
     status?: string;
@@ -59,7 +45,6 @@ export default async function UsuariosPage({
   }
 
   const { data: perfis } = await query;
-  const flash = (sp.criado || sp.senha) ? readUserCreatedFlash() : null;
   const rows = perfis ?? [];
   const ativos = rows.filter((p) => p.ativo).length;
 
@@ -81,41 +66,6 @@ export default async function UsuariosPage({
           { label: "Inativos", value: (rows.length - ativos).toLocaleString("pt-BR"), tone: "danger" },
         ]}
       />
-
-      {flash && (
-        <div className="flex items-start gap-2 rounded-ui bg-success/10 p-4 text-sm font-semibold text-success">
-          <CheckCircle2 size={16} className="mt-0.5 shrink-0" />
-          <div>
-            {sp.senha ? "Nova senha gerada" : "Usuário criado"} para <strong>{flash.email}</strong>. Senha: <code className="font-mono">{flash.password}</code>
-            <p className="mt-1 text-xs font-medium text-ink/60">
-              {sp.email
-                ? "Email enviado com as credenciais. Senha não será exibida novamente."
-                : "Email NÃO enviado (Resend não configurado). Anote agora — não será exibida novamente."}
-            </p>
-          </div>
-        </div>
-      )}
-      {sp.desativado && (
-        <div className="flex items-center gap-2 rounded-ui bg-success/10 p-4 text-sm font-semibold text-success">
-          <CheckCircle2 size={16} /> Usuário desativado.
-        </div>
-      )}
-      {sp.reativado && (
-        <div className="flex items-center gap-2 rounded-ui bg-success/10 p-4 text-sm font-semibold text-success">
-          <CheckCircle2 size={16} /> Usuário reativado.
-        </div>
-      )}
-      {sp.atualizado && (
-        <div className="flex items-center gap-2 rounded-ui bg-success/10 p-4 text-sm font-semibold text-success">
-          <CheckCircle2 size={16} /> Usuário atualizado.
-        </div>
-      )}
-      {sp.erro && (
-        <div className="flex items-center gap-2 rounded-ui bg-danger/10 p-4 text-sm font-semibold text-danger">
-          <AlertCircle size={16} />
-          {sp.erro === "self" ? "Você não pode desativar a própria conta." : `Falha: ${decodeURIComponent(sp.erro)}`}
-        </div>
-      )}
 
       <Panel>
         <form className="grid gap-3 md:grid-cols-[1fr_180px_160px_auto] items-end">
@@ -154,93 +104,7 @@ export default async function UsuariosPage({
         </form>
       </Panel>
 
-      <DataTableShell>
-        <table className="ds-dt min-w-[720px]">
-          <thead>
-            <tr>
-              <th>Nome</th>
-              <th>Email</th>
-              <th>Perfil</th>
-              <th>Status</th>
-              <th className="w-[140px] text-center">Ações</th>
-            </tr>
-          </thead>
-          <tbody>
-            {rows.length === 0 ? (
-              <tr>
-                <td colSpan={5} className="py-12">
-                  <div className="flex flex-col items-center justify-center gap-2 text-ink/60">
-                    <Users size={28} />
-                    <p className="text-sm font-medium">Nenhum usuário encontrado.</p>
-                  </div>
-                </td>
-              </tr>
-            ) : (
-              rows.map((p) => (
-                <tr key={p.id}>
-                  <td className="font-semibold text-ink">{p.nome}</td>
-                  <td className="text-ink/75">{p.email}</td>
-                  <td>
-                    <span className="rounded-pill bg-muted px-2 py-0.5 text-xs font-semibold text-ink/70">
-                      {PERFIL_LABEL[p.perfil] ?? p.perfil}
-                    </span>
-                  </td>
-                  <td>
-                    <StatusPill tone={p.ativo ? "success" : "danger"}>
-                      {p.ativo ? "Ativo" : "Inativo"}
-                    </StatusPill>
-                  </td>
-                  <td className="text-center">
-                    <div className="inline-flex items-center justify-center gap-1">
-                      <Link
-                        href={`/usuarios/${p.id}/editar`}
-                        title="Editar"
-                        aria-label="Editar"
-                        className="inline-flex h-8 w-8 items-center justify-center rounded-md text-brand hover:bg-brand/10"
-                      >
-                        <Pencil size={15} />
-                      </Link>
-                      <form action={resetPasswordAction} className="inline">
-                        <input type="hidden" name="perfilId" value={p.id} />
-                        <button
-                          title="Resetar senha"
-                          aria-label="Resetar senha"
-                          className="inline-flex h-8 w-8 items-center justify-center rounded-md text-warning hover:bg-warning/10"
-                        >
-                          <KeyRound size={15} />
-                        </button>
-                      </form>
-                      {p.ativo ? (
-                        <form action={deactivateUserAction} className="inline">
-                          <input type="hidden" name="perfilId" value={p.id} />
-                          <button
-                            title="Desativar"
-                            aria-label="Desativar"
-                            className="inline-flex h-8 w-8 items-center justify-center rounded-md text-danger hover:bg-danger/10"
-                          >
-                            <UserX size={15} />
-                          </button>
-                        </form>
-                      ) : (
-                        <form action={reactivateUserAction} className="inline">
-                          <input type="hidden" name="perfilId" value={p.id} />
-                          <button
-                            title="Reativar"
-                            aria-label="Reativar"
-                            className="inline-flex h-8 w-8 items-center justify-center rounded-md text-success hover:bg-success/10"
-                          >
-                            <UserCheck size={15} />
-                          </button>
-                        </form>
-                      )}
-                    </div>
-                  </td>
-                </tr>
-              ))
-            )}
-          </tbody>
-        </table>
-      </DataTableShell>
+      <UsuariosGrid rows={rows} />
     </div>
   );
 }

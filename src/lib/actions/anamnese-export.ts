@@ -19,8 +19,8 @@ const TEMPLATE_PATH = join(
 );
 
 export type ExportarAnamneseResult =
-  | { success: true; base64: string; nomeArquivo: string }
-  | { success: false; error: string };
+  | { ok: true; base64: string; nomeArquivo: string }
+  | { ok: false; error: string };
 
 type Ref = { cardId?: string; alunoId?: string };
 
@@ -31,11 +31,11 @@ export async function exportarAnamneseDocxAction(
   try {
     session = await requirePermission("pipeline_sensivel", "read");
   } catch {
-    return { success: false, error: "Sem permissão para exportar dados sensíveis" };
+    return { ok: false, error: "Sem permissão para exportar dados sensíveis" };
   }
 
   if (!ref.cardId && !ref.alunoId) {
-    return { success: false, error: "Referência inválida (cardId ou alunoId)" };
+    return { ok: false, error: "Referência inválida (cardId ou alunoId)" };
   }
 
   const supabase = await createServerClient();
@@ -51,7 +51,7 @@ export async function exportarAnamneseDocxAction(
     : await query.eq("aluno_id", ref.alunoId!).maybeSingle();
 
   if (!anamnese) {
-    return { success: false, error: "Anamnese não encontrada" };
+    return { ok: false, error: "Anamnese não encontrada" };
   }
 
   // 2) Dados de identificação (caminho card → lead; caminho aluno → alunos)
@@ -72,7 +72,7 @@ export async function exportarAnamneseDocxAction(
     buffer = res.buffer;
   } catch (e) {
     return {
-      success: false,
+      ok: false,
       error: e instanceof Error ? e.message : "Falha ao gerar documento",
     };
   }
@@ -91,7 +91,7 @@ export async function exportarAnamneseDocxAction(
   }
 
   return {
-    success: true,
+    ok: true,
     base64: buffer.toString("base64"),
     nomeArquivo: nomeArquivoAnamnese(ident.nome),
   };

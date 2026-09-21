@@ -33,14 +33,13 @@ import {
 import { createAdminClient } from "@/lib/supabase/admin";
 import { enviarWhatsApp } from "@/lib/whatsapp/send";
 import { normalizarTelefone } from "@/lib/whatsapp/telefone";
+import type { ActionResult } from "./types";
 
 const PATH = "/pipeline";
 
 // ─── Tipos de retorno ────────────────────────────────────────────────────────
 
-export type ActionResult<T = void> =
-  | { ok: true; data: T }
-  | { ok: false; error: string };
+export type { ActionResult } from "./types";
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 

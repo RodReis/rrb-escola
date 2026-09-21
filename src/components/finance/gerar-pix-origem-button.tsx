@@ -26,7 +26,7 @@ export function GerarPixOrigemButton({
     try {
       const result = await gerarPixOrigemAction({ origemTipo, origemId, valor, descricao });
       if (!result.ok) {
-        toast.error(result.reason);
+        toast.error(result.error);
         return;
       }
       setCopiaCola(result.copiaCola);

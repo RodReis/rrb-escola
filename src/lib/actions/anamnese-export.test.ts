@@ -16,8 +16,8 @@ describe("exportarAnamneseDocxAction — RBAC", () => {
   it("barra usuário sem pipeline_sensivel (requirePermission lança)", async () => {
     requirePermission.mockRejectedValueOnce(new Error("acesso negado"));
     const res = await exportarAnamneseDocxAction({ cardId: "c1" });
-    expect(res.success).toBe(false);
-    if (!res.success) {
+    expect(res.ok).toBe(false);
+    if (!res.ok) {
       expect(res.error).toMatch(/permiss/i);
     }
   });
@@ -25,6 +25,6 @@ describe("exportarAnamneseDocxAction — RBAC", () => {
   it("rejeita referência sem cardId nem alunoId", async () => {
     requirePermission.mockResolvedValueOnce({ profile: { id: "u1", escola_id: "e1" } });
     const res = await exportarAnamneseDocxAction({});
-    expect(res.success).toBe(false);
+    expect(res.ok).toBe(false);
   });
 });

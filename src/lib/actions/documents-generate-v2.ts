@@ -10,7 +10,7 @@ import { validateMapping, type Mapping } from "@/lib/documents/schema-catalog";
 export async function generateFromTemplateAction(
   matriculaId: string,
   templateId: string,
-): Promise<{ success: boolean; base64?: string; nomeArquivo?: string; error?: string; warning?: string }> {
+): Promise<{ ok: boolean; base64?: string; nomeArquivo?: string; error?: string; warning?: string }> {
   // Geração de documento a partir de template — requer leitura de templates.
   const session = await requirePermission("documentos.templates", "read");
   const escolaId = session.profile.escola_id;
@@ -23,8 +23,8 @@ export async function generateFromTemplateAction(
     .eq("id", templateId)
     .eq("escola_id", escolaId)
     .maybeSingle();
-  if (tplErr || !tpl) return { success: false, error: "Template não encontrado." };
-  if (!tpl.ativo) return { success: false, error: "Template inativo." };
+  if (tplErr || !tpl) return { ok: false, error: "Template não encontrado." };
+  if (!tpl.ativo) return { ok: false, error: "Template inativo." };
 
   // 2) Carrega matrícula
   const { data: mat, error: matErr } = await supabase
@@ -32,13 +32,13 @@ export async function generateFromTemplateAction(
     .select("aluno_id, ano_letivo")
     .eq("id", matriculaId)
     .maybeSingle();
-  if (matErr || !mat) return { success: false, error: "Matrícula não encontrada." };
+  if (matErr || !mat) return { ok: false, error: "Matrícula não encontrada." };
   const alunoId = mat.aluno_id as string;
 
   // 3) Baixa template do Storage
   const { data: dl, error: dlErr } = await supabase
     .storage.from("templates-documentos").download(tpl.storage_path as string);
-  if (dlErr || !dl) return { success: false, error: "Falha ao baixar template." };
+  if (dlErr || !dl) return { ok: false, error: "Falha ao baixar template." };
   const templateBuffer = Buffer.from(await dl.arrayBuffer());
 
   // 4) Resolve mappings (validados antes — mas filtramos por segurança)
@@ -56,7 +56,7 @@ export async function generateFromTemplateAction(
     docxBuffer = result.buffer;
     missingPlaceholders = result.missing;
   } catch (err) {
-    return { success: false, error: err instanceof Error ? err.message : "Erro ao gerar docx." };
+    return { ok: false, error: err instanceof Error ? err.message : "Erro ao gerar docx." };
   }
 
   // 6) Monta nome de arquivo, faz upload em documentos-alunos, registra
@@ -78,7 +78,7 @@ export async function generateFromTemplateAction(
   const { error: upErr } = await supabase.storage
     .from("documentos-alunos")
     .upload(storagePath, docxBuffer, { contentType, upsert: false });
-  if (upErr) return { success: false, error: upErr.message };
+  if (upErr) return { ok: false, error: upErr.message };
 
   const { error: insErr } = await supabase.from("documentos_aluno").insert({
     aluno_id: alunoId,
@@ -90,7 +90,7 @@ export async function generateFromTemplateAction(
   });
   if (insErr) {
     await supabase.storage.from("documentos-alunos").remove([storagePath]);
-    return { success: false, error: insErr.message };
+    return { ok: false, error: insErr.message };
   }
 
   // 7) Incrementa contagem (read+update; perda raríssima sob concorrência é aceitável)
@@ -113,7 +113,7 @@ export async function generateFromTemplateAction(
     : undefined;
 
   return {
-    success: true,
+    ok: true,
     base64: docxBuffer.toString("base64"),
     nomeArquivo,
     warning,

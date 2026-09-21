@@ -37,7 +37,7 @@ export function AtualizarExtratoButton() {
         );
       }
     } else {
-      toast.error(state.reason);
+      toast.error(state.error);
     }
   }, [state]);
 

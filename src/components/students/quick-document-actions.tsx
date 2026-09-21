@@ -82,7 +82,7 @@ export function QuickDocumentActions({ matriculaAtiva, templates, onExportFichaP
     setLoadingId(templateId);
     try {
       const res = await generateFromTemplateAction(matriculaAtiva.id, templateId);
-      if (!res.success || !res.base64 || !res.nomeArquivo) {
+      if (!res.ok || !res.base64 || !res.nomeArquivo) {
         toast.error(res.error ?? "Erro ao gerar documento.");
         return;
       }
