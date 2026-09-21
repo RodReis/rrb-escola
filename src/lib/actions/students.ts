@@ -7,6 +7,7 @@ import { DEFAULT_SCHOOL_ID } from "@/lib/constants";
 import { generateChargesForEnrollment } from "@/lib/server/generate-charges";
 import { createServerClient } from "@/lib/supabase/server";
 import { formBoolean, formNumber, formText } from "@/lib/utils";
+import type { ActionResult } from "@/lib/actions/types";
 
 type TipoVagaInput = "paga" | "bolsa_integral" | "bolsa_parcial" | "permuta" | "gratuita";
 
@@ -160,7 +161,7 @@ export async function createStudentAction(formData: FormData) {
   redirect(`/alunos/${alunoId}`);
 }
 
-export async function updateStudentAction(formData: FormData) {
+export async function updateStudentAction(formData: FormData): Promise<ActionResult> {
   await requirePermission("alunos", "update");
   const supabase = await createServerClient();
   const alunoId = formText(formData, "aluno_id");
@@ -358,7 +359,11 @@ export async function updateStudentAction(formData: FormData) {
   revalidatePath("/alunos");
   revalidatePath(`/alunos/${alunoId}`);
   revalidatePath(`/alunos/${alunoId}/editar`);
-  redirect(`/alunos/${alunoId}/editar?ftab=${ftab}&saved=1`);
+  return {
+    ok: true,
+    data: undefined,
+    redirectTo: `/alunos/${alunoId}/editar?ftab=${ftab}`,
+  };
 }
 
 export async function toggleStudentAction(formData: FormData) {

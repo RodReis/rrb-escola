@@ -1,4 +1,4 @@
-import { ArrowLeft, CheckCircle2, Camera } from "lucide-react";
+import { ArrowLeft, Camera } from "lucide-react";
 import { BiometricEnrollment } from "@/components/students/biometric-enrollment";
 import { StudentEditForm } from "@/components/students/student-edit-form";
 import { StudentEditTabs } from "@/components/students/student-edit-tabs";
@@ -51,12 +51,6 @@ export default async function EditStudentPage({
       <div className="sticky top-0 z-10 bg-surface shadow-soft">
         <StudentEditTabs />
       </div>
-
-      {(await searchParams).saved === "1" && (
-        <div className="flex items-center gap-2 border-b border-emerald-200 bg-emerald-50 px-6 py-3 text-sm font-medium text-emerald-800">
-          <CheckCircle2 size={16} /> Dados salvos com sucesso.
-        </div>
-      )}
 
       <div className="grid gap-6 py-6">
         {tab === "dados" && (

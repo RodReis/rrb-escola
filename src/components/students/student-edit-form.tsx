@@ -2,7 +2,9 @@
 
 import { useSearchParams, useRouter, usePathname } from "next/navigation";
 import { Panel } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
 import { updateStudentAction } from "@/lib/actions/students";
+import { useAction } from "@/lib/hooks/use-action";
 import type { StudentSheet } from "@/lib/types";
 
 const TABS = [
@@ -43,10 +45,20 @@ export function StudentEditForm({ student }: { student: StudentSheet }) {
   const router      = useRouter();
   const active      = params.get("ftab") ?? "pessoal";
 
+  const { run, pending } = useAction(updateStudentAction, {
+    success: "Dados salvos.",
+    error: "Falha ao salvar os dados.",
+  });
+
   function go(key: string) {
     const p = new URLSearchParams(params.toString());
     p.set("ftab", key);
     router.push(`${pathname}?${p.toString()}`);
+  }
+
+  function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
+    e.preventDefault();
+    run(new FormData(e.currentTarget));
   }
 
   return (
@@ -70,7 +82,7 @@ export function StudentEditForm({ student }: { student: StudentSheet }) {
         ))}
       </nav>
 
-      <form action={updateStudentAction} className="grid gap-5 p-5">
+      <form onSubmit={handleSubmit} className="grid gap-5 p-5">
         <input type="hidden" name="ftab"              value={active} />
         <input type="hidden" name="aluno_id"          value={student.id} />
         <input type="hidden" name="nome"             value={student.nome} />
@@ -194,7 +206,7 @@ export function StudentEditForm({ student }: { student: StudentSheet }) {
         )}
 
         <div className="flex justify-end border-t border-line pt-4">
-          <button className="ds-button ds-button-accent px-6">Salvar alterações</button>
+          <Button type="submit" variant="accent" loading={pending} className="px-6">Salvar alterações</Button>
         </div>
       </form>
     </Panel>
