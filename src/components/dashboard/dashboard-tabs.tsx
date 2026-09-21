@@ -4,8 +4,7 @@ import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
 import { BookOpen, ClipboardList, ShoppingBag, Wallet, type LucideIcon } from "lucide-react";
 import { Spinner } from "@/components/ui/spinner";
-
-type Tab = "financeiro" | "comercial" | "secretaria" | "pedagogico";
+import type { DashTab as Tab } from "./parse-tab";
 
 const TABS: Array<{ id: Tab; label: string; icon: LucideIcon }> = [
   { id: "financeiro", label: "Financeiro", icon: Wallet },
@@ -72,12 +71,4 @@ export function DashboardTabs({
       })}
     </nav>
   );
-}
-
-export function parseTab(value: string | undefined): Tab {
-  // Backward compat: aba=alunos -> secretaria
-  if (value === "alunos" || value === "secretaria") return "secretaria";
-  if (value === "pedagogico") return "pedagogico";
-  if (value === "comercial") return "comercial";
-  return "financeiro";
 }

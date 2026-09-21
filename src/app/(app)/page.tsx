@@ -40,7 +40,8 @@ import { AniversariantesHojeCard, AniversariantesProximosRow } from "@/component
 import { AniversarioMatriculaCard } from "@/components/dashboard/aniversario-matricula-card";
 import { BeneficiosCard } from "@/components/dashboard/beneficios-card";
 import { BolsistasReceitaCard } from "@/components/dashboard/bolsistas-receita-card";
-import { DashboardTabs, parseTab } from "@/components/dashboard/dashboard-tabs";
+import { DashboardTabs } from "@/components/dashboard/dashboard-tabs";
+import { parseTab, type DashTab } from "@/components/dashboard/parse-tab";
 import { ComercialResumoCards } from "@/components/dashboard/comercial-resumo-cards";
 import { getComercialResumo } from "@/lib/data/dashboard-comercial";
 import { FolhaEmpresas } from "@/components/dashboard/folha-empresas";
@@ -98,7 +99,6 @@ function isValidAno(val: string | undefined): boolean {
   return Number.isInteger(n) && n >= 2000 && n <= 2100;
 }
 
-type DashTab = "financeiro" | "comercial" | "secretaria" | "pedagogico";
 
 function SectionHeader({ title, subtitle }: { title: string; subtitle?: string }) {
   return (
