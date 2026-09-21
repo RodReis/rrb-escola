@@ -18,6 +18,7 @@ export async function getOrganogramaTree(anoLetivo: number = new Date().getFullY
     .from("series")
     .select("id, nome, ordem, segmento_id")
     .eq("escola_id", DEFAULT_SCHOOL_ID)
+    .eq("ativo", true)
     .not("segmento_id", "is", null)
     .order("ordem");
 
@@ -28,6 +29,7 @@ export async function getOrganogramaTree(anoLetivo: number = new Date().getFullY
     .select("id, nome, serie_id")
     .eq("escola_id", DEFAULT_SCHOOL_ID)
     .eq("ano_letivo", anoLetivo)
+    .eq("ativo", true)
     .order("nome");
 
   if (turErr) throw turErr;

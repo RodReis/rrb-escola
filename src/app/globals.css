@@ -383,6 +383,35 @@ textarea {
       0 22px 50px -16px color-mix(in oklab, var(--warn) 65%, transparent);
   }
 
+  /* Documentos do aluno — §8.1. Cada emissão tem um matiz fixo, para que a
+     equipe reconheça a ação pela cor antes de ler o rótulo:
+     boletim = teal, histórico = violeta, certificado = verde.
+
+     Tint (matiz lavado + texto escuro), não matiz cheio, por dois motivos:
+     a) contraste — texto escuro sobre o matiz cheio fica em 2.8:1 (violeta) e
+        4.3:1 (verde no claro), abaixo do AA; com branco é pior ainda (2.2–3.5).
+        No tint o pior caso fica acima de 8:1 nos dois temas;
+     b) hierarquia — são ações secundárias e não devem competir com o azul
+        cheio do primário "Editar".
+     Define a cor por `--doc-c`; o resto é compartilhado. */
+  .ds-button-doc {
+    background: color-mix(in oklab, var(--doc-c) 22%, var(--surface));
+    /* `--on-tint` já resolve o texto sobre tint nos dois temas (38% no claro,
+       78% no escuro), o mesmo token que as pills de status usam. */
+    color: color-mix(in oklab, var(--doc-c) var(--on-tint), var(--text));
+    border-color: color-mix(in oklab, var(--doc-c) 45%, transparent);
+    box-shadow: var(--shadow-xs);
+  }
+  .ds-button-doc:hover {
+    transform: translateY(-1px);
+    background: color-mix(in oklab, var(--doc-c) 32%, var(--surface));
+    border-color: color-mix(in oklab, var(--doc-c) 62%, transparent);
+    box-shadow: 0 10px 26px -12px color-mix(in oklab, var(--doc-c) 55%, transparent);
+  }
+  .ds-button-boletim     { --doc-c: var(--c-teal); }
+  .ds-button-historico   { --doc-c: var(--c-violet); }
+  .ds-button-certificado { --doc-c: var(--c-green); }
+
   /* Eyebrow / kicker — §4 */
   .ds-kicker,
   .rb-eyebrow {
@@ -956,6 +985,12 @@ textarea {
   box-shadow:
     0 0 0 2px var(--surface),
     0 0 0 5px color-mix(in oklab, var(--brand-500) 55%, transparent);
+}
+/* Botões de documento: anel no próprio matiz, pelo mesmo motivo do primário. */
+.ds-button-doc:focus-visible {
+  box-shadow:
+    0 0 0 2px var(--surface),
+    0 0 0 5px color-mix(in oklab, var(--doc-c) 60%, transparent);
 }
 /* Fallback p/ navegadores sem :focus-visible: usa :focus mas remove no mouse. */
 @supports not selector(:focus-visible) {

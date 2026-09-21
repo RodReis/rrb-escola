@@ -157,14 +157,19 @@ export default async function DashboardPage({
   const showPipeline = has("pipeline");
   const showAnamnesePipeline = has("pipeline_sensivel");
 
-  // Tab visibility
+  // Tab visibility. Duas condições: a permissão do painel (configurável em
+  // Perfis e Permissões) E ter algum módulo de dado por trás — sem dado a aba
+  // abriria vazia.
   const tabFinanceiroVisible =
-    showFinanceiroCobrancas || showDespesas || showBolsistas || showRhFolha;
+    has("dashboard.financeiro") &&
+    (showFinanceiroCobrancas || showDespesas || showBolsistas || showRhFolha);
   const showEventos = has("eventos");
   const tabSecretariaVisible =
-    showAlunos || showMatriculas || showFrequencias || showTurmas || showEventos;
-  const tabPedagogicoVisible = showAvaliacoes || showFrequencias || showPipeline;
-  const tabComercialVisible = showComercial;
+    has("dashboard.secretaria") &&
+    (showAlunos || showMatriculas || showFrequencias || showTurmas || showEventos);
+  const tabPedagogicoVisible =
+    has("dashboard.pedagogico") && (showAvaliacoes || showFrequencias || showPipeline);
+  const tabComercialVisible = has("dashboard.comercial") && showComercial;
 
   const tabsVisiveis: DashTab[] = [];
   if (tabFinanceiroVisible) tabsVisiveis.push("financeiro");

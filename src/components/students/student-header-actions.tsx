@@ -5,7 +5,7 @@ import { QuickDocumentActions } from "@/components/students/quick-document-actio
 import type { StudentSheet } from "@/lib/types";
 
 type MatriculaAtiva = { id: string; codigo: string | null };
-type TemplateLite = { id: string; nome: string };
+type TemplateLite = { id: string; nome: string; categoria?: string | null };
 
 export function StudentHeaderActions({
   student,

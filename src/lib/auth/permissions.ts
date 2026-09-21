@@ -3,6 +3,7 @@
 export type Acao = "read" | "create" | "update" | "delete";
 
 export const GRUPOS = [
+  "dashboard",
   "pedagogico",
   "secretaria",
   "financeiro",
@@ -15,6 +16,7 @@ export const GRUPOS = [
 export type Grupo = (typeof GRUPOS)[number];
 
 export const GRUPO_LABEL: Record<Grupo, string> = {
+  dashboard: "Dashboard",
   pedagogico: "Pedagógico",
   secretaria: "Secretaria",
   financeiro: "Financeiro",
@@ -26,6 +28,15 @@ export const GRUPO_LABEL: Record<Grupo, string> = {
 };
 
 export const MODULOS = {
+  // dashboard — uma aba do painel inicial por módulo. Gate ADICIONAL: a aba só
+  // aparece se o perfil tiver esta permissão E algum módulo de dado por trás
+  // dela (ex.: a aba Financeiro ainda precisa de financeiro.cobrancas ou
+  // despesas). Serve para esconder o painel de quem tem o dado mas não deve
+  // ver o resumo consolidado.
+  "dashboard.financeiro": { grupo: "dashboard", nome: "Painel Financeiro" },
+  "dashboard.comercial": { grupo: "dashboard", nome: "Painel Comercial" },
+  "dashboard.secretaria": { grupo: "dashboard", nome: "Painel Secretaria" },
+  "dashboard.pedagogico": { grupo: "dashboard", nome: "Painel Pedagógico" },
   // pedagogico
   avaliacoes: { grupo: "pedagogico", nome: "Avaliações" },
   frequencias: { grupo: "pedagogico", nome: "Frequências" },
@@ -109,8 +120,13 @@ export function modulosDoGrupo(grupo: Grupo): ModuloCodigo[] {
 export const ROTA_PARA_MODULO: Record<string, ModuloCodigo> = {
   "/alunos": "alunos",
   "/historico": "historico",
-  // Redundante com o prefixo acima, mas explícito: o certificado de conclusão
-  // consome o histórico e reusa o módulo dele, sem módulo RBAC próprio.
+  // Redundantes com o prefixo acima, mas explícitos: as telas do histórico
+  // (incluindo o certificado de conclusão) reusam o módulo `historico`, sem
+  // módulo RBAC próprio. Entrada explícita evita que uma rota nova escape pelo
+  // fallback "sem mapa = liberada" dos filtros de menu.
+  "/historico/associacoes": "historico",
+  "/historico/notas": "historico",
+  "/historico/emissao": "historico",
   "/historico/certificado": "historico",
   "/eventos": "eventos",
   "/comercial/produtos": "comercial.produtos",
