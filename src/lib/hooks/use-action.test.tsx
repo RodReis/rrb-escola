@@ -104,4 +104,16 @@ describe("useAction", () => {
     screen.getByRole("button").click();
     await waitFor(() => expect(onSuccess).toHaveBeenCalledOnce());
   });
+
+  it("passa o data do ActionResult para onSuccess", async () => {
+    const onSuccess = vi.fn();
+    const action = vi
+      .fn()
+      .mockResolvedValue({ ok: true, data: { senha: "abc123" } });
+    render(<Harness action={action} opts={{ onSuccess }} />);
+    screen.getByRole("button").click();
+    await waitFor(() =>
+      expect(onSuccess).toHaveBeenCalledWith({ senha: "abc123" })
+    );
+  });
 });

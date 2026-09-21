@@ -23,8 +23,9 @@ export type UseActionOptions = {
   error?: string;
   /** Pede confirmacao antes de executar. String = a mensagem. */
   confirm?: ConfirmOption;
-  /** Roda depois do sucesso (fechar modal, limpar formulario). */
-  onSuccess?: () => void;
+  /** Roda depois do sucesso (fechar modal, limpar formulario). Recebe o
+   * `data` do ActionResult quando a action devolve um. */
+  onSuccess?: (data?: unknown) => void;
 };
 
 export function useAction<Args extends unknown[]>(
@@ -71,7 +72,7 @@ export function useAction<Args extends unknown[]>(
         setBusy(false);
 
         if (instruction.toast !== "error") {
-          opts.onSuccess?.();
+          opts.onSuccess?.(instruction.data);
           if (instruction.redirectTo) {
             startTransition(() => router.push(instruction.redirectTo as string));
           } else if (instruction.refresh) {

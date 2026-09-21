@@ -9,6 +9,10 @@ export type Instruction = {
   refresh: boolean;
   /** Excecoes de controle do Next (redirect/notFound) precisam subir. */
   rethrow: boolean;
+  /** `data` do ActionResult (contrato novo), quando presente. Deixa o
+   * `onSuccess` do useAction ler um valor devolvido pela action (ex: a senha
+   * gerada por resetPasswordAction) sem precisar de outro mecanismo. */
+  data?: unknown;
 };
 
 const DEFAULT_SUCCESS = "Operação concluída.";
@@ -87,5 +91,6 @@ export function interpretActionResult(
     // Sem navegacao, a tela precisa de refresh para refletir o revalidatePath.
     refresh: redirectTo === undefined,
     rethrow: false,
+    data: record.data,
   };
 }
