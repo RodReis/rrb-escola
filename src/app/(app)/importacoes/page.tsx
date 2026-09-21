@@ -1,20 +1,9 @@
-import { ExternalLink, UploadCloud, FileUp, Inbox } from "lucide-react";
-import { markImportProcessedAction, uploadStudentImportAction } from "@/lib/actions/imports";
+import { FileUp, Inbox } from "lucide-react";
 import { getImportedFiles } from "@/lib/data/imports";
-import { Badge } from "@/components/ui/badge";
-import { ButtonLink } from "@/components/ui/button";
 import { Card, Panel } from "@/components/ui/card";
 import { requirePermission } from "@/lib/auth/session";
-
-function tone(status: string) {
-  if (status === "processado") return "green";
-  if (status === "erro") return "red";
-  return "gold";
-}
-
-function dateText(value: string) {
-  return new Date(value).toLocaleString("pt-BR");
-}
+import { NovoArquivoForm } from "@/components/importacoes/novo-arquivo-form";
+import { ArquivoImportadoCard } from "@/components/importacoes/arquivo-importado-card";
 
 export default async function ImportaçõesPage() {
   await requirePermission("importacoes", "read");
@@ -76,20 +65,7 @@ export default async function ImportaçõesPage() {
             Enviar arquivo de alunos
           </h2>
         </div>
-        <form action={uploadStudentImportAction} className="grid gap-4 md:grid-cols-[1fr_1fr_190px]">
-          <label>
-            Arquivo PDF ou planilha
-            <input name="arquivo" type="file" accept="application/pdf,.pdf,.xlsx,.xls,.csv,text/csv" required />
-          </label>
-          <label>
-            Observação
-            <input name="observacao" placeholder="Ex.: fichas ou planilha 2026" />
-          </label>
-          <button className="ds-button ds-button-accent self-end">
-            <UploadCloud size={17} />
-            Processar arquivo
-          </button>
-        </form>
+        <NovoArquivoForm />
       </Panel>
 
       <section className="grid gap-3">
@@ -102,41 +78,7 @@ export default async function ImportaçõesPage() {
           </Panel>
         ) : null}
         {files.map((file) => (
-          <Panel key={file.id} className="grid gap-4 lg:grid-cols-[1fr_220px_270px] lg:items-center">
-            <div>
-              <h2 className="font-black text-ink">{file.nome_arquivo}</h2>
-              <p className="mt-1 text-sm text-ink/65">{file.observacao || file.storage_path}</p>
-              <p className="mt-1 text-xs font-medium text-ink/60">{dateText(file.created_at)}</p>
-              <div className="mt-3 flex flex-wrap gap-2">
-                <ButtonLink href={`/importacoes/${file.id}`} variant="primary">Revisar lote</ButtonLink>
-                {file.signed_url ? (
-                  <a href={file.signed_url} target="_blank" className="ds-button ds-button-secondary">
-                    <ExternalLink size={14} /> Abrir arquivo
-                  </a>
-                ) : null}
-              </div>
-            </div>
-            <div className="grid gap-2 self-center text-sm">
-              <Badge tone={tone(file.status)}>{file.status}</Badge>
-              <span className="text-muted">
-                {file.total_linhas} linhas / {file.prontas} prontas / {file.importadas} importadas
-              </span>
-              {file.pendentes || file.duplicadas || file.erros ? (
-                <span className="text-xs font-bold text-clay">
-                  {file.pendentes} pendentes / {file.duplicadas} duplicadas / {file.erros} erros
-                </span>
-              ) : null}
-            </div>
-            <form action={markImportProcessedAction} className="grid grid-cols-[1fr_90px] gap-2 self-center">
-              <input type="hidden" name="id" value={file.id} />
-              <select name="status" defaultValue={file.status}>
-                <option value="pendente">Pendente</option>
-                <option value="processado">Processado</option>
-                <option value="erro">Erro</option>
-              </select>
-              <button className="ds-button ds-button-primary min-h-0 px-3 py-2 text-xs">Salvar</button>
-            </form>
-          </Panel>
+          <ArquivoImportadoCard key={file.id} file={file} />
         ))}
       </section>
     </div>
