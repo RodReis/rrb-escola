@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { DataTableShell } from "@/components/ui/data-table";
 import { FieldNote } from "@/components/ui/field-note";
+import { PageNotice } from "@/components/ui/page-notice";
 import { FilterChips } from "@/components/ui/filter-chips";
 import { FilterDropdown, type DropdownOption } from "@/components/ui/filter-dropdown";
 import { StatusPill } from "@/components/ui/status-pill";
@@ -209,10 +210,12 @@ export function EmissaoForm({
       )}
 
       {pendentes.length > 0 && (
-        <FieldNote tone="warn" className="text-sm">
-          Sem histórico cadastrado ({pendentes.length}): {pendentes.map((a) => a.nome).join(", ")}.
-          Estes alunos não entram na emissão — cadastre o histórico deles na Entrada de Notas.
-        </FieldNote>
+        <PageNotice tone="warning" title={`Sem histórico cadastrado (${pendentes.length})`}>
+          <p>{pendentes.map((a) => a.nome).join(", ")}</p>
+          <p className="mt-1 text-ink/60">
+            Estes alunos não entram na emissão — cadastre o histórico deles na Entrada de Notas.
+          </p>
+        </PageNotice>
       )}
 
       <DataTableShell>
