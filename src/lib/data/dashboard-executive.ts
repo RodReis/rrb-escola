@@ -1405,6 +1405,79 @@ export async function getAniversariantesSemana(
   }));
 }
 
+/**
+ * Todos os aniversariantes do mês corrente (para o mural completo).
+ * Mesma fonte/regras de `getAniversariantesSemana`, mas sem limitar a 7 dias.
+ */
+export async function getAniversariantesMes(
+  escolaId: string = DEFAULT_SCHOOL_ID
+): Promise<AniversarioSemanaRow[]> {
+  const supabase = await createServerClient();
+  const hoje = new Date();
+  const mesAtual = hoje.getMonth() + 1;
+  const DIAS_SEMANA = ["Dom", "Seg", "Ter", "Qua", "Qui", "Sex", "Sab"];
+
+  const { data: matriculas } = await supabase
+    .from("matriculas")
+    .select("aluno_id, turmas(nome, series(nome)), alunos!inner(id, nome, data_nascimento, foto_url, ativo)")
+    .eq("escola_id", escolaId)
+    .eq("status", "ativa")
+    .eq("alunos.ativo", true);
+
+  const vistos = new Set<string>();
+  const rows: AniversarioSemanaRow[] = [];
+
+  for (const m of ((matriculas ?? []) as any[])) {
+    const aluno = Array.isArray(m.alunos) ? m.alunos[0] : m.alunos;
+    if (!aluno?.data_nascimento) continue;
+    if (vistos.has(aluno.id)) continue;
+
+    const parts = String(aluno.data_nascimento).split("-").map(Number);
+    const anoNasc = parts[0];
+    const mm = parts[1];
+    const dd = parts[2];
+    if (!anoNasc || !mm || !dd) continue;
+    if (mm !== mesAtual) continue;
+
+    vistos.add(aluno.id);
+
+    const anoCorrente = hoje.getFullYear();
+    const jaPassou = dd < hoje.getDate();
+    const anoAniv = jaPassou ? anoCorrente + 1 : anoCorrente;
+    const idade = anoAniv - anoNasc;
+
+    const dataAniv = new Date(anoCorrente, mm - 1, dd);
+    const rotulo = DIAS_SEMANA[dataAniv.getDay()] ?? "";
+    const dataLabel = `${rotulo.toLowerCase()} ${String(dd).padStart(2, "0")}/${String(mm).padStart(2, "0")}`;
+
+    const turmaRel = Array.isArray(m.turmas) ? m.turmas[0] : m.turmas;
+    const serieRel = turmaRel ? (Array.isArray(turmaRel.series) ? turmaRel.series[0] : turmaRel.series) : null;
+
+    rows.push({
+      alunoId: aluno.id,
+      nome: aluno.nome ?? "—",
+      dia: dd,
+      mes: mm,
+      diaSemana: rotulo,
+      fotoUrl: aluno.foto_url ?? null,
+      hoje: dd === hoje.getDate() && mm === mesAtual,
+      idade,
+      dataLabel,
+      serie: serieRel?.nome ?? null,
+      turma: turmaRel?.nome ?? null,
+    });
+  }
+
+  rows.sort((a, b) => a.dia - b.dia);
+
+  const fotoPaths = rows.map((r) => r.fotoUrl);
+  const signedMap = await getSignedFotoUrls(fotoPaths);
+  return rows.map((r) => ({
+    ...r,
+    fotoUrl: r.fotoUrl ? (signedMap.get(r.fotoUrl) ?? null) : null,
+  }));
+}
+
 export type AniversarioMatriculaRow = {
   alunoId: string;
   nome: string;
