@@ -79,7 +79,7 @@ export function AnamneseSection({ cardId, podeAcessar }: Props) {
     setErroAcao(null);
     try {
       const res = await exportarAnamneseDocxAction({ cardId });
-      if (!res.success) { setErroAcao(res.error); return; }
+      if (!res.ok) { setErroAcao(res.error); return; }
       downloadBase64Docx(res.base64, res.nomeArquivo);
     } finally {
       setExportando(false);

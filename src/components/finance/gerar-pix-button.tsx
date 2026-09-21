@@ -16,7 +16,7 @@ export function GerarPixButton({ cobrancaId }: { cobrancaId: string }) {
     try {
       const res = await gerarPixAction(cobrancaId);
       if (!res.ok) {
-        toast.error(res.reason);
+        toast.error(res.error);
         return;
       }
       setCopiaCola(res.copiaCola);
@@ -40,7 +40,7 @@ export function GerarPixButton({ cobrancaId }: { cobrancaId: string }) {
     try {
       const res = await enviarPixWhatsAppAction(cobrancaId);
       if (res.ok) toast.success("Pix enviado por WhatsApp.");
-      else toast.error(res.reason);
+      else toast.error(res.error);
     } catch {
       toast.error("Erro ao enviar Pix por WhatsApp.");
     } finally {

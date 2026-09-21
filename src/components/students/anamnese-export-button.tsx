@@ -14,7 +14,7 @@ export function AnamneseExportButton({ alunoId }: { alunoId: string }) {
     setErro(null);
     try {
       const res = await exportarAnamneseDocxAction({ alunoId });
-      if (!res.success) { setErro(res.error); return; }
+      if (!res.ok) { setErro(res.error); return; }
       downloadBase64Docx(res.base64, res.nomeArquivo);
     } finally {
       setExportando(false);

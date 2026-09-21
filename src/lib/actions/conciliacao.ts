@@ -7,7 +7,7 @@ import { syncExtratoSicoob } from "@/lib/conciliacao/sync-extrato";
 
 export type AtualizarExtratoResult =
   | { ok: true; movimentos: number; descartados: number }
-  | { ok: false; reason: string };
+  | { ok: false; error: string };
 
 // Erros do Supabase são objetos simples com `message`/`details`, não instâncias
 // de Error — extrair o texto evita perder a causa real no relatório.
@@ -32,7 +32,7 @@ export async function atualizarExtratoAction(
     return { ok: true, movimentos: resultado.movimentos, descartados: resultado.descartados };
   } catch (err) {
     console.error("[conciliacao] falha ao sincronizar extrato", err);
-    return { ok: false, reason: descreverErro(err) };
+    return { ok: false, error: descreverErro(err) };
   }
 }
 

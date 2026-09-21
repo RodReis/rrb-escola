@@ -36,7 +36,7 @@ export function GerarBoletoButton({
         setUrl(res.invoiceUrl);
         toast.success("Boleto/PIX gerado.");
       } else {
-        toast.error(res.reason);
+        toast.error(res.error);
       }
     } catch {
       toast.error("Erro ao gerar boleto.");

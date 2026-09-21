@@ -38,7 +38,7 @@ export function PixAvulsoForm({ contas }: { contas: Conta[] }) {
       formRef.current?.reset();
       setValor(0);
     } else {
-      toast.error(state.reason);
+      toast.error(state.error);
     }
   }, [state]);
 

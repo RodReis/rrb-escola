@@ -37,7 +37,7 @@ export function DocumentGenerator({ matriculaId, templates, documentosIniciais }
     setLoading(true);
     try {
       const res = await generateFromTemplateAction(matriculaId, templateId);
-      if (!res.success || !res.base64 || !res.nomeArquivo) {
+      if (!res.ok || !res.base64 || !res.nomeArquivo) {
         toast.error(res.error ?? "Erro ao gerar documento.");
         return;
       }
