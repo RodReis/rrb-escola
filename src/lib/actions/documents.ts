@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { requirePermission } from "@/lib/auth/session";
 import { createServerClient } from "@/lib/supabase/server";
 import { formText } from "@/lib/utils";
+import { assertOk } from "@/lib/actions/assert-ok";
 
 export async function uploadStudentDocumentAction(formData: FormData) {
   // Documento anexado a um aluno — gate via módulo `alunos`.
@@ -53,7 +54,10 @@ export async function removeStudentDocumentAction(formData: FormData) {
 
   const supabase = await createServerClient();
   await supabase.storage.from("documentos-alunos").remove([storagePath]);
-  await supabase.from("documentos_aluno").delete().eq("id", documentoId).eq("aluno_id", alunoId);
+  assertOk(
+    await supabase.from("documentos_aluno").delete().eq("id", documentoId).eq("aluno_id", alunoId),
+    "Não foi possível excluir o documento",
+  );
 
   revalidatePath(`/alunos/${alunoId}`);
   revalidatePath(`/alunos/${alunoId}/editar`);

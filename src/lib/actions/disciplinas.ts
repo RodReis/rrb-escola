@@ -5,6 +5,7 @@ import { createServerClient } from "@/lib/supabase/server";
 import { requirePermission } from "@/lib/auth/session";
 import { DEFAULT_SCHOOL_ID } from "@/lib/constants";
 import { formNumber, formText } from "@/lib/utils";
+import { assertOk } from "@/lib/actions/assert-ok";
 
 export async function createDisciplinaAction(formData: FormData) {
   await requirePermission("disciplinas", "create");
@@ -14,13 +15,13 @@ export async function createDisciplinaAction(formData: FormData) {
   const nome = formText(formData, "nome");
   if (!serieId || !nome) throw new Error("Série e nome obrigatórios");
 
-  await supabase.from("disciplinas").insert({
+  assertOk(await supabase.from("disciplinas").insert({
     escola_id: DEFAULT_SCHOOL_ID,
     serie_id: serieId,
     nome,
     ordem: formNumber(formData, "ordem") ?? 0,
     ativo: true,
-  });
+  }), "Não foi possível salvar a disciplina");
 
   revalidatePath("/disciplinas");
 }
@@ -72,12 +73,12 @@ export async function createAtribuicaoAction(formData: FormData) {
   const turmaId = formText(formData, "turma_id");
   if (!employeeId || !disciplinaId || !turmaId) throw new Error("Todos campos obrigatórios");
 
-  await supabase.from("professor_disciplina_turma").insert({
+  assertOk(await supabase.from("professor_disciplina_turma").insert({
     escola_id: DEFAULT_SCHOOL_ID,
     employee_id: employeeId,
     disciplina_id: disciplinaId,
     turma_id: turmaId,
-  });
+  }), "Não foi possível salvar a atribuição");
 
   revalidatePath("/professores/atribuicoes");
 }

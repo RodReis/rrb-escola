@@ -7,6 +7,7 @@ import { requirePermission } from "@/lib/auth/session";
 import { DEFAULT_SCHOOL_ID } from "@/lib/constants";
 import { createServerClient } from "@/lib/supabase/server";
 import { formBoolean, formNumber, formText } from "@/lib/utils";
+import { assertOk } from "@/lib/actions/assert-ok";
 import type { ActionResult } from "@/lib/actions/types";
 
 export async function createSerieAction(formData: FormData) {
@@ -14,11 +15,11 @@ export async function createSerieAction(formData: FormData) {
   const nome = formText(formData, "nome");
   if (!nome) return;
   const supabase = await createServerClient();
-  await supabase.from("series").insert({
+  assertOk(await supabase.from("series").insert({
     escola_id: DEFAULT_SCHOOL_ID,
     nome,
     ordem: formNumber(formData, "ordem") ?? 0
-  });
+  }), "Não foi possível salvar a série");
   revalidatePath("/series");
 }
 
@@ -115,7 +116,7 @@ export async function createPlanAction(formData: FormData) {
   const nome = formText(formData, "nome");
   if (!nome) return;
   const supabase = await createServerClient();
-  await supabase.from("planos").insert({
+  assertOk(await supabase.from("planos").insert({
     escola_id: DEFAULT_SCHOOL_ID,
     nome,
     descricao: formText(formData, "descricao"),
@@ -123,7 +124,7 @@ export async function createPlanAction(formData: FormData) {
     valor_mensalidade: formNumber(formData, "valor_mensalidade") ?? 0,
     quantidade_parcelas: formNumber(formData, "quantidade_parcelas") ?? 12,
     dia_vencimento: formNumber(formData, "dia_vencimento") ?? 10
-  });
+  }), "Não foi possível salvar o plano");
   revalidatePath("/planos");
 }
 

@@ -6,6 +6,7 @@ import { DEFAULT_SCHOOL_ID } from "@/lib/constants";
 import { registerGateEvent } from "@/lib/server/gate-events";
 import { createServerClient } from "@/lib/supabase/server";
 import { formBoolean, formNumber, formText } from "@/lib/utils";
+import { assertOk } from "@/lib/actions/assert-ok";
 
 export async function registerGateEventAction(formData: FormData) {
   await requirePermission("portaria", "create");
@@ -38,29 +39,37 @@ export async function saveStudentGateSettingsAction(formData: FormData) {
   const authorized = formBoolean(formData, "autorizado");
   const guardianId = formText(formData, "responsavel_id");
 
-  await supabase.from("consentimentos_biometria").upsert(
-    {
-      aluno_id: alunoId,
-      autorizado: authorized,
-      responsavel_id: guardianId,
-      data_consentimento: authorized ? new Date().toISOString() : null,
-      data_revogacao: authorized ? null : new Date().toISOString(),
-      observacao: formText(formData, "observacao")
-    },
-    { onConflict: "aluno_id" }
+  // Consentimento de biometria é dado sensível (LGPD): se a gravação falhar,
+  // a tela não pode dizer que o responsável autorizou.
+  assertOk(
+    await supabase.from("consentimentos_biometria").upsert(
+      {
+        aluno_id: alunoId,
+        autorizado: authorized,
+        responsavel_id: guardianId,
+        data_consentimento: authorized ? new Date().toISOString() : null,
+        data_revogacao: authorized ? null : new Date().toISOString(),
+        observacao: formText(formData, "observacao")
+      },
+      { onConflict: "aluno_id" }
+    ),
+    "Não foi possível salvar o consentimento de biometria",
   );
 
-  await supabase.from("preferencias_notificacao_aluno").upsert(
-    {
-      aluno_id: alunoId,
-      responsavel_id: guardianId,
-      canal: "whatsapp",
-      telefone_destino: formText(formData, "telefone_destino"),
-      notificar_entrada: formBoolean(formData, "notificar_entrada"),
-      notificar_saida: formBoolean(formData, "notificar_saida"),
-      ativo: formBoolean(formData, "notificacao_ativa")
-    },
-    { onConflict: "aluno_id,canal" }
+  assertOk(
+    await supabase.from("preferencias_notificacao_aluno").upsert(
+      {
+        aluno_id: alunoId,
+        responsavel_id: guardianId,
+        canal: "whatsapp",
+        telefone_destino: formText(formData, "telefone_destino"),
+        notificar_entrada: formBoolean(formData, "notificar_entrada"),
+        notificar_saida: formBoolean(formData, "notificar_saida"),
+        ativo: formBoolean(formData, "notificacao_ativa")
+      },
+      { onConflict: "aluno_id,canal" }
+    ),
+    "Não foi possível salvar as preferências de notificação",
   );
 
   revalidatePath(`/alunos/${alunoId}/editar`);
@@ -72,13 +81,13 @@ export async function createGateDeviceAction(formData: FormData) {
   if (!nome) return;
 
   const supabase = await createServerClient();
-  await supabase.from("dispositivos_acesso").insert({
+  assertOk(await supabase.from("dispositivos_acesso").insert({
     escola_id: DEFAULT_SCHOOL_ID,
     nome,
     local: formText(formData, "local"),
     tipo: formText(formData, "tipo") ?? "portaria",
     ativo: true
-  });
+  }), "Não foi possível cadastrar o dispositivo");
 
   revalidatePath("/portaria");
   revalidatePath("/portaria/dispositivos");

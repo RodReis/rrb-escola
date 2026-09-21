@@ -9,6 +9,7 @@ import { generateChargesForEnrollment } from "@/lib/server/generate-charges";
 import { parsePdfStudents, parseSpreadsheetStudents, type StudentImportData } from "@/lib/server/student-import-parser";
 import { createServerClient } from "@/lib/supabase/server";
 import { formNumber, formText } from "@/lib/utils";
+import { assertOk, logSeFalhou } from "@/lib/actions/assert-ok";
 
 const readyStatus = "pronto";
 
@@ -336,7 +337,13 @@ export async function processImportStudentBatchAction(formData: FormData) {
       });
     }
 
-    await supabase.from("importacao_alunos_linhas").update({ status: "importado", erros: [], aluno_id: aluno.id }).eq("id", row.id);
+    // Dentro do laço por linha: lançar abortaria o lote inteiro no meio e
+    // deixaria as linhas seguintes sem processar. A falha vai para o log e o
+    // status final abaixo continua "pendente", então a linha reaparece.
+    logSeFalhou(
+      await supabase.from("importacao_alunos_linhas").update({ status: "importado", erros: [], aluno_id: aluno.id }).eq("id", row.id),
+      `marcar linha ${row.id} como importada`,
+    );
   }
 
   const { data: remaining } = await supabase
@@ -347,7 +354,10 @@ export async function processImportStudentBatchAction(formData: FormData) {
   const statuses = remaining ?? [];
   const finalStatus = statuses.length > 0 && statuses.every((row) => row.status === "importado") ? "processado" : "pendente";
 
-  await supabase.from("arquivos_importados").update({ status: finalStatus }).eq("id", arquivoId).eq("escola_id", DEFAULT_SCHOOL_ID);
+  assertOk(
+    await supabase.from("arquivos_importados").update({ status: finalStatus }).eq("id", arquivoId).eq("escola_id", DEFAULT_SCHOOL_ID),
+    "Não foi possível atualizar o status da importação",
+  );
 
   revalidatePath(`/importacoes/${arquivoId}`);
   revalidatePath("/importacoes");

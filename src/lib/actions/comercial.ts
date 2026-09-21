@@ -7,6 +7,7 @@ import { DEFAULT_SCHOOL_ID } from "@/lib/constants";
 import { createServerClient } from "@/lib/supabase/server";
 import { formBoolean, formNumber, formText } from "@/lib/utils";
 import { produtoSchema, variacaoSchema, vendaSchema, vendaItemSchema } from "@/lib/validation/comercial";
+import { logSeFalhou } from "@/lib/actions/assert-ok";
 
 const PRODUTOS = "/comercial/produtos";
 const VENDAS = "/comercial/vendas";
@@ -189,8 +190,12 @@ export async function createVendaAction(formData: FormData) {
   const itensInsert = itensParsed.data.map((i) => ({ ...i, venda_id: venda.id }));
   const { error: errItens } = await supabase.from("venda_item").insert(itensInsert);
   if (errItens) {
-    // rollback do cabeçalho órfão
-    await supabase.from("venda").delete().eq("id", venda.id).eq("escola_id", DEFAULT_SCHOOL_ID);
+    // rollback do cabeçalho órfão — se o próprio rollback falhar, o erro
+    // original é o que o usuário precisa ver, então aqui só registra.
+    logSeFalhou(
+      await supabase.from("venda").delete().eq("id", venda.id).eq("escola_id", DEFAULT_SCHOOL_ID),
+      `rollback da venda ${venda.id}`,
+    );
     redirect(`${VENDAS}/nova?erro=${encodeURIComponent(errItens.message)}`);
   }
 

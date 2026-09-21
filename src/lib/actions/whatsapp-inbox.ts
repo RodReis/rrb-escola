@@ -6,6 +6,7 @@ import { createServerClient } from "@/lib/supabase/server";
 import { sendText, sendImage, sendTemplate } from "@/lib/whatsapp/meta";
 import { janelaAberta } from "@/lib/whatsapp/inbox-parser";
 import { validarPathImagem } from "@/lib/actions/whatsapp-inbox-validation";
+import { logSeFalhou } from "@/lib/actions/assert-ok";
 import type { ActionResult } from "./types";
 
 // ─── Tipo de retorno ──────────────────────────────────────────────────────────
@@ -72,7 +73,7 @@ export async function responderTextoAction(
 
     const r = await sendText({ telefone: conversa.telefone, mensagem: parsed.data });
 
-    await supabase.from("pipeline_conversa_mensagem").insert({
+    logSeFalhou(await supabase.from("pipeline_conversa_mensagem").insert({
       escola_id: session.profile.escola_id,
       conversa_id: conversaId,
       direcao: "saida",
@@ -82,7 +83,7 @@ export async function responderTextoAction(
       erro: r.ok ? null : r.reason,
       provider_message_id: r.ok ? (r.providerMessageId || null) : null,
       enviada_por: session.profile.id,
-    });
+    }), "registro da mensagem enviada");
 
     await supabase
       .from("pipeline_conversa")
@@ -147,7 +148,7 @@ export async function responderImagemAction(
     // A URL assinada (efêmera) vai para a Meta buscar a imagem; o path é o que persiste no banco.
     const r = await sendImage({ telefone: conversa.telefone, imagemUrl, legenda });
 
-    await supabase.from("pipeline_conversa_mensagem").insert({
+    logSeFalhou(await supabase.from("pipeline_conversa_mensagem").insert({
       escola_id: session.profile.escola_id,
       conversa_id: conversaId,
       direcao: "saida",
@@ -158,7 +159,7 @@ export async function responderImagemAction(
       erro: r.ok ? null : r.reason,
       provider_message_id: r.ok ? (r.providerMessageId || null) : null,
       enviada_por: session.profile.id,
-    });
+    }), "registro da mensagem enviada");
 
     await supabase
       .from("pipeline_conversa")
@@ -200,7 +201,7 @@ export async function responderTemplateAction(
       variaveis,
     });
 
-    await supabase.from("pipeline_conversa_mensagem").insert({
+    logSeFalhou(await supabase.from("pipeline_conversa_mensagem").insert({
       escola_id: session.profile.escola_id,
       conversa_id: conversaId,
       direcao: "saida",
@@ -210,7 +211,7 @@ export async function responderTemplateAction(
       erro: r.ok ? null : r.reason,
       provider_message_id: r.ok ? (r.providerMessageId || null) : null,
       enviada_por: session.profile.id,
-    });
+    }), "registro da mensagem enviada");
 
     await supabase
       .from("pipeline_conversa")

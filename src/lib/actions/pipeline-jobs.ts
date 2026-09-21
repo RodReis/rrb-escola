@@ -2,6 +2,7 @@
 
 import { createAdminClient } from "@/lib/supabase/admin";
 import { enviarWhatsApp } from "@/lib/whatsapp/send";
+import { logSeFalhou } from "@/lib/actions/assert-ok";
 import type { TipoAutomacao } from "@/lib/validation/pipeline";
 
 export type AutomacaoJobResult = {
@@ -39,14 +40,15 @@ async function gravarExecucao(
   detalhe?: string,
   coluna_id?: string | null,
 ) {
-  await supabase.from("pipeline_automacao_execucao").insert({
+  // Log de execucao: falhar aqui nao pode derrubar a automacao que ja rodou.
+  logSeFalhou(await supabase.from("pipeline_automacao_execucao").insert({
     escola_id,
     automacao_id,
     card_id,
     coluna_id: coluna_id ?? null,
     resultado,
     detalhe: detalhe ?? null,
-  });
+  }), "log de execucao da automacao");
 }
 
 async function gravarAtividade(
@@ -55,12 +57,12 @@ async function gravarAtividade(
   escola_id: string,
   descricao: string,
 ) {
-  await supabase.from("pipeline_card_atividade").insert({
+  logSeFalhou(await supabase.from("pipeline_card_atividade").insert({
     escola_id,
     card_id,
     tipo: "sistema",
     descricao,
-  });
+  }), "atividade do card");
 }
 
 async function processarCardParadoCriaTarefa(

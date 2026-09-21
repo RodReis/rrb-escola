@@ -5,6 +5,7 @@ import { redirect } from "next/navigation";
 import { createServerClient } from "@/lib/supabase/server";
 import { requirePermission } from "@/lib/auth/session";
 import { formText } from "@/lib/utils";
+import { assertOk } from "@/lib/actions/assert-ok";
 
 const IMG_TYPES = new Set(["image/jpeg", "image/png", "image/webp", "image/svg+xml"]);
 
@@ -46,7 +47,10 @@ export async function removeEscolaLogoAction() {
   const session = await requirePermission("configuracoes.escola", "update");
   const supabase = await createServerClient();
 
-  await supabase.from("escolas").update({ logo_url: null }).eq("id", session.profile.escola_id);
+  assertOk(
+    await supabase.from("escolas").update({ logo_url: null }).eq("id", session.profile.escola_id),
+    "Não foi possível remover o logo",
+  );
 
   revalidatePath("/configuracoes/escola");
   revalidatePath("/", "layout");

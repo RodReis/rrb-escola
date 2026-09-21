@@ -6,6 +6,7 @@ import { createServerClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { requireSession } from "@/lib/auth/session";
 import { formText } from "@/lib/utils";
+import { assertOk } from "@/lib/actions/assert-ok";
 
 const IMG_TYPES = new Set(["image/jpeg", "image/png", "image/webp", "image/svg+xml"]);
 
@@ -47,7 +48,10 @@ export async function removeOwnAvatarAction() {
   const session = await requireSession();
   const supabase = await createServerClient();
 
-  await supabase.from("perfis").update({ foto_url: null }).eq("id", session.profile.id);
+  assertOk(
+    await supabase.from("perfis").update({ foto_url: null }).eq("id", session.profile.id),
+    "Não foi possível remover a foto",
+  );
 
   revalidatePath("/meu-perfil");
   revalidatePath("/", "layout");

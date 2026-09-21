@@ -36,3 +36,19 @@ export function assertOk<T>(resposta: RespostaSupabase<T>, contexto?: string): T
 
   throw new Error(amigavel ?? contexto ?? "Não foi possível concluir a operação.");
 }
+
+/**
+ * Para escrita acessoria, cuja falha NAO deve derrubar a operacao principal:
+ * notificacao, log de atividade, telemetria. A tarefa foi criada; se o aviso
+ * nao foi gravado, isso vai para o log do servidor e a action segue.
+ *
+ *     logSeFalhou(await supabase.from("notificacoes").insert({ ... }), "notificacao de tarefa");
+ */
+export function logSeFalhou(
+  resposta: { error: { message: string; code?: string } | null },
+  oQue: string,
+): void {
+  if (resposta.error) {
+    console.error("[supabase:acessorio]", oQue, resposta.error.code ?? "", resposta.error.message);
+  }
+}

@@ -34,6 +34,7 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import { enviarWhatsApp } from "@/lib/whatsapp/send";
 import { normalizarTelefone } from "@/lib/whatsapp/telefone";
 import type { ActionResult } from "./types";
+import { logSeFalhou } from "@/lib/actions/assert-ok";
 
 const PATH = "/pipeline";
 
@@ -252,13 +253,14 @@ export async function criarCardAction(
   if (leadErr) return { ok: false, error: leadErr.message };
   if (respErr) return { ok: false, error: respErr.message };
 
-  await supabase.from("pipeline_card_atividade").insert({
+  // Trilha de atividade: o card ja foi criado, falha aqui nao desfaz isso.
+  logSeFalhou(await supabase.from("pipeline_card_atividade").insert({
     escola_id,
     card_id,
     tipo: "sistema",
     descricao: "Card criado",
     usuario_id,
-  });
+  }), "atividade do card criado");
 
   revalidatePath(PATH);
   return { ok: true, data: { id: card_id } };
@@ -1345,7 +1347,7 @@ export async function criarTarefaAction(
   if (error) return { ok: false, error: error.message };
 
   if (parsed.data.assigned_to) {
-    await supabase.from("notificacoes").insert({
+    logSeFalhou(await supabase.from("notificacoes").insert({
       escola_id,
       perfil_id: parsed.data.assigned_to,
       tipo: "pipeline_tarefa_atribuida",
@@ -1353,7 +1355,7 @@ export async function criarTarefaAction(
       descricao: parsed.data.titulo,
       href: "/pipeline",
       severidade: "info",
-    });
+    }), "notificação de tarefa atribuída");
   }
 
   revalidatePath(PATH);
@@ -1439,7 +1441,7 @@ export async function checkTarefasVencidasAction(): Promise<void> {
       .like("href", `%${t.card_id}%`);
 
     if (!count) {
-      await supabase.from("notificacoes").insert({
+      logSeFalhou(await supabase.from("notificacoes").insert({
         escola_id,
         perfil_id: usuario_id,
         tipo: "pipeline_tarefa_vencida",
@@ -1447,7 +1449,7 @@ export async function checkTarefasVencidasAction(): Promise<void> {
         descricao: t.titulo,
         href: "/pipeline",
         severidade: "atencao",
-      });
+      }), "notificação de tarefa vencida");
     }
   }
 }

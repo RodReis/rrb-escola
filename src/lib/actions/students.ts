@@ -127,7 +127,10 @@ export async function createStudentAction(formData: FormData) {
     const tipoVaga = readTipoVaga(formData);
     const percentualBolsa = readPercentualBolsa(formData, tipoVaga);
 
-    const { data: enrollment } = await supabase.from("matriculas").insert({
+    // Sem o assertOk, uma matrícula recusada devolvia `enrollment` null, o
+    // `if` abaixo pulava a geração de cobranças e a tela confirmava a
+    // matrícula: aluno sem matrícula e sem cobrança, ninguém avisado.
+    const enrollment = assertOk(await supabase.from("matriculas").insert({
       escola_id: DEFAULT_SCHOOL_ID,
       aluno_id: alunoId,
       serie_id: serieId,
@@ -140,7 +143,7 @@ export async function createStudentAction(formData: FormData) {
       status: "ativa",
       tipo_vaga: tipoVaga,
       percentual_bolsa: percentualBolsa
-    }).select("id").single();
+    }).select("id").single(), "Não foi possível criar a matrícula");
 
     if (enrollment) {
       await generateChargesForEnrollment({

@@ -7,6 +7,7 @@ import { DEFAULT_SCHOOL_ID } from "@/lib/constants";
 import { generateChargesForEnrollment } from "@/lib/server/generate-charges";
 import { createServerClient } from "@/lib/supabase/server";
 import { formNumber, formText } from "@/lib/utils";
+import { assertOk } from "@/lib/actions/assert-ok";
 
 export async function createChargeAction(formData: FormData) {
   await requirePermission("financeiro.cobrancas", "create");
@@ -15,7 +16,7 @@ export async function createChargeAction(formData: FormData) {
   if (!alunoId || !descricao) return;
 
   const supabase = await createServerClient();
-  await supabase.from("cobrancas").insert({
+  assertOk(await supabase.from("cobrancas").insert({
     escola_id: DEFAULT_SCHOOL_ID,
     aluno_id: alunoId,
     descricao,
@@ -26,7 +27,7 @@ export async function createChargeAction(formData: FormData) {
     valor_acrescimo: formNumber(formData, "valor_acrescimo") ?? 0,
     data_vencimento: formText(formData, "data_vencimento") ?? new Date().toISOString().slice(0, 10),
     status: "aberta"
-  });
+  }), "Não foi possível criar a cobrança");
 
   revalidatePath("/financeiro");
 }

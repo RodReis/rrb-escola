@@ -5,6 +5,7 @@ import { createServerClient } from "@/lib/supabase/server";
 import { requirePermission } from "@/lib/auth/session";
 import { DEFAULT_SCHOOL_ID } from "@/lib/constants";
 import { SEGMENTOS, type SegmentoSerie } from "@/lib/data/valores-praticados";
+import { assertOk } from "@/lib/actions/assert-ok";
 
 function formText(formData: FormData, key: string): string | null {
   const v = formData.get(key);
@@ -51,7 +52,7 @@ export async function upsertValorPraticadoAction(formData: FormData) {
   const valorMensalidade = formNumber(formData, "valor_mensalidade") ?? 0;
   const observacao = formText(formData, "observacao");
 
-  await supabase.from("valores_praticados").upsert({
+  assertOk(await supabase.from("valores_praticados").upsert({
     escola_id: DEFAULT_SCHOOL_ID,
     ano_letivo: anoLetivo,
     segmento,
@@ -59,7 +60,7 @@ export async function upsertValorPraticadoAction(formData: FormData) {
     valor_matricula: valorMatricula,
     valor_mensalidade: valorMensalidade,
     observacao,
-  }, { onConflict: "escola_id,ano_letivo,segmento,ordem_filho" });
+  }, { onConflict: "escola_id,ano_letivo,segmento,ordem_filho" }), "Não foi possível salvar o valor praticado");
 
   revalidatePath("/valores-praticados");
 }
