@@ -1,6 +1,11 @@
 import type { Config } from "tailwindcss";
 
 const config: Config = {
+  // O tema é dirigido por `data-theme` no <html> (theme-toggle + script anti-FOUC
+  // no layout), não pela preferência do SO. Sem isto o Tailwind usa `media` e as
+  // classes `dark:` disparam fora de hora — texto escuro em fundo escuro quando o
+  // SO está no escuro e o app no claro.
+  darkMode: ["selector", '[data-theme="dark"]'],
   content: [
     "./src/pages/**/*.{js,ts,jsx,tsx,mdx}",
     "./src/components/**/*.{js,ts,jsx,tsx,mdx}",
