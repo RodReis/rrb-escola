@@ -15,6 +15,7 @@ import { ChamadaTabs } from "@/components/frequencias/chamada-tabs";
 import { DisciplinasCards } from "@/components/avaliacoes/disciplinas-cards";
 import { NotasUnicoBimestreGrid } from "@/components/avaliacoes/notas-unico-bimestre-grid";
 import { BimestreSelect } from "@/components/frequencias/bimestre-select";
+import { SubmitButton } from "@/components/ui/submit-button";
 
 type SearchParams = {
   turma_id?: string;
@@ -191,9 +192,9 @@ export default async function ChamadaPage({ searchParams }: { searchParams: Sear
           ))
         )}
         <div className="flex justify-end border-t border-line p-4">
-          <button className="ds-button ds-button-accent" disabled={data.students.length === 0 || (data.temCalendario && !data.diaLetivo)}>
+          <SubmitButton variant="accent" disabled={data.students.length === 0 || (data.temCalendario && !data.diaLetivo)}>
             <CalendarCheck size={16} /> Salvar chamada
-          </button>
+          </SubmitButton>
         </div>
       </form>
       )}

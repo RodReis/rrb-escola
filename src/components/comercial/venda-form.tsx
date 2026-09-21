@@ -8,6 +8,7 @@ import { money } from "@/lib/constants";
 import { FORMAS_PAGAMENTO } from "@/lib/validation/comercial";
 import { totalVenda, cupomObrigatorio } from "@/lib/comercial/venda-calc";
 import type { VariacaoOption } from "@/lib/data/comercial";
+import { SubmitButton } from "@/components/ui/submit-button";
 
 type ItemState = { variacao_id: string; quantidade: number; preco_unit: number };
 
@@ -167,9 +168,9 @@ export function VendaForm({ action, variacoes }: Props) {
       </div>
 
       <div className="flex justify-end">
-        <Button type="submit" variant="primary" disabled={itens.length === 0 || total <= 0}>
+        <SubmitButton disabled={itens.length === 0 || total <= 0}>
           Salvar venda (rascunho)
-        </Button>
+        </SubmitButton>
       </div>
     </form>
   );

@@ -15,6 +15,7 @@ import { displayStatus, isUnpaid } from "@/lib/finance/charge-status";
 import { saldoDevedor, totalPago } from "@/lib/finance/charge-totals";
 import { requirePermission } from "@/lib/auth/session";
 import { readSicoobConfig } from "@/lib/sicoob/config";
+import { SubmitButton } from "@/components/ui/submit-button";
 
 const statusTone: Record<string, StatusTone> = {
   aberta: "warning",
@@ -145,9 +146,9 @@ export default async function FinanceiroPage({ searchParams }: { searchParams: P
           <label>Desconto<input name="valor_desconto" inputMode="decimal" /></label>
           <label>Acréscimo<input name="valor_acrescimo" inputMode="decimal" /></label>
           <label>Vencimento<input name="data_vencimento" type="date" /></label>
-          <button className="ds-button ds-button-accent self-end">
+          <SubmitButton variant="accent" className="self-end">
             <Plus size={16} /> Gerar
-          </button>
+          </SubmitButton>
         </form>
       </Panel>
 
@@ -219,7 +220,7 @@ export default async function FinanceiroPage({ searchParams }: { searchParams: P
                       <div className="grid grid-cols-[140px_1fr_96px] gap-2">
                         <input name="data_pagamento" type="date" defaultValue={new Date().toISOString().slice(0, 10)} />
                         <input name="observacao" placeholder="Observação" />
-                        <button className="ds-button ds-button-primary min-h-0 px-3 py-2 text-xs" type="submit">Pagar</button>
+                        <SubmitButton className="min-h-0 px-3 py-2 text-xs">Pagar</SubmitButton>
                       </div>
                     </form>
                     <details className="text-xs">

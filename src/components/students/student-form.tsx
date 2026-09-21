@@ -1,5 +1,6 @@
 import { Panel } from "@/components/ui/card";
 import { createStudentAction } from "@/lib/actions/students";
+import { SubmitButton } from "@/components/ui/submit-button";
 
 type Options = {
   series: Array<{ id: string; nome: string }>;
@@ -141,7 +142,7 @@ export function StudentForm({ options }: { options: Options }) {
       </Section>
 
       <div className="flex justify-end">
-        <button className="ds-button ds-button-accent px-6">Salvar aluno</button>
+        <SubmitButton variant="accent" className="px-6">Salvar aluno</SubmitButton>
       </div>
     </form>
   );
