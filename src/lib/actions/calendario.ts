@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { createServerClient } from "@/lib/supabase/server";
 import { requirePermission } from "@/lib/auth/session";
 import { DEFAULT_SCHOOL_ID } from "@/lib/constants";
+import { assertOk } from "@/lib/actions/assert-ok";
 import { formText, formNumber } from "@/lib/utils";
 import { todosFeriados } from "@/lib/calendario/feriados";
 
@@ -43,7 +44,10 @@ export async function salvarCalendarioAction(formData: FormData) {
   };
 
   if (id) {
-    await supabase.from("calendario_letivo").update(payload).eq("id", id).eq("escola_id", DEFAULT_SCHOOL_ID);
+    assertOk(
+      await supabase.from("calendario_letivo").update(payload).eq("id", id).eq("escola_id", DEFAULT_SCHOOL_ID),
+      "Não foi possível salvar o calendário",
+    );
   } else {
     const { data: novoCal } = await supabase
       .from("calendario_letivo")
@@ -129,9 +133,15 @@ export async function salvarExcecaoAction(formData: FormData) {
   };
 
   if (id) {
-    await supabase.from("calendario_excecoes").update(payload).eq("id", id).eq("escola_id", DEFAULT_SCHOOL_ID);
+    assertOk(
+      await supabase.from("calendario_excecoes").update(payload).eq("id", id).eq("escola_id", DEFAULT_SCHOOL_ID),
+      "Não foi possível salvar a exceção",
+    );
   } else {
-    await supabase.from("calendario_excecoes").insert(payload);
+    assertOk(
+      await supabase.from("calendario_excecoes").insert(payload),
+      "Não foi possível criar a exceção",
+    );
   }
 
   revalidatePath("/calendario");
@@ -144,7 +154,10 @@ export async function excluirExcecaoAction(formData: FormData) {
   const id = formText(formData, "id");
   if (!id) throw new Error("ID obrigatório");
 
-  await supabase.from("calendario_excecoes").delete().eq("id", id).eq("escola_id", DEFAULT_SCHOOL_ID);
+  assertOk(
+    await supabase.from("calendario_excecoes").delete().eq("id", id).eq("escola_id", DEFAULT_SCHOOL_ID),
+    "Não foi possível excluir a exceção",
+  );
 
   revalidatePath("/calendario");
 }
@@ -157,7 +170,10 @@ export async function excluirCalendarioAction(formData: FormData) {
   if (!id) throw new Error("ID obrigatório");
 
   // FK calendario_excecoes.calendario_id tem ON DELETE CASCADE — exceções somem junto.
-  await supabase.from("calendario_letivo").delete().eq("id", id).eq("escola_id", DEFAULT_SCHOOL_ID);
+  assertOk(
+    await supabase.from("calendario_letivo").delete().eq("id", id).eq("escola_id", DEFAULT_SCHOOL_ID),
+    "Não foi possível excluir o calendário",
+  );
 
   revalidatePath("/calendario");
 }

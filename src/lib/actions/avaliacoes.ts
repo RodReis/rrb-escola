@@ -5,6 +5,7 @@ import { createServerClient } from "@/lib/supabase/server";
 import { requirePermission } from "@/lib/auth/session";
 import { DEFAULT_SCHOOL_ID } from "@/lib/constants";
 import { formNumber, formText } from "@/lib/utils";
+import { assertOk } from "@/lib/actions/assert-ok";
 
 const TIPOS = ["prova", "trabalho", "participacao", "simulado", "outro"] as const;
 
@@ -31,7 +32,7 @@ export async function createAvaliacaoAction(formData: FormData) {
   }
   if (bimestre < 1 || bimestre > 4) throw new Error("Bimestre deve ser 1-4");
 
-  await supabase.from("avaliacoes").insert({
+  assertOk(await supabase.from("avaliacoes").insert({
     escola_id: DEFAULT_SCHOOL_ID,
     disciplina_id: disciplinaId,
     turma_id: turmaId,
@@ -43,7 +44,7 @@ export async function createAvaliacaoAction(formData: FormData) {
     valor_maximo: valorMaximo,
     data_aplicacao: formText(formData, "data_aplicacao"),
     criado_por: session.profile.id,
-  });
+  }), "Não foi possível criar a avaliação");
 
   revalidatePath("/avaliacoes");
 }
@@ -131,7 +132,10 @@ export async function lancarNotasAction(formData: FormData) {
   if (rows.length === 0) return;
 
   // Upsert por (avaliacao_id, aluno_id)
-  await supabase.from("notas").upsert(rows, { onConflict: "avaliacao_id,aluno_id" });
+  assertOk(
+    await supabase.from("notas").upsert(rows, { onConflict: "avaliacao_id,aluno_id" }),
+    "Não foi possível salvar as notas",
+  );
 
   revalidatePath(`/avaliacoes/${avaliacaoId}`);
   revalidatePath("/avaliacoes");

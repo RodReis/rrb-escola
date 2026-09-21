@@ -7,6 +7,7 @@ import { DEFAULT_SCHOOL_ID } from "@/lib/constants";
 import { generateChargesForEnrollment } from "@/lib/server/generate-charges";
 import { createServerClient } from "@/lib/supabase/server";
 import { formBoolean, formNumber, formText } from "@/lib/utils";
+import { assertOk } from "@/lib/actions/assert-ok";
 import type { ActionResult } from "@/lib/actions/types";
 
 type TipoVagaInput = "paga" | "bolsa_integral" | "bolsa_parcial" | "permuta" | "gratuita";
@@ -390,7 +391,7 @@ export async function addStudentAddressAction(formData: FormData) {
   if (!alunoId || !logradouro) return;
 
   const supabase = await createServerClient();
-  await supabase.from("enderecos_aluno").insert({
+  assertOk(await supabase.from("enderecos_aluno").insert({
     aluno_id: alunoId,
     logradouro,
     numero: formText(formData, "numero"),
@@ -400,7 +401,7 @@ export async function addStudentAddressAction(formData: FormData) {
     uf: formText(formData, "uf"),
     cep: formText(formData, "cep"),
     principal: false
-  });
+  }), "Não foi possível salvar o endereço");
 
   revalidatePath(`/alunos/${alunoId}`);
   revalidatePath(`/alunos/${alunoId}/editar`);
@@ -413,7 +414,7 @@ export async function addStudentContactAction(formData: FormData) {
   if (!alunoId || !nome) return;
 
   const supabase = await createServerClient();
-  await supabase.from("contatos_aluno").insert({
+  assertOk(await supabase.from("contatos_aluno").insert({
     aluno_id: alunoId,
     nome,
     telefone: formText(formData, "telefone"),
@@ -421,7 +422,7 @@ export async function addStudentContactAction(formData: FormData) {
     parentesco: formText(formData, "parentesco"),
     observacao: formText(formData, "observacao"),
     principal: false
-  });
+  }), "Não foi possível salvar o contato");
 
   revalidatePath(`/alunos/${alunoId}`);
   revalidatePath(`/alunos/${alunoId}/editar`);
@@ -434,7 +435,7 @@ export async function addStudentGuardianAction(formData: FormData) {
   if (!alunoId || !nome) return;
 
   const supabase = await createServerClient();
-  await supabase.from("responsaveis_aluno").insert({
+  assertOk(await supabase.from("responsaveis_aluno").insert({
     aluno_id: alunoId,
     nome,
     cpf: formText(formData, "cpf"),
@@ -444,7 +445,7 @@ export async function addStudentGuardianAction(formData: FormData) {
     email: formText(formData, "email"),
     responsavel_financeiro: formBoolean(formData, "responsavel_financeiro"),
     responsavel_pedagogico: formBoolean(formData, "responsavel_pedagogico")
-  });
+  }), "Não foi possível salvar o responsável");
 
   revalidatePath(`/alunos/${alunoId}`);
   revalidatePath(`/alunos/${alunoId}/editar`);
@@ -457,14 +458,14 @@ export async function addStudentAuthorizedPersonAction(formData: FormData) {
   if (!alunoId || !nome) return;
 
   const supabase = await createServerClient();
-  await supabase.from("pessoas_autorizadas").insert({
+  assertOk(await supabase.from("pessoas_autorizadas").insert({
     aluno_id: alunoId,
     nome,
     telefone: formText(formData, "telefone"),
     documento: formText(formData, "documento"),
     observacao: formText(formData, "observacao"),
     ativo: true
-  });
+  }), "Não foi possível salvar a pessoa autorizada");
 
   revalidatePath(`/alunos/${alunoId}`);
   revalidatePath(`/alunos/${alunoId}/editar`);
@@ -481,7 +482,10 @@ export async function removeStudentRelatedRecordAction(formData: FormData) {
   if (!allowedTables.has(table)) return;
 
   const supabase = await createServerClient();
-  await supabase.from(table).delete().eq("id", id).eq("aluno_id", alunoId);
+  assertOk(
+    await supabase.from(table).delete().eq("id", id).eq("aluno_id", alunoId),
+    "Não foi possível remover o registro",
+  );
 
   revalidatePath(`/alunos/${alunoId}`);
   revalidatePath(`/alunos/${alunoId}/editar`);
