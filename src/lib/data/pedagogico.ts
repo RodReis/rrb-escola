@@ -1,6 +1,9 @@
 import { createServerClient } from "@/lib/supabase/server";
 import { DEFAULT_SCHOOL_ID } from "@/lib/constants";
 import { contarAlunosAtivos } from "./students";
+import { compareSerie } from "./pedagogico-constants";
+
+export { compareSerie };
 
 export type EvasaoData = {
   ativos: number;
@@ -243,7 +246,7 @@ export async function getMediasPorDisciplina(
   });
 
   rows.sort((a, b) => {
-    if (a.serie !== b.serie) return a.serie.localeCompare(b.serie);
+    if (a.serie !== b.serie) return compareSerie(a.serie, b.serie);
     if (a.bimestre !== b.bimestre) return a.bimestre - b.bimestre;
     return a.disciplina.localeCompare(b.disciplina);
   });
