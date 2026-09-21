@@ -1,12 +1,11 @@
-import { AlertCircle, GraduationCap, Plus, Save } from "lucide-react";
+import { AlertCircle, GraduationCap, Plus } from "lucide-react";
 import { ButtonLink } from "@/components/ui/button";
-import { ConfirmButton } from "@/components/ui/confirm-button";
 import { Panel } from "@/components/ui/card";
 import { PageHeader } from "@/components/ui/page-header";
-import { StatusPill } from "@/components/ui/status-pill";
-import { createTurmaAction, toggleTurmaAction, updateTurmaAction } from "@/lib/actions/academics";
+import { createTurmaAction } from "@/lib/actions/academics";
 import { getAcademicData } from "@/lib/data/lookups";
 import { requirePermission } from "@/lib/auth/session";
+import { TurmaCard } from "@/components/pedagogico/turma-card";
 
 const ERRO_MENSAGEM: Record<string, string> = {
   duplicada: "Já existe uma turma com essa série, nome, ano letivo e turno.",
@@ -105,62 +104,7 @@ export default async function TurmasPage({
           </Panel>
         ) : null}
         {turmas.map((item) => (
-          <Panel key={item.id} className="grid gap-4">
-            <form action={updateTurmaAction} className="grid gap-3 lg:grid-cols-[1fr_1fr_120px_150px_120px_110px_120px]">
-              <input type="hidden" name="id" value={item.id} />
-              <label>
-                Serie
-                <select name="serie_id" defaultValue={item.serie_id} required>
-                  {series.map((serie) => (
-                    <option key={serie.id} value={serie.id}>{serie.nome}</option>
-                  ))}
-                </select>
-              </label>
-              <label>
-                Nome
-                <input name="nome" defaultValue={item.nome} required />
-              </label>
-              <label>
-                Ano
-                <input name="ano_letivo" type="number" defaultValue={item.ano_letivo} />
-              </label>
-              <label>
-                Turno
-                <select name="turno" defaultValue={item.turno}>
-                  <option value="matutino">Matutino</option>
-                  <option value="vespertino">Vespertino</option>
-                  <option value="noturno">Noturno</option>
-                  <option value="integral">Integral</option>
-                </select>
-              </label>
-              <label>
-                Capacidade
-                <input name="capacidade" type="number" defaultValue={item.capacidade} />
-              </label>
-              <label className="flex grid-cols-none items-center gap-2 self-end pb-3">
-                <input name="ativo" type="checkbox" className="h-4 w-4" defaultChecked={item.ativo} />
-                Ativa
-              </label>
-              <button className="ds-button ds-button-primary self-end">
-                <Save size={14} /> Salvar
-              </button>
-            </form>
-
-            <div className="flex flex-wrap items-center justify-between gap-3 border-t border-line pt-3">
-              <StatusPill tone={item.ativo ? "success" : "danger"}>{item.ativo ? "Ativa" : "Inativa"}</StatusPill>
-              <span className="text-sm font-medium text-ink/60">{item.series?.nome} - {item.ano_letivo}</span>
-              <form action={toggleTurmaAction}>
-                <input type="hidden" name="id" value={item.id} />
-                <input type="hidden" name="ativo" value={item.ativo ? "" : "on"} />
-                <ConfirmButton
-                  message={`Tem certeza que quer ${item.ativo ? "desativar" : "ativar"} a turma "${item.nome}"?`}
-                  className="text-xs font-black text-clay"
-                >
-                  {item.ativo ? "Desativar" : "Ativar"}
-                </ConfirmButton>
-              </form>
-            </div>
-          </Panel>
+          <TurmaCard key={item.id} item={item} series={series} />
         ))}
       </section>
     </div>
