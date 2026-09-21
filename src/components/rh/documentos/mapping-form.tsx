@@ -5,6 +5,8 @@ import { Save } from "lucide-react";
 import { toast } from "sonner";
 import { saveTemplateMappingsAction } from "@/lib/actions/templates";
 import { ALLOWED_TABLES, COMPUTED_FNS, type Mapping, type ComputedFn } from "@/lib/documents/schema-catalog";
+import { useAction } from "@/lib/hooks/use-action";
+import { Button } from "@/components/ui/button";
 
 type RowState =
   | { placeholder: string; type: "tabela"; table: string; column: string; filter: string }
@@ -57,7 +59,11 @@ export function MappingForm({
   }, [initial, placeholders]);
 
   const [rows, setRows] = useState<RowState[]>(initialRows);
-  const [pending, setPending] = useState(false);
+  // saveTemplateMappingsAction faz redirect() no sucesso: sem `success`,
+  // a navegacao para /rh/documentos e o proprio feedback.
+  const { run, pending } = useAction(saveTemplateMappingsAction, {
+    error: "Falha ao salvar.",
+  });
 
   function updateRow(idx: number, patch: Partial<RowState>) {
     setRows((prev) => {
@@ -77,29 +83,23 @@ export function MappingForm({
     });
   }
 
-  async function onSave() {
-    setPending(true);
-    try {
-      const mappings: Mapping[] = [];
-      for (const r of rows) {
-        const m = toMapping(r);
-        if (!m) {
-          toast.error(`Mapping inválido para ${r.placeholder}.`);
-          return;
-        }
-        mappings.push(m);
+  function onSave() {
+    // Validacao client-side continua fora do useAction: uma linha invalida
+    // nao deve nem chamar a action.
+    const mappings: Mapping[] = [];
+    for (const r of rows) {
+      const m = toMapping(r);
+      if (!m) {
+        toast.error(`Mapping inválido para ${r.placeholder}.`);
+        return;
       }
-      const fd = new FormData();
-      fd.set("template_id", templateId);
-      fd.set("mappings", JSON.stringify(mappings));
-      if (activate) fd.set("ativar", "1");
-      await saveTemplateMappingsAction(fd);
-      toast.success("Mappings salvos.");
-    } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Falha ao salvar.");
-    } finally {
-      setPending(false);
+      mappings.push(m);
     }
+    const fd = new FormData();
+    fd.set("template_id", templateId);
+    fd.set("mappings", JSON.stringify(mappings));
+    if (activate) fd.set("ativar", "1");
+    run(fd);
   }
 
   return (
@@ -185,9 +185,9 @@ export function MappingForm({
 
       <div className="flex justify-end gap-2">
         <a href="/rh/documentos" className="ds-button ds-button-secondary">Cancelar</a>
-        <button onClick={onSave} disabled={pending} className="ds-button ds-button-primary">
+        <Button onClick={onSave} loading={pending}>
           <Save size={14} /> {activate ? "Salvar e ativar" : "Salvar"}
-        </button>
+        </Button>
       </div>
     </div>
   );

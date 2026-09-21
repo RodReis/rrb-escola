@@ -1,48 +1,36 @@
 "use client";
 
-import { useRef, useState } from "react";
 import { Trash2 } from "lucide-react";
-import { toast } from "sonner";
 import { deleteTemplateAction } from "@/lib/actions/templates";
-import { useConfirm } from "@/components/ui/confirm-dialog";
+import { useAction } from "@/lib/hooks/use-action";
 
 export function DeleteTemplateButton({ templateId, nome }: { templateId: string; nome: string }) {
-  const confirm = useConfirm();
-  const formRef = useRef<HTMLFormElement>(null);
-  const [pending, setPending] = useState(false);
+  // deleteTemplateAction faz redirect() no sucesso: sem `success`, a
+  // navegacao para /rh/documentos e o proprio feedback.
+  const { run, pending } = useAction(deleteTemplateAction, {
+    confirm: {
+      title: "Excluir template",
+      message: `Tem certeza que quer excluir o template "${nome}"? Esta ação é permanente.`,
+      confirmLabel: "Excluir",
+      variant: "danger",
+    },
+    error: "Falha ao excluir.",
+  });
+
+  function handleClick() {
+    const fd = new FormData();
+    fd.append("template_id", templateId);
+    run(fd);
+  }
 
   return (
-    <form
-      ref={formRef}
-      action={async (formData) => {
-        setPending(true);
-        try {
-          await deleteTemplateAction(formData);
-          toast.success("Template excluído.");
-        } catch (err) {
-          toast.error(err instanceof Error ? err.message : "Falha ao excluir.");
-        } finally {
-          setPending(false);
-        }
-      }}
+    <button
+      type="button"
+      disabled={pending}
+      onClick={handleClick}
+      className="inline-flex items-center gap-1 rounded-ui border border-clay/30 bg-clay/5 px-2.5 py-1 text-xs font-semibold text-clay hover:bg-clay/10 disabled:opacity-50"
     >
-      <input type="hidden" name="template_id" value={templateId} />
-      <button
-        type="button"
-        disabled={pending}
-        className="inline-flex items-center gap-1 rounded-ui border border-clay/30 bg-clay/5 px-2.5 py-1 text-xs font-semibold text-clay hover:bg-clay/10 disabled:opacity-50"
-        onClick={async () => {
-          const ok = await confirm({
-            title: "Excluir template",
-            message: `Tem certeza que quer excluir o template "${nome}"? Esta ação é permanente.`,
-            confirmLabel: "Excluir",
-            variant: "danger",
-          });
-          if (ok) formRef.current?.requestSubmit();
-        }}
-      >
-        <Trash2 size={12} /> Excluir
-      </button>
-    </form>
+      <Trash2 size={12} /> Excluir
+    </button>
   );
 }
