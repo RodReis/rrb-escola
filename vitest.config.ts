@@ -4,9 +4,12 @@ import { resolve } from "node:path";
 export default defineConfig({
   test: {
     environment: "node",
-    include: ["src/**/*.test.ts"],
+    setupFiles: ["src/test-setup.ts"],
+    include: ["src/**/*.test.ts", "src/**/*.test.tsx"],
     passWithNoTests: true,
     fileParallelism: false,
+    // @ts-ignore - environmentMatchGlobs is available in vitest 4.1+ but types haven't caught up
+    environmentMatchGlobs: [["src/**/*.test.tsx", "jsdom"]],
   },
   resolve: {
     alias: {
