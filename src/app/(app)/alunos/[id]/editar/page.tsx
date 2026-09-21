@@ -1,4 +1,4 @@
-import { ArrowLeft, CheckCircle2, Camera } from "lucide-react";
+import { ArrowLeft, Camera } from "lucide-react";
 import { BiometricEnrollment } from "@/components/students/biometric-enrollment";
 import { StudentEditForm } from "@/components/students/student-edit-form";
 import { StudentEditTabs } from "@/components/students/student-edit-tabs";
@@ -38,7 +38,7 @@ export default async function EditStudentPage({
       <header className="flex flex-wrap items-end justify-between gap-4 border-b border-line bg-surface px-6 py-7">
         <div>
           <p className="ds-kicker">Gestao / Editar ficha</p>
-          <h1 className="mt-7 font-serif text-4xl text-ink">{student.nome}</h1>
+          <h1 className="mt-7 font-display text-4xl text-ink">{student.nome}</h1>
           <p className="mt-3 max-w-2xl text-sm text-muted">
             Atualize dados cadastrais, documentos, portaria, matriculas e informacoes relacionadas do aluno.
           </p>
@@ -51,12 +51,6 @@ export default async function EditStudentPage({
       <div className="sticky top-0 z-10 bg-surface shadow-soft">
         <StudentEditTabs />
       </div>
-
-      {(await searchParams).saved === "1" && (
-        <div className="flex items-center gap-2 border-b border-emerald-200 bg-emerald-50 px-6 py-3 text-sm font-medium text-emerald-800">
-          <CheckCircle2 size={16} /> Dados salvos com sucesso.
-        </div>
-      )}
 
       <div className="grid gap-6 py-6">
         {tab === "dados" && (
@@ -74,7 +68,7 @@ export default async function EditStudentPage({
           <>
             <StudentGatePanel alunoId={student.id} settings={gateSettings} />
             <section className="rounded-panel border border-line bg-surface p-5">
-              <h2 className="mb-3 flex items-center gap-2 font-serif text-2xl text-ink">
+              <h2 className="mb-3 flex items-center gap-2 font-display text-2xl text-ink">
                 <Camera size={20} className="text-brand" />
                 Biometria facial (LGPD)
               </h2>

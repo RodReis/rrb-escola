@@ -28,7 +28,7 @@ export function CompanyCard({ company, summary, canEdit }: Props) {
           </span>
           <div className="min-w-0">
             <h3 className="text-lg font-bold text-ink truncate" title={company.name}>{company.name}</h3>
-            <p className="text-xs text-ink/55 font-medium tabular-nums">{company.cnpj}</p>
+            <p className="text-xs text-ink/60 font-medium tabular-nums">{company.cnpj}</p>
           </div>
         </div>
         <StatusPill tone={company.ativo ? "success" : "danger"}>
@@ -38,12 +38,12 @@ export function CompanyCard({ company, summary, canEdit }: Props) {
 
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-5 border-y border-line py-3">
         <div>
-          <p className="text-[0.62rem] font-bold uppercase tracking-[0.10em] text-ink/55">Funcionários</p>
+          <p className="text-[0.62rem] font-bold uppercase tracking-[0.10em] text-ink/60">Funcionários</p>
           <strong className="mt-1 block text-lg font-bold text-ink tabular-nums">{summary.totalFuncionarios}</strong>
         </div>
         {(Object.keys(categoryLabels) as Array<keyof typeof categoryLabels>).map((cat) => (
           <div key={cat}>
-            <p className="text-[0.62rem] font-bold uppercase tracking-[0.10em] text-ink/55">{categoryLabels[cat]}</p>
+            <p className="text-[0.62rem] font-bold uppercase tracking-[0.10em] text-ink/60">{categoryLabels[cat]}</p>
             <strong className="mt-1 block text-lg font-bold text-ink/80 tabular-nums">{summary.porCategoria[cat]}</strong>
           </div>
         ))}

@@ -31,7 +31,10 @@ npx supabase start
 # 3. Aplica migrations + restaura snapshot completo de dados reais
 npx supabase db reset --local
 
-# 4. Sobe Next dev
+# 4. Garante o admin de teste local
+npm run seed:auth
+
+# 5. Sobe Next dev
 npm run dev
 ```
 
@@ -40,11 +43,20 @@ Abra `http://localhost:3000` e logue com:
 - **Email**: `admin@rrb.local`
 - **Senha**: `admin123`
 
+Para trabalhar com os dados atuais de produção em vez do snapshot, use
+`bash scripts/sync_local_from_prod.sh` (ver [docs/db-seed-workflow.md](docs/db-seed-workflow.md)).
+
+**Login falhou com "Sem perfil ativo"?** Rode `npm run seed:auth`. O usuário existe
+no `auth`, mas sem linha em `perfis` — acontece sempre que o banco local é
+reconstruído a partir de produção, onde `admin@rrb.local` não tem perfil.
+
 Supabase Studio (admin DB): `http://127.0.0.1:55423`
 
 ## O que `db reset` faz
 
 Roda todas migrations em `supabase/migrations/` em ordem. A última migration (`202605270002_seed_real_data.sql`) é um snapshot completo do banco com **~23 mil INSERTs** (alunos, matrículas, cobranças, payroll etc). Sai com banco populado pronto pra usar.
+
+Atenção: esse snapshot foi capturado em **2026-05-17** e tem 509 alunos, contra 789 em produção. Para trabalhar com os dados atuais, use `bash scripts/sync_local_from_prod.sh` — ver [docs/db-seed-workflow.md](docs/db-seed-workflow.md), que compara as duas fontes.
 
 **Login pós-reset**: o navegador pode ter cookie de sessão stale apontando para auth user antigo. Se aparecer `Invalid Refresh Token`: limpe cookies do site (DevTools → Application → Cookies → delete `sb-*`) ou faça logout/login.
 
@@ -173,6 +185,7 @@ bash scripts/regenerate_seed_migration.sh  # Snapshot atual → migration
 | Migration nova quebra com FK | Ordem de migrations / seed antes de tabela existir | Conferir ordem dos arquivos em `supabase/migrations/` |
 | `gen_salt does not exist` no seed.sql | Falta extension pgcrypto | Não usado — seed.sql é noop, migration faz tudo |
 | Erros pré-existentes em `alunos/[id]/editar` typecheck | Componente removido em refator anterior | Sem fix ainda |
+| `Sem perfil ativo. Solicite acesso ao administrador.` no login | Auth user existe mas não tem linha em `perfis` (ou `perfis.ativo = false`) vinculada pro `escola_id` | Rodar `npx supabase db reset --local` para restaurar o snapshot com o perfil do `admin@rrb.local`, ou verificar a tabela `perfis` no Supabase Studio |
 
 ## Documentação adicional
 

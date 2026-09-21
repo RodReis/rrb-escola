@@ -43,7 +43,18 @@ export async function updateCompanyAction(formData: FormData) {
     id: String(formData.get("id") ?? ""),
     name: String(formData.get("name") ?? "").trim(),
     cnpj: String(formData.get("cnpj") ?? "").trim(),
-    ativo: formData.get("ativo")
+    ativo: formData.get("ativo"),
+    endereco: formData.get("endereco"),
+    cidade: formData.get("cidade"),
+    uf: formData.get("uf"),
+    cep: formData.get("cep"),
+    resolucao: formData.get("resolucao"),
+    telefones: formData.get("telefones"),
+    email: formData.get("email"),
+    secretarioNome: formData.get("secretarioNome"),
+    secretarioCargo: formData.get("secretarioCargo"),
+    diretorNome: formData.get("diretorNome"),
+    diretorCargo: formData.get("diretorCargo")
   });
   if (!parsed.success) {
     const id = formData.get("id");
@@ -56,7 +67,18 @@ export async function updateCompanyAction(formData: FormData) {
     .update({
       name: parsed.data.name,
       cnpj: parsed.data.cnpj,
-      ativo: parsed.data.ativo
+      ativo: parsed.data.ativo,
+      endereco: parsed.data.endereco ?? null,
+      cidade: parsed.data.cidade ?? null,
+      uf: parsed.data.uf ?? null,
+      cep: parsed.data.cep ?? null,
+      resolucao: parsed.data.resolucao ?? null,
+      telefones: parsed.data.telefones ?? null,
+      email: parsed.data.email ?? null,
+      secretario_nome: parsed.data.secretarioNome ?? null,
+      secretario_cargo: parsed.data.secretarioCargo ?? "Secretário(a)",
+      diretor_nome: parsed.data.diretorNome ?? null,
+      diretor_cargo: parsed.data.diretorCargo ?? "Diretor(a)"
     })
     .eq("id", parsed.data.id);
 

@@ -7,7 +7,7 @@ import { criarCustomer, criarCobranca } from "@/lib/asaas/client";
 
 export type GerarCobrancaResult =
   | { ok: true; invoiceUrl: string }
-  | { ok: false; reason: string };
+  | { ok: false; error: string };
 
 export async function gerarCobrancaAsaasAction(
   cobrancaId: string,
@@ -23,12 +23,12 @@ export async function gerarCobrancaAsaasAction(
     .eq("escola_id", session.profile.escola_id)
     .maybeSingle();
 
-  if (!cobranca) return { ok: false, reason: "Cobrança não encontrada" };
+  if (!cobranca) return { ok: false, error: "Cobrança não encontrada" };
   if (cobranca.status === "paga" || cobranca.status === "cancelada") {
-    return { ok: false, reason: "Cobrança já está paga ou cancelada" };
+    return { ok: false, error: "Cobrança já está paga ou cancelada" };
   }
   if (cobranca.asaas_payment_id) {
-    return { ok: false, reason: "Cobrança já tem boleto gerado" };
+    return { ok: false, error: "Cobrança já tem boleto gerado" };
   }
 
   // Responsável financeiro do aluno.
@@ -40,10 +40,10 @@ export async function gerarCobrancaAsaasAction(
     .maybeSingle();
 
   if (!responsavel) {
-    return { ok: false, reason: "Aluno sem responsável financeiro cadastrado" };
+    return { ok: false, error: "Aluno sem responsável financeiro cadastrado" };
   }
   if (!responsavel.cpf || !responsavel.nome) {
-    return { ok: false, reason: "Responsável financeiro precisa de nome e CPF cadastrados" };
+    return { ok: false, error: "Responsável financeiro precisa de nome e CPF cadastrados" };
   }
 
   // Customer lazy: cria no Asaas na primeira vez.
@@ -55,14 +55,14 @@ export async function gerarCobrancaAsaasAction(
       email: responsavel.email,
       celular: responsavel.celular,
     });
-    if (!cliente.ok) return { ok: false, reason: cliente.reason };
+    if (!cliente.ok) return { ok: false, error: cliente.reason };
     customerId = cliente.data.id;
     const { error: custErr } = await supabase
       .from("responsaveis_aluno")
       .update({ asaas_customer_id: customerId })
       .eq("id", responsavel.id);
     if (custErr) {
-      return { ok: false, reason: "Erro ao salvar o customer Asaas. Tente novamente." };
+      return { ok: false, error: "Erro ao salvar o customer Asaas. Tente novamente." };
     }
   }
 
@@ -73,7 +73,7 @@ export async function gerarCobrancaAsaasAction(
     vencimento: cobranca.data_vencimento,
     descricao: cobranca.descricao,
   });
-  if (!pagamento.ok) return { ok: false, reason: pagamento.reason };
+  if (!pagamento.ok) return { ok: false, error: pagamento.reason };
 
   // Grava os dados do Asaas na cobrança.
   const { error: updErr } = await supabase
@@ -88,7 +88,7 @@ export async function gerarCobrancaAsaasAction(
   if (updErr) {
     return {
       ok: false,
-      reason: "Cobrança gerada no Asaas, mas não foi salva. Contate o suporte.",
+      error: "Cobrança gerada no Asaas, mas não foi salva. Contate o suporte.",
     };
   }
 

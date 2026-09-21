@@ -34,7 +34,7 @@ export function EventosCard({ items }: { items: EventoEscola[] }) {
           </span>
           <div>
             <h3 className="text-sm font-bold text-ink">Eventos</h3>
-            <p className="text-[0.66rem] text-ink/55">próximos da agenda da escola</p>
+            <p className="text-[0.66rem] text-ink/60">próximos da agenda da escola</p>
           </div>
         </div>
         {items.length > 0 && (
@@ -45,7 +45,7 @@ export function EventosCard({ items }: { items: EventoEscola[] }) {
       </div>
 
       {items.length === 0 && (
-        <div className="mt-6 flex flex-col items-center justify-center gap-2 rounded-ui bg-muted/30 py-8 text-ink/40">
+        <div className="mt-6 flex flex-col items-center justify-center gap-2 rounded-ui bg-muted/30 py-8 text-ink/60">
           <CalendarOff size={24} />
           <p className="text-sm">Nenhum evento cadastrado.</p>
         </div>
@@ -63,9 +63,9 @@ export function EventosCard({ items }: { items: EventoEscola[] }) {
                 Próximo evento
               </p>
               <p className="truncate text-sm font-bold text-ink">{destaque.titulo}</p>
-              <p className="text-xs text-ink/55">{formatRange(destaque.dataInicio, destaque.dataFim)}</p>
+              <p className="text-xs text-ink/60">{formatRange(destaque.dataInicio, destaque.dataFim)}</p>
               {destaque.local && (
-                <p className="mt-0.5 flex items-center gap-1 text-[0.66rem] text-ink/55">
+                <p className="mt-0.5 flex items-center gap-1 text-[0.66rem] text-ink/60">
                   <MapPin size={11} /> {destaque.local}
                 </p>
               )}
@@ -85,7 +85,7 @@ export function EventosCard({ items }: { items: EventoEscola[] }) {
                 </span>
                 <div className="min-w-0 flex-1">
                   <p className="truncate text-sm font-semibold text-ink">{e.titulo}</p>
-                  <p className="text-xs text-ink/55">
+                  <p className="text-xs text-ink/60">
                     {MESES[d.mes - 1]}
                     {e.local && <span className="ml-1">· {e.local}</span>}
                   </p>

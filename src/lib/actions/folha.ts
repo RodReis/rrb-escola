@@ -1,6 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { redirect } from "next/navigation";
 import { requirePermission } from "@/lib/auth/session";
 import { createServerClient } from "@/lib/supabase/server";
 import { gerarRun, recalcularItemDb, recalcularTotaisRun } from "@/lib/folha/service";
@@ -14,8 +15,14 @@ export async function gerarFolhaManualAction(formData: FormData) {
   const companyId = formText(formData, "company_id");
   const competencia = formText(formData, "competencia");
   if (!companyId || !competencia) throw new Error("Empresa e competência obrigatórias");
-  await gerarRun(companyId, competencia, session.profile.id);
+  try {
+    await gerarRun(companyId, competencia, session.profile.id);
+  } catch (e) {
+    const msg = e instanceof Error ? e.message : "Falha ao gerar folha";
+    redirect(`/rh/folha-v2?erro=${encodeURIComponent(msg)}`);
+  }
   revalidatePath("/rh/folha-v2");
+  redirect("/rh/folha-v2?ok=gerada");
 }
 
 export async function editarLancamentoAction(formData: FormData) {
@@ -47,7 +54,7 @@ export async function editarLancamentoAction(formData: FormData) {
       valor,
       origem: "manual",
       valor_calculado: row.origem === "auto" ? row.valor : undefined,
-      editado_por: session.profile.id,
+      editado_por: session.profile.user_id,
     })
     .eq("id", id);
   if (updError) throw updError;
@@ -126,13 +133,20 @@ export async function transicionarRunAction(formData: FormData) {
 
   const { data: run, error: runErr } = await supabase
     .from("folha_runs")
-    .select(
-      "*, tipo, folha_config:company_id(categoria_despesa_folha, categoria_despesa_encargos, regra_pagamento, feriados_locais, dia_vencimento_gps, dia_vencimento_fgts)",
-    )
+    .select("*, tipo")
     .eq("id", runId)
     .single();
   if (runErr) throw runErr;
   if (!run) throw new Error("Run não encontrada");
+
+  // folha_config nao tem FK direta de folha_runs (ambas referenciam company);
+  // busca por company_id para evitar embedding ambiguo (resolvia em companies).
+  const { data: cfg, error: cfgErr } = await supabase
+    .from("folha_config")
+    .select("categoria_despesa_folha, categoria_despesa_encargos, regra_pagamento, feriados_locais, dia_vencimento_gps, dia_vencimento_fgts")
+    .eq("company_id", (run as { company_id: string }).company_id)
+    .maybeSingle();
+  if (cfgErr) throw cfgErr;
 
   type RunRow = {
     id: string;
@@ -143,7 +157,7 @@ export async function transicionarRunAction(formData: FormData) {
     tipo: string;
     folha_config: RunParaDespesas["folha_config"];
   };
-  const runRow = run as unknown as RunRow;
+  const runRow = { ...(run as object), folha_config: cfg } as unknown as RunRow;
 
   if (!podeTransicionar(runRow.status, destino))
     throw new Error(`Transição ${runRow.status} → ${destino} inválida`);
@@ -205,7 +219,7 @@ export async function transicionarRunAction(formData: FormData) {
 
     const { error: updErr } = await supabase
       .from("folha_runs")
-      .update({ status: "aprovado", aprovada_por: session.profile.id, aprovada_em: new Date().toISOString() })
+      .update({ status: "aprovado", aprovada_por: session.profile.user_id, aprovada_em: new Date().toISOString() })
       .eq("id", runId);
     if (updErr) throw updErr;
   } else {
@@ -217,6 +231,8 @@ export async function transicionarRunAction(formData: FormData) {
   }
 
   revalidatePath("/rh/folha-v2");
+  revalidatePath(`/rh/folha-v2/${runId}`);
+  redirect(`/rh/folha-v2/${runId}?ok=${encodeURIComponent(destino)}`);
 }
 
 export async function validarRunAction(runId: string): Promise<string[]> {

@@ -47,11 +47,11 @@ export function PageHeader({
               })}
             </nav>
           ) : null}
-          <h1 className="ds-heading mt-3">
-            {title}
-            {counter != null ? <span className="ds-heading-counter">· {counter}</span> : null}
-          </h1>
-          {description ? <p className="ds-subhead">{description}</p> : null}
+          <div className="mt-2 flex flex-wrap items-center gap-3">
+            <h1 className="font-display text-[26px] font-bold leading-tight text-ink">{title}</h1>
+            {counter != null ? <span className="rb-pill rb-pill-info">{counter}</span> : null}
+          </div>
+          {description ? <p className="mt-1.5 text-[13.5px] text-ink/60">{description}</p> : null}
         </div>
         {actions ? <div className="flex flex-wrap items-center gap-2 lg:justify-end shrink-0">{actions}</div> : null}
       </div>

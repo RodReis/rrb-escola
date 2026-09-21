@@ -99,12 +99,12 @@ function DespesasCard({ total, previous, yoy, fixas, variaveis }: DespesasCardPr
           <dl className="mt-2 grid grid-cols-2 gap-2 text-xs">
             <div className="flex items-center gap-1.5">
               <span className="h-2 w-2 rounded-full bg-danger" />
-              <dt className="text-ink/55">Fixas</dt>
+              <dt className="text-ink/60">Fixas</dt>
               <dd className="ml-auto font-semibold text-ink">{money.format(fixas)}</dd>
             </div>
             <div className="flex items-center gap-1.5">
               <span className="h-2 w-2 rounded-full bg-warning" />
-              <dt className="text-ink/55">Variáveis</dt>
+              <dt className="text-ink/60">Variáveis</dt>
               <dd className="ml-auto font-semibold text-ink">{money.format(variaveis)}</dd>
             </div>
           </dl>

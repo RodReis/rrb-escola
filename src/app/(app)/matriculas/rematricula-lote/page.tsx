@@ -17,6 +17,8 @@ export default async function RematricularLotePage({
   const ano = parseInt(params.ano ?? "", 10);
   const turma_id = params.turma_id ?? "";
   const serie_dest_id = params.serie_dest_id ?? "";
+  const turma_dest_id = params.turma_dest_id ?? "";
+  const plano_dest_id = params.plano_dest_id ?? "";
 
   // Guard: step 2 requires ano + turma_id
   if (step === "2" && (!ano || !turma_id)) {
@@ -27,7 +29,7 @@ export default async function RematricularLotePage({
   if (step === "3" && (!ano || !turma_id)) {
     redirect("/matriculas/rematricula-lote?step=1");
   }
-  if (step === "3" && !serie_dest_id) {
+  if (step === "3" && (!serie_dest_id || !turma_dest_id)) {
     redirect(`/matriculas/rematricula-lote?step=2&ano=${ano}&turma_id=${turma_id}`);
   }
 
@@ -56,6 +58,8 @@ export default async function RematricularLotePage({
           ano={ano}
           turma_id={turma_id}
           serie_dest_id={serie_dest_id}
+          turma_dest_id={turma_dest_id}
+          plano_dest_id={plano_dest_id}
         />
       )}
     </div>

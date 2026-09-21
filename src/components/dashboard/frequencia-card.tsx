@@ -4,10 +4,10 @@ import { TrendSpark } from "./trend-spark";
 import type { FrequenciaResumo, FrequenciaPorTurmaRow } from "@/lib/data/dashboard-executive";
 
 const SEG_COLOR: Record<string, string> = {
-  INFANTIL: "bg-gold",
-  FUNDAMENTAL1: "bg-brand",
-  FUNDAMENTAL2: "bg-clay",
-  MEDIO: "bg-moss",
+  INFANTIL: "var(--c-amber)",
+  FUNDAMENTAL1: "rgb(var(--color-brand))",
+  FUNDAMENTAL2: "var(--c-coral)",
+  MEDIO: "var(--c-green)",
 };
 
 type Props = {
@@ -42,7 +42,7 @@ export function FrequenciaCard({ data, porTurma = [] }: Props) {
           </span>
           <div>
             <h3 className="text-sm font-bold text-ink">Frequência</h3>
-            <p className="text-[0.66rem] text-ink/55">últimos 30 dias</p>
+            <p className="text-[0.66rem] text-ink/60">últimos 30 dias</p>
           </div>
         </div>
         <Link
@@ -55,7 +55,7 @@ export function FrequenciaCard({ data, porTurma = [] }: Props) {
       </div>
 
       {data.totalRegistros === 0 ? (
-        <div className="mt-6 flex flex-col items-center justify-center gap-2 rounded-ui bg-muted/30 py-8 text-ink/40">
+        <div className="mt-6 flex flex-col items-center justify-center gap-2 rounded-ui bg-muted/30 py-8 text-ink/60">
           <CalendarCheck size={24} />
           <p className="text-sm text-center px-3">Sem registros nos últimos 30 dias.</p>
         </div>
@@ -63,20 +63,20 @@ export function FrequenciaCard({ data, porTurma = [] }: Props) {
         <>
           <div className="mt-4 flex items-baseline gap-2">
             <strong className={`text-4xl font-bold leading-none ${cfg.text}`}>{pct.toFixed(1)}%</strong>
-            <span className="text-xs text-ink/55">presença média</span>
+            <span className="text-xs text-ink/60">presença média</span>
           </div>
 
           <dl className="mt-3 grid grid-cols-3 gap-2 text-xs">
             <div className="rounded-ui bg-muted/40 p-2">
-              <dt className="text-[0.66rem] uppercase tracking-kicker text-ink/55">Presentes</dt>
+              <dt className="text-[0.66rem] uppercase tracking-kicker text-ink/60">Presentes</dt>
               <dd className="mt-1 font-bold text-success">{data.presentes}</dd>
             </div>
             <div className="rounded-ui bg-muted/40 p-2">
-              <dt className="text-[0.66rem] uppercase tracking-kicker text-ink/55">Faltas</dt>
+              <dt className="text-[0.66rem] uppercase tracking-kicker text-ink/60">Faltas</dt>
               <dd className="mt-1 font-bold text-danger">{data.faltas}</dd>
             </div>
             <div className="rounded-ui bg-muted/40 p-2">
-              <dt className="text-[0.66rem] uppercase tracking-kicker text-ink/55">Dias</dt>
+              <dt className="text-[0.66rem] uppercase tracking-kicker text-ink/60">Dias</dt>
               <dd className="mt-1 font-bold text-ink">{data.diasComRegistro}</dd>
             </div>
           </dl>
@@ -102,7 +102,10 @@ export function FrequenciaCard({ data, porTurma = [] }: Props) {
                       href={`/frequencias?turma=${t.turmaId}`}
                       className="flex items-center gap-2 text-xs hover:underline"
                     >
-                      <span className={`h-1.5 w-1.5 rounded-full ${SEG_COLOR[t.segmento] ?? "bg-ink/30"}`} />
+                      <span
+                        className="h-1.5 w-1.5 rounded-full"
+                        style={{ background: SEG_COLOR[t.segmento] ?? "rgb(var(--color-ink) / 0.3)" }}
+                      />
                       <span className="truncate text-ink">{t.serie} {t.turmaNome}</span>
                       <span className="ml-auto font-bold text-danger">
                         {(t.taxaPresenca * 100).toFixed(0)}%

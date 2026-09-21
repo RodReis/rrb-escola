@@ -26,9 +26,8 @@ export default async function RematricularLoteResultadoPage() {
     redirect("/matriculas/rematricula-lote?step=1");
   }
 
-  // Clear cookie immediately after parsing
-  cookieStore.set("rematricula_lote_result", "", { maxAge: 0, httpOnly: true, path: "/" });
-
+  // Server Component não pode escrever cookie; o cookie expira sozinho (maxAge 60s)
+  // e é sobrescrito a cada novo lote.
   const { anoDestino, ok, errors } = resultado;
 
   // Re-fetch names from DB — cookie stores only IDs to stay under 4KB limit
@@ -38,8 +37,7 @@ export default async function RematricularLoteResultadoPage() {
   const errorMatriculaIds = errors.map((r) => r.matriculaId);
   const allIds = [...novaIds, ...errorMatriculaIds];
 
-  type NomeRow = { id: string; aluno_nome: string };
-  let nomeMap: Record<string, string> = {};
+  const nomeMap: Record<string, string> = {};
 
   if (allIds.length > 0) {
     // For ok rows: fetch nova matrícula → aluno nome
@@ -81,7 +79,7 @@ export default async function RematricularLoteResultadoPage() {
         description={`${ok.length} re-matriculados · ${errors.length} erros`}
       />
 
-      <div className="grid gap-6 max-w-3xl">
+      <div className="grid gap-6">
         {ok.length > 0 && (
           <Panel className="grid gap-4">
             <div className="flex items-center gap-2 text-success">
@@ -90,7 +88,7 @@ export default async function RematricularLoteResultadoPage() {
             </div>
             <table className="w-full text-sm">
               <thead>
-                <tr className="border-b border-line text-left text-ink/50">
+                <tr className="border-b border-line text-left text-muted">
                   <th className="pb-2 font-medium">Aluno</th>
                   <th className="pb-2 font-medium text-right">Nova matrícula</th>
                 </tr>
@@ -122,7 +120,7 @@ export default async function RematricularLoteResultadoPage() {
             </div>
             <table className="w-full text-sm">
               <thead>
-                <tr className="border-b border-line text-left text-ink/50">
+                <tr className="border-b border-line text-left text-muted">
                   <th className="pb-2 font-medium">Aluno</th>
                   <th className="pb-2 font-medium">Motivo</th>
                 </tr>
@@ -131,7 +129,7 @@ export default async function RematricularLoteResultadoPage() {
                 {errors.map((row) => (
                   <tr key={row.matriculaId}>
                     <td className="py-2 text-ink">{nomeMap[row.matriculaId] ?? "—"}</td>
-                    <td className="py-2 text-ink/60">{row.motivo}</td>
+                    <td className="py-2 text-muted">{row.motivo}</td>
                   </tr>
                 ))}
               </tbody>

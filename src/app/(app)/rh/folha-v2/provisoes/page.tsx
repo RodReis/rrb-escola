@@ -80,7 +80,7 @@ export default async function ProvisoesPage() {
       />
 
       <Card>
-        <p className="text-xs font-bold uppercase tracking-kicker text-ink/55 mb-1">Total provisionado</p>
+        <p className="text-xs font-bold uppercase tracking-kicker text-ink/60 mb-1">Total provisionado</p>
         <p className="text-2xl font-bold tabular-nums text-ink">{money.format(totalGeral)}</p>
       </Card>
 
@@ -105,7 +105,7 @@ export default async function ProvisoesPage() {
           <tbody>
             {byFuncionario.size === 0 ? (
               <tr>
-                <td colSpan={7} className="py-8 text-center text-sm text-ink/40">
+                <td colSpan={7} className="py-8 text-center text-sm text-ink/60">
                   Nenhuma provisão registrada.
                 </td>
               </tr>

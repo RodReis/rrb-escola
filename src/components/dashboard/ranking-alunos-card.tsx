@@ -34,7 +34,7 @@ export function RankingAlunosCard({ items }: { items: AlunoRankingRow[] }) {
           </span>
           <div>
             <h3 className="text-sm font-bold text-ink">Ranking de alunos</h3>
-            <p className="text-[0.66rem] text-ink/55">por média geral no ano</p>
+            <p className="text-[0.66rem] text-ink/60">por média geral no ano</p>
           </div>
         </div>
         {items.length > 0 && (
@@ -45,7 +45,7 @@ export function RankingAlunosCard({ items }: { items: AlunoRankingRow[] }) {
       </div>
 
       {items.length === 0 ? (
-        <div className="mt-6 flex flex-col items-center justify-center gap-2 rounded-ui bg-muted/40 py-10 text-ink/40">
+        <div className="mt-6 flex flex-col items-center justify-center gap-2 rounded-ui bg-muted/40 py-10 text-ink/60">
           <Award size={28} />
           <p className="text-sm text-center px-4">
             Sem médias consolidadas.
@@ -72,7 +72,7 @@ export function RankingAlunosCard({ items }: { items: AlunoRankingRow[] }) {
                   <Avatar name={a.nome} src={a.fotoUrl} size={36} />
                   <div className="min-w-0 flex-1">
                     <p className="truncate text-sm font-semibold text-ink">{a.nome}</p>
-                    <p className="mt-0.5 flex items-center gap-1.5 text-xs text-ink/55">
+                    <p className="mt-0.5 flex items-center gap-1.5 text-xs text-ink/60">
                       <span className={`h-1.5 w-1.5 rounded-full ${dotColor}`} />
                       {SEG_LABEL[a.segmento] ?? a.segmento} · {a.serie} {a.turma}
                     </p>
@@ -85,7 +85,7 @@ export function RankingAlunosCard({ items }: { items: AlunoRankingRow[] }) {
                     }`}>
                       {a.mediaGeral.toFixed(2)}
                     </p>
-                    <p className="mt-1 text-[0.6rem] font-semibold uppercase tracking-kicker text-ink/45">
+                    <p className="mt-1 text-[0.6rem] font-semibold uppercase tracking-kicker text-ink/60">
                       {a.disciplinasComMedia} disc.
                     </p>
                   </div>

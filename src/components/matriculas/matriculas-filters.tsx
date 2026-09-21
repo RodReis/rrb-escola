@@ -59,7 +59,7 @@ export function MatriculasFilters({ counts }: { counts: Counts }) {
       {(nome || status) && (
         <button
           type="button"
-          className="text-xs font-semibold text-ink/55 hover:text-brand"
+          className="text-xs font-semibold text-ink/60 hover:text-brand"
           onClick={() => router.push(pathname)}
         >
           Limpar filtros

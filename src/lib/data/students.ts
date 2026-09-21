@@ -1,58 +1,181 @@
 import { createServerClient } from "@/lib/supabase/server";
 import { DEFAULT_SCHOOL_ID } from "@/lib/constants";
 import type { StudentSheet } from "@/lib/types";
+import { normalizeNome } from "@/lib/format/normalize-nome";
+import {
+  alunoSemMatriculaAtivaNoAno,
+  montarFiltroAlunosAtivos,
+  type FiltroAlunosAtivosResolvido,
+} from "./students-shared-constants";
+
+/** "ativos" (padrao) | "inativos" | "todos" — ver `situacao` em runStudentsQuery. */
+export type SituacaoAluno = "ativos" | "inativos" | "todos";
 
 export type StudentFilters = {
   nome?: string;
   serieId?: string;
   turmaId?: string;
   segmento?: string;
+  anoLetivo?: number;
+  situacao?: SituacaoAluno;
+  page?: number;
+  pageSize?: number;
 };
 
-export async function listStudents(filters?: StudentFilters) {
-  const supabase = await createServerClient();
+export const STUDENTS_PAGE_SIZE = 30;
+
+export type PaginatedStudents = {
+  rows: NonNullable<Awaited<ReturnType<typeof runStudentsQuery>>["data"]>;
+  total: number;
+  page: number;
+  pageSize: number;
+};
+
+function runStudentsQuery(
+  supabase: Awaited<ReturnType<typeof createServerClient>>,
+  filters: StudentFilters | undefined,
+  from: number,
+  to: number
+) {
+  // Filtro por matrícula (segmento/série/turma) exige inner join na relação;
+  // sem esses filtros usamos left join para não perder alunos sem matrícula.
+  // Ex-aluno nao tem matricula: o inner join abaixo o excluiria sempre, entao
+  // ao pedir inativos (ou todos) o join volta a ser left.
+  //
+  // `anoLetivo` de proposito NAO entra aqui: a tela sempre manda um (o ano
+  // corrente por padrao), entao inclui-lo tornava o inner join permanente e
+  // escondia da lista o aluno ativo sem matricula no ano — justamente quem a
+  // secretaria precisa achar para rematricular. O ano volta a filtrar assim que
+  // ha serie/turma/segmento escolhidos.
+  const situacao = filters?.situacao ?? "ativos";
+  const querInativos = situacao !== "ativos";
+  const hasEnrollmentFilter =
+    !querInativos && Boolean(filters?.serieId || filters?.turmaId || filters?.segmento);
+  const matriculaSelect = hasEnrollmentFilter
+    ? "matriculas!inner(status, serie_id, turma_id, ano_letivo, series!inner(id, nome, segmento), turmas(id, nome), planos(nome))"
+    : "matriculas(status, serie_id, turma_id, ano_letivo, series(id, nome, segmento), turmas(id, nome), planos(nome))";
+
   let query = supabase
     .from("alunos")
-    .select("id, matricula_codigo, nome, cpf, celular, ativo, foto_url, matriculas(status, serie_id, turma_id, series(id, nome, segmento), turmas(id, nome)), responsaveis_aluno(nome, celular, telefone, parentesco)")
+    .select(
+      `id, matricula_codigo, nome, cpf, celular, ativo, foto_url, ${matriculaSelect}, responsaveis_aluno(nome, celular, telefone, parentesco)`,
+      { count: "exact" }
+    )
     .eq("escola_id", DEFAULT_SCHOOL_ID)
-    .order("nome");
+    .order("nome")
+    .range(from, to);
 
-  if (filters?.nome) {
-    query = query.ilike("nome", `%${filters.nome}%`);
+  // Busca ignora acento/caixa (mesma regra do combo/fonte única): compara
+  // contra `nome_normalizado` em vez de `nome` — ver `docs/superpowers/specs/
+  // 2026-09-19-fonte-unica-alunos-design.md`.
+  if (filters?.nome) query = query.ilike("nome_normalizado", `%${normalizeNome(filters.nome)}%`);
+  if (situacao === "ativos") query = query.eq("ativo", true);
+  if (situacao === "inativos") query = query.eq("ativo", false);
+  // Filtrar por ano é visão histórica: quem foi re-matriculado fica "concluida"
+  // no ano anterior e ainda deve aparecer nele.
+  if (hasEnrollmentFilter) {
+    query = filters?.anoLetivo
+      ? query.in("matriculas.status", ["ativa", "concluida"])
+      : query.eq("matriculas.status", "ativa");
   }
+  if (hasEnrollmentFilter) {
+    if (filters?.serieId) query = query.eq("matriculas.serie_id", filters.serieId);
+    if (filters?.turmaId) query = query.eq("matriculas.turma_id", filters.turmaId);
+    if (filters?.segmento) query = query.eq("matriculas.series.segmento", filters.segmento);
+    if (filters?.anoLetivo) query = query.eq("matriculas.ano_letivo", filters.anoLetivo);
+  }
+
+  return query;
+}
+
+export async function listStudents(filters?: StudentFilters): Promise<PaginatedStudents> {
+  const supabase = await createServerClient();
+  const page = Math.max(1, filters?.page ?? 1);
+  const pageSize = filters?.pageSize ?? STUDENTS_PAGE_SIZE;
+  const from = (page - 1) * pageSize;
+  const to = from + pageSize - 1;
+
+  const { data, error, count } = await runStudentsQuery(supabase, filters, from, to);
+  if (error) throw error;
+
+  return { rows: data ?? [], total: count ?? 0, page, pageSize };
+}
+
+type SegmentCountFilters = Pick<StudentFilters, "situacao" | "serieId" | "turmaId" | "anoLetivo">;
+
+/**
+ * Status de matrícula que as abas de segmento contam.
+ *
+ * No ano corrente conta só `ativa` — mesma regra da fonte única
+ * (`contarAlunosAtivos`), para as abas somarem o mesmo número de matriculados
+ * que o organograma e os KPIs do dashboard mostram. Quem concluiu ou saiu no
+ * meio do ano não está mais estudando e não entra.
+ *
+ * Em ano já encerrado conta também `concluida`: lá, quem foi rematriculado
+ * ficou com a matrícula daquele ano concluída e ainda precisa aparecer nele.
+ *
+ * Exportada para teste — é a regra de decisão onde um bug de contagem moraria.
+ */
+export function statusParaContagemDeSegmento(
+  anoLetivo: number,
+  anoCorrente: number = new Date().getFullYear()
+): string[] {
+  return anoLetivo < anoCorrente ? ["ativa", "concluida"] : ["ativa"];
+}
+
+/**
+ * Conta por segmento com os mesmos filtros de `listStudents` (exceto `segmento`,
+ * que é o próprio eixo contado) — senão as abas ficam travadas num total que
+ * ignora Situação/Série/Turma escolhidos nos combos ao lado.
+ */
+export async function getStudentSegmentCounts(filters?: SegmentCountFilters) {
+  const supabase = await createServerClient();
+  const situacao = filters?.situacao ?? "ativos";
+  const querInativos = situacao !== "ativos";
+  const anoLetivo = filters?.anoLetivo ?? new Date().getFullYear();
+
+  let query = supabase
+    .from("alunos")
+    .select("id, ativo, matriculas(status, ano_letivo, serie_id, turma_id, series(segmento))")
+    .eq("escola_id", DEFAULT_SCHOOL_ID);
+  if (situacao === "ativos") query = query.eq("ativo", true);
+  if (situacao === "inativos") query = query.eq("ativo", false);
 
   const { data, error } = await query;
   if (error) throw error;
 
-  let rows = data ?? [];
-
-  if (filters?.serieId || filters?.turmaId || filters?.segmento) {
-    rows = rows.filter((student) => {
-      const enrollment = student.matriculas?.find((m) => m.status === "ativa") ?? student.matriculas?.[0];
-      if (!enrollment) return false;
-      const serie = Array.isArray(enrollment.series) ? enrollment.series[0] : enrollment.series;
-      const turma = Array.isArray(enrollment.turmas) ? enrollment.turmas[0] : enrollment.turmas;
-      if (filters.serieId && serie?.id !== filters.serieId) return false;
-      if (filters.turmaId && turma?.id !== filters.turmaId) return false;
-      if (filters.segmento && (serie as { segmento?: string | null })?.segmento !== filters.segmento) return false;
-      return true;
-    });
-  }
-
-  return rows;
-}
-
-export async function getStudentSegmentCounts() {
-  const supabase = await createServerClient();
-  const { data, error } = await supabase
-    .from("alunos")
-    .select("id, matriculas(status, series(segmento))")
-    .eq("escola_id", DEFAULT_SCHOOL_ID);
-  if (error) throw error;
   const counts = { all: 0, infantil: 0, fund1: 0, fund2: 0, medio: 0 };
   for (const row of data ?? []) {
+    // Ex-aluno sem matrícula (inativo) ainda deve ser contado em "Todos" ao
+    // filtrar por Situação — só matrícula filtra por ano quando ela existe.
+    const matriculas = (row.matriculas ?? []) as {
+      status?: string | null;
+      ano_letivo?: number | null;
+      serie_id?: string | null;
+      turma_id?: string | null;
+      series?: { segmento?: string | null } | { segmento?: string | null }[] | null;
+    }[];
+    let matriculasDoAno = matriculas.filter((m) => m.ano_letivo === anoLetivo);
+    if (filters?.serieId) matriculasDoAno = matriculasDoAno.filter((m) => m.serie_id === filters.serieId);
+    if (filters?.turmaId) matriculasDoAno = matriculasDoAno.filter((m) => m.turma_id === filters.turmaId);
+    if (!querInativos) {
+      const statusAceitos = statusParaContagemDeSegmento(anoLetivo);
+      matriculasDoAno = matriculasDoAno.filter((m) => statusAceitos.includes(m.status ?? ""));
+    }
+
+    if (matriculasDoAno.length === 0) {
+      // Sem matrícula no ano não há segmento a atribuir. Ao listar ativos,
+      // "Todos" conta só matriculados — assim a aba bate com a soma das abas
+      // de segmento ao lado e com o contador do título (ambos vêm da fonte
+      // única). Quem está ativo sem matrícula aparece na lista e no KPI
+      // "Sem matrícula no ano", não aqui.
+      // Ao pedir inativos/todos a regra é outra: ex-aluno não tem matrícula e
+      // ainda precisa ser contado, senão a aba zera.
+      if (querInativos && !filters?.serieId && !filters?.turmaId) counts.all += 1;
+      continue;
+    }
     counts.all += 1;
-    const enr = (row.matriculas ?? []).find((m: { status?: string | null }) => m.status === "ativa") ?? row.matriculas?.[0];
+    const enr = matriculasDoAno.find((m) => m.status === "ativa") ?? matriculasDoAno[0];
     const series = enr ? (Array.isArray(enr.series) ? enr.series[0] : enr.series) : null;
     const seg = (series as { segmento?: string | null } | null)?.segmento ?? null;
     if (seg === "INFANTIL") counts.infantil += 1;
@@ -63,7 +186,7 @@ export async function getStudentSegmentCounts() {
   return counts;
 }
 
-export async function getStudentFilterOptions() {
+export async function getStudentFilterOptions(anoLetivo: number = new Date().getFullYear()) {
   const supabase = await createServerClient();
   const [seriesRes, turmasRes] = await Promise.all([
     supabase
@@ -75,10 +198,11 @@ export async function getStudentFilterOptions() {
       .order("ordem"),
     supabase
       .from("turmas")
-      .select("id, nome, serie_id, ano_letivo")
+      .select("id, nome, serie_id, ano_letivo, turno")
       .eq("escola_id", DEFAULT_SCHOOL_ID)
       .eq("ativo", true)
-      .eq("ano_letivo", new Date().getFullYear())
+      .eq("ano_letivo", anoLetivo)
+      .order("turno")
       .order("nome"),
   ]);
 
@@ -89,6 +213,18 @@ export async function getStudentFilterOptions() {
     series: seriesRes.data ?? [],
     turmas: turmasRes.data ?? [],
   };
+}
+
+export async function getStudentAvailableYears(): Promise<number[]> {
+  const supabase = await createServerClient();
+  const { data, error } = await supabase.rpc("anos_letivos_matriculas", {
+    p_escola_id: DEFAULT_SCHOOL_ID,
+  });
+  if (error) throw error;
+  const rows = (data ?? []) as { ano_letivo: number }[];
+  const anos = new Set<number>(rows.map((m) => m.ano_letivo));
+  anos.add(new Date().getFullYear());
+  return Array.from(anos).sort((a, b) => b - a);
 }
 
 export async function getStudentSheet(id: string) {
@@ -144,6 +280,7 @@ export async function getStudentsReport() {
       data_nascimento,
       celular,
       ativo,
+      foto_url,
       enderecos_aluno(cidade, uf, cep),
       responsaveis_aluno(nome, parentesco, celular, email, responsavel_financeiro),
       matriculas(status, ano_letivo, data_matricula, series(nome), turmas(nome))
@@ -172,6 +309,7 @@ export async function getStudentsReport() {
       dataNascimento: student.data_nascimento,
       celular: student.celular,
       ativo: student.ativo,
+      fotoUrl: student.foto_url,
       cidade: address?.cidade ?? "",
       uf: address?.uf ?? "",
       cep: address?.cep ?? "",
@@ -185,4 +323,152 @@ export async function getStudentsReport() {
       statusMatricula: activeEnrollment?.status ?? ""
     };
   });
+}
+
+export type AlunoAtivoAnoCorrente = {
+  id: string;
+  nome: string;
+  matriculaCodigo: string | null;
+  cpf: string | null;
+  matriculaId: string;
+  serieId: string;
+  turmaId: string;
+  anoLetivo: number;
+};
+
+export type FiltroAlunosAtivos = {
+  anoLetivo?: number;
+  serieId?: string;
+  turmaId?: string;
+  nome?: string;
+};
+
+type AlunoAtivoRow = {
+  id: string;
+  nome: string;
+  matricula_codigo: string | null;
+  cpf: string | null;
+  matriculas:
+    | { id: string; serie_id: string; turma_id: string; ano_letivo: number; status: string }
+    | { id: string; serie_id: string; turma_id: string; ano_letivo: number; status: string }[]
+    | null;
+};
+
+// Exportada (apenas para teste) para permitir cobrir a regra 527 com um fake
+// mínimo de query builder, sem mockar o client Supabase inteiro — ver
+// students-shared.test.ts.
+export function buildAlunosAtivosQuery(
+  supabase: Awaited<ReturnType<typeof createServerClient>>,
+  filtro: FiltroAlunosAtivosResolvido,
+  opts: { countOnly: boolean }
+) {
+  // A select string precisa ser IDENTICA nos dois modos: no PostgREST o join
+  // com `matriculas` e declarado no proprio select, entao se countOnly trocar
+  // o select para "id" os .eq("matriculas.*", ...) abaixo ficam sem relacao a
+  // que se aplicar e a regra 527 (status='ativa' + ano_letivo) e ignorada.
+  // `opts.countOnly` deve afetar apenas `head`, nunca o conteudo do select.
+  let query = supabase
+    .from("alunos")
+    .select(
+      "id, nome, matricula_codigo, cpf, matriculas!inner(id, serie_id, turma_id, ano_letivo, status)",
+      { count: "exact", head: opts.countOnly }
+    )
+    .eq("escola_id", DEFAULT_SCHOOL_ID)
+    .eq("ativo", true)
+    .eq("matriculas.status", "ativa")
+    .eq("matriculas.ano_letivo", filtro.anoLetivo);
+
+  if (filtro.serieId) query = query.eq("matriculas.serie_id", filtro.serieId);
+  if (filtro.turmaId) query = query.eq("matriculas.turma_id", filtro.turmaId);
+  if (filtro.nomeNormalizado) query = query.ilike("nome_normalizado", `%${filtro.nomeNormalizado}%`);
+  if (!opts.countOnly) query = query.order("nome");
+
+  return query;
+}
+
+/**
+ * Fonte única: alunos com `ativo=true` e matrícula `status='ativa'` no ano
+ * letivo informado (ou corrente). Base de todo KPI/contagem "oficial" do
+ * sistema — a regra "527". Não usar para telas que precisam ver aluno ativo
+ * sem matrícula no ano (ver `listStudents`) nem para o combo de nova
+ * matrícula (ver `getAlunosSemMatriculaNoAno`).
+ */
+export async function getAlunosAtivosAnoCorrente(
+  filtro?: FiltroAlunosAtivos
+): Promise<AlunoAtivoAnoCorrente[]> {
+  const supabase = await createServerClient();
+  const resolvido = montarFiltroAlunosAtivos(filtro ?? {});
+  const { data, error } = await buildAlunosAtivosQuery(supabase, resolvido, { countOnly: false });
+  if (error) throw error;
+
+  return ((data ?? []) as unknown as AlunoAtivoRow[]).map((row) => {
+    const matricula = Array.isArray(row.matriculas) ? row.matriculas[0] : row.matriculas;
+    return {
+      id: row.id,
+      nome: row.nome,
+      matriculaCodigo: row.matricula_codigo,
+      cpf: row.cpf,
+      matriculaId: matricula?.id ?? "",
+      serieId: matricula?.serie_id ?? "",
+      turmaId: matricula?.turma_id ?? "",
+      anoLetivo: matricula?.ano_letivo ?? resolvido.anoLetivo,
+    };
+  });
+}
+
+/**
+ * Mesma base de `getAlunosAtivosAnoCorrente`, mas devolve só a contagem
+ * (`head: true`) — evita trazer linhas quando só o número importa.
+ */
+export async function contarAlunosAtivos(
+  filtro?: Omit<FiltroAlunosAtivos, "nome">
+): Promise<number> {
+  const supabase = await createServerClient();
+  const resolvido = montarFiltroAlunosAtivos(filtro ?? {});
+  const { count, error } = await buildAlunosAtivosQuery(supabase, resolvido, { countOnly: true });
+  if (error) throw error;
+  return count ?? 0;
+}
+
+/**
+ * Universo do combo de NOVA matrícula/rematrícula: alunos `ativo=true` que
+ * NÃO têm matrícula `status='ativa'` no ano letivo informado — quem ainda
+ * pode ser matriculado nesse ano. Sem esta função, o combo alinhado à regra
+ * 527 ficaria vazio para quem ainda não tem matrícula no ano (caso comum:
+ * matricular aluno novo ou reativar aluno com lacuna de anos).
+ */
+export async function getAlunosSemMatriculaNoAno(
+  anoLetivo: number = new Date().getFullYear()
+): Promise<
+  {
+    id: string;
+    nome: string;
+    matriculaCodigo: string | null;
+    dataNascimento: string | null;
+    matriculas: { ano_letivo: number; status: string; serie_id: string | null }[];
+  }[]
+> {
+  const supabase = await createServerClient();
+  const { data, error } = await supabase
+    .from("alunos")
+    .select("id, nome, matricula_codigo, data_nascimento, matriculas(ano_letivo, status, serie_id)")
+    .eq("escola_id", DEFAULT_SCHOOL_ID)
+    .eq("ativo", true)
+    .order("nome");
+  if (error) throw error;
+
+  return (data ?? [])
+    .filter((row) =>
+      alunoSemMatriculaAtivaNoAno(
+        (row.matriculas ?? []) as { ano_letivo: number; status: string }[],
+        anoLetivo
+      )
+    )
+    .map((row) => ({
+      id: row.id,
+      nome: row.nome,
+      matriculaCodigo: row.matricula_codigo,
+      dataNascimento: row.data_nascimento,
+      matriculas: (row.matriculas ?? []) as { ano_letivo: number; status: string; serie_id: string | null }[],
+    }));
 }

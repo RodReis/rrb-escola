@@ -33,16 +33,16 @@ export function EvasaoCard({ data }: { data: EvasaoData }) {
             </span>
             <div>
               <h3 className="text-sm font-bold text-ink">Evasão</h3>
-              <p className="text-[0.66rem] text-ink/55">ano corrente</p>
+              <p className="text-[0.66rem] text-ink/60">ano corrente</p>
             </div>
           </div>
           <div className="mt-4 flex items-baseline gap-2">
             <strong className={`text-4xl font-bold leading-none ${cfg.text}`}>{pct.toFixed(1)}%</strong>
-            <span className="text-xs text-ink/55">{totalEvasao} de {totalGeral}</span>
+            <span className="text-xs text-ink/60">{totalEvasao} de {totalGeral}</span>
           </div>
         </div>
         <div className="rounded-ui bg-muted/40 px-3 py-2 text-right">
-          <div className="flex items-center justify-end gap-1.5 text-ink/55">
+          <div className="flex items-center justify-end gap-1.5 text-ink/60">
             <Users size={11} />
             <span className="text-[0.6rem] font-semibold uppercase tracking-kicker">Ativos</span>
           </div>
@@ -69,8 +69,8 @@ export function EvasaoCard({ data }: { data: EvasaoData }) {
         <div className="mt-5">
           <div className="flex items-center gap-2 mb-3">
             <TrendingDown size={12} className="text-danger" />
-            <p className="text-[0.66rem] font-bold uppercase tracking-kicker text-ink/55">Por mês</p>
-            <span className="ml-auto flex items-center gap-3 text-[0.6rem] text-ink/45">
+            <p className="text-[0.66rem] font-bold uppercase tracking-kicker text-ink/60">Por mês</p>
+            <span className="ml-auto flex items-center gap-3 text-[0.6rem] text-ink/60">
               <span className="flex items-center gap-1">
                 <span className="h-2 w-2 rounded-sm bg-danger" /> cancelados
               </span>
@@ -84,7 +84,7 @@ export function EvasaoCard({ data }: { data: EvasaoData }) {
               const total = m.cancelados + m.transferidos;
               return (
                 <div key={m.mes} className="flex items-center gap-2 text-xs">
-                  <span className="w-10 shrink-0 font-semibold text-ink/55">{labelMes(m.mes)}</span>
+                  <span className="w-10 shrink-0 font-semibold text-ink/60">{labelMes(m.mes)}</span>
                   <div className="flex-1 h-2.5 rounded-pill bg-muted overflow-hidden flex">
                     <div className="h-2.5 bg-danger transition-all" style={{ width: `${(m.cancelados / maxMes) * 100}%` }} />
                     <div className="h-2.5 bg-warning transition-all" style={{ width: `${(m.transferidos / maxMes) * 100}%` }} />

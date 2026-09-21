@@ -112,7 +112,7 @@ export default async function FuncionariosPage({
             {employees.length === 0 ? (
               <tr>
                 <td colSpan={canMutate ? 7 : 6} className="py-12">
-                  <div className="flex flex-col items-center justify-center gap-2 text-ink/40">
+                  <div className="flex flex-col items-center justify-center gap-2 text-ink/60">
                     <Users size={28} />
                     <p className="text-sm">Nenhum funcionário encontrado.</p>
                   </div>
@@ -129,7 +129,7 @@ export default async function FuncionariosPage({
                     <Avatar name={emp.name} size={32} />
                     <span className="flex flex-col leading-tight">
                       <span className="font-semibold text-ink group-hover:text-brand">{emp.name}</span>
-                      <span className="text-xs text-ink/50 tabular-nums">{emp.cpf}</span>
+                      <span className="text-xs text-ink/60 tabular-nums">{emp.cpf}</span>
                     </span>
                   </Link>
                 </td>
@@ -140,7 +140,7 @@ export default async function FuncionariosPage({
                 <td>
                   <span className="flex flex-col leading-tight">
                     <span className="text-sm text-ink/80">{emp.email ?? "—"}</span>
-                    <span className="text-xs text-ink/55">{emp.telefone ?? "—"}</span>
+                    <span className="text-xs text-ink/60">{emp.telefone ?? "—"}</span>
                   </span>
                 </td>
                 <td>
@@ -154,7 +154,7 @@ export default async function FuncionariosPage({
                   ) : (
                     <Link
                       href={`/rh/folha-v2/contratos/novo`}
-                      className="inline-flex items-center gap-1 text-xs font-semibold text-ink/50 hover:text-brand hover:underline"
+                      className="inline-flex items-center gap-1 text-xs font-semibold text-ink/60 hover:text-brand hover:underline"
                     >
                       <Plus size={13} /> Criar contrato
                     </Link>

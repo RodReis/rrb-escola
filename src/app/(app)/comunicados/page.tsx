@@ -29,7 +29,7 @@ export default async function ComunicadosPage() {
 
       {comunicados.length === 0 ? (
         <Panel>
-          <div className="flex flex-col items-center justify-center gap-2 py-10 text-ink/40">
+          <div className="flex flex-col items-center justify-center gap-2 py-10 text-ink/60">
             <Megaphone size={28} />
             <p className="text-sm font-medium">Nenhum comunicado enviado.</p>
           </div>
@@ -46,7 +46,7 @@ export default async function ComunicadosPage() {
               >
                 <div className="min-w-0">
                   <p className="truncate font-semibold text-ink">{c.titulo}</p>
-                  <p className="text-xs text-ink/55">
+                  <p className="text-xs text-ink/60">
                     {c.alcance === "geral"
                       ? "Geral"
                       : c.alcance === "segmentado"

@@ -99,7 +99,7 @@ export default async function ChamadaPage({ searchParams }: { searchParams: Sear
               {summary.map(([label, value]) => (
                 <div key={label} className="border-line py-1 sm:border-l sm:px-6 first:sm:border-l-0">
                   <dt className="text-xs font-medium text-ink/62">{label}</dt>
-                  <dd className="mt-1 font-serif text-2xl italic leading-none text-brand">{value}</dd>
+                  <dd className="mt-1 font-display text-2xl italic leading-none text-brand">{value}</dd>
                 </div>
               ))}
             </dl>
@@ -166,7 +166,7 @@ export default async function ChamadaPage({ searchParams }: { searchParams: Sear
           <span>Justificativa</span>
         </div>
         {data.students.length === 0 ? (
-          <div className="flex flex-col items-center justify-center gap-2 py-12 text-ink/40">
+          <div className="flex flex-col items-center justify-center gap-2 py-12 text-ink/60">
             <Users size={28} />
             <p className="text-sm font-medium">Nenhum aluno ativo nesta turma.</p>
           </div>
@@ -212,7 +212,7 @@ export default async function ChamadaPage({ searchParams }: { searchParams: Sear
             <Panel className="grid gap-3">
               <div className="flex items-center justify-between">
                 <h3 className="font-bold text-ink">Notas dos alunos</h3>
-                <p className="text-xs text-ink/55">
+                <p className="text-xs text-ink/60">
                   {notasGrid.alunos.length} aluno{notasGrid.alunos.length === 1 ? "" : "s"} ·
                   salva automaticamente
                 </p>
@@ -230,7 +230,7 @@ export default async function ChamadaPage({ searchParams }: { searchParams: Sear
           )}
 
           {!disciplinaValida && (
-            <div className="rounded-ui bg-muted/30 p-6 text-center text-sm text-ink/40">
+            <div className="rounded-ui bg-muted/30 p-6 text-center text-sm text-ink/60">
               Selecione uma disciplina para lançar as notas.
             </div>
           )}

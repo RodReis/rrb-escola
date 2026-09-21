@@ -1,5 +1,5 @@
 // Reconcilia série/turma/turno de matrículas 2026 a partir de
-// public/MATRICULADOS2026.xlsx.
+// dados-alunos/MATRICULADOS2026.xlsx.
 // Spec: docs/superpowers/specs/2026-05-17-reconciliar-matriculas-2026-design.md
 // Plan: docs/superpowers/plans/2026-05-17-reconciliar-matriculas-2026.md
 //
@@ -16,7 +16,7 @@ import { mapTurmaHeader } from "./lib/turma-mapper.mjs";
 import { normalizeName } from "./lib/normalize-name.mjs";
 
 const ANO_LETIVO = 2026;
-const XLSX_PATH = "public/MATRICULADOS2026.xlsx";
+const XLSX_PATH = "dados-alunos/MATRICULADOS2026.xlsx";
 const REPORT_DIR = "docs/pdfs";
 
 function loadEnvFile(file) {

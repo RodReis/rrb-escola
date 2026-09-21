@@ -67,7 +67,7 @@ export default async function PerfisPage({
             {roles.length === 0 && (
               <tr>
                 <td colSpan={5} className="py-12">
-                  <div className="flex flex-col items-center justify-center gap-2 text-ink/40">
+                  <div className="flex flex-col items-center justify-center gap-2 text-ink/60">
                     <Shield size={28} />
                     <p className="text-sm">Nenhuma role cadastrada.</p>
                   </div>

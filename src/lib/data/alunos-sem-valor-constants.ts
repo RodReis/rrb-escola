@@ -76,6 +76,7 @@ export type AlunosSemValorFilters = {
   motivo: MotivoSemValor | null;
   serieId: string | null;
   turmaId: string | null;
+  anoLetivo?: number;
 };
 
 export const MOTIVO_LABEL: Record<MotivoSemValor, string> = {

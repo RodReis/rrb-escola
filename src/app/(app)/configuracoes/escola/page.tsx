@@ -74,7 +74,7 @@ export default async function EscolaConfigPage({
             // eslint-disable-next-line @next/next/no-img-element
             <img src={logoUrl} alt="Logo" className="max-h-32 max-w-[180px] rounded-ui border border-line bg-paper object-contain p-2" />
           ) : (
-            <div className="grid h-32 w-32 place-items-center rounded-ui border border-line bg-muted/40 text-xs font-semibold text-ink/50">
+            <div className="grid h-32 w-32 place-items-center rounded-ui border border-line bg-muted/40 text-xs font-semibold text-ink/60">
               Sem logo
             </div>
           )}

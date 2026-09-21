@@ -12,14 +12,14 @@ export function TicketCard({ data }: { data: TicketMedioData }) {
         </span>
         <div>
           <h3 className="text-sm font-bold text-ink">Ticket Médio</h3>
-          <p className="text-[0.66rem] text-ink/55">receita / aluno</p>
+          <p className="text-[0.66rem] text-ink/60">receita / aluno</p>
         </div>
       </div>
       <strong className="mt-4 block text-4xl font-bold leading-none text-ink">{money.format(data.atual)}</strong>
       <div className="mt-4 text-accent">
         <TrendSpark values={data.serie} width={140} height={36} />
       </div>
-      <p className="mt-1 text-[0.66rem] uppercase tracking-kicker text-ink/45">últimos 6 meses</p>
+      <p className="mt-1 text-[0.66rem] uppercase tracking-kicker text-ink/60">últimos 6 meses</p>
     </article>
   );
 }

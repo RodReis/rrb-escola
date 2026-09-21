@@ -55,7 +55,7 @@ export default async function ValoresPraticadosPage() {
 
       {anos.length === 0 && (
         <article className="rounded-panel bg-surface p-8 shadow-soft">
-          <div className="flex flex-col items-center justify-center gap-2 text-ink/40">
+          <div className="flex flex-col items-center justify-center gap-2 text-ink/60">
             <ReceiptText size={28} />
             <p className="text-sm font-medium">Nenhum ano cadastrado. Crie um novo ano acima.</p>
           </div>
@@ -84,7 +84,7 @@ export default async function ValoresPraticadosPage() {
             <div className="overflow-x-auto">
               <table className="w-full text-sm">
                 <thead>
-                  <tr className="text-[0.66rem] uppercase tracking-kicker text-ink/55">
+                  <tr className="text-[0.66rem] uppercase tracking-kicker text-ink/60">
                     <th className="px-3 py-2 text-left">Segmento</th>
                     {([1, 2, 3] as const).map((o) => (
                       <th key={o} colSpan={2} className="px-3 py-2 text-center border-l border-line">
@@ -92,7 +92,7 @@ export default async function ValoresPraticadosPage() {
                       </th>
                     ))}
                   </tr>
-                  <tr className="text-[0.66rem] uppercase tracking-kicker text-ink/40">
+                  <tr className="text-[0.66rem] uppercase tracking-kicker text-ink/60">
                     <th />
                     {([1, 2, 3] as const).flatMap((o) => [
                       <th key={`m${o}`} className="px-3 py-1 text-right border-l border-line">Matrícula</th>,

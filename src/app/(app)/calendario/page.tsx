@@ -77,14 +77,14 @@ export default async function CalendarioPage({
       {dados && (
         <Panel className="grid gap-3 sm:grid-cols-4 sm:items-center">
           <div>
-            <p className="text-xs uppercase tracking-kicker text-ink/45">Período</p>
+            <p className="text-xs uppercase tracking-kicker text-ink/60">Período</p>
             <p className="text-sm font-semibold text-ink">
               {dados.calendario.dataInicio.split("-").reverse().join("/")} –{" "}
               {dados.calendario.dataFim.split("-").reverse().join("/")}
             </p>
           </div>
           <div>
-            <p className="text-xs uppercase tracking-kicker text-ink/45">Dias letivos da semana</p>
+            <p className="text-xs uppercase tracking-kicker text-ink/60">Dias letivos da semana</p>
             <p className="text-sm font-semibold text-ink">
               {dados.calendario.diasSemanaLetivos
                 .slice()
@@ -94,7 +94,7 @@ export default async function CalendarioPage({
             </p>
           </div>
           <div>
-            <p className="text-xs uppercase tracking-kicker text-ink/45">Total de dias letivos</p>
+            <p className="text-xs uppercase tracking-kicker text-ink/60">Total de dias letivos</p>
             <p className="flex items-center gap-2 text-sm font-bold">
               <span className={atingeMinimo ? "text-success" : "text-danger"}>
                 {totalLetivos}
@@ -146,7 +146,7 @@ export default async function CalendarioPage({
         </>
       ) : (
         <Panel>
-          <p className="py-6 text-center text-sm text-ink/55">
+          <p className="py-6 text-center text-sm text-ink/60">
             Configure o calendário acima para visualizar a grade e cadastrar feriados.
           </p>
         </Panel>

@@ -55,7 +55,7 @@ export function LancamentoRow({ lancamento, editavel }: Props) {
   return (
     <tr className="border-t">
       <td className="py-2 font-medium">{rubrica?.nome ?? "—"}</td>
-      <td className="py-2 text-xs text-ink/55 tabular-nums">{lancamento.referencia ?? "—"}</td>
+      <td className="py-2 text-xs text-ink/60 tabular-nums">{lancamento.referencia ?? "—"}</td>
       <td className="py-2">
         <span className="inline-flex items-center gap-1">
           <StatusPill tone={origemTone}>

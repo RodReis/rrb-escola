@@ -1,7 +1,8 @@
-import { Plus, Building2, CheckCircle2, AlertCircle } from "lucide-react";
+import { Plus, Building2 } from "lucide-react";
 import { ButtonLink } from "@/components/ui/button";
 import { PageHeader } from "@/components/ui/page-header";
 import { CompanyCard } from "@/components/rh/company-card";
+import { StatusBanner } from "@/components/ui/status-banner";
 import { listCompanies, getCompanySummary } from "@/lib/data/rh";
 import { requirePermission } from "@/lib/auth/session";
 
@@ -47,21 +48,14 @@ export default async function EmpresasPage({
         ]}
       />
 
-      {params.ok ? (
-        <div className="flex items-center gap-2 rounded-ui bg-success/10 p-3 text-sm font-semibold text-success">
-          <CheckCircle2 size={16} />
-          Empresa {params.ok} com sucesso.
-        </div>
-      ) : null}
-      {params.erro ? (
-        <div className="flex items-center gap-2 rounded-ui bg-danger/10 p-3 text-sm font-semibold text-danger">
-          <AlertCircle size={16} />
-          {params.erro}
-        </div>
-      ) : null}
+      <StatusBanner
+        ok={params.ok ? `Empresa ${params.ok} com sucesso.` : undefined}
+        erro={params.erro}
+        rota="/rh/empresas"
+      />
 
       {companies.length === 0 ? (
-        <div className="flex flex-col items-center justify-center gap-2 rounded-panel border border-line bg-surface py-14 text-ink/40">
+        <div className="flex flex-col items-center justify-center gap-2 rounded-panel border border-line bg-surface py-14 text-ink/60">
           <Building2 size={32} />
           <p className="text-sm font-medium">Nenhuma empresa cadastrada.</p>
           {isAdmin ? (

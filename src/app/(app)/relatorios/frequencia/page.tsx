@@ -32,7 +32,7 @@ export default async function RelatorioFrequenciaPage({ searchParams }: { search
       />
 
       <Panel>
-        <div className="mb-3 flex items-center gap-2 text-xs font-bold uppercase tracking-kicker text-ink/55">
+        <div className="mb-3 flex items-center gap-2 text-xs font-bold uppercase tracking-kicker text-ink/60">
           <Filter size={12} /> Período
         </div>
         <form action="/relatorios/frequencia" className="grid gap-4 md:grid-cols-[220px_220px_140px]">
@@ -58,7 +58,7 @@ export default async function RelatorioFrequenciaPage({ searchParams }: { search
             {report.summary.length === 0 ? (
               <tr>
                 <td colSpan={6} className="py-12">
-                  <div className="flex flex-col items-center justify-center gap-2 text-ink/40">
+                  <div className="flex flex-col items-center justify-center gap-2 text-ink/60">
                     <ClipboardList size={28} />
                     <p className="text-sm font-medium">Nenhum registro de frequência no período.</p>
                   </div>

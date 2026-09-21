@@ -5,6 +5,18 @@ export type Company = {
   cnpj: string;
   name: string;
   ativo: boolean;
+  endereco: string | null;
+  cidade: string | null;
+  uf: string | null;
+  cep: string | null;
+  resolucao: string | null;
+  telefones: string | null;
+  email: string | null;
+  logo_path: string | null;
+  secretario_nome: string | null;
+  secretario_cargo: string;
+  diretor_nome: string | null;
+  diretor_cargo: string;
   created_at: string | null;
   updated_at: string | null;
 };
@@ -20,7 +32,9 @@ export async function listCompanies(opts?: { includeInactive?: boolean }): Promi
   const supabase = await createServerClient();
   let query = supabase
     .from("companies")
-    .select("id, cnpj, name, ativo, created_at, updated_at")
+    .select(
+      "id, cnpj, name, ativo, endereco, cidade, uf, cep, resolucao, telefones, email, logo_path, secretario_nome, secretario_cargo, diretor_nome, diretor_cargo, created_at, updated_at"
+    )
     .order("name");
   if (!opts?.includeInactive) query = query.eq("ativo", true);
   const { data, error } = await query;
@@ -32,7 +46,9 @@ export async function getCompanyById(id: string): Promise<Company | null> {
   const supabase = await createServerClient();
   const { data, error } = await supabase
     .from("companies")
-    .select("id, cnpj, name, ativo, created_at, updated_at")
+    .select(
+      "id, cnpj, name, ativo, endereco, cidade, uf, cep, resolucao, telefones, email, logo_path, secretario_nome, secretario_cargo, diretor_nome, diretor_cargo, created_at, updated_at"
+    )
     .eq("id", id)
     .maybeSingle();
   if (error) throw error;

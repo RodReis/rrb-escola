@@ -26,8 +26,8 @@ SUPABASE_URL = os.environ["NEXT_PUBLIC_SUPABASE_URL"].rstrip("/")
 SUPABASE_KEY = os.environ["SUPABASE_SERVICE_ROLE_KEY"]
 BUCKET = "alunos-fotos"
 PDFS = [
-    "docs/pdfs/Resultado.pdf",
-    "docs/pdfs/Resultado1.pdf",
+    "dados-alunos/Resultado.pdf",
+    "dados-alunos/Resultado1.pdf",
 ]
 
 HEADERS = {

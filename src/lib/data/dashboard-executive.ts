@@ -1,6 +1,7 @@
 import { createServerClient } from "@/lib/supabase/server";
 import { DEFAULT_SCHOOL_ID } from "@/lib/constants";
 import { getSignedFotoUrls } from "@/lib/storage/photos";
+import { getAlunosAtivosAnoCorrente } from "./students";
 
 export type GestaoFinanceira = "propria" | "terceirizada";
 
@@ -286,11 +287,21 @@ export async function getOcupacao(
     .eq("ano_letivo", anoLetivo)
     .eq("ativo", true);
 
+  // Não dá para usar contarAlunosAtivos aqui: esta função agrega por
+  // turma_id/tipo_vaga (ocupação por etapa, pagantes vs. bolsistas), dado que
+  // a fonte única só devolve linhas/contagem, não esse detalhamento. Para não
+  // duplicar a regra 527 em duas queries que podem divergir, a query abaixo
+  // aplica a MESMA regra (alunos.ativo=true AND matriculas.status='ativa' AND
+  // matriculas.ano_letivo=:anoLetivo) via inner join em `alunos`. `ano_letivo`
+  // antes era implícito via turma_id (só turmas do ano entravam no map) —
+  // agora explícito na própria query de matrículas.
   const { data: matriculas } = await supabase
     .from("matriculas")
-    .select("turma_id, tipo_vaga")
+    .select("turma_id, tipo_vaga, alunos!inner(ativo)")
     .eq("escola_id", escolaId)
-    .eq("status", "ativa");
+    .eq("status", "ativa")
+    .eq("ano_letivo", anoLetivo)
+    .eq("alunos.ativo", true);
 
   type MatriculaCount = { total: number; bolsistas: number };
   const matriculasPorTurma = new Map<string, MatriculaCount>();
@@ -606,6 +617,11 @@ export type DevedorRow = {
   diasVencimento: number;
 };
 
+// Task 7: NÃO migrada para `getAlunosAtivosAnoCorrente` (Task 3) — de
+// propósito. A base aqui é `cobrancas` vencidas/parciais, sem filtro de
+// `alunos.ativo` nem `ano_letivo`: um aluno que ficou inativo (ex.:
+// transferido) ainda devendo continua devedor e deve aparecer nesta lista.
+// Aplicar a regra 527 esconderia dívidas reais. Manter query própria.
 export async function getTopDevedores(
   limit: number = 5,
   escolaId: string = DEFAULT_SCHOOL_ID
@@ -697,12 +713,18 @@ export async function getRenovacoesPendentes(
   const anoLetivo = hoje.getFullYear();
   const hojeUTC = Date.UTC(hoje.getFullYear(), hoje.getMonth(), hoje.getDate());
 
+  // Não usa `getAlunosAtivosAnoCorrente` (Task 3) diretamente: esta função
+  // precisa de `data_matricula` (não exposto pela fonte única) para calcular
+  // `diasRestantes`, e já ordena/pagina no banco. A query abaixo aplica a
+  // MESMA regra 527 via inner join em alunos (antes ausente aqui — matrícula
+  // ativa com aluno.ativo=false entrava incorretamente na lista).
   const { data } = await supabase
     .from("matriculas")
-    .select("id, aluno_id, ano_letivo, data_matricula, alunos(nome, foto_url)")
+    .select("id, aluno_id, ano_letivo, data_matricula, alunos!inner(nome, foto_url, ativo)")
     .eq("escola_id", escolaId)
     .eq("status", "ativa")
     .eq("ano_letivo", anoLetivo)
+    .eq("alunos.ativo", true)
     .order("data_matricula", { ascending: true })
     .limit(limit);
 
@@ -803,12 +825,18 @@ export async function getBeneficios(
 ): Promise<BeneficiosData> {
   const supabase = await createServerClient();
 
+  // Mesma populacao de listBolsistas (bolsistas.ts): regra 527 aplicada via
+  // inner join em alunos — o `!inner` e o `.eq("alunos.ativo", true)` precisam
+  // estar juntos (embed so filtra com .eq quando declarado no select, ver
+  // licao da Task 3). Sem isso o card do dashboard home diverge do total da
+  // tela /bolsistas (Task 7, fix round 1).
   const { data: matriculas } = await supabase
     .from("matriculas")
-    .select("tipo_vaga, percentual_bolsa, series(segmento), planos(valor_mensalidade)")
+    .select("tipo_vaga, percentual_bolsa, series(segmento), planos(valor_mensalidade), alunos!inner(ativo)")
     .eq("escola_id", escolaId)
     .eq("ano_letivo", anoLetivo)
     .eq("status", "ativa")
+    .eq("alunos.ativo", true)
     .in("tipo_vaga", BENEFICIARIO_TIPOS);
 
   // Carrega valores praticados do ano corrente (ordem_filho = 1)
@@ -955,12 +983,18 @@ export async function getAniversariantes(
   const mesAtual = hoje.getMonth() + 1;
   const diaHoje = hoje.getDate();
 
-  // alunos com matricula ativa
+  // alunos com matricula ativa. Não usa `getAlunosAtivosAnoCorrente` (Task 3)
+  // diretamente: esta função não filtra por ano_letivo (aniversariante conta
+  // com QUALQUER matrícula ativa, cobrindo o caso de mais de uma matrícula
+  // ativa em anos diferentes) e precisa de `data_nascimento`, ausente na
+  // fonte única. A query abaixo aplica a MESMA regra alunos.ativo=true via
+  // inner join (antes ausente aqui).
   const { data: matriculas } = await supabase
     .from("matriculas")
-    .select("aluno_id, alunos(id, nome, data_nascimento)")
+    .select("aluno_id, alunos!inner(id, nome, data_nascimento, ativo)")
     .eq("escola_id", escolaId)
-    .eq("status", "ativa");
+    .eq("status", "ativa")
+    .eq("alunos.ativo", true);
 
   const vistos = new Set<string>();
   const rows: AniversarianteRow[] = [];
@@ -1017,11 +1051,16 @@ export async function getRankingTurmas(
     .eq("ano_letivo", anoLetivo)
     .eq("ativo", true);
 
+  // Mesma regra 527 de getOcupacao (sibling exato, mesmo Promise.all em
+  // src/app/(app)/page.tsx): alunos.ativo=true + ano_letivo, via inner join
+  // declarado no select antes dos .eq() correlacionados (Important I1).
   const { data: matriculas } = await supabase
     .from("matriculas")
-    .select("turma_id")
+    .select("turma_id, alunos!inner(ativo)")
     .eq("escola_id", escolaId)
-    .eq("status", "ativa");
+    .eq("status", "ativa")
+    .eq("ano_letivo", anoLetivo)
+    .eq("alunos.ativo", true);
 
   const countPorTurma = new Map<string, number>();
   for (const m of matriculas ?? []) {
@@ -1269,6 +1308,8 @@ export type AniversarioSemanaRow = {
   hoje: boolean;
   idade: number;
   dataLabel: string;
+  serie: string | null;
+  turma: string | null;
 };
 
 export async function getAniversariantesSemana(
@@ -1289,11 +1330,16 @@ export async function getAniversariantesSemana(
     });
   }
 
+  // Não usa `getAlunosAtivosAnoCorrente` (Task 3) diretamente: esta função não
+  // filtra por ano_letivo (mesma razão de `getAniversariantes` acima) e
+  // precisa de `data_nascimento`/`foto_url`, ausentes na fonte única. Aplica
+  // a MESMA regra alunos.ativo=true via inner join (antes ausente aqui).
   const { data: matriculas } = await supabase
     .from("matriculas")
-    .select("aluno_id, alunos(id, nome, data_nascimento, foto_url)")
+    .select("aluno_id, turmas(nome, series(nome)), alunos!inner(id, nome, data_nascimento, foto_url, ativo)")
     .eq("escola_id", escolaId)
-    .eq("status", "ativa");
+    .eq("status", "ativa")
+    .eq("alunos.ativo", true);
 
   const vistos = new Set<string>();
   const rows: AniversarioSemanaRow[] = [];
@@ -1325,6 +1371,9 @@ export async function getAniversariantesSemana(
 
     const dataLabel = `${slot.rotulo.toLowerCase()} ${String(dd).padStart(2, "0")}/${String(mm).padStart(2, "0")}`;
 
+    const turmaRel = Array.isArray(m.turmas) ? m.turmas[0] : m.turmas;
+    const serieRel = turmaRel ? (Array.isArray(turmaRel.series) ? turmaRel.series[0] : turmaRel.series) : null;
+
     rows.push({
       alunoId: aluno.id,
       nome: aluno.nome ?? "—",
@@ -1335,6 +1384,8 @@ export async function getAniversariantesSemana(
       hoje: dd === hoje.getDate() && mm === hoje.getMonth() + 1,
       idade,
       dataLabel,
+      serie: serieRel?.nome ?? null,
+      turma: turmaRel?.nome ?? null,
     });
   }
 
@@ -1346,6 +1397,79 @@ export async function getAniversariantesSemana(
   });
 
   // Assinar fotos em batch (bucket privado)
+  const fotoPaths = rows.map((r) => r.fotoUrl);
+  const signedMap = await getSignedFotoUrls(fotoPaths);
+  return rows.map((r) => ({
+    ...r,
+    fotoUrl: r.fotoUrl ? (signedMap.get(r.fotoUrl) ?? null) : null,
+  }));
+}
+
+/**
+ * Todos os aniversariantes do mês corrente (para o mural completo).
+ * Mesma fonte/regras de `getAniversariantesSemana`, mas sem limitar a 7 dias.
+ */
+export async function getAniversariantesMes(
+  escolaId: string = DEFAULT_SCHOOL_ID
+): Promise<AniversarioSemanaRow[]> {
+  const supabase = await createServerClient();
+  const hoje = new Date();
+  const mesAtual = hoje.getMonth() + 1;
+  const DIAS_SEMANA = ["Dom", "Seg", "Ter", "Qua", "Qui", "Sex", "Sab"];
+
+  const { data: matriculas } = await supabase
+    .from("matriculas")
+    .select("aluno_id, turmas(nome, series(nome)), alunos!inner(id, nome, data_nascimento, foto_url, ativo)")
+    .eq("escola_id", escolaId)
+    .eq("status", "ativa")
+    .eq("alunos.ativo", true);
+
+  const vistos = new Set<string>();
+  const rows: AniversarioSemanaRow[] = [];
+
+  for (const m of ((matriculas ?? []) as any[])) {
+    const aluno = Array.isArray(m.alunos) ? m.alunos[0] : m.alunos;
+    if (!aluno?.data_nascimento) continue;
+    if (vistos.has(aluno.id)) continue;
+
+    const parts = String(aluno.data_nascimento).split("-").map(Number);
+    const anoNasc = parts[0];
+    const mm = parts[1];
+    const dd = parts[2];
+    if (!anoNasc || !mm || !dd) continue;
+    if (mm !== mesAtual) continue;
+
+    vistos.add(aluno.id);
+
+    const anoCorrente = hoje.getFullYear();
+    const jaPassou = dd < hoje.getDate();
+    const anoAniv = jaPassou ? anoCorrente + 1 : anoCorrente;
+    const idade = anoAniv - anoNasc;
+
+    const dataAniv = new Date(anoCorrente, mm - 1, dd);
+    const rotulo = DIAS_SEMANA[dataAniv.getDay()] ?? "";
+    const dataLabel = `${rotulo.toLowerCase()} ${String(dd).padStart(2, "0")}/${String(mm).padStart(2, "0")}`;
+
+    const turmaRel = Array.isArray(m.turmas) ? m.turmas[0] : m.turmas;
+    const serieRel = turmaRel ? (Array.isArray(turmaRel.series) ? turmaRel.series[0] : turmaRel.series) : null;
+
+    rows.push({
+      alunoId: aluno.id,
+      nome: aluno.nome ?? "—",
+      dia: dd,
+      mes: mm,
+      diaSemana: rotulo,
+      fotoUrl: aluno.foto_url ?? null,
+      hoje: dd === hoje.getDate() && mm === mesAtual,
+      idade,
+      dataLabel,
+      serie: serieRel?.nome ?? null,
+      turma: turmaRel?.nome ?? null,
+    });
+  }
+
+  rows.sort((a, b) => a.dia - b.dia);
+
   const fotoPaths = rows.map((r) => r.fotoUrl);
   const signedMap = await getSignedFotoUrls(fotoPaths);
   return rows.map((r) => ({
@@ -1391,17 +1515,13 @@ export async function getAniversariantesMatricula(
     }
   }
 
-  // Verifica quem tem matricula ATIVA (so listar quem ainda esta na escola)
-  const { data: ativasRaw } = await supabase
-    .from("matriculas")
-    .select("aluno_id")
-    .eq("escola_id", escolaId)
-    .eq("status", "ativa")
-    .eq("ano_letivo", anoLetivo);
-
-  const ativos = new Set<string>(
-    (ativasRaw ?? []).map((m: { aluno_id: string }) => m.aluno_id)
-  );
+  // Verifica quem tem matricula ATIVA (so listar quem ainda esta na escola).
+  // Usa a fonte única (Task 3): aqui só precisamos do conjunto de alunoIds
+  // válidos pela regra 527, que é exatamente o que ela devolve — substitui a
+  // query própria antiga, que checava `matriculas.status=ativa` sem exigir
+  // `alunos.ativo=true` (mesmo gap de regra 527 das demais funções acima).
+  const alunosAtivos = await getAlunosAtivosAnoCorrente({ anoLetivo });
+  const ativos = new Set<string>(alunosAtivos.map((a) => a.id));
 
   const rows: AniversarioMatriculaRow[] = [];
   for (const [alunoId, info] of Array.from(primeira.entries())) {

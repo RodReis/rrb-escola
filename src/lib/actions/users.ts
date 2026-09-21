@@ -1,16 +1,19 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { redirect } from "next/navigation";
 import { requirePermission } from "@/lib/auth/session";
 import { createAdminClient } from "@/lib/supabase/admin";
-import { setUserCreatedFlash } from "@/lib/actions/user-flash";
+import { gravarEventoAuth } from "@/lib/auth/audit";
 import { formText } from "@/lib/utils";
+import type { ActionResult } from "@/lib/actions/types";
 import {
   sendEmail,
   renderPasswordResetEmail,
   renderUserCreatedEmail,
 } from "@/lib/email/resend";
+
+/** Dados exibidos uma unica vez no modal de credencial (criar/resetar senha). */
+export type CredencialGerada = { email: string; senha: string; emailEnviado: boolean };
 
 function getAppUrl(): string {
   return process.env.NEXT_PUBLIC_APP_URL ?? process.env.APP_URL ?? "http://localhost:3000";
@@ -37,11 +40,15 @@ function generatePassword() {
     .slice(0, 16);
 }
 
-export async function createUserAction(formData: FormData) {
+export async function createUserAction(
+  formData: FormData
+): Promise<ActionResult<CredencialGerada>> {
   const session = await requirePermission("usuarios", "create");
   const email = formText(formData, "email");
   const nome = formText(formData, "nome");
-  if (!email || !nome) redirect("/usuarios/novo?erro=campos");
+  if (!email || !nome) {
+    return { ok: false, error: "Preencha todos os campos obrigatórios." };
+  }
 
   const perfil = await readPerfil(formData, session.profile.escola_id);
   const password = generatePassword();
@@ -52,7 +59,7 @@ export async function createUserAction(formData: FormData) {
     email_confirm: true,
     user_metadata: { nome },
   });
-  if (error || !created.user) redirect(`/usuarios/novo?erro=auth`);
+  if (error || !created.user) return { ok: false, error: "Falha ao criar o acesso." };
 
   const { error: perfilError } = await admin.from("perfis").insert({
     user_id: created.user.id,
@@ -64,7 +71,7 @@ export async function createUserAction(formData: FormData) {
   });
   if (perfilError) {
     await admin.auth.admin.deleteUser(created.user.id);
-    redirect(`/usuarios/novo?erro=perfil`);
+    return { ok: false, error: "Falha ao salvar o perfil." };
   }
 
   const emailResult = await sendEmail({
@@ -76,16 +83,23 @@ export async function createUserAction(formData: FormData) {
     console.warn(`[users] email send fail (createUser ${email}): ${emailResult.reason}`);
   }
 
-  setUserCreatedFlash(email, password);
   revalidatePath("/usuarios");
-  redirect(emailResult.ok ? "/usuarios?criado=1&email=1" : "/usuarios?criado=1");
+  // Sem redirectTo de proposito: a navegacao so deve acontecer depois que o
+  // usuario ve e fecha o modal com a senha gerada (NovoUsuarioForm cuida
+  // disso via onSuccess + router.push manual).
+  return {
+    ok: true,
+    data: { email, senha: password, emailEnviado: emailResult.ok },
+  };
 }
 
-export async function updateUserAction(formData: FormData) {
+export async function updateUserAction(formData: FormData): Promise<ActionResult> {
   const session = await requirePermission("usuarios", "update");
   const perfilId = formText(formData, "perfilId");
   const nome = formText(formData, "nome");
-  if (!perfilId || !nome) redirect(`/usuarios?erro=campos`);
+  if (!perfilId || !nome) {
+    return { ok: false, error: "Preencha todos os campos obrigatórios." };
+  }
 
   const perfil = await readPerfil(formData, session.profile.escola_id);
   const admin = createAdminClient();
@@ -94,49 +108,63 @@ export async function updateUserAction(formData: FormData) {
     .from("perfis")
     .update({ nome, perfil })
     .eq("id", perfilId);
-  if (error) redirect(`/usuarios/${perfilId}/editar?erro=${encodeURIComponent(error.message)}`);
+  if (error) return { ok: false, error: "Falha ao salvar o perfil." };
 
   revalidatePath("/usuarios");
-  redirect("/usuarios?atualizado=1");
+  return { ok: true, data: undefined, redirectTo: "/usuarios" };
 }
 
-export async function deactivateUserAction(formData: FormData) {
+export async function deactivateUserAction(formData: FormData): Promise<ActionResult> {
   const session = await requirePermission("usuarios", "update");
   const perfilId = formText(formData, "perfilId");
-  if (!perfilId) redirect("/usuarios?erro=id");
-  if (perfilId === session.profile.id) redirect("/usuarios?erro=self");
+  if (!perfilId) return { ok: false, error: "Usuário não informado." };
+  if (perfilId === session.profile.id) {
+    return { ok: false, error: "Você não pode desativar o próprio usuário." };
+  }
 
   const admin = createAdminClient();
   const { error } = await admin
     .from("perfis")
     .update({ ativo: false })
     .eq("id", perfilId);
-  if (error) redirect("/usuarios?erro=desativar");
+  if (error) return { ok: false, error: "Falha ao desativar o usuário." };
+
+  await gravarEventoAuth({
+    escola_id: session.profile.escola_id,
+    user_id: session.profile.user_id,
+    email: session.profile.email,
+    evento: "dado_excluido",
+    recurso: "perfis",
+    recurso_id: perfilId,
+    detalhe: "usuário desativado",
+  });
 
   revalidatePath("/usuarios");
-  redirect("/usuarios?desativado=1");
+  return { ok: true, data: undefined };
 }
 
-export async function reactivateUserAction(formData: FormData) {
+export async function reactivateUserAction(formData: FormData): Promise<ActionResult> {
   await requirePermission("usuarios", "update");
   const perfilId = formText(formData, "perfilId");
-  if (!perfilId) redirect("/usuarios?erro=id");
+  if (!perfilId) return { ok: false, error: "Usuário não informado." };
 
   const admin = createAdminClient();
   const { error } = await admin
     .from("perfis")
     .update({ ativo: true })
     .eq("id", perfilId);
-  if (error) redirect("/usuarios?erro=reativar");
+  if (error) return { ok: false, error: "Falha ao reativar o usuário." };
 
   revalidatePath("/usuarios");
-  redirect("/usuarios?reativado=1");
+  return { ok: true, data: undefined };
 }
 
-export async function resetPasswordAction(formData: FormData) {
-  await requirePermission("usuarios", "update");
+export async function resetPasswordAction(
+  formData: FormData
+): Promise<ActionResult<CredencialGerada>> {
+  const session = await requirePermission("usuarios", "update");
   const perfilId = formText(formData, "perfilId");
-  if (!perfilId) redirect("/usuarios?erro=id");
+  if (!perfilId) return { ok: false, error: "Usuário não informado." };
 
   const admin = createAdminClient();
   const { data: perfil } = await admin
@@ -144,11 +172,21 @@ export async function resetPasswordAction(formData: FormData) {
     .select("user_id, email")
     .eq("id", perfilId)
     .maybeSingle();
-  if (!perfil?.user_id) redirect("/usuarios?erro=notfound");
+  if (!perfil?.user_id) return { ok: false, error: "Usuário não encontrado." };
 
   const password = generatePassword();
   const { error } = await admin.auth.admin.updateUserById(perfil.user_id, { password });
-  if (error) redirect(`/usuarios?erro=${encodeURIComponent(error.message)}`);
+  if (error) return { ok: false, error: error.message };
+
+  await gravarEventoAuth({
+    escola_id: session.profile.escola_id,
+    user_id: perfil.user_id,
+    email: perfil.email,
+    evento: "senha_alterada",
+    recurso: "perfis",
+    recurso_id: perfilId,
+    detalhe: `redefinida por ${session.profile.email}`,
+  });
 
   const { data: perfilFull } = await admin
     .from("perfis")
@@ -170,7 +208,9 @@ export async function resetPasswordAction(formData: FormData) {
     console.warn(`[users] email send fail (resetPassword ${perfil.email}): ${emailResult.reason}`);
   }
 
-  setUserCreatedFlash(perfil.email, password);
   revalidatePath("/usuarios");
-  redirect(emailResult.ok ? "/usuarios?senha=1&email=1" : "/usuarios?senha=1");
+  return {
+    ok: true,
+    data: { email: perfil.email, senha: password, emailEnviado: emailResult.ok },
+  };
 }

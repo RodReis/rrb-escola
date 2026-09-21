@@ -1,20 +1,9 @@
-import { ExternalLink, UploadCloud, FileUp, Inbox } from "lucide-react";
-import { markImportProcessedAction, uploadStudentImportAction } from "@/lib/actions/imports";
+import { FileUp, Inbox } from "lucide-react";
 import { getImportedFiles } from "@/lib/data/imports";
-import { Badge } from "@/components/ui/badge";
-import { ButtonLink } from "@/components/ui/button";
 import { Card, Panel } from "@/components/ui/card";
 import { requirePermission } from "@/lib/auth/session";
-
-function tone(status: string) {
-  if (status === "processado") return "green";
-  if (status === "erro") return "red";
-  return "gold";
-}
-
-function dateText(value: string) {
-  return new Date(value).toLocaleString("pt-BR");
-}
+import { NovoArquivoForm } from "@/components/importacoes/novo-arquivo-form";
+import { ArquivoImportadoCard } from "@/components/importacoes/arquivo-importado-card";
 
 export default async function ImportaçõesPage() {
   await requirePermission("importacoes", "read");
@@ -41,7 +30,7 @@ export default async function ImportaçõesPage() {
               <span className="text-brand">Importações</span>
             </p>
             <h1 className="mt-8 text-4xl font-black leading-none text-brand md:text-5xl">
-              Importações <span className="font-serif italic text-ink/42">{files.length}</span>
+              Importações <span className="font-display italic text-ink/60">{files.length}</span>
             </h1>
             <p className="mt-4 max-w-2xl text-sm font-medium leading-6 text-ink/68">
               Controle de PDFs e planilhas recebidos para conferência e cadastro em lote na base local.
@@ -52,7 +41,7 @@ export default async function ImportaçõesPage() {
             {summary.map(([label, value]) => (
               <div key={label} className="border-line py-1 sm:border-l sm:px-6 first:sm:border-l-0">
                 <dt className="text-xs font-medium text-ink/62">{label}</dt>
-                <dd className="mt-1 font-serif text-2xl italic leading-none text-brand">{value}</dd>
+                <dd className="mt-1 font-display text-2xl italic leading-none text-brand">{value}</dd>
               </div>
             ))}
           </dl>
@@ -76,67 +65,20 @@ export default async function ImportaçõesPage() {
             Enviar arquivo de alunos
           </h2>
         </div>
-        <form action={uploadStudentImportAction} className="grid gap-4 md:grid-cols-[1fr_1fr_190px]">
-          <label>
-            Arquivo PDF ou planilha
-            <input name="arquivo" type="file" accept="application/pdf,.pdf,.xlsx,.xls,.csv,text/csv" required />
-          </label>
-          <label>
-            Observação
-            <input name="observacao" placeholder="Ex.: fichas ou planilha 2026" />
-          </label>
-          <button className="ds-button ds-button-accent self-end">
-            <UploadCloud size={17} />
-            Processar arquivo
-          </button>
-        </form>
+        <NovoArquivoForm />
       </Panel>
 
       <section className="grid gap-3">
         {files.length === 0 ? (
           <Panel>
-            <div className="flex flex-col items-center justify-center gap-2 py-10 text-ink/40">
+            <div className="flex flex-col items-center justify-center gap-2 py-10 text-ink/60">
               <Inbox size={28} />
               <p className="text-sm font-medium">Nenhum arquivo importado ainda.</p>
             </div>
           </Panel>
         ) : null}
         {files.map((file) => (
-          <Panel key={file.id} className="grid gap-4 lg:grid-cols-[1fr_220px_270px] lg:items-center">
-            <div>
-              <h2 className="font-black text-ink">{file.nome_arquivo}</h2>
-              <p className="mt-1 text-sm text-ink/65">{file.observacao || file.storage_path}</p>
-              <p className="mt-1 text-xs font-medium text-ink/50">{dateText(file.created_at)}</p>
-              <div className="mt-3 flex flex-wrap gap-2">
-                <ButtonLink href={`/importacoes/${file.id}`} variant="primary">Revisar lote</ButtonLink>
-                {file.signed_url ? (
-                  <a href={file.signed_url} target="_blank" className="ds-button ds-button-secondary">
-                    <ExternalLink size={14} /> Abrir arquivo
-                  </a>
-                ) : null}
-              </div>
-            </div>
-            <div className="grid gap-2 self-center text-sm">
-              <Badge tone={tone(file.status)}>{file.status}</Badge>
-              <span className="text-muted">
-                {file.total_linhas} linhas / {file.prontas} prontas / {file.importadas} importadas
-              </span>
-              {file.pendentes || file.duplicadas || file.erros ? (
-                <span className="text-xs font-bold text-clay">
-                  {file.pendentes} pendentes / {file.duplicadas} duplicadas / {file.erros} erros
-                </span>
-              ) : null}
-            </div>
-            <form action={markImportProcessedAction} className="grid grid-cols-[1fr_90px] gap-2 self-center">
-              <input type="hidden" name="id" value={file.id} />
-              <select name="status" defaultValue={file.status}>
-                <option value="pendente">Pendente</option>
-                <option value="processado">Processado</option>
-                <option value="erro">Erro</option>
-              </select>
-              <button className="ds-button ds-button-primary min-h-0 px-3 py-2 text-xs">Salvar</button>
-            </form>
-          </Panel>
+          <ArquivoImportadoCard key={file.id} file={file} />
         ))}
       </section>
     </div>

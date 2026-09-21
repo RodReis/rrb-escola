@@ -22,10 +22,10 @@ function AnoLetivoPickerInner({ anos }: Props) {
   }
 
   return (
-    <div className="relative inline-flex items-center gap-1.5 h-[30px] px-2.5 rounded-[7px] text-[11.5px] font-medium text-white/70 bg-white/10 border border-white/[0.12]">
+    <div className="ds-dropdown relative" style={{ gap: "0.4rem" }}>
       <svg
-        width="12"
-        height="12"
+        width="13"
+        height="13"
         viewBox="0 0 24 24"
         fill="none"
         stroke="currentColor"
@@ -33,6 +33,7 @@ function AnoLetivoPickerInner({ anos }: Props) {
         strokeLinecap="round"
         strokeLinejoin="round"
         className="shrink-0"
+        style={{ color: "var(--text-muted)" }}
       >
         <rect x="3" y="4" width="18" height="18" rx="2" ry="2" />
         <line x1="16" y1="2" x2="16" y2="6" />
@@ -42,15 +43,15 @@ function AnoLetivoPickerInner({ anos }: Props) {
       <select
         value={current}
         onChange={(e) => handleChange(Number(e.target.value))}
-        className="appearance-none bg-transparent text-white font-semibold focus:outline-none cursor-pointer"
+        className="ds-dropdown-value appearance-none bg-transparent focus:outline-none cursor-pointer"
       >
         {anos.map((ano) => (
-          <option key={ano} value={ano} className="bg-[#1B3FB8] text-white">
+          <option key={ano} value={ano} style={{ background: "var(--surface)", color: "var(--text)" }}>
             {ano}
           </option>
         ))}
       </select>
-      <ChevronDown size={10} className="pointer-events-none shrink-0 text-white/70" />
+      <ChevronDown size={11} className="pointer-events-none shrink-0" style={{ color: "var(--text-muted)" }} />
     </div>
   );
 }
@@ -58,8 +59,8 @@ function AnoLetivoPickerInner({ anos }: Props) {
 export function AnoLetivoPicker({ anos }: Props) {
   return (
     <Suspense fallback={
-      <div className="inline-flex items-center h-[30px] px-2.5 rounded-[7px] text-[11.5px] font-medium text-white/70 bg-white/10 border border-white/[0.12]">
-        <span className="text-white font-semibold">{new Date().getFullYear()}</span>
+      <div className="ds-dropdown">
+        <span className="ds-dropdown-value">{new Date().getFullYear()}</span>
       </div>
     }>
       <AnoLetivoPickerInner anos={anos} />

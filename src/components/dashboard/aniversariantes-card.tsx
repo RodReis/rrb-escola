@@ -10,36 +10,51 @@ export function AniversariantesCard({ items }: { items: AniversarianteRow[] }) {
   const demais = items.filter((a) => !a.hoje);
 
   return (
-    <article className="rounded-panel bg-surface bg-gradient-to-br from-gold/10 to-transparent p-6 shadow-soft">
+    <article
+      className="rounded-panel bg-surface p-6 shadow-soft"
+      style={{ background: "color-mix(in oklab, var(--c-amber) 12%, var(--surface))" }}
+    >
       <div className="flex items-start justify-between gap-2">
         <div className="flex items-center gap-2">
-          <span className="grid h-9 w-9 place-items-center rounded-ui bg-gold/15 text-gold">
+          <span
+            className="grid h-9 w-9 place-items-center rounded-ui"
+            style={{ background: "color-mix(in oklab, var(--c-amber) 15%, var(--surface))", color: "var(--c-amber)" }}
+          >
             <Cake size={16} />
           </span>
           <div>
             <h3 className="text-sm font-bold text-ink">Aniversariantes do mês</h3>
-            <p className="text-[0.66rem] text-ink/55">{mesLabel}</p>
+            <p className="text-[0.66rem] text-ink/60">{mesLabel}</p>
           </div>
         </div>
         {items.length > 0 && (
-          <span className="rounded-pill bg-gold/20 px-2 py-0.5 text-[0.66rem] font-bold text-gold">
+          <span
+            className="rounded-pill px-2 py-0.5 text-[0.66rem] font-bold"
+            style={{ background: "color-mix(in oklab, var(--c-amber) 20%, var(--surface))", color: "var(--c-amber)" }}
+          >
             {items.length}
           </span>
         )}
       </div>
 
       {items.length === 0 && (
-        <div className="mt-6 flex flex-col items-center justify-center gap-2 rounded-ui bg-muted/30 py-8 text-ink/40">
+        <div className="mt-6 flex flex-col items-center justify-center gap-2 rounded-ui bg-muted/30 py-8 text-ink/60">
           <Cake size={24} />
           <p className="text-sm">Nenhum aniversário neste mês.</p>
         </div>
       )}
 
       {aniversariantesHoje.length > 0 && (
-        <div className="mt-4 rounded-ui border border-gold/30 bg-gradient-to-br from-gold/20 to-gold/5 p-3">
+        <div
+          className="mt-4 rounded-ui border p-3"
+          style={{
+            borderColor: "color-mix(in oklab, var(--c-amber) 30%, var(--border))",
+            background: "color-mix(in oklab, var(--c-amber) 14%, var(--surface))",
+          }}
+        >
           <div className="flex items-center gap-2 mb-2">
-            <PartyPopper size={14} className="text-gold" />
-            <p className="text-[0.66rem] font-bold uppercase tracking-kicker text-gold">
+            <PartyPopper size={14} style={{ color: "var(--c-amber)" }} />
+            <p className="text-[0.66rem] font-bold uppercase tracking-kicker" style={{ color: "var(--c-amber)" }}>
               Hoje!
             </p>
           </div>
@@ -48,16 +63,20 @@ export function AniversariantesCard({ items }: { items: AniversarianteRow[] }) {
               <li key={a.alunoId}>
                 <Link
                   href={`/alunos/${a.alunoId}`}
-                  className="flex items-center gap-3 rounded-ui bg-surface p-2 ring-1 ring-gold/40 hover:bg-gold/5"
+                  className="flex items-center gap-3 rounded-ui bg-surface p-2 border hover:bg-muted/60"
+                  style={{ borderColor: "color-mix(in oklab, var(--c-amber) 40%, var(--border))" }}
                 >
-                  <span className="grid h-10 w-10 shrink-0 place-items-center rounded-pill bg-gold text-paper text-sm font-bold shadow-soft">
+                  <span
+                    className="grid h-10 w-10 shrink-0 place-items-center rounded-pill text-paper text-sm font-bold shadow-soft"
+                    style={{ background: "var(--c-amber)" }}
+                  >
                     {String(a.dia).padStart(2, "0")}
                   </span>
                   <div className="min-w-0 flex-1">
                     <p className="truncate text-sm font-bold text-ink">{a.nome}</p>
-                    <p className="text-xs font-semibold text-gold">Aniversário hoje · {a.diaSemana}</p>
+                    <p className="text-xs font-semibold" style={{ color: "var(--c-amber)" }}>Aniversário hoje · {a.diaSemana}</p>
                   </div>
-                  <PartyPopper size={18} className="text-gold shrink-0" />
+                  <PartyPopper size={18} className="shrink-0" style={{ color: "var(--c-amber)" }} />
                 </Link>
               </li>
             ))}
@@ -73,14 +92,17 @@ export function AniversariantesCard({ items }: { items: AniversarianteRow[] }) {
                 href={`/alunos/${a.alunoId}`}
                 className="flex items-center gap-3 rounded-ui border border-line p-2 hover:bg-muted/60"
               >
-                <span className={`grid h-9 w-9 shrink-0 place-items-center rounded-pill text-xs font-bold ${
-                  a.proximo ? "bg-gold/20 text-gold" : "bg-muted text-ink/40"
-                }`}>
+                <span
+                  className={`grid h-9 w-9 shrink-0 place-items-center rounded-pill text-xs font-bold ${
+                    a.proximo ? "" : "bg-muted text-ink/60"
+                  }`}
+                  style={a.proximo ? { background: "color-mix(in oklab, var(--c-amber) 20%, var(--surface))", color: "var(--c-amber)" } : undefined}
+                >
                   {String(a.dia).padStart(2, "0")}
                 </span>
                 <div className="min-w-0 flex-1">
                   <p className="truncate text-sm font-semibold text-ink">{a.nome}</p>
-                  <p className="text-xs text-ink/55">{a.diaSemana}</p>
+                  <p className="text-xs text-ink/60">{a.diaSemana}</p>
                 </div>
               </Link>
             </li>

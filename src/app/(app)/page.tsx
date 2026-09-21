@@ -40,8 +40,10 @@ import { AniversariantesHojeCard, AniversariantesProximosRow } from "@/component
 import { AniversarioMatriculaCard } from "@/components/dashboard/aniversario-matricula-card";
 import { BeneficiosCard } from "@/components/dashboard/beneficios-card";
 import { BolsistasReceitaCard } from "@/components/dashboard/bolsistas-receita-card";
-import { CompetenciaPicker } from "@/components/dashboard/competencia-picker";
-import { DashboardTabs, parseTab } from "@/components/dashboard/dashboard-tabs";
+import { DashboardTabs } from "@/components/dashboard/dashboard-tabs";
+import { parseTab, type DashTab } from "@/components/dashboard/parse-tab";
+import { ComercialResumoCards } from "@/components/dashboard/comercial-resumo-cards";
+import { getComercialResumo } from "@/lib/data/dashboard-comercial";
 import { FolhaEmpresas } from "@/components/dashboard/folha-empresas";
 import { HeroFinancial } from "@/components/dashboard/hero-financial";
 import { FolhaRatioCard } from "@/components/dashboard/folha-ratio-card";
@@ -60,6 +62,10 @@ import { RankingTurmasCard } from "@/components/dashboard/ranking-turmas-card";
 import { RealizadoProjetadoCard } from "@/components/dashboard/realizado-projetado-card";
 import { ResumoAlunosCard } from "@/components/dashboard/resumo-alunos-card";
 import { SaudeSistemaCard } from "@/components/dashboard/saude-sistema-card";
+import { PipelineStatusCard } from "@/components/dashboard/pipeline-status-card";
+import { PipelineAtividadeCard } from "@/components/dashboard/pipeline-atividade-card";
+import { getIndicadoresPipeline } from "@/lib/actions/pipeline-indicadores";
+import { getAtividadeRecentePipeline } from "@/lib/data/pipeline-atividade";
 import { TopCategoriasCard } from "@/components/dashboard/top-categorias-card";
 import {
   getEvasao,
@@ -93,13 +99,12 @@ function isValidAno(val: string | undefined): boolean {
   return Number.isInteger(n) && n >= 2000 && n <= 2100;
 }
 
-type DashTab = "financeiro" | "secretaria" | "pedagogico";
 
 function SectionHeader({ title, subtitle }: { title: string; subtitle?: string }) {
   return (
     <header className="flex items-baseline gap-3 border-l-2 border-brand/40 pl-3">
       <h2 className="text-base font-bold text-ink">{title}</h2>
-      {subtitle && <p className="text-xs text-ink/55">{subtitle}</p>}
+      {subtitle && <p className="text-xs text-ink/60">{subtitle}</p>}
     </header>
   );
 }
@@ -148,17 +153,27 @@ export default async function DashboardPage({
   const showFrequencias = has("frequencias");
   const showTurmas = has("turmas");
   const showAvaliacoes = has("avaliacoes");
+  const showComercial = has("comercial.vendas") || has("comercial.estoque") || has("comercial.produtos");
+  const showPipeline = has("pipeline");
+  const showAnamnesePipeline = has("pipeline_sensivel");
 
-  // Tab visibility
+  // Tab visibility. Duas condições: a permissão do painel (configurável em
+  // Perfis e Permissões) E ter algum módulo de dado por trás — sem dado a aba
+  // abriria vazia.
   const tabFinanceiroVisible =
-    showFinanceiroCobrancas || showDespesas || showBolsistas || showRhFolha;
+    has("dashboard.financeiro") &&
+    (showFinanceiroCobrancas || showDespesas || showBolsistas || showRhFolha);
   const showEventos = has("eventos");
   const tabSecretariaVisible =
-    showAlunos || showMatriculas || showFrequencias || showTurmas || showEventos;
-  const tabPedagogicoVisible = showAvaliacoes || showFrequencias;
+    has("dashboard.secretaria") &&
+    (showAlunos || showMatriculas || showFrequencias || showTurmas || showEventos);
+  const tabPedagogicoVisible =
+    has("dashboard.pedagogico") && (showAvaliacoes || showFrequencias || showPipeline);
+  const tabComercialVisible = has("dashboard.comercial") && showComercial;
 
   const tabsVisiveis: DashTab[] = [];
   if (tabFinanceiroVisible) tabsVisiveis.push("financeiro");
+  if (tabComercialVisible) tabsVisiveis.push("comercial");
   if (tabSecretariaVisible) tabsVisiveis.push("secretaria");
   if (tabPedagogicoVisible) tabsVisiveis.push("pedagogico");
 
@@ -178,7 +193,7 @@ export default async function DashboardPage({
           counter={mesLabel(competencia)}
           description="Visão executiva para tomada de decisão."
         />
-        <div className="rounded-ui bg-muted p-12 text-center text-ink/55">
+        <div className="rounded-ui bg-muted p-12 text-center text-ink/60">
           Seu perfil não tem permissão para visualizar nenhum dashboard. Contate um administrador.
         </div>
       </div>
@@ -225,6 +240,9 @@ export default async function DashboardPage({
     aniversariantesSemana,
     feriadosProximos,
     eventosProximos,
+    comercialResumo,
+    indicadoresPipeline,
+    atividadePipeline,
   ] = await Promise.all([
     showFinanceiroCobrancas ? getHero(competencia, escolaId) : null,
     showFinanceiroCobrancas ? getRevenueTrend(6, escolaId) : null,
@@ -263,6 +281,9 @@ export default async function DashboardPage({
     showAlunos ? getAniversariantesSemana(escolaId) : null,
     showFrequencias ? getFeriadosProximos(escolaId) : null,
     showEventos ? getEventosProximos(escolaId, 5) : null,
+    showComercial ? getComercialResumo(competencia, escolaId) : null,
+    showPipeline ? getIndicadoresPipeline(30) : null,
+    showPipeline ? getAtividadeRecentePipeline(escolaId, 5) : null,
   ]);
 
   // slot2 currently is computed but not rendered in the original page (was unused).
@@ -280,7 +301,6 @@ export default async function DashboardPage({
         description="Visão executiva para tomada de decisão."
         actions={
           <>
-            <CompetenciaPicker current={competencia} />
             {showNovoAluno && (
               <ButtonLink href="/alunos/novo" variant="primary">
                 <Plus size={14} /> Novo aluno
@@ -353,8 +373,20 @@ export default async function DashboardPage({
         </>
       )}
 
+      {tabEfetiva === "comercial" && comercialResumo && (
+        <>
+          <SectionHeader title="Comercial" subtitle="Vendas e estoque do mês" />
+          <ComercialResumoCards data={comercialResumo} />
+        </>
+      )}
+
       {tabEfetiva === "secretaria" && (
         <>
+          {/* DESTAQUE — aniversariantes de hoje no topo */}
+          {showAlunos && aniversariantesSemana && (
+            <AniversariantesHojeCard items={aniversariantesSemana} destaque />
+          )}
+
           {/* ESTA SEMANA — agenda primeiro: próximos aniversariantes, eventos, feriados, aniv. matrícula */}
           <SectionHeader title="Esta semana" subtitle="Próximos dias da agenda" />
           {showAlunos && aniversariantesSemana && (
@@ -370,20 +402,13 @@ export default async function DashboardPage({
             <AniversarioMatriculaCard items={aniversariantesMatricula} />
           )}
 
-          {/* HOJE — aniversariantes do dia + frequência atual */}
+          {/* HOJE — frequência atual + saúde do sistema */}
           <SectionHeader title="Hoje" subtitle="O que acontece agora" />
-          <section className="grid gap-6 lg:grid-cols-[1fr_auto]">
-            <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
-              {showFrequencias && frequencia && frequenciaPorTurma && (
-                <FrequenciaCard data={frequencia} porTurma={frequenciaPorTurma} />
-              )}
-              <SaudeSistemaCard data={saudeSistema} />
-            </div>
-            {showAlunos && aniversariantesSemana && (
-              <div className="w-80 shrink-0">
-                <AniversariantesHojeCard items={aniversariantesSemana} />
-              </div>
+          <section className="grid grid-cols-1 gap-6 sm:grid-cols-2">
+            {showFrequencias && frequencia && frequenciaPorTurma && (
+              <FrequenciaCard data={frequencia} porTurma={frequenciaPorTurma} />
             )}
+            <SaudeSistemaCard data={saudeSistema} />
           </section>
 
           {/* VISÃO GERAL — indicadores estruturais */}
@@ -412,6 +437,20 @@ export default async function DashboardPage({
 
       {tabEfetiva === "pedagogico" && (
         <>
+          {showPipeline && indicadoresPipeline?.ok && (
+            <>
+              <SectionHeader title="Captação" subtitle="Funil, conversão e atividade recente do pipeline" />
+              <section className="grid gap-6 sm:grid-cols-2">
+                <PipelineStatusCard data={indicadoresPipeline.data} />
+                <PipelineAtividadeCard
+                  anamneses={indicadoresPipeline.data.anamneses}
+                  atividades={atividadePipeline ?? []}
+                  showAnamnese={showAnamnesePipeline}
+                />
+              </section>
+            </>
+          )}
+
           {showAvaliacoes && pedagogicoOverview && (
             <PedagogicoOverviewSection data={pedagogicoOverview} />
           )}

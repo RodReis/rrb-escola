@@ -7,6 +7,7 @@ import { requirePermission } from "@/lib/auth/session";
 import { DEFAULT_SCHOOL_ID } from "@/lib/constants";
 import { createServerClient } from "@/lib/supabase/server";
 import { formBoolean, formNumber, formText } from "@/lib/utils";
+import type { ActionResult } from "@/lib/actions/types";
 
 export async function createSerieAction(formData: FormData) {
   await requirePermission("series", "create");
@@ -43,13 +44,25 @@ export async function updateSerieAction(formData: FormData) {
   revalidatePath("/matriculas");
 }
 
-export async function createTurmaAction(formData: FormData) {
+function turmaErrorCode(message: string): string {
+  if (message.includes("turmas_escola_id_serie_id_nome_ano_letivo_turno_key")) return "duplicada";
+  return "turma";
+}
+
+const TURMA_ERROR_MENSAGEM: Record<string, string> = {
+  duplicada: "Já existe uma turma com essa série, nome, ano letivo e turno.",
+  turma: "Erro ao salvar turma. Tente novamente.",
+};
+
+export async function createTurmaAction(formData: FormData): Promise<ActionResult> {
   await requirePermission("turmas", "create");
   const nome = formText(formData, "nome");
   const serieId = formText(formData, "serie_id");
-  if (!nome || !serieId) return;
+  if (!nome || !serieId) {
+    return { ok: false, error: "Preencha nome e série." };
+  }
   const supabase = await createServerClient();
-  await supabase.from("turmas").insert({
+  const { error } = await supabase.from("turmas").insert({
     escola_id: DEFAULT_SCHOOL_ID,
     serie_id: serieId,
     nome,
@@ -57,18 +70,25 @@ export async function createTurmaAction(formData: FormData) {
     turno: formText(formData, "turno") ?? "matutino",
     capacidade: formNumber(formData, "capacidade") ?? 30
   });
+  if (error) {
+    const code = turmaErrorCode(error.message);
+    return { ok: false, error: TURMA_ERROR_MENSAGEM[code] ?? TURMA_ERROR_MENSAGEM.turma };
+  }
   revalidatePath("/turmas");
+  return { ok: true, data: undefined };
 }
 
-export async function updateTurmaAction(formData: FormData) {
+export async function updateTurmaAction(formData: FormData): Promise<ActionResult> {
   await requirePermission("turmas", "update");
   const id = formText(formData, "id");
   const nome = formText(formData, "nome");
   const serieId = formText(formData, "serie_id");
-  if (!id || !nome || !serieId) return;
+  if (!id || !nome || !serieId) {
+    return { ok: false, error: "Preencha nome e série." };
+  }
 
   const supabase = await createServerClient();
-  await supabase
+  const { error } = await supabase
     .from("turmas")
     .update({
       serie_id: serieId,
@@ -81,8 +101,13 @@ export async function updateTurmaAction(formData: FormData) {
     .eq("id", id)
     .eq("escola_id", DEFAULT_SCHOOL_ID);
 
+  if (error) {
+    const code = turmaErrorCode(error.message);
+    return { ok: false, error: TURMA_ERROR_MENSAGEM[code] ?? TURMA_ERROR_MENSAGEM.turma };
+  }
   revalidatePath("/turmas");
   revalidatePath("/matriculas");
+  return { ok: true, data: undefined };
 }
 
 export async function createPlanAction(formData: FormData) {
@@ -140,7 +165,16 @@ export async function createEnrollmentAction(formData: FormData) {
   const dataMatricula = formText(formData, "data_matricula") ?? new Date().toISOString().slice(0, 10);
   const anoLetivo = formNumber(formData, "ano_letivo") ?? new Date().getFullYear();
 
-  await supabase.from("matriculas").insert({
+  // Nova matrícula sempre encerra qualquer matrícula ativa anterior do aluno
+  // (mesma regra da re-matrícula) — evita duas matrículas "ativa" simultâneas.
+  await supabase
+    .from("matriculas")
+    .update({ status: "concluida" })
+    .eq("aluno_id", alunoId)
+    .eq("escola_id", DEFAULT_SCHOOL_ID)
+    .eq("status", "ativa");
+
+  const { error } = await supabase.from("matriculas").insert({
     escola_id: DEFAULT_SCHOOL_ID,
     aluno_id: alunoId,
     serie_id: serieId,
@@ -154,8 +188,11 @@ export async function createEnrollmentAction(formData: FormData) {
     observacoes: formText(formData, "observacoes")
   });
 
+  if (error) redirect(`/matriculas?erro=matricula`);
+
   revalidatePath("/matriculas");
   revalidatePath("/financeiro");
+  redirect(`/matriculas?sucesso=1`);
 }
 
 export async function updateEnrollmentAction(formData: FormData) {
@@ -251,27 +288,6 @@ export async function togglePlanAction(formData: FormData) {
   revalidatePath("/planos");
 }
 
-export async function rematricularAlunoAction(matriculaId: string): Promise<{ error?: string; novaMatriculaId?: string }> {
-  await requirePermission("matriculas", "create");
-  const supabase = await createServerClient();
-
-  const { data, error } = await supabase.rpc("rematriculate", { p_matricula_id: matriculaId });
-
-  if (error) {
-    const msg = error.message ?? "";
-    if (msg.includes("not_found")) return { error: "Matrícula não encontrada." };
-    if (msg.includes("not_active")) return { error: "Só é possível re-matricular matrículas ativas." };
-    if (msg.includes("no_next_serie")) return { error: "Não há série seguinte cadastrada. Cadastre a próxima série antes de re-matricular." };
-    if (msg.includes("already_enrolled")) return { error: "Aluno já possui matrícula ativa para o próximo ano letivo." };
-    return { error: "Erro ao processar re-matrícula. Tente novamente." };
-  }
-
-  revalidatePath("/matriculas");
-  revalidatePath("/alunos");
-
-  return { novaMatriculaId: data as string };
-}
-
 // Cookie stores only IDs (no names) to stay well under the 4KB browser cookie limit.
 // The resultado page re-fetches names from the DB.
 export type RematricularLoteResultado = {
@@ -280,18 +296,37 @@ export type RematricularLoteResultado = {
   errors: { matriculaId: string; motivo: string }[];
 };
 
+// Mensagens da RPC rematriculate: dizem o problema e o caminho de correção.
+function motivoRematricula(mensagemRpc: string, anoDestino: number): string {
+  if (mensagemRpc.includes("not_found")) return "Matrícula não encontrada";
+  if (mensagemRpc.includes("not_active")) return "Matrícula não está ativa";
+  if (mensagemRpc.includes("already_enrolled")) return `Já possui matrícula ativa em ${anoDestino}`;
+  if (mensagemRpc.includes("invalid_serie_dest")) return "Série destino não pertence a esta escola";
+  if (mensagemRpc.includes("turma_dest_required")) return "Turma destino não informada";
+  if (mensagemRpc.includes("invalid_turma_dest")) return "Turma destino não pertence a esta escola";
+  if (mensagemRpc.includes("turma_serie_mismatch")) return "Turma destino não pertence à série destino";
+  if (mensagemRpc.includes("invalid_plano_dest")) return "Plano destino não pertence a esta escola";
+  if (mensagemRpc.includes("no_next_serie")) return "Não há série seguinte cadastrada";
+  if (mensagemRpc.includes("violates not-null constraint")) return "Dados obrigatórios ausentes na nova matrícula";
+  if (mensagemRpc.includes("violates foreign key")) return "Série, turma ou plano não existe mais";
+  return "Falha ao gravar. Tente novamente ou avise o suporte.";
+}
+
 export async function rematricularLoteAction(formData: FormData) {
   await requirePermission("matriculas", "create");
 
   const serieDestId = formData.get("serie_dest_id") as string;
+  const turmaDestId = formData.get("turma_dest_id") as string;
+  // Plano é opcional: vazio grava a matrícula sem plano.
+  const planoDestId = (formData.get("plano_dest_id") as string) || null;
   const anoLetivo = parseInt(formData.get("ano_letivo") as string, 10);
   const matriculaIds = formData.getAll("matricula_ids") as string[];
 
   const turmaId = formData.get("turma_id") as string;
 
-  if (!serieDestId || !anoLetivo || !turmaId || matriculaIds.length === 0) {
+  if (!serieDestId || !turmaDestId || !anoLetivo || !turmaId || matriculaIds.length === 0) {
     // Redirect back to step 3 instead of silent return
-    redirect(`/matriculas/rematricula-lote?step=3&ano=${anoLetivo || ""}&turma_id=${turmaId || ""}&serie_dest_id=${serieDestId || ""}`);
+    redirect(`/matriculas/rematricula-lote?step=3&ano=${anoLetivo || ""}&turma_id=${turmaId || ""}&serie_dest_id=${serieDestId || ""}&turma_dest_id=${turmaDestId || ""}&plano_dest_id=${planoDestId || ""}`);
   }
 
   const supabase = await createServerClient();
@@ -306,16 +341,12 @@ export async function rematricularLoteAction(formData: FormData) {
     const { data, error } = await supabase.rpc("rematriculate", {
       p_matricula_id: matriculaId,
       p_serie_dest_id: serieDestId,
+      p_turma_dest_id: turmaDestId,
+      p_plano_dest_id: planoDestId,
     });
 
     if (error) {
-      const msg = error.message ?? "";
-      let motivo = "Erro inesperado";
-      if (msg.includes("not_found")) motivo = "Matrícula não encontrada";
-      else if (msg.includes("not_active")) motivo = "Matrícula não está ativa";
-      else if (msg.includes("already_enrolled")) motivo = `Já possui matrícula ativa em ${anoLetivo + 1}`;
-      else if (msg.includes("invalid_serie_dest")) motivo = "Série destino inválida";
-      resultado.errors.push({ matriculaId, motivo });
+      resultado.errors.push({ matriculaId, motivo: motivoRematricula(error.message ?? "", anoLetivo + 1) });
     } else {
       resultado.ok.push({ novaMatriculaId: data as string });
     }

@@ -9,7 +9,7 @@ type Props = {
 export function DeltaBadge({ current, previous, invert = false }: Props) {
   if (previous === 0) {
     return (
-      <span className="inline-flex items-center gap-1 rounded-pill bg-muted px-2 py-0.5 text-[0.66rem] font-semibold uppercase tracking-kicker text-ink/55">
+      <span className="inline-flex items-center gap-1 rounded-pill bg-muted px-2 py-0.5 text-[0.66rem] font-semibold uppercase tracking-kicker text-ink/60">
         <Minus size={12} /> sem base
       </span>
     );

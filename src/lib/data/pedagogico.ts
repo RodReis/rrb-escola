@@ -1,5 +1,9 @@
 import { createServerClient } from "@/lib/supabase/server";
 import { DEFAULT_SCHOOL_ID } from "@/lib/constants";
+import { contarAlunosAtivos } from "./students";
+import { compareSerie } from "./pedagogico-constants";
+
+export { compareSerie };
 
 export type EvasaoData = {
   ativos: number;
@@ -59,18 +63,28 @@ export async function getEvasao(
 ): Promise<EvasaoData> {
   const supabase = await createServerClient();
 
+  // Mesma regra 527 de contarAlunosAtivos (alunos!inner + alunos.ativo=true),
+  // para que os 4 subtotais (ativos/cancelados/transferidos/concluidos) usem
+  // a mesma convenção de filtro — senão total = soma dos 4 sub-conta a
+  // população real e infla taxaEvasao (denominador menor, mesmo numerador).
   const { data } = await supabase
     .from("matriculas")
-    .select("status, updated_at")
+    .select("status, updated_at, alunos!inner(ativo)")
     .eq("escola_id", escolaId)
-    .eq("ano_letivo", anoLetivo);
+    .eq("ano_letivo", anoLetivo)
+    .eq("alunos.ativo", true);
 
-  let ativos = 0, cancelados = 0, transferidos = 0, concluidos = 0;
+  // "ativos" vem da fonte única (contarAlunosAtivos), não do loop abaixo —
+  // que soma apenas cancelada/transferida/concluida (evasão exige os
+  // status não-ativos, que contarAlunosAtivos não devolve). A aritmética de
+  // total = ativos + cancelados + transferidos + concluidos depende da
+  // constraint UNIQUE(escola_id, aluno_id, ano_letivo) — uma matrícula por
+  // aluno por ano — para que contar alunos e contar matrículas coincidam.
+  let cancelados = 0, transferidos = 0, concluidos = 0;
   const porMesMap = new Map<string, { cancelados: number; transferidos: number }>();
 
   for (const r of (data ?? []) as Array<{ status: string; updated_at: string }>) {
-    if (r.status === "ativa") ativos++;
-    else if (r.status === "cancelada") cancelados++;
+    if (r.status === "cancelada") cancelados++;
     else if (r.status === "transferida") transferidos++;
     else if (r.status === "concluida") concluidos++;
 
@@ -83,6 +97,7 @@ export async function getEvasao(
     }
   }
 
+  const ativos = await contarAlunosAtivos({ anoLetivo });
   const total = ativos + cancelados + transferidos + concluidos;
   const evasivos = cancelados + transferidos;
 
@@ -231,7 +246,7 @@ export async function getMediasPorDisciplina(
   });
 
   rows.sort((a, b) => {
-    if (a.serie !== b.serie) return a.serie.localeCompare(b.serie);
+    if (a.serie !== b.serie) return compareSerie(a.serie, b.serie);
     if (a.bimestre !== b.bimestre) return a.bimestre - b.bimestre;
     return a.disciplina.localeCompare(b.disciplina);
   });
@@ -878,16 +893,12 @@ export async function getPedagogicoOverview(
   const supabase = await createServerClient();
 
   const [
-    { count: totalAlunos },
+    totalAlunos,
     { data: turmas },
     { count: totalSeries },
     { data: matriculasEtapa },
   ] = await Promise.all([
-    supabase
-      .from("matriculas")
-      .select("id", { count: "exact", head: true })
-      .eq("escola_id", escolaId)
-      .eq("status", "ativa"),
+    contarAlunosAtivos({ anoLetivo }),
     supabase
       .from("turmas")
       .select("id, turno")
@@ -898,11 +909,16 @@ export async function getPedagogicoOverview(
       .from("series")
       .select("id", { count: "exact", head: true })
       .eq("escola_id", escolaId),
+    // Mesma regra 527 de contarAlunosAtivos (alunos!inner + alunos.ativo=true),
+    // para que numerador (porEtapa.count) e denominador (totalAlunos) usem a
+    // mesma população — senão os percentuais podem somar mais de 100%.
     supabase
       .from("matriculas")
-      .select("series(segmento)")
+      .select("series(segmento), alunos!inner(ativo)")
       .eq("escola_id", escolaId)
-      .eq("status", "ativa"),
+      .eq("status", "ativa")
+      .eq("ano_letivo", anoLetivo)
+      .eq("alunos.ativo", true),
   ]);
 
   const turnosSet = new Set<string>();
@@ -917,7 +933,7 @@ export async function getPedagogicoOverview(
     porEtapaMap.set(etapa, (porEtapaMap.get(etapa) ?? 0) + 1);
   }
 
-  const total = totalAlunos ?? 0;
+  const total = totalAlunos;
   const ordem = ["INFANTIL", "FUNDAMENTAL1", "FUNDAMENTAL2", "MEDIO"];
   const porEtapa = ordem.map((etapa) => {
     const count = porEtapaMap.get(etapa) ?? 0;

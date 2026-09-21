@@ -1,6 +1,7 @@
-import { ArrowLeft, FileText, Pencil } from "lucide-react";
+import { ArrowLeft, Award, FileText, Pencil, ScrollText } from "lucide-react";
 import { ReenrollButton } from "@/components/students/reenroll-button";
 import { StudentStatementSection } from "@/components/finance/student-statement-section";
+import { AnamneseAlunoSection } from "@/components/students/anamnese-aluno-section";
 import { StudentHeaderActions } from "@/components/students/student-header-actions";
 import { StudentSheetView } from "@/components/students/student-sheet";
 import { ButtonLink } from "@/components/ui/button";
@@ -19,9 +20,19 @@ export default async function StudentPage({ params, searchParams }: { params: { 
     ? { id: matriculaAtivaForDocs.id, codigo: matriculaAtivaForDocs.codigo ?? null }
     : null;
 
+  // Emissão direta pelo id do aluno. As duas telas aceitam ?aluno= e derivam
+  // série/nível da matrícula daquele ano letivo, então o link já cai filtrado.
+  const anoDoHistorico = activeEnrollment?.ano_letivo ?? new Date().getFullYear();
+  const historicoHref = `/historico/emissao?aluno=${student.id}&ano=${anoDoHistorico}`;
+  const certificadoHref = `/historico/certificado?aluno=${student.id}&ano=${anoDoHistorico}`;
+
   const session = await requirePermission("alunos", "read");
   const templatesAtivos = await getTemplatesAtivos(session.profile.escola_id);
-  const templatesLite = templatesAtivos.map((t) => ({ id: t.id, nome: t.nome }));
+  const templatesLite = templatesAtivos.map((t) => ({
+    id: t.id,
+    nome: t.nome,
+    categoria: t.categoria ?? null
+  }));
 
   return (
     <div className="grid gap-6">
@@ -29,7 +40,7 @@ export default async function StudentPage({ params, searchParams }: { params: { 
         <div>
           <p className="ds-kicker">Gestao / Ficha do aluno</p>
           <div className="mt-7 flex flex-wrap items-center gap-3">
-            <h1 className="font-serif text-4xl text-ink">{student.nome}</h1>
+            <h1 className="font-display text-4xl text-ink">{student.nome}</h1>
             {activeEnrollment ? <Badge tone="green">{activeEnrollment.status}</Badge> : null}
           </div>
           <div className="mt-3 flex flex-wrap items-center gap-2 text-sm text-muted">
@@ -42,18 +53,25 @@ export default async function StudentPage({ params, searchParams }: { params: { 
           <ButtonLink href="/alunos" variant="secondary">
             <ArrowLeft size={14} /> Voltar
           </ButtonLink>
-          <ButtonLink href={`/alunos/${student.id}/boletim`} variant="secondary">
+          <ButtonLink href={`/alunos/${student.id}/boletim`} variant="boletim">
             <FileText size={14} /> Boletim
+          </ButtonLink>
+          <ButtonLink href={historicoHref} variant="historico">
+            <ScrollText size={14} /> Histórico Escolar
+          </ButtonLink>
+          <ButtonLink href={certificadoHref} variant="certificado">
+            <Award size={14} /> Certificado
           </ButtonLink>
           <ButtonLink href={`/alunos/${student.id}/editar`} variant="primary">
             <Pencil size={14} /> Editar
           </ButtonLink>
-          {matriculaAtivaPayload ? <ReenrollButton matriculaId={matriculaAtivaPayload.id} /> : null}
+          <ReenrollButton alunoId={student.id} novato={student.matriculas.length === 0} />
           <StudentHeaderActions student={student} matriculaAtiva={matriculaAtivaPayload} templates={templatesLite} />
         </div>
       </header>
       <StudentSheetView student={student} fotoSrc={fotoSrc} geradoEm={new Date()} />
       <StudentStatementSection alunoId={params.id} searchParams={searchParams} />
+      <AnamneseAlunoSection alunoId={params.id} />
     </div>
   );
 }

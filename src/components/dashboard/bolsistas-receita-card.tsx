@@ -15,7 +15,7 @@ export function BolsistasReceitaCard({ data }: { data: BeneficiosData }) {
           </span>
           <div>
             <h3 className="text-sm font-bold text-ink">Receita perdida</h3>
-            <p className="text-[0.66rem] text-ink/55">bolsistas e benefícios</p>
+            <p className="text-[0.66rem] text-ink/60">bolsistas e benefícios</p>
           </div>
         </div>
         <Link
@@ -28,7 +28,7 @@ export function BolsistasReceitaCard({ data }: { data: BeneficiosData }) {
       </div>
 
       {data.total === 0 ? (
-        <div className="mt-6 flex flex-col items-center justify-center gap-2 rounded-ui bg-muted/30 py-8 text-ink/40">
+        <div className="mt-6 flex flex-col items-center justify-center gap-2 rounded-ui bg-muted/30 py-8 text-ink/60">
           <HandHeart size={24} />
           <p className="text-sm">Sem bolsistas ativos.</p>
         </div>
@@ -37,7 +37,7 @@ export function BolsistasReceitaCard({ data }: { data: BeneficiosData }) {
           <strong className="mt-4 block text-4xl font-bold leading-none text-warning">
             {money.format(data.receitaPerdidaEstimada)}
           </strong>
-          <p className="mt-1 text-xs text-ink/55">{data.total} alunos · por mês</p>
+          <p className="mt-1 text-xs text-ink/60">{data.total} alunos · por mês</p>
 
           <div className="mt-4 rounded-ui bg-warning/10 px-3 py-2.5">
             <p className="text-[0.6rem] font-semibold uppercase tracking-kicker text-warning/80">Anual estimado</p>

@@ -1,6 +1,10 @@
-# Aplicar em produção — pendente
+# Aplicar em produção — RESOLVIDO
 
-Migrations e correções aplicadas no Docker local (`db reset` OK, 66 migrations). **Falta aplicar em produção.**
+> **Status em 2026-09-20: não há mais pendência.** `npx supabase migration list --linked`
+> mostra as 125 migrations com `local` = `remote`, incluindo todas as listadas abaixo.
+> O documento fica como registro histórico da rodada folha-v2.
+
+Migrations e correções aplicadas no Docker local (`db reset` OK, 66 migrations). ~~Falta aplicar em produção.~~
 
 ## Como aplicar
 
@@ -52,6 +56,25 @@ Aplicada no local (`db push --local` OK). **Em prod, conferir ANTES do push:**
 - [ ] Migração de contratos a partir de `employees` (script one-off, revisão manual de hora-aula dos professores)
 - [ ] Rodar folha da competência de corte em paralelo com a planilha do financeiro; bater totais (caso Ana Flávia: hora-aula 23,16 × 48 = 5002,56)
 
+## PENDÊNCIA — finalizar cálculo da folha do PROFESSOR (com contador)
+
+Status: **aberto** — aguardando definição do contador. Contratos de professor em prod
+foram criados (script `criar_contratos_da_planilha.mjs`) com `salario_base` tirado da
+coluna "Salário base" da planilha, mas isso está **conceitualmente errado**.
+
+Diagnóstico (recibo oficial Ana Flávia, mai/2026):
+- Professor é **HORISTA**, não mensalista. Recibo: SALÁRIO HORA 216h = 5.002,56 (valor-hora 23,16) + DSR PROFESSOR AULISTA 833,76 (= salário-hora ÷ 6) = total 5.836,32.
+- INSS 618,58 · IRRF 324,61 · líquido 4.698,78 · base INSS/FGTS/IRRF = 5.836,32 (IRRF base 5.217,74).
+- Relação planilha→recibo: `salário-hora ≈ TOTAL_planilha × 6/7`; `DSR = salário-hora ÷ 6`.
+
+O que falta para fechar:
+- [ ] Obter (RH/contador) `valor_hora_aula` + `aulas_semanais` reais de cada professor (a planilha só tem totais, não horas). Ana = 23,16/h × 48 aulas/sem × 4,5 semanas = 216h.
+- [ ] Preencher `valor_hora_aula`/`aulas_semanais` nos contratos professor; a rubrica `hora_aula` (perfil `clt_professor`) já incide DSR (÷6 automático). Hoje esses campos estão nulos → proventos vinham 0 antes do paliativo.
+- [ ] **Reverter migration `202606130006_professor_salario_base.sql`** (adicionou `salario_base` ao perfil `clt_professor`). Foi paliativo para não zerar; professor não é mensalista. Reverter quando os contratos forem para hora-aula. (rollback: `delete from folha_perfis_rubricas` da dupla clt_professor+salario_base.)
+- [ ] Revalidar com o recibo da Ana após ajuste (e amostra de 2-3 professores).
+
+Não-professores (perfil `clt`, ex.: Keila, Reginalda) já calculam corretamente por `salario_base`.
+
 ## Férias e 13º (v2.1) — operacional
 
 - [ ] Habilitar `jobs.gerar_especiais` na config de cada empresa (tela Config → Férias e 13º) para o cron gerar 13º/férias automaticamente
@@ -59,3 +82,12 @@ Aplicada no local (`db push --local` OK). **Em prod, conferir ANTES do push:**
 - [ ] Import de bases históricas 2025 (opcional, só se usar média 12 meses): `node scripts/importar_bases_historicas.mjs --dry-run` depois `--apply`
 - [ ] Smoke E2E com `?hoje=` simulado (dev): jobs geram decimo_1a (01/11), decimo_2a (01/12), férias (01/06); fechar férias baixa provisão + abre período; mensal de julho recebe ferias_desconto_gozo
 - [ ] INSS 2025 método: caso dourado dá 842,12 (progressivo) vs 842,11 oficial (tabela única) — diferença de R$0,01 por método; confirmar com contador se o cliente exige tabela-única exata
+
+## Branches pendentes de merge na main
+
+- [ ] **PR #5 — `scripts-dados-prod`** — scripts one-off de dados prod (atualizar_cpf_funcionarios.mjs, criar_contratos_da_planilha.mjs) + remoção do migrar_contratos quebrado + .gitignore (backup/). Já aberto, falta revisar e mergear na `main`.
+
+## Pendências técnicas (código)
+
+- [ ] **Aprovação da folha não é transacional** (`transicionarRunAction` → `aprovado`): gera despesas + provisões ANTES do UPDATE de status. Se o UPDATE falhar, deixa despesas/provisões órfãs e status preso em `aprovacao` (aconteceu em prod 2026-06; limpeza manual necessária). Envolver as 3 operações (gerarDespesasDaRun + gravarProvisoes/baixa + update status) numa transação (RPC/função no Postgres ou rollback manual em catch).
+- [ ] Rotacionar a senha do banco de produção (foi exposta em sessão de trabalho).

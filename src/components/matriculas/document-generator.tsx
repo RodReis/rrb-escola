@@ -37,7 +37,7 @@ export function DocumentGenerator({ matriculaId, templates, documentosIniciais }
     setLoading(true);
     try {
       const res = await generateFromTemplateAction(matriculaId, templateId);
-      if (!res.success || !res.base64 || !res.nomeArquivo) {
+      if (!res.ok || !res.base64 || !res.nomeArquivo) {
         toast.error(res.error ?? "Erro ao gerar documento.");
         return;
       }
@@ -56,7 +56,7 @@ export function DocumentGenerator({ matriculaId, templates, documentosIniciais }
 
   return (
     <Panel className="grid gap-5">
-      <h2 className="font-serif text-2xl text-ink">Documentos</h2>
+      <h2 className="font-display text-2xl text-ink">Documentos</h2>
 
       {templates.length === 0 ? (
         <p className="text-sm text-muted">Nenhum template ativo. Cadastre em RH → Documentos.</p>

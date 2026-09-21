@@ -87,7 +87,7 @@ export default async function FeriasPage({
 
       {vencendoEm60 > 0 ? (
         <Card>
-          <p className="text-xs font-bold uppercase tracking-kicker text-ink/55 mb-1">Atenção</p>
+          <p className="text-xs font-bold uppercase tracking-kicker text-ink/60 mb-1">Atenção</p>
           <p className="text-2xl font-bold tabular-nums text-danger">{vencendoEm60}</p>
           <p className="text-sm text-ink/60 mt-1">
             {vencendoEm60 === 1 ? "período vence" : "períodos vencem"} nos próximos 60 dias
@@ -121,7 +121,7 @@ export default async function FeriasPage({
             {periodos.length === 0 ? (
               <tr>
                 <td colSpan={8} className="py-12">
-                  <div className="flex flex-col items-center justify-center gap-2 text-ink/40">
+                  <div className="flex flex-col items-center justify-center gap-2 text-ink/60">
                     <CalendarOff size={28} />
                     <p className="text-sm">Nenhum período aquisitivo encontrado.</p>
                   </div>

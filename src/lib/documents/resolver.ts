@@ -282,3 +282,114 @@ export async function resolveMappings(
   }
   return out;
 }
+
+// ---------------------------------------------------------------------------
+// Phase 2 addition — TemplateResolver class wrapping existing functions.
+// Provides the class-based API for Phase 3 server actions without breaking
+// the existing resolveMappings function consumers.
+// ---------------------------------------------------------------------------
+
+export type MappingValidationResult = {
+  valid: boolean;
+  errors: string[];
+};
+
+/**
+ * Validates a single raw mapping against the allowlist schema.
+ * Returns structured errors instead of throwing.
+ */
+export function validateMappingDetailed(m: unknown): MappingValidationResult {
+  if (!m || typeof m !== "object") {
+    return { valid: false, errors: ["Mapping must be a non-null object."] };
+  }
+  const obj = m as Record<string, unknown>;
+  const errors: string[] = [];
+
+  if (typeof obj.placeholder !== "string" || !obj.placeholder.trim()) {
+    errors.push("Missing or empty 'placeholder' field.");
+  }
+
+  if (obj.type === "tabela") {
+    if (typeof obj.table !== "string" || !isAllowedTable(obj.table)) {
+      errors.push(`Table '${String(obj.table)}' is not in the allowlist.`);
+    } else {
+      const tableConfig = ALLOWED_TABLES[obj.table];
+      if (typeof obj.column !== "string" || !(tableConfig.columns as readonly string[]).includes(obj.column)) {
+        errors.push(`Column '${String(obj.column)}' is not allowed for table '${String(obj.table)}'.`);
+      }
+      if (obj.filter != null && obj.filter !== "") {
+        if (typeof obj.filter !== "string" || !(tableConfig.filters as readonly string[]).includes(obj.filter)) {
+          errors.push(`Filter '${String(obj.filter)}' is not allowed for table '${String(obj.table)}'.`);
+        }
+      }
+    }
+  } else if (obj.type === "computed") {
+    if (typeof obj.fn !== "string" || !isComputedFn(obj.fn)) {
+      errors.push(`Computed function '${String(obj.fn)}' is not in the allowlist.`);
+    }
+  } else {
+    errors.push(`Unknown mapping type '${String(obj.type)}'. Expected 'tabela' or 'computed'.`);
+  }
+
+  return { valid: errors.length === 0, errors };
+}
+
+/**
+ * Class-based facade over the functional resolver.
+ * Phase 3 server actions instantiate this with a Supabase client and
+ * call resolveMappings per document generation request.
+ *
+ * The underlying query logic (grouping by table, parallel fetching,
+ * filter application) is handled by the module-level functions above.
+ */
+export class TemplateResolver {
+  private readonly supabase: SupabaseClient;
+
+  constructor(supabase: SupabaseClient) {
+    this.supabase = supabase;
+  }
+
+  /**
+   * Resolves all mappings for a given matriculaId.
+   * Requires alunoId and escolaId from the caller (loaded from the
+   * matricula record by the server action before calling this method).
+   *
+   * Returns a dict of { placeholder → resolved string value }.
+   * Invalid table/column/filter entries are skipped and produce "".
+   */
+  async resolveMappings(
+    mappings: Mapping[],
+    ctx: ResolverContext,
+  ): Promise<Record<string, string>> {
+    return resolveMappings(mappings, ctx);
+  }
+
+  /**
+   * Validates a single raw mapping, returning structured errors.
+   * Use before persisting user-supplied mappings.
+   */
+  validateMapping(m: unknown): MappingValidationResult {
+    return validateMappingDetailed(m);
+  }
+
+  /**
+   * Validates all mappings in an array. Returns the valid subset
+   * and the list of errors per invalid entry.
+   */
+  validateAll(raws: unknown[]): {
+    valid: Mapping[];
+    invalid: Array<{ index: number; errors: string[] }>;
+  } {
+    const valid: Mapping[] = [];
+    const invalid: Array<{ index: number; errors: string[] }> = [];
+    for (let i = 0; i < raws.length; i++) {
+      const result = validateMappingDetailed(raws[i]);
+      if (result.valid) {
+        valid.push(raws[i] as Mapping);
+      } else {
+        invalid.push({ index: i, errors: result.errors });
+      }
+    }
+    return { valid, invalid };
+  }
+}

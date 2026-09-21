@@ -14,7 +14,7 @@ SUPABASE_URL = 'http://127.0.0.1:55421'
 SERVICE_KEY  = 'sb_secret_N7UND0UgjKTVK-Uodkm0Hg_xSvEMPvz'
 ESCOLA_ID    = '00000000-0000-0000-0000-000000000001'
 ANO          = 2026
-XLSX_PATH    = 'c:/Desenv/Projetos/rrb-escola/public/MATRICULADOS2026.xlsx'
+XLSX_PATH    = 'c:/Desenv/Projetos/rrb-escola/dados-alunos/MATRICULADOS2026.xlsx'
 
 HEADERS = {
     'apikey': SERVICE_KEY,

@@ -39,7 +39,7 @@ export function FeriadosCard({ items }: { items: CalendarioExcecao[] }) {
           </span>
           <div>
             <h3 className="text-sm font-bold text-ink">Feriados e recessos</h3>
-            <p className="text-[0.66rem] text-ink/55">este mês e o próximo</p>
+            <p className="text-[0.66rem] text-ink/60">este mês e o próximo</p>
           </div>
         </div>
         {futuros.length > 0 && (
@@ -50,7 +50,7 @@ export function FeriadosCard({ items }: { items: CalendarioExcecao[] }) {
       </div>
 
       {futuros.length === 0 && (
-        <div className="mt-6 flex flex-col items-center justify-center gap-2 rounded-ui bg-muted/30 py-8 text-ink/40">
+        <div className="mt-6 flex flex-col items-center justify-center gap-2 rounded-ui bg-muted/30 py-8 text-ink/60">
           <CalendarOff size={24} />
           <p className="text-sm">Nenhum feriado ou recesso à frente.</p>
         </div>
@@ -74,7 +74,7 @@ export function FeriadosCard({ items }: { items: CalendarioExcecao[] }) {
                 </p>
               </div>
               <p className="truncate text-sm font-bold text-ink">{destaque.descricao}</p>
-              <p className="text-xs text-ink/55">{periodo}</p>
+              <p className="text-xs text-ink/60">{periodo}</p>
             </div>
           </div>
         );
@@ -96,7 +96,7 @@ export function FeriadosCard({ items }: { items: CalendarioExcecao[] }) {
                 </span>
                 <div className="min-w-0 flex-1">
                   <p className="truncate text-sm font-semibold text-ink">{e.descricao}</p>
-                  <p className="text-xs text-ink/55">
+                  <p className="text-xs text-ink/60">
                     {TIPO_LABEL[e.tipo]} · {MESES[d.mes - 1]}
                   </p>
                 </div>

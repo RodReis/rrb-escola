@@ -1,81 +1,132 @@
 # DB Seed Workflow
 
-Como preservar e restaurar o estado do banco local.
+Como popular e restaurar o banco local.
 
-## Por que existe
+Existem duas fontes de dados possíveis, e elas servem a propósitos diferentes:
 
-O Supabase CLI tem `npx supabase db reset --local` que **apaga tudo** e reaplica migrations. Antes desta solução, qualquer reset destruía dados cadastrados manualmente.
+| Fonte | Comando | Dados | Use quando |
+|-------|---------|-------|-----------|
+| **Espelho de produção** (recomendado) | `bash scripts/sync_local_from_prod.sh` | Iguais aos de prod (789 alunos) | Trabalho do dia a dia, reproduzir bug relatado |
+| **Snapshot versionado** (legado) | `npx supabase db reset --local` | Congelados em 2026-05-17 (509 alunos) | Validar a cadeia de migrations do zero |
 
-Solução: migration final `202605270002_seed_real_data.sql` contém snapshot completo do banco em formato SQL (INSERTs com `ON CONFLICT DO NOTHING`). Após reset, ela restaura todo o estado.
-
-## Estado preservado
-
-Snapshot atual cobre:
-
-- `auth.users` + `auth.identities` (admin login)
-- `escolas`, `perfis`, `segmentos`, `planos`
-- `series`, `turmas`, `alunos`, `matriculas`, `historico_matriculas`
-- `enderecos_aluno`, `contatos_aluno`, `responsaveis_aluno`, `informacoes_medicas`, `autorizacoes_aluno`, `pessoas_autorizadas`
-- `cobrancas`, `pagamentos`
-- `companies`, `employees`, `payroll`, `payroll_periods`, `inss_brackets`, `ir_brackets`
-- `categorias_despesa`, `despesas`
-- `dispositivos_acesso`
-
-## Comandos
-
-### Resetar banco e restaurar snapshot
+## Espelhar produção
 
 ```bash
-npx supabase db reset --local
-```
-
-Sequência:
-1. Drop schema `public` + `auth`
-2. Reaplica todas migrations em `supabase/migrations/` em ordem alfabética
-3. `202605270002_seed_real_data.sql` restaura ~23k rows
-4. Roda `supabase/seed.sql` (noop atualmente)
-
-### Regerar snapshot (após cadastrar dados novos)
-
-```bash
-bash scripts/regenerate_seed_migration.sh
+bash scripts/sync_local_from_prod.sh
 ```
 
 O script:
-1. Faz `pg_dump -Fc` (backup binário) em `backups/pre_regen_TIMESTAMP.dump`
-2. Dump `--data-only --column-inserts` de `auth.users`, `auth.identities`, todo `public` schema (exceto `schema_migrations`)
-3. Monta `supabase/migrations/202605270002_seed_real_data.sql`
-4. Adiciona `ON CONFLICT DO NOTHING` em cada INSERT (idempotência)
-5. Corrige `search_path` (pg_dump zera por default, quebra triggers que referenciam tabelas sem schema)
 
-Sempre commite o resultado:
+1. Faz backup binário do banco local em `backups/pre_prod_mirror_TIMESTAMP.dump`
+2. Baixa schema + dados de prod via `supabase db dump --linked` para `backups/prod/`
+3. Corrige o `search_path` dos dumps (ver [gotcha](#gotcha-search_path-nos-dumps))
+4. Recria o schema `public` e limpa `auth.users`
+5. Carrega schema e dados de produção
+6. Marca as migrations como aplicadas em `supabase_migrations.schema_migrations`
+7. Roda `npm run seed:auth` para garantir o admin de teste local
+
+Os dumps ficam em `backups/`, que está no `.gitignore`: contêm dados pessoais de
+alunos (CPF, RG, certidão, contatos, informações médicas) e nunca devem ser versionados.
+
+Depois do sync, confira que o `.env.local` está com o bloco **Supabase Local Docker**
+ativo — com o bloco Cloud ativo, `npm run dev` e todos os scripts escrevem direto
+em produção.
+
+### Fluxo do dia a dia
 
 ```bash
-git add supabase/migrations/202605270002_seed_real_data.sql
-git commit -m "chore(seed): atualizar snapshot"
+bash scripts/sync_local_from_prod.sh   # quando quiser os dados atuais de prod
+npx supabase migration up --local      # aplica migrations novas por cima
 ```
 
-### Restaurar de backup binário
+O passo 6 do script é o que torna isso possível: `supabase db dump` não inclui o
+schema `supabase_migrations`, então sem a marcação o CLI acharia que nenhuma
+migration rodou e tentaria reaplicar todas sobre um schema que já existe.
 
-Se a migration de seed quebrar (FK, schema mismatch etc):
+### Por que `db reset --local` não espelha produção
+
+O reset apaga tudo e reaplica a cadeia desde o zero. Duas coisas impedem que ele
+termine com os dados de produção:
+
+1. Ele restaura o snapshot `202605270002_seed_real_data.sql`, com os dados
+   **antigos** (509 alunos, capturados em 2026-05-17) em vez dos 789 de produção.
+2. ~28 migrations de dados (boletins, rematrículas, correções) chumbam UUIDs de
+   séries e turmas em vez de resolvê-los por consulta. Num banco vazio elas quebram:
+
+```
+insert or update on table "disciplinas" violates foreign key constraint
+"disciplinas_serie_id_fkey"
+```
+
+Essas migrations rodam bem sobre um banco já povoado — o erro só aparece no reset
+do zero. Torná-las reexecutáveis exigiria reescrever cada uma para resolver os
+UUIDs dinamicamente. Como todas já estão aplicadas em produção e não rodarão de
+novo lá, isso não foi feito.
+
+Ou seja: `db reset --local` serve para validar a cadeia de migrations num banco
+descartável; o script de sync, para trabalhar com dados reais.
+
+## Login local
+
+Usuário de teste: `admin@rrb.local` / `admin123` (definidos em `APP_DEFAULT_ADMIN_*`
+no `.env.local`).
 
 ```bash
-# Lista backups
-ls backups/
-
-# Restaura
-docker exec -i supabase_db_rrb-escola pg_restore \
-  -U postgres -d postgres --clean --if-exists --no-owner --no-acl \
-  < backups/<arquivo>.dump
-
-# Verifica
-docker exec -i supabase_db_rrb-escola psql -U postgres -d postgres \
-  -c "select count(*) from alunos;"
+npm run seed:auth
 ```
 
-Warnings sobre event triggers de superuser são ignoráveis.
+Cria o usuário se não existir, garante o perfil `admin` ativo e reaplica a senha.
+É idempotente e recusa rodar contra banco remoto — como ele escreve senha,
+apontado para prod sobrescreveria a de um admin real. Para forçar:
+`SEED_ADMIN_ALLOW_REMOTE=1 npm run seed:auth`.
 
-### Backup manual ad-hoc
+### "Sem perfil ativo. Solicite acesso ao administrador."
+
+O login autenticou, mas não há linha em `perfis` para aquele `user_id` — ou ela
+está com `ativo = false`. Rode `npm run seed:auth`.
+
+Acontece sempre que o banco local é reconstruído a partir de produção: **`admin@rrb.local`
+não tem perfil em produção**, ele só existia no snapshot local.
+
+Detalhe que explica por que o problema voltava a cada reconstrução: o perfil
+`22222222-2222-2222-2222-222222222222` pertence a **usuários diferentes** nos dois
+mundos — a `admin@rrb.local` no snapshot local e a `admin@rrbescola.local` em
+produção. Qualquer mistura das duas fontes deixa o perfil apontando para o usuário
+errado ou inativo. Corrigir por INSERT manual não resolve: some na próxima
+reconstrução. A correção tem que passar pelo `seed:auth`, que o script de sync já
+chama no final.
+
+### `Invalid Refresh Token: Refresh Token Not Found`
+
+O navegador tem cookie de sessão apontando para um auth user que não existe mais.
+Limpe os cookies `sb-*` do site (DevTools → Application → Cookies) ou faça logout.
+
+## Snapshot versionado (legado)
+
+`supabase/migrations/202605270002_seed_real_data.sql` é um snapshot de ~23k rows
+capturado em 2026-05-17, restaurado automaticamente pelo `db reset --local`.
+
+Cobre `auth.users`/`auth.identities`, `escolas`, `perfis`, `series`, `turmas`,
+`alunos`, `matriculas`, `cobrancas`, `pagamentos`, folha de pagamento, despesas e
+dispositivos de acesso.
+
+Regerar com `bash scripts/regenerate_seed_migration.sh`, que faz backup binário,
+dump `--column-inserts`, adiciona `ON CONFLICT DO NOTHING` e corrige o `search_path`.
+
+**Na prática não regenere.** Isso versionaria dados pessoais de ~789 alunos em texto
+claro no git, com churn de dezenas de milhares de linhas a cada atualização. Para
+trabalhar com dados atuais, use o espelho de produção. O snapshot continua existindo
+porque ~28 migrations de dados dependem dos registros que ele cria.
+
+### Limitações do snapshot
+
+Gerado com `--column-inserts`, então sobrevive à adição de colunas novas. Mas
+quebra ao **remover coluna**, **mudar tipo** de coluna existente ou **adicionar
+NOT NULL sem default**.
+
+## Backup e restauração
+
+Backup ad-hoc:
 
 ```bash
 docker exec supabase_db_rrb-escola pg_dump -U postgres -d postgres \
@@ -83,52 +134,41 @@ docker exec supabase_db_rrb-escola pg_dump -U postgres -d postgres \
   > "backups/manual_$(date +%Y%m%d_%H%M%S).dump"
 ```
 
-## Gotchas conhecidos
+Restaurar:
 
-### Cookie de sessão stale após reset
+```bash
+ls backups/
 
-A migration recria `auth.users` com mesmo UUID, mas o navegador pode ter token de refresh do auth user antigo. Sintoma:
+docker exec -i supabase_db_rrb-escola pg_restore \
+  -U postgres -d postgres --clean --if-exists --no-owner --no-acl \
+  < backups/<arquivo>.dump
 
-```
-AuthApiError: Invalid Refresh Token: Refresh Token Not Found
-```
-
-Fix: DevTools → Application → Cookies → delete cookies `sb-*` do site. Ou logout/login.
-
-### Migration de seed depende da ordem do schema
-
-A migration foi gerada com `--column-inserts` (colunas explícitas), então sobrevive a adição de novas colunas. Mas:
-
-- **Remover coluna** existente quebra inserts antigos
-- **Mudar tipo** de coluna existente quebra inserts
-- **Adicionar NOT NULL sem default** em coluna que o snapshot não tem quebra inserts
-
-Se schema mudar de forma incompatível, regenere o snapshot ou edite manualmente.
-
-### search_path
-
-`pg_dump` por default emite:
-```sql
-SELECT pg_catalog.set_config('search_path', '', false);
+docker exec -i supabase_db_rrb-escola psql -U postgres -d postgres \
+  -c "select count(*) from alunos;"
 ```
 
-Search path vazio quebra triggers que fazem `insert into outra_tabela` sem qualificar com `public.`. Exemplo no projeto: trigger `registrar_historico_matricula` insere em `historico_matriculas`.
+Warnings sobre event triggers de superuser são ignoráveis.
 
-O regenerator substitui essa linha por:
-```sql
-SELECT pg_catalog.set_config('search_path', 'public, pg_catalog', false);
-```
+## Gotcha: search_path nos dumps
 
-### seed.sql não roda mais
+`pg_dump` emite `SELECT pg_catalog.set_config('search_path', '', false);`. Com o
+search_path vazio, qualquer função ou trigger que referencie objetos sem qualificar
+o schema falha. Dois casos reais no projeto:
 
-`supabase/seed.sql` virou noop (`select 1;`). Toda inicialização está em `202605270002_seed_real_data.sql`. Razão: seed.sql roda **depois** de todas migrations e não tem o mesmo controle de ordem. Migration final é mais previsível.
+- `immutable_unaccent()` chama `unaccent('unaccent', $1)`. Sem search_path a coluna
+  gerada `alunos.nome_normalizado` não é criada, a tabela `alunos` não existe e ~30
+  objetos dependentes quebram em cascata.
+- O trigger `registrar_historico_matricula` insere em `historico_matriculas`.
 
-## Trade-offs
+`sync_local_from_prod.sh` substitui por `'public, extensions, pg_catalog'`;
+`regenerate_seed_migration.sh`, por `'public, pg_catalog'`.
 
-| Solução | Prós | Contras |
-|---------|------|---------|
-| Migration de seed (atual) | Versão controlado, idempotente, automático | 24k linhas, churn grande no git em cada update |
-| Backup binário só | Pequeno, rápido | Não versionado, perde se backup local sumir |
-| Sem snapshot | Zero overhead | Perde tudo no primeiro reset (já aconteceu) |
+## Nota sobre `supabase/seed.sql`
 
-Decisão: migration de seed como fonte da verdade, backups binários como segurança extra de curto prazo.
+É um noop (`select 1;`). O `db reset --local` o executa depois de todas as migrations,
+sem o mesmo controle de ordem, então a inicialização do snapshot ficou na migration
+`202605270002_seed_real_data.sql`.
+
+Ele também não serve para carregar o dump de produção: o CLI envia o arquivo via
+protocolo, não pelo psql, então meta-comandos como `\i` falham com
+`syntax error at or near "\"`.

@@ -34,7 +34,7 @@ export default async function GateNotificationsPage({
       <header className="flex flex-wrap items-end justify-between gap-4 border-b border-line bg-paper px-6 py-7">
         <div>
           <p className="ds-kicker">Portaria</p>
-          <h1 className="mt-7 font-serif text-4xl text-ink">Notificações</h1>
+          <h1 className="mt-7 font-display text-4xl text-ink">Notificações</h1>
           <p className="mt-3 max-w-2xl text-sm text-muted">
             Mensagens de entrada e saída enviadas aos responsáveis via WhatsApp.
           </p>
@@ -66,7 +66,7 @@ export default async function GateNotificationsPage({
 
         <div className="grid bg-paper/70">
           {notifications.length === 0 ? (
-            <div className="flex flex-col items-center justify-center gap-2 py-12 text-ink/40">
+            <div className="flex flex-col items-center justify-center gap-2 py-12 text-ink/60">
               <Bell size={28} />
               <p className="text-sm font-medium">Nenhuma notificação encontrada.</p>
             </div>

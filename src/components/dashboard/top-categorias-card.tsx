@@ -25,13 +25,13 @@ export function TopCategoriasCard({ items }: { items: CategoriaDespesaRow[] }) {
           </span>
           <div>
             <h3 className="text-sm font-bold text-ink">Top categorias de despesa</h3>
-            <p className="text-[0.66rem] text-ink/55">distribuição mensal</p>
+            <p className="text-[0.66rem] text-ink/60">distribuição mensal</p>
           </div>
         </div>
         {items.length > 0 && (
           <div className="text-right">
             <strong className="block text-lg font-bold text-ink leading-none">{money.format(total)}</strong>
-            <p className="mt-0.5 text-[0.6rem] font-semibold uppercase tracking-kicker text-ink/45">
+            <p className="mt-0.5 text-[0.6rem] font-semibold uppercase tracking-kicker text-ink/60">
               {totalCount} despesas
             </p>
           </div>
@@ -39,7 +39,7 @@ export function TopCategoriasCard({ items }: { items: CategoriaDespesaRow[] }) {
       </div>
 
       {items.length === 0 ? (
-        <div className="mt-6 flex flex-col items-center justify-center gap-2 rounded-ui bg-muted/30 py-8 text-ink/40">
+        <div className="mt-6 flex flex-col items-center justify-center gap-2 rounded-ui bg-muted/30 py-8 text-ink/60">
           <Layers size={24} />
           <p className="text-sm">Sem despesas neste mês.</p>
         </div>
@@ -73,7 +73,7 @@ export function TopCategoriasCard({ items }: { items: CategoriaDespesaRow[] }) {
                     <div className="h-1.5 flex-1 rounded-pill bg-muted overflow-hidden">
                       <div className={`h-1.5 rounded-pill ${color}`} style={{ width: `${pct}%` }} />
                     </div>
-                    <span className="shrink-0 text-[0.66rem] font-semibold text-ink/55">{pct.toFixed(1)}%</span>
+                    <span className="shrink-0 text-[0.66rem] font-semibold text-ink/60">{pct.toFixed(1)}%</span>
                   </div>
                 </li>
               );

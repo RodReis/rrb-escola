@@ -4,11 +4,18 @@ import type { AniversarioMatriculaRow } from "@/lib/data/dashboard-executive";
 
 const MESES = ["Janeiro","Fevereiro","Março","Abril","Maio","Junho","Julho","Agosto","Setembro","Outubro","Novembro","Dezembro"];
 
-function colorAnos(anos: number): string {
-  if (anos >= 10) return "bg-gold/15 text-gold";
-  if (anos >= 5) return "bg-brand/10 text-brand";
-  if (anos >= 3) return "bg-accent/10 text-accent";
-  return "bg-muted text-ink/60";
+function colorAnos(anos: number): { className: string; style?: React.CSSProperties } {
+  if (anos >= 10)
+    return {
+      className: "text-ink",
+      style: {
+        background: "color-mix(in oklab, var(--c-amber) 15%, var(--surface))",
+        color: "var(--c-amber)",
+      },
+    };
+  if (anos >= 5) return { className: "bg-brand/10 text-brand" };
+  if (anos >= 3) return { className: "bg-accent/10 text-accent" };
+  return { className: "bg-muted text-ink/60" };
 }
 
 export function AniversarioMatriculaCard({ items }: { items: AniversarioMatriculaRow[] }) {
@@ -27,7 +34,7 @@ export function AniversarioMatriculaCard({ items }: { items: AniversarioMatricul
           </span>
           <div>
             <h3 className="text-sm font-bold text-ink">Aniversário na escola</h3>
-            <p className="text-[0.66rem] text-ink/55">{mesLabel} · fidelidade</p>
+            <p className="text-[0.66rem] text-ink/60">{mesLabel} · fidelidade</p>
           </div>
         </div>
         {items.length > 0 && (
@@ -38,7 +45,7 @@ export function AniversarioMatriculaCard({ items }: { items: AniversarioMatricul
       </div>
 
       {items.length === 0 && (
-        <div className="mt-6 flex flex-col items-center justify-center gap-2 rounded-ui bg-muted/30 py-8 text-ink/40">
+        <div className="mt-6 flex flex-col items-center justify-center gap-2 rounded-ui bg-muted/30 py-8 text-ink/60">
           <Trophy size={24} />
           <p className="text-sm">Nenhum aniversário de matrícula este mês.</p>
         </div>
@@ -59,7 +66,10 @@ export function AniversarioMatriculaCard({ items }: { items: AniversarioMatricul
                   href={`/alunos/${a.alunoId}`}
                   className="flex items-center gap-3 rounded-ui bg-surface p-2 ring-1 ring-brand/40 hover:bg-brand/5"
                 >
-                  <span className={`grid h-10 w-10 shrink-0 place-items-center rounded-pill text-sm font-bold shadow-soft ${colorAnos(a.anosNaEscola)}`}>
+                  <span
+                    className={`grid h-10 w-10 shrink-0 place-items-center rounded-pill text-sm font-bold shadow-soft ${colorAnos(a.anosNaEscola).className}`}
+                    style={colorAnos(a.anosNaEscola).style}
+                  >
                     {a.anosNaEscola}
                   </span>
                   <div className="min-w-0 flex-1">
@@ -86,12 +96,15 @@ export function AniversarioMatriculaCard({ items }: { items: AniversarioMatricul
                   href={`/alunos/${a.alunoId}`}
                   className="flex items-center gap-3 rounded-ui border border-line p-2 hover:bg-muted/60"
                 >
-                  <span className={`grid h-9 w-9 shrink-0 place-items-center rounded-pill text-xs font-bold ${colorAnos(a.anosNaEscola)}`}>
+                  <span
+                    className={`grid h-9 w-9 shrink-0 place-items-center rounded-pill text-xs font-bold ${colorAnos(a.anosNaEscola).className}`}
+                    style={colorAnos(a.anosNaEscola).style}
+                  >
                     {a.anosNaEscola}a
                   </span>
                   <div className="min-w-0 flex-1">
                     <p className="truncate text-sm font-semibold text-ink">{a.nome}</p>
-                    <p className="text-xs text-ink/55">
+                    <p className="text-xs text-ink/60">
                       Dia {String(dia).padStart(2, "0")} · {a.diaSemana}
                     </p>
                   </div>

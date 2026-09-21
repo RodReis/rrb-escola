@@ -38,7 +38,7 @@ export default async function PortariaPage() {
       <Panel className="grid gap-5">
         <div className="flex items-center gap-3">
           <DoorOpen className="text-moss" />
-          <h2 className="font-serif text-2xl text-ink">Registro manual ou facial simulado</h2>
+          <h2 className="font-display text-2xl text-ink">Registro manual ou facial simulado</h2>
         </div>
         <form action={registerGateEventAction} className="grid gap-4 md:grid-cols-5">
           <label className="md:col-span-2">
@@ -75,13 +75,13 @@ export default async function PortariaPage() {
 
       <section className="grid gap-4 lg:grid-cols-2">
         <Panel className="grid gap-4">
-          <h2 className="flex items-center gap-2 font-serif text-2xl text-ink">
+          <h2 className="flex items-center gap-2 font-display text-2xl text-ink">
             <Activity size={20} className="text-brand" />
             Eventos recentes
           </h2>
           <div className="grid gap-2">
             {data.events.length === 0 && (
-              <div className="flex flex-col items-center justify-center gap-2 py-8 text-ink/40">
+              <div className="flex flex-col items-center justify-center gap-2 py-8 text-ink/60">
                 <Inbox size={24} />
                 <p className="text-sm">Nenhum evento registrado ainda.</p>
               </div>
@@ -99,7 +99,7 @@ export default async function PortariaPage() {
 
         <Panel className="grid gap-4">
           <div className="flex items-center justify-between gap-3">
-            <h2 className="flex items-center gap-2 font-serif text-2xl text-ink">
+            <h2 className="flex items-center gap-2 font-display text-2xl text-ink">
               <Bell size={20} className="text-brand" />
               Mensagens
             </h2>
@@ -107,7 +107,7 @@ export default async function PortariaPage() {
           </div>
           <div className="grid gap-2">
             {data.notifications.length === 0 && (
-              <div className="flex flex-col items-center justify-center gap-2 py-8 text-ink/40">
+              <div className="flex flex-col items-center justify-center gap-2 py-8 text-ink/60">
                 <Bell size={24} />
                 <p className="text-sm">Nenhuma notificação enviada.</p>
               </div>

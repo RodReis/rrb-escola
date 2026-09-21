@@ -114,7 +114,7 @@ export function NotasUnicoBimestreGrid({
 
   if (alunos.length === 0) {
     return (
-      <div className="rounded-ui bg-muted/30 p-6 text-center text-sm text-ink/40">
+      <div className="rounded-ui bg-muted/30 p-6 text-center text-sm text-ink/60">
         Nenhum aluno matriculado nessa turma.
       </div>
     );
@@ -124,7 +124,7 @@ export function NotasUnicoBimestreGrid({
     <div className="overflow-x-auto rounded-panel border border-line">
       <table className="w-full text-sm">
         <thead className="bg-muted/50">
-          <tr className="text-[0.66rem] uppercase tracking-kicker text-ink/55">
+          <tr className="text-[0.66rem] uppercase tracking-kicker text-ink/60">
             <th className="px-3 py-2 text-left">Aluno</th>
             <th className="px-2 py-2 text-center w-40">{bimestre}º Bimestre (0 a {valorMaximo})</th>
           </tr>

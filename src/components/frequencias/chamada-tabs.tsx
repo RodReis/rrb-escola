@@ -28,7 +28,7 @@ export function ChamadaTabs({ tab }: { tab: "chamada" | "notas" }) {
             key={t.id}
             href={hrefFor(t.id)}
             className={`relative inline-flex items-center gap-2 px-4 py-2.5 text-sm font-semibold transition ${
-              ativo ? "text-brand" : "text-ink/55 hover:text-ink"
+              ativo ? "text-brand" : "text-ink/60 hover:text-ink"
             }`}
           >
             <t.Icon size={14} />

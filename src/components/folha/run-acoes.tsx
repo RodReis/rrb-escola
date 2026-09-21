@@ -40,10 +40,21 @@ function destinoLabel(de: string, para: string): string {
 
 function destinoVariant(de: string, para: string): "primary" | "secondary" | "accent" | "ghost" {
   if (para === "aprovado") return "primary";
-  if (de !== "iniciada" && para === "iniciada") return "ghost";
-  if (de !== "iniciada" && de !== "em_andamento" && para === "em_andamento") return "ghost";
-  if (de !== "revisao" && para === "revisao" && de === "aprovacao") return "ghost";
-  return DESTINO_VARIANT[para] ?? "secondary";
+  if (isVoltar(de, para)) return "ghost";
+  return "primary";
+}
+
+// "Voltar" = transição para um status anterior no fluxo.
+const ORDEM: Record<string, number> = { iniciada: 0, em_andamento: 1, revisao: 2, aprovacao: 3, aprovado: 4 };
+function isVoltar(de: string, para: string): boolean {
+  return (ORDEM[para] ?? 99) < (ORDEM[de] ?? 0);
+}
+
+// Cor de destaque por destino (classes inline, sem mexer no CSS global).
+function destinoClasse(de: string, para: string): string {
+  if (para === "aprovado") return "!bg-success !text-white !shadow-[0_4px_12px_rgba(34,160,90,0.28)] hover:!brightness-105";
+  if (isVoltar(de, para)) return "text-ink/60 hover:text-ink";
+  return ""; // avançar usa primary (azul) padrão
 }
 
 export function RunAcoes({ runId, status }: Props) {
@@ -118,6 +129,7 @@ export function RunAcoes({ runId, status }: Props) {
               variant={destinoVariant(status, destino)}
               disabled={isPending}
               onClick={() => handleTransicionar(destino)}
+              className={destinoClasse(status, destino)}
             >
               {destinoLabel(status, destino)}
             </Button>

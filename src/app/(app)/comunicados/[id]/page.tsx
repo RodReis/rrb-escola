@@ -94,7 +94,7 @@ export default async function ComunicadoDetalhePage({
             </span>
             <div>
               <h2 className="font-bold text-ink">Mensagem enviada</h2>
-              <p className="text-xs text-ink/55">Conteúdo entregue aos responsáveis.</p>
+              <p className="text-xs text-ink/60">Conteúdo entregue aos responsáveis.</p>
             </div>
           </div>
 
@@ -105,7 +105,7 @@ export default async function ComunicadoDetalhePage({
           </div>
 
           {comunicado.imagemPath && (
-            <p className="flex items-center gap-1.5 text-xs text-ink/55">
+            <p className="flex items-center gap-1.5 text-xs text-ink/60">
               <ImageIcon size={13} /> Comunicado com imagem anexada.
             </p>
           )}
@@ -119,7 +119,7 @@ export default async function ComunicadoDetalhePage({
             </span>
             <div>
               <h2 className="font-bold text-ink">Segmentação</h2>
-              <p className="text-xs text-ink/55">Critério usado para selecionar.</p>
+              <p className="text-xs text-ink/60">Critério usado para selecionar.</p>
             </div>
           </div>
 
@@ -172,7 +172,7 @@ export default async function ComunicadoDetalhePage({
                 </div>
               )}
               {series.length === 0 && turmas.length === 0 && (
-                <p className="text-sm text-ink/55">Seleção manual de alunos.</p>
+                <p className="text-sm text-ink/60">Seleção manual de alunos.</p>
               )}
               <p className="border-t border-line pt-2 text-sm text-ink/70">
                 <strong className="text-ink">{comunicado.alvos.alunos.length}</strong> aluno(s)
@@ -204,8 +204,8 @@ export default async function ComunicadoDetalhePage({
         {destinatarios.length === 0 ? (
           <div className="grid place-items-center gap-2 py-10 text-center">
             <Users size={28} className="text-ink/25" />
-            <p className="text-sm font-semibold text-ink/55">Nenhum destinatário</p>
-            <p className="max-w-sm text-xs text-ink/45">
+            <p className="text-sm font-semibold text-ink/60">Nenhum destinatário</p>
+            <p className="max-w-sm text-xs text-ink/60">
               Nenhum responsável financeiro com WhatsApp foi encontrado para os alunos
               selecionados.
             </p>
@@ -235,7 +235,7 @@ export default async function ComunicadoDetalhePage({
                       <p className="truncate font-semibold text-ink">
                         {d.alunoNome ?? "Aluno"}
                       </p>
-                      <p className="font-mono text-xs text-ink/55">{d.telefone}</p>
+                      <p className="font-mono text-xs text-ink/60">{d.telefone}</p>
                     </div>
                   </div>
                   <div className="flex shrink-0 items-center gap-2">

@@ -127,12 +127,22 @@ export function NotificationBell({ perfilId, escolaId, initial }: Props) {
       <button
         type="button"
         onClick={() => setOpen((v) => !v)}
-        className="relative inline-flex h-[30px] w-[30px] items-center justify-center rounded-[7px] border border-white/[0.12] bg-white/10 text-white hover:bg-white/[0.18]"
+        className="relative inline-flex h-9 w-9 items-center justify-center rounded-[var(--r-sm)] border transition-colors"
+        style={{
+          borderColor: "var(--border-strong)",
+          background: "var(--surface)",
+          color: "var(--text-soft)",
+        }}
+        onMouseEnter={(e) => (e.currentTarget.style.background = "var(--surface-2)")}
+        onMouseLeave={(e) => (e.currentTarget.style.background = "var(--surface)")}
         aria-label="Notificações"
       >
-        <Icon size={13} strokeWidth={pulse ? 2 : 1.8} className={pulse ? "animate-pulse" : ""} />
+        <Icon size={15} strokeWidth={pulse ? 2 : 1.8} className={pulse ? "animate-pulse" : ""} />
         {naoLidas > 0 && (
-          <span className="absolute -top-1 -right-1 grid h-4 min-w-[16px] place-items-center rounded-full bg-[#ff3344] px-1 text-[9px] font-bold text-white shadow-[0_0_0_1.5px_#15349E]">
+          <span
+            className="absolute -top-1 -right-1 grid h-4 min-w-[16px] place-items-center rounded-full px-1 text-[9px] font-bold text-white"
+            style={{ background: "var(--c-coral)", boxShadow: "0 0 0 1.5px var(--surface)" }}
+          >
             {naoLidas > 99 ? "99+" : naoLidas}
           </span>
         )}
@@ -141,7 +151,7 @@ export function NotificationBell({ perfilId, escolaId, initial }: Props) {
       {open && (
         <div className="absolute right-0 top-full mt-2 w-[360px] max-w-[calc(100vw-2rem)] rounded-panel border border-line bg-surface shadow-lift overflow-hidden z-50">
           <div className="flex items-center justify-between border-b border-line p-3">
-            <p className="text-[0.66rem] font-bold uppercase tracking-kicker text-ink/55">
+            <p className="text-[0.66rem] font-bold uppercase tracking-kicker text-ink/60">
               Notificações {naoLidas > 0 && <span className="text-brand">({naoLidas})</span>}
             </p>
             {naoLidas > 0 && (
@@ -156,7 +166,7 @@ export function NotificationBell({ perfilId, escolaId, initial }: Props) {
 
           <div className="max-h-[400px] overflow-y-auto">
             {items.length === 0 ? (
-              <div className="flex flex-col items-center justify-center gap-2 py-8 text-ink/40">
+              <div className="flex flex-col items-center justify-center gap-2 py-8 text-ink/60">
                 <BellOff size={24} />
                 <p className="text-sm">Nenhuma notificação.</p>
               </div>
@@ -184,7 +194,7 @@ export function NotificationBell({ perfilId, escolaId, initial }: Props) {
                           {n.descricao && (
                             <p className="text-xs text-ink/60 line-clamp-2">{n.descricao}</p>
                           )}
-                          <p className="mt-1 text-[0.66rem] uppercase tracking-kicker text-ink/40">
+                          <p className="mt-1 text-[0.66rem] uppercase tracking-kicker text-ink/60">
                             {timeAgo(n.criadaEm)}
                           </p>
                         </div>

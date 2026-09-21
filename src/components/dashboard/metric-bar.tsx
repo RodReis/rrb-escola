@@ -33,7 +33,7 @@ export function MetricBar({
         <span className={`grid h-9 w-9 place-items-center rounded-ui ${cfg.chip}`}>
           <PieChart size={16} />
         </span>
-        <p className="text-[0.66rem] font-bold uppercase tracking-kicker text-ink/55">{label}</p>
+        <p className="text-[0.66rem] font-bold uppercase tracking-kicker text-ink/60">{label}</p>
       </div>
       <div className="mt-3 flex items-baseline gap-2">
         <strong className={`text-3xl font-bold ${cfg.text}`}>{(pct * 100).toFixed(1)}%</strong>

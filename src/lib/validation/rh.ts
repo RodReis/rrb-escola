@@ -6,9 +6,24 @@ export const CompanySchema = z.object({
   cnpj: z.string().regex(CNPJ_REGEX, "CNPJ inválido (formato 00.000.000/0000-00)")
 });
 
+const optionalText = () =>
+  z.preprocess((v) => (typeof v === "string" && v.trim() === "" ? undefined : v), z.string().optional());
+
 export const CompanyUpdateSchema = CompanySchema.extend({
   id: z.string().uuid(),
-  ativo: z.preprocess((v) => v === "on" || v === true, z.boolean())
+  ativo: z.preprocess((v) => v === "on" || v === true, z.boolean()),
+  // Dados de cabecalho usados no historico escolar (endereco, resolucao, assinaturas).
+  endereco: optionalText(),
+  cidade: optionalText(),
+  uf: optionalText(),
+  cep: optionalText(),
+  resolucao: optionalText(),
+  telefones: optionalText(),
+  email: optionalText(),
+  secretarioNome: optionalText(),
+  secretarioCargo: optionalText(),
+  diretorNome: optionalText(),
+  diretorCargo: optionalText()
 });
 
 export const SchoolCategoryEnum = z.enum(["admin", "fund1", "fund2", "medio"]);

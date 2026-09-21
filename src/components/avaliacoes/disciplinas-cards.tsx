@@ -223,7 +223,7 @@ export function DisciplinasCards({
 
   if (disciplinas.length === 0) {
     return (
-      <div className="rounded-ui bg-muted/30 p-6 text-center text-sm text-ink/40">
+      <div className="rounded-ui bg-muted/30 p-6 text-center text-sm text-ink/60">
         Esta série não tem disciplinas cadastradas.
       </div>
     );
@@ -243,7 +243,7 @@ export function DisciplinasCards({
             className={`group inline-flex items-center gap-2 rounded-pill border-2 px-3 py-1.5 text-xs font-bold transition ${
               ativo
                 ? `${t.ring} ${t.activeBg} ${t.activeText} shadow-soft`
-                : "border-line bg-surface text-ink/70 hover:border-ink/30 hover:bg-muted/40"
+                : "border-line bg-surface text-ink/60 hover:border-ink/30 hover:bg-muted/40"
             }`}
           >
             <span

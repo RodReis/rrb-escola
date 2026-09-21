@@ -1,0 +1,38 @@
+[
+  {
+    "key": "login",
+    "theme": "light",
+    "pct": 36.508418274864894,
+    "status": "FAIL"
+  },
+  {
+    "key": "login",
+    "theme": "dark",
+    "pct": 15.852144626010242,
+    "status": "FAIL"
+  },
+  {
+    "key": "dashboard",
+    "theme": "light",
+    "pct": 11.472122821520378,
+    "status": "FAIL"
+  },
+  {
+    "key": "dashboard",
+    "theme": "dark",
+    "pct": 12.349374621413228,
+    "status": "FAIL"
+  },
+  {
+    "key": "alunos",
+    "theme": "light",
+    "pct": 10.50561014407385,
+    "status": "FAIL"
+  },
+  {
+    "key": "alunos",
+    "theme": "dark",
+    "pct": 12.208355787099903,
+    "status": "FAIL"
+  }
+]

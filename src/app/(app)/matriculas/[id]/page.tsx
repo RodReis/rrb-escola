@@ -67,7 +67,7 @@ export default async function EnrollmentDetailPage({
       <header className="flex flex-wrap items-end justify-between gap-4 border-b border-line bg-surface px-6 py-7">
         <div>
           <p className="ds-kicker">Gestão / Histórico de matrícula</p>
-          <h1 className="mt-7 font-serif text-4xl text-ink">{student?.nome ?? "Matrícula"}</h1>
+          <h1 className="mt-7 font-display text-4xl text-ink">{student?.nome ?? "Matrícula"}</h1>
           <p className="mt-3 text-sm text-muted">
             {student?.matricula_codigo ?? "—"} / {serie?.nome ?? "—"} / {turma?.nome ?? "—"} / {enrollment.ano_letivo}
           </p>
@@ -77,7 +77,7 @@ export default async function EnrollmentDetailPage({
             <ArrowLeft size={14} /> Voltar
           </ButtonLink>
           {student?.id ? <ButtonLink href={`/alunos/${student.id}`} variant="primary">Ficha do aluno</ButtonLink> : null}
-          {enrollment.status === "ativa" ? <ReenrollButton matriculaId={enrollment.id} /> : null}
+          {enrollment.status === "ativa" && student?.id ? <ReenrollButton alunoId={student.id} /> : null}
         </div>
       </header>
       {rematricula === "1" && (
@@ -119,7 +119,7 @@ export default async function EnrollmentDetailPage({
           <Panel className="grid gap-5">
             <div>
               <p className="ds-kicker">Cadastro</p>
-              <h2 className="mt-2 flex items-center gap-2 font-serif text-2xl text-ink">
+              <h2 className="mt-2 flex items-center gap-2 font-display text-2xl text-ink">
                 <Pencil size={20} className="text-brand" />
                 Editar matrícula
               </h2>
@@ -166,7 +166,7 @@ export default async function EnrollmentDetailPage({
             <Panel className="grid gap-4">
               <div>
                 <p className="ds-kicker">Financeiro</p>
-                <h2 className="mt-2 flex items-center gap-2 font-serif text-2xl text-ink">
+                <h2 className="mt-2 flex items-center gap-2 font-display text-2xl text-ink">
                   <Receipt size={20} className="text-brand" />
                   Histórico financeiro
                 </h2>
@@ -174,7 +174,7 @@ export default async function EnrollmentDetailPage({
               </div>
               <div className="grid gap-2">
                 {detail.charges.length === 0 ? (
-                  <div className="flex flex-col items-center justify-center gap-2 rounded-ui bg-muted/30 py-8 text-ink/40">
+                  <div className="flex flex-col items-center justify-center gap-2 rounded-ui bg-muted/30 py-8 text-ink/60">
                     <Receipt size={24} />
                     <p className="text-sm">Nenhuma cobrança vinculada.</p>
                   </div>
@@ -196,14 +196,14 @@ export default async function EnrollmentDetailPage({
             <Panel className="grid gap-4">
               <div>
                 <p className="ds-kicker">Baixas</p>
-                <h2 className="mt-2 flex items-center gap-2 font-serif text-2xl text-ink">
+                <h2 className="mt-2 flex items-center gap-2 font-display text-2xl text-ink">
                   <Wallet size={20} className="text-brand" />
                   Pagamentos
                 </h2>
               </div>
               <div className="grid gap-2">
                 {detail.payments.length === 0 ? (
-                  <div className="flex flex-col items-center justify-center gap-2 rounded-ui bg-muted/30 py-8 text-ink/40">
+                  <div className="flex flex-col items-center justify-center gap-2 rounded-ui bg-muted/30 py-8 text-ink/60">
                     <Wallet size={24} />
                     <p className="text-sm">Nenhum pagamento vinculado.</p>
                   </div>
@@ -231,14 +231,14 @@ export default async function EnrollmentDetailPage({
           <Panel className="grid gap-4">
             <div>
               <p className="ds-kicker">Presença</p>
-              <h2 className="mt-2 flex items-center gap-2 font-serif text-2xl text-ink">
+              <h2 className="mt-2 flex items-center gap-2 font-display text-2xl text-ink">
                 <Calendar size={20} className="text-brand" />
                 Histórico de frequência
               </h2>
             </div>
             <div className="grid gap-2">
               {detail.attendance.length === 0 ? (
-                <div className="flex flex-col items-center justify-center gap-2 rounded-ui bg-muted/30 py-8 text-ink/40">
+                <div className="flex flex-col items-center justify-center gap-2 rounded-ui bg-muted/30 py-8 text-ink/60">
                   <Calendar size={24} />
                   <p className="text-sm">Nenhuma frequência vinculada.</p>
                 </div>
@@ -259,14 +259,14 @@ export default async function EnrollmentDetailPage({
           <Panel className="grid gap-4">
             <div>
               <p className="ds-kicker">Auditoria</p>
-              <h2 className="mt-2 flex items-center gap-2 font-serif text-2xl text-ink">
+              <h2 className="mt-2 flex items-center gap-2 font-display text-2xl text-ink">
                 <History size={20} className="text-brand" />
                 Alterações da matrícula
               </h2>
             </div>
             <div className="grid gap-2">
               {detail.history.length === 0 ? (
-                <div className="flex flex-col items-center justify-center gap-2 rounded-ui bg-muted/30 py-8 text-ink/40">
+                <div className="flex flex-col items-center justify-center gap-2 rounded-ui bg-muted/30 py-8 text-ink/60">
                   <History size={24} />
                   <p className="text-sm">Nenhuma alteração registrada.</p>
                 </div>

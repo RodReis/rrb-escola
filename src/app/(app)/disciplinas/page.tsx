@@ -1,15 +1,11 @@
-import { BookOpen, Plus, Trash2 } from "lucide-react";
+import { BookOpen, Plus } from "lucide-react";
 import { Panel } from "@/components/ui/card";
-import { ConfirmButton } from "@/components/ui/confirm-button";
 import { PageHeader } from "@/components/ui/page-header";
 import { getAcademicData } from "@/lib/data/lookups";
 import { listDisciplinas } from "@/lib/data/pedagogico";
-import {
-  createDisciplinaAction,
-  deleteDisciplinaAction,
-  updateDisciplinaAction,
-} from "@/lib/actions/disciplinas";
 import { requirePermission } from "@/lib/auth/session";
+import { DisciplinaListItem } from "@/components/pedagogico/disciplina-list-item";
+import { NovaDisciplinaForm } from "@/components/pedagogico/nova-disciplina-form";
 
 const SEG_LABEL: Record<string, string> = {
   INFANTIL: "Ed. Infantil",
@@ -53,33 +49,12 @@ export default async function DisciplinasPage() {
           <Plus size={16} className="text-brand" />
           Nova disciplina
         </h2>
-        <form action={createDisciplinaAction} className="grid gap-3 md:grid-cols-4">
-          <label>
-            Série
-            <select name="serie_id" required>
-              <option value="">Selecione...</option>
-              {series.map((s) => (
-                <option key={s.id} value={s.id}>{s.nome}</option>
-              ))}
-            </select>
-          </label>
-          <label className="md:col-span-2">
-            Nome
-            <input name="nome" required maxLength={80} placeholder="Ex.: Matemática" />
-          </label>
-          <label>
-            Ordem
-            <input name="ordem" type="number" defaultValue={0} />
-          </label>
-          <div className="md:col-span-4 flex justify-end">
-            <button className="ds-button ds-button-primary px-4">Adicionar</button>
-          </div>
-        </form>
+        <NovaDisciplinaForm series={series} />
       </Panel>
 
       {disciplinas.length === 0 && (
         <Panel>
-          <div className="flex flex-col items-center justify-center gap-2 py-10 text-ink/40">
+          <div className="flex flex-col items-center justify-center gap-2 py-10 text-ink/60">
             <BookOpen size={28} />
             <p className="text-sm font-medium">Nenhuma disciplina cadastrada.</p>
           </div>
@@ -99,33 +74,11 @@ export default async function DisciplinasPage() {
               <span className={`rounded-pill px-2 py-0.5 text-[0.66rem] font-semibold uppercase tracking-kicker ${segColor}`}>
                 {segLabel}
               </span>
-              <span className="ml-auto text-xs text-ink/55">{lista.length} disciplinas</span>
+              <span className="ml-auto text-xs text-ink/60">{lista.length} disciplinas</span>
             </div>
             <ul className="grid gap-2">
               {lista.map((d) => (
-                <li key={d.id} className="rounded-ui border border-line p-3">
-                  <form action={updateDisciplinaAction} className="grid gap-2 md:grid-cols-[1fr_80px_80px_120px]">
-                    <input type="hidden" name="id" value={d.id} />
-                    <input name="nome" defaultValue={d.nome} required maxLength={80} />
-                    <input name="ordem" type="number" defaultValue={d.ordem} />
-                    <label className="flex items-center gap-2 text-xs">
-                      <input name="ativo" type="checkbox" defaultChecked={d.ativo} />
-                      Ativa
-                    </label>
-                    <div className="flex gap-2">
-                      <button className="ds-button ds-button-secondary text-xs">Salvar</button>
-                    </div>
-                  </form>
-                  <form action={deleteDisciplinaAction} className="mt-2">
-                    <input type="hidden" name="id" value={d.id} />
-                    <ConfirmButton
-                      message={`Tem certeza que quer remover a disciplina "${d.nome}"?`}
-                      className="inline-flex items-center gap-1 text-xs text-danger hover:underline"
-                    >
-                      <Trash2 size={12} /> Remover
-                    </ConfirmButton>
-                  </form>
-                </li>
+                <DisciplinaListItem key={d.id} disciplina={d} />
               ))}
             </ul>
           </Panel>

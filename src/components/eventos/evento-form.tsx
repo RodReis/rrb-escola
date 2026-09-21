@@ -82,7 +82,7 @@ export function EventoForm({ evento }: { evento?: EventoEscola | null }) {
         </div>
 
         <label className="grid gap-1 text-sm">
-          Local <span className="text-xs text-ink/55">(opcional)</span>
+          Local <span className="text-xs text-ink/60">(opcional)</span>
           <input
             type="text"
             name="local"
@@ -93,7 +93,7 @@ export function EventoForm({ evento }: { evento?: EventoEscola | null }) {
         </label>
 
         <label className="grid gap-1 text-sm">
-          Descrição <span className="text-xs text-ink/55">(opcional)</span>
+          Descrição <span className="text-xs text-ink/60">(opcional)</span>
           <textarea
             name="descricao"
             rows={3}

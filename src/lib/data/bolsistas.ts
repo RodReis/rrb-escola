@@ -32,13 +32,22 @@ export async function listBolsistas(escolaId: string = DEFAULT_SCHOOL_ID): Promi
   const supabase = await createServerClient();
   const anoLetivo = new Date().getFullYear();
 
+  // Não usa `getAlunosAtivosAnoCorrente` (Task 3) diretamente: a fonte única
+  // não devolve `tipo_vaga`/foto/contato/plano, que esta tela precisa em
+  // volume (todo o card + tabela). Buscar so os ids ativos e depois uma
+  // segunda query so pra pegar os campos extras equivaleria a 2 round-trips
+  // pelo mesmo resultado que 1 query ja da. Em vez disso a query abaixo
+  // aplica a MESMA regra 527 (alunos.ativo=true AND matriculas.status=ativa
+  // AND matriculas.ano_letivo=:anoLetivo) via inner join em alunos — o `!inner`
+  // e o `.eq("alunos.ativo", true)` precisam estar juntos (embed so filtra
+  // com .eq quando declarado no select, ver licao da Task 3).
   const [matriculasRes, valoresRes] = await Promise.all([
     supabase
       .from("matriculas")
       .select(`
         id, tipo_vaga, percentual_bolsa,
-        alunos (
-          id, nome, foto_url, matricula_codigo, celular, email,
+        alunos!inner (
+          id, nome, foto_url, matricula_codigo, celular, email, ativo,
           responsaveis_aluno ( nome, celular, telefone, parentesco, responsavel_financeiro )
         ),
         series ( nome, segmento ),
@@ -48,6 +57,7 @@ export async function listBolsistas(escolaId: string = DEFAULT_SCHOOL_ID): Promi
       .eq("escola_id", escolaId)
       .eq("status", "ativa")
       .eq("ano_letivo", anoLetivo)
+      .eq("alunos.ativo", true)
       .in("tipo_vaga", ["bolsa_integral", "bolsa_parcial", "permuta", "gratuita"]),
     supabase
       .from("valores_praticados")

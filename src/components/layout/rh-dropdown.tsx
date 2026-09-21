@@ -46,11 +46,14 @@ export function RhDropdown({ items }: { items: DropdownItem[] }) {
         ref={btnRef}
         type="button"
         onClick={() => setOpen((v) => !v)}
+        style={
+          isActive || open
+            ? { color: "var(--brand-600)", background: "color-mix(in oklab, var(--brand-600) 12%, var(--surface))" }
+            : { color: "var(--text-muted)" }
+        }
         className={cn(
-          "inline-flex h-[30px] shrink-0 items-center gap-[7px] rounded-[7px] px-2.5 text-[12px] font-semibold no-underline outline-none focus:outline-none focus-visible:ring-2 focus-visible:ring-white/40 transition-all duration-150",
-          isActive
-            ? "bg-white text-[#1B3FB8] shadow-[0_1px_0_rgba(255,255,255,0.16)_inset,0_6px_14px_-6px_rgba(0,0,0,0.25)]"
-            : "text-white/70 hover:bg-white/[0.18] hover:text-white"
+          "inline-flex h-[34px] shrink-0 items-center gap-[7px] rounded-[9px] px-3 text-[12.5px] font-semibold no-underline outline-none focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--brand-600)]/40 transition-all duration-150",
+          !isActive && !open && "hover:bg-[var(--surface-3)] hover:text-[var(--text)]"
         )}
       >
         <Briefcase size={13} strokeWidth={isActive ? 2 : 1.7} />
@@ -61,8 +64,8 @@ export function RhDropdown({ items }: { items: DropdownItem[] }) {
       {open && mounted
         ? createPortal(
             <div
-              style={{ position: "fixed", left: pos.left, top: pos.top, width: pos.width, zIndex: 9999 }}
-              className="rounded-[10px] border border-[#1B3FB8]/20 bg-white shadow-[0_14px_40px_-10px_rgba(0,0,0,0.18),0_2px_8px_-4px_rgba(0,0,0,0.08)] p-1"
+              style={{ position: "fixed", left: pos.left, top: pos.top, width: pos.width, zIndex: 9999, background: "var(--surface)", border: "1px solid var(--border)", borderRadius: "var(--r-md)", boxShadow: "var(--shadow-lg)" }}
+              className="p-1"
               onMouseDown={(e) => e.stopPropagation()}
             >
               {items.map((item) => {
@@ -73,11 +76,14 @@ export function RhDropdown({ items }: { items: DropdownItem[] }) {
                     key={item.href}
                     href={item.href}
                     onClick={() => setOpen(false)}
+                    style={
+                      active
+                        ? { color: "var(--brand-600)", background: "color-mix(in oklab, var(--brand-600) 8%, var(--surface))" }
+                        : { color: "var(--text-soft)" }
+                    }
                     className={cn(
                       "flex items-center gap-2.5 px-2.5 py-2 text-[12px] rounded-[7px] transition-colors duration-100",
-                      active
-                        ? "bg-[#1B3FB8]/[0.07] font-semibold text-[#1B3FB8]"
-                        : "font-medium text-[#1A2240] hover:bg-slate-50"
+                      active ? "font-semibold" : "font-medium hover:bg-[var(--surface-2)] hover:text-[var(--text)]"
                     )}
                   >
                     <Icon size={13} strokeWidth={active ? 2 : 1.7} />

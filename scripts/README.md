@@ -1,7 +1,7 @@
 ## reconcile_matriculas_2026
 
 Reconcilia série/turma/turno de matrículas 2026 a partir de
-`public/MATRICULADOS2026.xlsx`.
+`dados-alunos/MATRICULADOS2026.xlsx`.
 
 - Dry-run: `npm run reconcile:matriculas:2026`
 - Apply: `npm run reconcile:matriculas:2026:apply`

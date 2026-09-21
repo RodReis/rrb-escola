@@ -33,7 +33,7 @@ export function EnrollmentTabs() {
             "px-4 py-3 text-sm font-black transition",
             active === t.key
               ? "border-b-2 border-brand text-brand"
-              : "text-ink/50 hover:text-ink",
+              : "text-ink/60 hover:text-ink",
           ].join(" ")}
         >
           {t.label}

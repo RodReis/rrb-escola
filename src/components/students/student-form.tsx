@@ -10,7 +10,7 @@ type Options = {
 function Section({ title, children }: { title: string; children: React.ReactNode }) {
   return (
     <Panel className="grid gap-4">
-      <h2 className="font-serif text-2xl text-ink">{title}</h2>
+      <h2 className="font-display text-2xl text-ink">{title}</h2>
       {children}
     </Panel>
   );
@@ -103,7 +103,7 @@ export function StudentForm({ options }: { options: Options }) {
             />
           </label>
         </div>
-        <p className="text-xs text-ink/55">
+        <p className="text-xs text-ink/60">
           % Bolsa parcial só é considerado quando o tipo é &quot;Bolsa parcial&quot;. Para outros tipos, deixe em 0.
         </p>
       </Section>

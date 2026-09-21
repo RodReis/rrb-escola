@@ -22,7 +22,7 @@ export function SaldoYTDCard({ data }: { data: SaldoYTDData }) {
           </span>
           <div>
             <h3 className="text-sm font-bold text-ink">Saldo YTD</h3>
-            <p className="text-[0.66rem] text-ink/55">acumulado do ano ({data.mesesComputados}m)</p>
+            <p className="text-[0.66rem] text-ink/60">acumulado do ano ({data.mesesComputados}m)</p>
           </div>
         </div>
       </div>
@@ -47,7 +47,7 @@ export function SaldoYTDCard({ data }: { data: SaldoYTDData }) {
       </dl>
 
       {data.receita > 0 && (
-        <p className="mt-3 text-xs text-ink/55">
+        <p className="mt-3 text-xs text-ink/60">
           Custos = <strong className="text-ink/70">{((custosTotal / data.receita) * 100).toFixed(1)}%</strong> da receita
         </p>
       )}

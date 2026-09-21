@@ -18,3 +18,37 @@ docs/pdfs/*.dump
 .superpowers/
 .vercel
 backup/
+.claude/settings.json
+
+# Artefatos de ferramentas locais (impeccable, playwright MCP)
+.impeccable/
+.playwright-mcp/
+
+# Dados pessoais de alunos (CPF, RG, endereco, telefone, foto de menores).
+# Ficam so na maquina de quem opera a importacao — nunca versionados.
+dados-alunos/
+
+# public/ e servido estaticamente pelo Next: planilha ou ficha de aluno
+# largada aqui vira download, bastando o middleware deixar de cobrir estatico.
+public/*.pdf
+public/*.xlsx
+public/*.json
+!public/face-models/*.json
+
+# Fichas exportadas do Escolar Manager
+docs/pdfs/*.pdf
+docs/pdfs/*.txt
+
+# Bytecode Python dos scripts de importacao
+__pycache__/
+*.pyc
+.gstack/
+
+# Dumps e backups de banco — contêm dados pessoais de alunos, nunca versionar
+.db-backups/
+backup-prod-*.json
+*.dump
+*.sql.gz
+
+# Extrações pontuais com dados pessoais (CPF/nome/matrícula)
+ref.json

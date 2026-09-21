@@ -1,5 +1,5 @@
 """
-Importa alunos dos PDFs docs/pdfs/Resultado.pdf e Resultado1.pdf direto no Supabase local.
+Importa alunos dos PDFs dados-alunos/Resultado.pdf e Resultado1.pdf direto no Supabase local.
 Cria séries e turmas faltantes automaticamente.
 Uso: python scripts/import_pdf_alunos.py [--dry-run]
 """
@@ -13,6 +13,9 @@ import argparse
 from datetime import datetime
 from pathlib import Path
 
+sys.path.insert(0, str(Path(__file__).parent))
+from lib.ano_letivo import ano_letivo_da_data
+
 sys.stdout.reconfigure(encoding="utf-8")
 
 # ── config ───────────────────────────────────────────────────────────────────
@@ -22,8 +25,8 @@ SERVICE_KEY = "sb_secret_N7UND0UgjKTVK-Uodkm0Hg_xSvEMPvz"
 ESCOLA_ID = "00000000-0000-0000-0000-000000000001"
 
 PDF_FILES = [
-    Path(__file__).parent.parent / "docs" / "pdfs" / "Resultado.pdf",
-    Path(__file__).parent.parent / "docs" / "pdfs" / "Resultado1.pdf",
+    Path(__file__).parent.parent / "dados-alunos" / "Resultado.pdf",
+    Path(__file__).parent.parent / "dados-alunos" / "Resultado1.pdf",
 ]
 
 HEADERS = {
@@ -378,7 +381,7 @@ def parse_page(text):
                 serie_turma_raw = m.group(1).strip()
                 data_mat = parse_date(m.group(2))
                 idade = int(m.group(3))
-                ano_letivo = int(m.group(2).split("/")[2])
+                ano_letivo = ano_letivo_da_data(m.group(2))
                 serie, turma = split_serie_turma(serie_turma_raw)
                 student["matriculas"].append({
                     "serie": serie,

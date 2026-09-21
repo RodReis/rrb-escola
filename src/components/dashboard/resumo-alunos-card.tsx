@@ -10,7 +10,7 @@ export function ResumoAlunosCard({ ocupacao }: { ocupacao: OcupacaoData }) {
         </span>
         <div>
           <h3 className="text-sm font-bold text-ink">Resumo</h3>
-          <p className="text-[0.66rem] text-ink/55">pagantes × beneficiados</p>
+          <p className="text-[0.66rem] text-ink/60">pagantes × beneficiados</p>
         </div>
       </div>
       <dl className="mt-5 grid gap-3">

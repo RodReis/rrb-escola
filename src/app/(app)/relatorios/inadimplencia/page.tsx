@@ -58,7 +58,7 @@ export default async function InadimplenciaPage({ searchParams }: { searchParams
         </h2>
         <div className="grid gap-2">
           {report.byStudent.length === 0 ? (
-            <div className="flex flex-col items-center justify-center gap-2 py-10 text-ink/40">
+            <div className="flex flex-col items-center justify-center gap-2 py-10 text-ink/60">
               <Receipt size={28} />
               <p className="text-sm font-medium">Nenhuma cobrança no filtro selecionado.</p>
             </div>

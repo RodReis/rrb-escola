@@ -2,9 +2,8 @@
 
 import { useEffect, useRef, useState } from "react";
 import { MoreHorizontal, Eye, Pencil, UserCheck, UserX, Trash2 } from "lucide-react";
-import { toast } from "sonner";
 import { toggleStudentAction, deleteStudentAction } from "@/lib/actions/students";
-import { useConfirm } from "@/components/ui/confirm-dialog";
+import { useAction } from "@/lib/hooks/use-action";
 
 type Props = {
   alunoId: string;
@@ -14,9 +13,7 @@ type Props = {
 
 export function AlunoRowActions({ alunoId, alunoNome, ativo }: Props) {
   const [open, setOpen] = useState(false);
-  const [pending, setPending] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
-  const confirm = useConfirm();
 
   useEffect(() => {
     function onDocClick(e: MouseEvent) {
@@ -35,50 +32,46 @@ export function AlunoRowActions({ alunoId, alunoNome, ativo }: Props) {
     };
   }, []);
 
-  async function handleToggle() {
-    setOpen(false);
-    const label = ativo ? "desativar" : "ativar";
-    const ok = await confirm({
+  const label = ativo ? "desativar" : "ativar";
+
+  const toggle = useAction(toggleStudentAction, {
+    confirm: {
       title: ativo ? "Desativar aluno" : "Ativar aluno",
       message: `Tem certeza que quer ${label} o aluno "${alunoNome}"?`,
       confirmLabel: ativo ? "Desativar" : "Ativar",
       variant: ativo ? "warning" : "default",
-    });
-    if (!ok) return;
-    setPending(true);
-    try {
-      const fd = new FormData();
-      fd.append("aluno_id", alunoId);
-      fd.append("ativo", ativo ? "" : "on");
-      await toggleStudentAction(fd);
-      toast.success(`Aluno ${label === "ativar" ? "ativado" : "desativado"}.`);
-    } catch {
-      toast.error("Falha ao alterar status.");
-    } finally {
-      setPending(false);
-    }
-  }
+    },
+    success: `Aluno ${ativo ? "desativado" : "ativado"}.`,
+    error: "Falha ao alterar status.",
+  });
 
-  async function handleDelete() {
-    setOpen(false);
-    const ok = await confirm({
+  const remove = useAction(deleteStudentAction, {
+    confirm: {
       title: "Excluir aluno",
       message: `Tem certeza que quer excluir "${alunoNome}"? Esta operação remove todos os dados vinculados e não pode ser desfeita.`,
       confirmLabel: "Excluir",
       variant: "danger",
-    });
-    if (!ok) return;
-    setPending(true);
-    try {
-      const fd = new FormData();
-      fd.append("aluno_id", alunoId);
-      await deleteStudentAction(fd);
-      toast.success("Aluno excluído.");
-    } catch {
-      toast.error("Falha ao excluir aluno.");
-    } finally {
-      setPending(false);
-    }
+    },
+    // deleteStudentAction faz redirect() no sucesso: o useAction deixa a
+    // excecao NEXT_REDIRECT subir e o Next navega para /alunos.
+    error: "Falha ao excluir aluno.",
+  });
+
+  const pending = toggle.pending || remove.pending;
+
+  function handleToggle() {
+    setOpen(false);
+    const fd = new FormData();
+    fd.append("aluno_id", alunoId);
+    fd.append("ativo", ativo ? "" : "on");
+    toggle.run(fd);
+  }
+
+  function handleDelete() {
+    setOpen(false);
+    const fd = new FormData();
+    fd.append("aluno_id", alunoId);
+    remove.run(fd);
   }
 
   return (
@@ -90,7 +83,7 @@ export function AlunoRowActions({ alunoId, alunoNome, ativo }: Props) {
         aria-haspopup="true"
         aria-expanded={open}
         aria-label="Mais ações"
-        className="flex h-7 w-7 items-center justify-center rounded-md text-ink/40 transition hover:bg-surface-raised hover:text-ink disabled:opacity-40"
+        className="flex h-7 w-7 items-center justify-center rounded-md text-ink/60 transition hover:bg-muted hover:text-ink disabled:opacity-40"
       >
         <MoreHorizontal size={16} />
       </button>
@@ -98,13 +91,13 @@ export function AlunoRowActions({ alunoId, alunoNome, ativo }: Props) {
       {open && (
         <div
           role="menu"
-          className="absolute right-0 top-full z-50 mt-1 w-52 rounded-lg border border-line bg-white py-1 shadow-soft"
+          className="absolute right-0 top-full z-50 mt-1 w-52 rounded-lg border border-line bg-surface py-1 shadow-soft"
         >
           <a
             href={`/alunos/${alunoId}`}
             role="menuitem"
             onClick={() => setOpen(false)}
-            className="flex items-center gap-2.5 px-3 py-2 text-sm text-ink hover:bg-surface-raised"
+            className="flex items-center gap-2.5 px-3 py-2 text-sm text-ink hover:bg-muted"
           >
             <Eye size={14} className="text-ink/50" />
             Ver ficha
@@ -114,7 +107,7 @@ export function AlunoRowActions({ alunoId, alunoNome, ativo }: Props) {
             href={`/alunos/${alunoId}/editar`}
             role="menuitem"
             onClick={() => setOpen(false)}
-            className="flex items-center gap-2.5 px-3 py-2 text-sm text-ink hover:bg-surface-raised"
+            className="flex items-center gap-2.5 px-3 py-2 text-sm text-ink hover:bg-muted"
           >
             <Pencil size={14} className="text-ink/50" />
             Editar
@@ -126,7 +119,7 @@ export function AlunoRowActions({ alunoId, alunoNome, ativo }: Props) {
             type="button"
             role="menuitem"
             onClick={handleToggle}
-            className="flex w-full items-center gap-2.5 px-3 py-2 text-sm text-ink hover:bg-surface-raised"
+            className="flex w-full items-center gap-2.5 px-3 py-2 text-sm text-ink hover:bg-muted"
           >
             {ativo ? (
               <>

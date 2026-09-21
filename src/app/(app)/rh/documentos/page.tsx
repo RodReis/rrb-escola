@@ -37,7 +37,7 @@ export default async function DocumentosPage({
       />
 
       <Panel className="p-5">
-        <div className="mb-3 flex items-center gap-2 text-xs font-bold uppercase tracking-kicker text-ink/55">
+        <div className="mb-3 flex items-center gap-2 text-xs font-bold uppercase tracking-kicker text-ink/60">
           <Filter size={12} /> Filtros
         </div>
         <form className="flex flex-wrap items-end gap-3 text-sm">

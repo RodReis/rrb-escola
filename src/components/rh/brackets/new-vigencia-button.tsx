@@ -42,7 +42,7 @@ export function NewVigenciaButton({
         </select>
       </label>
       <button type="submit" className="ds-button ds-button-primary">Criar</button>
-      <button type="button" onClick={() => setOpen(false)} className="text-xs font-semibold text-ink/55 hover:text-brand">
+      <button type="button" onClick={() => setOpen(false)} className="text-xs font-semibold text-ink/60 hover:text-brand">
         Cancelar
       </button>
     </form>

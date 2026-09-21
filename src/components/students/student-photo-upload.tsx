@@ -6,7 +6,7 @@ import { uploadStudentPhotoAction } from "@/lib/actions/students";
 export function StudentPhotoUpload({ alunoId, fotoUrl, nome }: { alunoId: string; fotoUrl: string | null; nome: string }) {
   return (
     <Panel className="grid gap-4">
-      <h2 className="font-serif text-2xl text-ink">Foto do aluno</h2>
+      <h2 className="font-display text-2xl text-ink">Foto do aluno</h2>
       <div className="grid gap-5 md:grid-cols-[130px_1fr]">
         {fotoUrl ? (
           <img src={fotoUrl} alt={nome} className="h-[160px] w-[120px] rounded-ui border border-line object-cover" />

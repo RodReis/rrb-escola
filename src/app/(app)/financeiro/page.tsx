@@ -2,6 +2,7 @@ import { ChevronLeft, ChevronRight, CreditCard, Plus, Receipt } from "lucide-rea
 import { ExportFinanceButton } from "@/components/pdf/export-finance-button";
 import { ChargeEditForm } from "@/components/finance/charge-edit-form";
 import { PaymentRow } from "@/components/finance/payment-row";
+import { GerarPixButton } from "@/components/finance/gerar-pix-button";
 import { ButtonLink } from "@/components/ui/button";
 import { Panel } from "@/components/ui/card";
 import { PageHeader } from "@/components/ui/page-header";
@@ -13,6 +14,7 @@ import { getAcademicData } from "@/lib/data/lookups";
 import { displayStatus, isUnpaid } from "@/lib/finance/charge-status";
 import { saldoDevedor, totalPago } from "@/lib/finance/charge-totals";
 import { requirePermission } from "@/lib/auth/session";
+import { readSicoobConfig } from "@/lib/sicoob/config";
 
 const statusTone: Record<string, StatusTone> = {
   aberta: "warning",
@@ -50,6 +52,10 @@ export default async function FinanceiroPage({ searchParams }: { searchParams: P
 
   const [{ alunos }, cobrancas] = await Promise.all([getAcademicData(), getFinanceData(competencia)]);
   const today = new Date().toISOString().slice(0, 10);
+  const sicoobConfig = readSicoobConfig();
+  const certDias = sicoobConfig?.certNotAfter
+    ? Math.ceil((new Date(sicoobConfig.certNotAfter).getTime() - Date.now()) / 86400000)
+    : null;
 
   let aVencer = 0;
   let vencido = 0;
@@ -107,6 +113,14 @@ export default async function FinanceiroPage({ searchParams }: { searchParams: P
         ]}
       />
 
+      {certDias !== null && certDias <= 30 ? (
+        <Panel className="border-clay/40 bg-clay/5">
+          <p className="text-sm font-semibold text-clay">
+            Certificado Sicoob {certDias < 0 ? "vencido" : `vence em ${certDias} dias`}. Renove o e-CNPJ A1 antes de gerar novos Pix.
+          </p>
+        </Panel>
+      ) : null}
+
       <Panel className="grid gap-5">
         <div>
           <p className="ds-kicker">Nova cobrança</p>
@@ -140,7 +154,7 @@ export default async function FinanceiroPage({ searchParams }: { searchParams: P
       <section className="grid gap-3">
         {cobrancas.length === 0 ? (
           <Panel>
-            <div className="flex flex-col items-center justify-center gap-2 py-10 text-ink/40">
+            <div className="flex flex-col items-center justify-center gap-2 py-10 text-ink/60">
               <Receipt size={28} />
               <p className="text-sm font-medium">Nenhuma cobrança cadastrada.</p>
             </div>
@@ -180,7 +194,7 @@ export default async function FinanceiroPage({ searchParams }: { searchParams: P
                 </div>
 
                 <div>
-                  <p className="text-xs font-black uppercase tracking-[0.12em] text-ink/50">Saldo</p>
+                  <p className="text-xs font-black uppercase tracking-[0.12em] text-ink/60">Saldo</p>
                   <strong className="mt-1 block text-2xl text-brand">{money.format(saldo)}</strong>
                   <span className="text-xs text-muted">de {money.format(valorFinal)}</span>
                 </div>
@@ -222,7 +236,10 @@ export default async function FinanceiroPage({ searchParams }: { searchParams: P
                     </details>
                     <form action={cancelChargeAction} className="text-right">
                       <input type="hidden" name="cobranca_id" value={item.id} />
-                      <button className="text-xs font-black text-clay" type="submit">Cancelar cobrança</button>
+                      <div className="flex items-center justify-end gap-3">
+                        <GerarPixButton cobrancaId={item.id} />
+                        <button className="text-xs font-black text-clay" type="submit">Cancelar cobrança</button>
+                      </div>
                     </form>
                   </div>
                 )}

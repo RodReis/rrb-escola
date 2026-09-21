@@ -1,7 +1,7 @@
 // scripts/reset_matriculas_2026.mjs
 //
 // Reset completo das matrículas 2026: apaga matriculas + cobrancas + pagamentos
-// + turmas 2026 + series não-alvo, e recria a partir de public/MATRICULADOS2026.xlsx.
+// + turmas 2026 + series não-alvo, e recria a partir de dados-alunos/MATRICULADOS2026.xlsx.
 //
 // Spec: docs/superpowers/specs/2026-05-23-reset-matriculas-planilha-design.md
 // Plan: docs/superpowers/plans/2026-05-23-reset-matriculas-planilha.md
@@ -23,7 +23,7 @@ import {
 } from "./lib/reset-matriculas-mapper.mjs";
 
 const ANO_LETIVO = 2026;
-const XLSX_PATH = "public/MATRICULADOS2026.xlsx";
+const XLSX_PATH = "dados-alunos/MATRICULADOS2026.xlsx";
 const PLANO_NOME = "Mensalidade 2026";
 
 function loadEnvFile(file) {

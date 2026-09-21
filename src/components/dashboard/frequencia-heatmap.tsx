@@ -47,7 +47,7 @@ export function FrequenciaHeatmap({ data }: { data: FrequenciaDetalhada }) {
           </span>
           <div>
             <h3 className="text-sm font-bold text-ink">Frequência detalhada</h3>
-            <p className="text-[0.66rem] text-ink/55">últimos 60 dias</p>
+            <p className="text-[0.66rem] text-ink/60">últimos 60 dias</p>
           </div>
         </div>
         {heatmap.length > 0 && (
@@ -57,7 +57,7 @@ export function FrequenciaHeatmap({ data }: { data: FrequenciaDetalhada }) {
             }`}>
               {(taxaGeral * 100).toFixed(1)}%
             </strong>
-            <p className="mt-0.5 text-[0.6rem] font-semibold uppercase tracking-kicker text-ink/45">
+            <p className="mt-0.5 text-[0.6rem] font-semibold uppercase tracking-kicker text-ink/60">
               taxa geral
             </p>
           </div>
@@ -65,20 +65,20 @@ export function FrequenciaHeatmap({ data }: { data: FrequenciaDetalhada }) {
       </div>
 
       {heatmap.length === 0 ? (
-        <div className="mt-6 flex flex-col items-center justify-center gap-2 rounded-ui bg-muted/40 py-10 text-ink/40">
+        <div className="mt-6 flex flex-col items-center justify-center gap-2 rounded-ui bg-muted/40 py-10 text-ink/60">
           <CalendarDays size={28} />
           <p className="text-sm">Sem registros nos últimos 60 dias.</p>
         </div>
       ) : (
         <>
           <div className="mt-5">
-            <p className="text-[0.66rem] font-bold uppercase tracking-kicker text-ink/55 mb-3">
+            <p className="text-[0.66rem] font-bold uppercase tracking-kicker text-ink/60 mb-3">
               Heatmap diário
             </p>
             <div className="grid gap-3">
               {grupos.map((g) => (
                 <div key={g.mes}>
-                  <p className="text-[0.6rem] font-semibold uppercase tracking-kicker text-ink/45 mb-1.5">
+                  <p className="text-[0.6rem] font-semibold uppercase tracking-kicker text-ink/60 mb-1.5">
                     {g.rotulo}
                   </p>
                   <div className="flex flex-wrap gap-1">
@@ -102,7 +102,7 @@ export function FrequenciaHeatmap({ data }: { data: FrequenciaDetalhada }) {
                 </div>
               ))}
             </div>
-            <div className="mt-3 flex items-center gap-2 text-[0.6rem] text-ink/45">
+            <div className="mt-3 flex items-center gap-2 text-[0.6rem] text-ink/60">
               <span>Baixa</span>
               <span className="h-3 w-3 rounded-sm bg-danger" />
               <span className="h-3 w-3 rounded-sm bg-warning" />
@@ -115,7 +115,7 @@ export function FrequenciaHeatmap({ data }: { data: FrequenciaDetalhada }) {
 
           {topFaltosos.length > 0 && (
             <div className="mt-6">
-              <p className="text-[0.66rem] font-bold uppercase tracking-kicker text-ink/55 mb-3">
+              <p className="text-[0.66rem] font-bold uppercase tracking-kicker text-ink/60 mb-3">
                 Top 10 faltosos
               </p>
               <ul className="grid gap-1.5">
@@ -131,12 +131,12 @@ export function FrequenciaHeatmap({ data }: { data: FrequenciaDetalhada }) {
                       <Avatar name={a.nome} src={a.fotoUrl} size={28} />
                       <div className="min-w-0 flex-1">
                         <p className="truncate text-xs font-semibold text-ink">{a.nome}</p>
-                        <p className="text-[0.66rem] text-ink/55">{a.turma}</p>
+                        <p className="text-[0.66rem] text-ink/60">{a.turma}</p>
                       </div>
                       <span className="shrink-0 rounded-pill bg-danger/10 px-2 py-0.5 text-[0.66rem] font-bold text-danger">
                         {a.faltas} faltas
                       </span>
-                      <span className="shrink-0 text-[0.66rem] font-semibold text-ink/55 w-9 text-right">
+                      <span className="shrink-0 text-[0.66rem] font-semibold text-ink/60 w-9 text-right">
                         {(a.taxa * 100).toFixed(0)}%
                       </span>
                     </Link>

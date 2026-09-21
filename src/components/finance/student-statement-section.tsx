@@ -19,7 +19,7 @@ export async function StudentStatementSection({ alunoId, searchParams }: {
       <div className="flex flex-wrap items-end justify-between gap-3">
         <div>
           <p className="ds-kicker">Financeiro</p>
-          <h2 className="mt-2 font-serif text-2xl text-ink">Extrato</h2>
+          <h2 className="mt-2 font-display text-2xl text-ink">Extrato</h2>
         </div>
         <form method="GET" className="flex flex-wrap items-end gap-2">
           <label className="text-xs">De<input name="ext_de" type="date" defaultValue={de} /></label>

@@ -1,0 +1,451 @@
+-- Importa notas do boletim (1o e 2o bimestre 2026) da turma 7o ANO A - Matutino.
+-- Mesmo padrao da migration 202609110010 (6o ANO): reaproveita disciplinas seed
+-- sem uso (Ciencias -> Ciencias da Natureza, Producao Textual -> Redacao) e cria
+-- Literatura, Filosofia, Matematica Complementar.
+-- Anna Clara Ferreira, Lara Nurralia Garcia Alves e Pedro Santana Cortes excluidos:
+-- boletim sem nenhuma nota lancada.
+-- Fonte: Resultado - 7 ANO - MATUTINO.pdf.
+-- Turma resolvida dinamicamente pela matricula 2026 dos alunos do boletim.
+
+create or replace function pg_temp.norm_nome(txt text) returns text as $$
+  select upper(translate(txt,
+    'áàâãäÁÀÂÃÄéèêëÉÈÊËíìîïÍÌÎÏóòôõöÓÒÔÕÖúùûüÚÙÛÜçÇñÑ',
+    'aaaaaAAAAAeeeeEEEEiiiiIIIIooooOOOOOOuuuuUUUUcCnN'
+  ));
+$$ language sql immutable;
+
+update disciplinas set nome = 'Ciencias da Natureza'
+where serie_id = '8945a508-93f4-421b-a0c2-cc813a00c90c' and nome = 'Ciencias';
+
+update disciplinas set nome = 'Redacao'
+where serie_id = '8945a508-93f4-421b-a0c2-cc813a00c90c' and nome = 'Producao Textual';
+
+insert into disciplinas (escola_id, serie_id, nome, ordem)
+select '00000000-0000-0000-0000-000000000001'::uuid, '8945a508-93f4-421b-a0c2-cc813a00c90c'::uuid, nome, ordem
+from (values
+  ('Literatura', 10),
+  ('Filosofia', 11),
+  ('Matematica Complementar', 12)
+) as novas(nome, ordem)
+on conflict (escola_id, serie_id, nome) do nothing;
+
+create temp table stg_boletim_7ano_a (
+  aluno_nome text,
+  disciplina text,
+  b1 numeric(5,2),
+  b2 numeric(5,2)
+) on commit drop;
+
+insert into stg_boletim_7ano_a (aluno_nome, disciplina, b1, b2) values
+  ('ANA REGINA RIBEIRO OLIVEIRA','Redacao',8.0,8.0),
+  ('ANA REGINA RIBEIRO OLIVEIRA','Literatura',8.0,8.0),
+  ('ANA REGINA RIBEIRO OLIVEIRA','Filosofia',10.0,9.0),
+  ('ANA REGINA RIBEIRO OLIVEIRA','Ciencias da Natureza',8.4,6.7),
+  ('ANA REGINA RIBEIRO OLIVEIRA','Matematica Complementar',6.1,5.0),
+  ('ANA REGINA RIBEIRO OLIVEIRA','Matematica',5.9,4.5),
+  ('ANA REGINA RIBEIRO OLIVEIRA','Portugues',7.4,7.8),
+  ('ANA REGINA RIBEIRO OLIVEIRA','Historia',7.7,7.9),
+  ('ANA REGINA RIBEIRO OLIVEIRA','Geografia',7.9,8.0),
+  ('ANA REGINA RIBEIRO OLIVEIRA','Artes',10.0,10.0),
+  ('ANA REGINA RIBEIRO OLIVEIRA','Educacao Fisica',10.0,9.0),
+  ('ANA REGINA RIBEIRO OLIVEIRA','Ingles',9.0,9.0),
+  ('ARTHUR CARNEIRO SANTANA PRADO','Redacao',9.5,9.0),
+  ('ARTHUR CARNEIRO SANTANA PRADO','Literatura',9.5,9.5),
+  ('ARTHUR CARNEIRO SANTANA PRADO','Filosofia',10.0,10.0),
+  ('ARTHUR CARNEIRO SANTANA PRADO','Ciencias da Natureza',8.3,7.1),
+  ('ARTHUR CARNEIRO SANTANA PRADO','Matematica Complementar',9.3,7.5),
+  ('ARTHUR CARNEIRO SANTANA PRADO','Matematica',8.4,7.4),
+  ('ARTHUR CARNEIRO SANTANA PRADO','Portugues',9.0,8.8),
+  ('ARTHUR CARNEIRO SANTANA PRADO','Historia',8.4,8.0),
+  ('ARTHUR CARNEIRO SANTANA PRADO','Geografia',7.6,8.6),
+  ('ARTHUR CARNEIRO SANTANA PRADO','Artes',10.0,10.0),
+  ('ARTHUR CARNEIRO SANTANA PRADO','Educacao Fisica',10.0,10.0),
+  ('ARTHUR CARNEIRO SANTANA PRADO','Ingles',8.6,8.6),
+  ('CECILIA DELMONICO CARDOSO MIRANDA','Redacao',9.5,10.0),
+  ('CECILIA DELMONICO CARDOSO MIRANDA','Literatura',9.5,10.0),
+  ('CECILIA DELMONICO CARDOSO MIRANDA','Filosofia',10.0,10.0),
+  ('CECILIA DELMONICO CARDOSO MIRANDA','Ciencias da Natureza',8.0,7.1),
+  ('CECILIA DELMONICO CARDOSO MIRANDA','Matematica Complementar',8.0,7.5),
+  ('CECILIA DELMONICO CARDOSO MIRANDA','Matematica',9.3,8.2),
+  ('CECILIA DELMONICO CARDOSO MIRANDA','Portugues',8.6,8.3),
+  ('CECILIA DELMONICO CARDOSO MIRANDA','Historia',9.1,8.0),
+  ('CECILIA DELMONICO CARDOSO MIRANDA','Geografia',8.1,8.1),
+  ('CECILIA DELMONICO CARDOSO MIRANDA','Artes',10.0,10.0),
+  ('CECILIA DELMONICO CARDOSO MIRANDA','Educacao Fisica',10.0,10.0),
+  ('CECILIA DELMONICO CARDOSO MIRANDA','Ingles',10.0,10.0),
+  ('DAVI AZARA BORGES DE ARAUJO BARBOSA','Redacao',9.5,10.0),
+  ('DAVI AZARA BORGES DE ARAUJO BARBOSA','Literatura',9.5,10.0),
+  ('DAVI AZARA BORGES DE ARAUJO BARBOSA','Filosofia',10.0,10.0),
+  ('DAVI AZARA BORGES DE ARAUJO BARBOSA','Ciencias da Natureza',9.0,9.6),
+  ('DAVI AZARA BORGES DE ARAUJO BARBOSA','Matematica Complementar',9.0,9.5),
+  ('DAVI AZARA BORGES DE ARAUJO BARBOSA','Matematica',9.0,9.0),
+  ('DAVI AZARA BORGES DE ARAUJO BARBOSA','Portugues',8.7,8.6),
+  ('DAVI AZARA BORGES DE ARAUJO BARBOSA','Historia',9.2,9.4),
+  ('DAVI AZARA BORGES DE ARAUJO BARBOSA','Geografia',8.2,8.1),
+  ('DAVI AZARA BORGES DE ARAUJO BARBOSA','Artes',10.0,10.0),
+  ('DAVI AZARA BORGES DE ARAUJO BARBOSA','Educacao Fisica',10.0,10.0),
+  ('DAVI AZARA BORGES DE ARAUJO BARBOSA','Ingles',9.3,9.3),
+  ('EDUARDO TEIXEIRA LIMA','Redacao',9.5,10.0),
+  ('EDUARDO TEIXEIRA LIMA','Literatura',9.5,10.0),
+  ('EDUARDO TEIXEIRA LIMA','Filosofia',10.0,10.0),
+  ('EDUARDO TEIXEIRA LIMA','Ciencias da Natureza',9.1,9.7),
+  ('EDUARDO TEIXEIRA LIMA','Matematica Complementar',7.8,9.0),
+  ('EDUARDO TEIXEIRA LIMA','Matematica',9.6,9.2),
+  ('EDUARDO TEIXEIRA LIMA','Portugues',9.4,9.2),
+  ('EDUARDO TEIXEIRA LIMA','Historia',8.8,8.7),
+  ('EDUARDO TEIXEIRA LIMA','Geografia',9.2,9.3),
+  ('EDUARDO TEIXEIRA LIMA','Artes',10.0,10.0),
+  ('EDUARDO TEIXEIRA LIMA','Educacao Fisica',10.0,10.0),
+  ('EDUARDO TEIXEIRA LIMA','Ingles',9.6,9.6),
+  ('EMANUELLY FERREIRA DE SOUZA','Redacao',9.5,10.0),
+  ('EMANUELLY FERREIRA DE SOUZA','Literatura',9.5,10.0),
+  ('EMANUELLY FERREIRA DE SOUZA','Filosofia',10.0,10.0),
+  ('EMANUELLY FERREIRA DE SOUZA','Ciencias da Natureza',8.8,9.7),
+  ('EMANUELLY FERREIRA DE SOUZA','Matematica Complementar',8.4,9.8),
+  ('EMANUELLY FERREIRA DE SOUZA','Matematica',9.7,9.7),
+  ('EMANUELLY FERREIRA DE SOUZA','Portugues',9.4,9.1),
+  ('EMANUELLY FERREIRA DE SOUZA','Historia',8.7,9.7),
+  ('EMANUELLY FERREIRA DE SOUZA','Geografia',8.2,9.7),
+  ('EMANUELLY FERREIRA DE SOUZA','Artes',10.0,10.0),
+  ('EMANUELLY FERREIRA DE SOUZA','Educacao Fisica',10.0,10.0),
+  ('EMANUELLY FERREIRA DE SOUZA','Ingles',10.0,10.0),
+  ('FELIPE GODOY DE ARAUJO','Redacao',8.5,10.0),
+  ('FELIPE GODOY DE ARAUJO','Literatura',9.5,9.5),
+  ('FELIPE GODOY DE ARAUJO','Filosofia',10.0,10.0),
+  ('FELIPE GODOY DE ARAUJO','Ciencias da Natureza',8.1,7.3),
+  ('FELIPE GODOY DE ARAUJO','Matematica Complementar',8.0,7.0),
+  ('FELIPE GODOY DE ARAUJO','Matematica',7.7,6.7),
+  ('FELIPE GODOY DE ARAUJO','Portugues',9.0,9.2),
+  ('FELIPE GODOY DE ARAUJO','Historia',8.7,8.6),
+  ('FELIPE GODOY DE ARAUJO','Geografia',8.7,8.0),
+  ('FELIPE GODOY DE ARAUJO','Artes',10.0,9.9),
+  ('FELIPE GODOY DE ARAUJO','Educacao Fisica',10.0,9.0),
+  ('FELIPE GODOY DE ARAUJO','Ingles',9.5,9.6),
+  ('FILIPE DE PAIVA VIANA','Redacao',8.5,10.0),
+  ('FILIPE DE PAIVA VIANA','Literatura',9.5,8.0),
+  ('FILIPE DE PAIVA VIANA','Filosofia',10.0,10.0),
+  ('FILIPE DE PAIVA VIANA','Ciencias da Natureza',8.0,8.8),
+  ('FILIPE DE PAIVA VIANA','Matematica Complementar',8.5,7.9),
+  ('FILIPE DE PAIVA VIANA','Matematica',9.1,9.7),
+  ('FILIPE DE PAIVA VIANA','Portugues',8.7,8.5),
+  ('FILIPE DE PAIVA VIANA','Historia',8.7,7.7),
+  ('FILIPE DE PAIVA VIANA','Geografia',8.0,7.2),
+  ('FILIPE DE PAIVA VIANA','Artes',10.0,10.0),
+  ('FILIPE DE PAIVA VIANA','Educacao Fisica',10.0,10.0),
+  ('FILIPE DE PAIVA VIANA','Ingles',8.6,8.6),
+  ('GABRIELLY SILVA MENDANHA','Redacao',9.0,10.0),
+  ('GABRIELLY SILVA MENDANHA','Literatura',8.5,10.0),
+  ('GABRIELLY SILVA MENDANHA','Filosofia',10.0,10.0),
+  ('GABRIELLY SILVA MENDANHA','Ciencias da Natureza',8.4,7.8),
+  ('GABRIELLY SILVA MENDANHA','Matematica Complementar',8.9,7.0),
+  ('GABRIELLY SILVA MENDANHA','Matematica',8.1,7.4),
+  ('GABRIELLY SILVA MENDANHA','Portugues',8.4,8.4),
+  ('GABRIELLY SILVA MENDANHA','Historia',8.4,8.3),
+  ('GABRIELLY SILVA MENDANHA','Geografia',7.4,8.9),
+  ('GABRIELLY SILVA MENDANHA','Artes',10.0,10.0),
+  ('GABRIELLY SILVA MENDANHA','Educacao Fisica',10.0,10.0),
+  ('GABRIELLY SILVA MENDANHA','Ingles',9.1,7.6),
+  ('GUSTAVO ANTONIO CORREIA MACHADO','Redacao',7.0,8.5),
+  ('GUSTAVO ANTONIO CORREIA MACHADO','Literatura',8.5,7.5),
+  ('GUSTAVO ANTONIO CORREIA MACHADO','Filosofia',10.0,10.0),
+  ('GUSTAVO ANTONIO CORREIA MACHADO','Ciencias da Natureza',8.0,5.2),
+  ('GUSTAVO ANTONIO CORREIA MACHADO','Matematica Complementar',7.1,5.8),
+  ('GUSTAVO ANTONIO CORREIA MACHADO','Matematica',6.5,4.4),
+  ('GUSTAVO ANTONIO CORREIA MACHADO','Portugues',7.8,7.9),
+  ('GUSTAVO ANTONIO CORREIA MACHADO','Historia',7.6,9.1),
+  ('GUSTAVO ANTONIO CORREIA MACHADO','Geografia',7.3,7.9),
+  ('GUSTAVO ANTONIO CORREIA MACHADO','Artes',10.0,9.9),
+  ('GUSTAVO ANTONIO CORREIA MACHADO','Educacao Fisica',10.0,9.5),
+  ('GUSTAVO ANTONIO CORREIA MACHADO','Ingles',8.3,7.6),
+  ('HEITOR SANTANA CAMPOS','Redacao',7.5,9.5),
+  ('HEITOR SANTANA CAMPOS','Literatura',9.5,9.0),
+  ('HEITOR SANTANA CAMPOS','Filosofia',10.0,10.0),
+  ('HEITOR SANTANA CAMPOS','Ciencias da Natureza',8.9,5.8),
+  ('HEITOR SANTANA CAMPOS','Matematica Complementar',7.0,7.1),
+  ('HEITOR SANTANA CAMPOS','Matematica',8.1,7.0),
+  ('HEITOR SANTANA CAMPOS','Portugues',7.8,7.7),
+  ('HEITOR SANTANA CAMPOS','Historia',8.0,8.9),
+  ('HEITOR SANTANA CAMPOS','Geografia',7.7,7.6),
+  ('HEITOR SANTANA CAMPOS','Artes',10.0,9.9),
+  ('HEITOR SANTANA CAMPOS','Educacao Fisica',10.0,9.5),
+  ('HEITOR SANTANA CAMPOS','Ingles',8.6,9.0),
+  ('KAIO HENRIQUE MARQUES BARBOSA','Redacao',7.0,9.2),
+  ('KAIO HENRIQUE MARQUES BARBOSA','Literatura',8.0,8.5),
+  ('KAIO HENRIQUE MARQUES BARBOSA','Filosofia',10.0,8.5),
+  ('KAIO HENRIQUE MARQUES BARBOSA','Ciencias da Natureza',8.0,6.5),
+  ('KAIO HENRIQUE MARQUES BARBOSA','Matematica Complementar',5.8,5.2),
+  ('KAIO HENRIQUE MARQUES BARBOSA','Matematica',5.4,4.8),
+  ('KAIO HENRIQUE MARQUES BARBOSA','Portugues',8.3,8.4),
+  ('KAIO HENRIQUE MARQUES BARBOSA','Historia',8.4,7.5),
+  ('KAIO HENRIQUE MARQUES BARBOSA','Geografia',7.0,7.9),
+  ('KAIO HENRIQUE MARQUES BARBOSA','Artes',10.0,9.9),
+  ('KAIO HENRIQUE MARQUES BARBOSA','Educacao Fisica',10.0,9.0),
+  ('KAIO HENRIQUE MARQUES BARBOSA','Ingles',7.7,7.6),
+  ('KAUAN HENRIQUE DA COSTA SILVA','Redacao',9.5,10.0),
+  ('KAUAN HENRIQUE DA COSTA SILVA','Literatura',9.5,10.0),
+  ('KAUAN HENRIQUE DA COSTA SILVA','Filosofia',10.0,10.0),
+  ('KAUAN HENRIQUE DA COSTA SILVA','Ciencias da Natureza',8.0,5.7),
+  ('KAUAN HENRIQUE DA COSTA SILVA','Matematica Complementar',7.5,7.2),
+  ('KAUAN HENRIQUE DA COSTA SILVA','Matematica',6.3,7.0),
+  ('KAUAN HENRIQUE DA COSTA SILVA','Portugues',7.4,7.4),
+  ('KAUAN HENRIQUE DA COSTA SILVA','Historia',8.6,7.9),
+  ('KAUAN HENRIQUE DA COSTA SILVA','Geografia',7.6,7.2),
+  ('KAUAN HENRIQUE DA COSTA SILVA','Artes',10.0,10.0),
+  ('KAUAN HENRIQUE DA COSTA SILVA','Educacao Fisica',10.0,10.0),
+  ('KAUAN HENRIQUE DA COSTA SILVA','Ingles',8.3,8.6),
+  ('LUIZA GRATAO COSTA','Redacao',10.0,10.0),
+  ('LUIZA GRATAO COSTA','Literatura',10.0,10.0),
+  ('LUIZA GRATAO COSTA','Filosofia',10.0,10.0),
+  ('LUIZA GRATAO COSTA','Ciencias da Natureza',9.3,9.7),
+  ('LUIZA GRATAO COSTA','Matematica Complementar',9.6,9.6),
+  ('LUIZA GRATAO COSTA','Matematica',9.8,9.3),
+  ('LUIZA GRATAO COSTA','Portugues',9.5,9.2),
+  ('LUIZA GRATAO COSTA','Historia',8.9,9.4),
+  ('LUIZA GRATAO COSTA','Geografia',8.9,9.6),
+  ('LUIZA GRATAO COSTA','Artes',10.0,10.0),
+  ('LUIZA GRATAO COSTA','Educacao Fisica',10.0,10.0),
+  ('LUIZA GRATAO COSTA','Ingles',10.0,10.0),
+  ('MARCELLA ALVES DE CARVALHO','Redacao',9.5,10.0),
+  ('MARCELLA ALVES DE CARVALHO','Literatura',9.5,10.0),
+  ('MARCELLA ALVES DE CARVALHO','Filosofia',10.0,10.0),
+  ('MARCELLA ALVES DE CARVALHO','Ciencias da Natureza',8.0,7.6),
+  ('MARCELLA ALVES DE CARVALHO','Matematica Complementar',7.8,8.5),
+  ('MARCELLA ALVES DE CARVALHO','Matematica',9.0,8.6),
+  ('MARCELLA ALVES DE CARVALHO','Portugues',8.7,8.4),
+  ('MARCELLA ALVES DE CARVALHO','Historia',7.5,8.0),
+  ('MARCELLA ALVES DE CARVALHO','Geografia',7.9,8.3),
+  ('MARCELLA ALVES DE CARVALHO','Artes',10.0,10.0),
+  ('MARCELLA ALVES DE CARVALHO','Educacao Fisica',10.0,10.0),
+  ('MARCELLA ALVES DE CARVALHO','Ingles',7.6,7.6),
+  ('MARIA ALICE DIONISIO BUENO','Redacao',8.5,10.0),
+  ('MARIA ALICE DIONISIO BUENO','Literatura',8.0,10.0),
+  ('MARIA ALICE DIONISIO BUENO','Filosofia',10.0,10.0),
+  ('MARIA ALICE DIONISIO BUENO','Ciencias da Natureza',8.0,7.9),
+  ('MARIA ALICE DIONISIO BUENO','Matematica Complementar',8.4,7.4),
+  ('MARIA ALICE DIONISIO BUENO','Matematica',8.1,6.4),
+  ('MARIA ALICE DIONISIO BUENO','Portugues',9.1,9.0),
+  ('MARIA ALICE DIONISIO BUENO','Historia',8.8,8.6),
+  ('MARIA ALICE DIONISIO BUENO','Geografia',7.5,7.9),
+  ('MARIA ALICE DIONISIO BUENO','Artes',10.0,10.0),
+  ('MARIA ALICE DIONISIO BUENO','Educacao Fisica',10.0,10.0),
+  ('MARIA ALICE DIONISIO BUENO','Ingles',8.3,8.6),
+  ('MARIA VALENTINA MOTA BITENCOURT','Redacao',9.5,10.0),
+  ('MARIA VALENTINA MOTA BITENCOURT','Literatura',9.5,10.0),
+  ('MARIA VALENTINA MOTA BITENCOURT','Filosofia',10.0,10.0),
+  ('MARIA VALENTINA MOTA BITENCOURT','Ciencias da Natureza',8.0,6.2),
+  ('MARIA VALENTINA MOTA BITENCOURT','Matematica Complementar',7.0,7.2),
+  ('MARIA VALENTINA MOTA BITENCOURT','Matematica',8.1,7.0),
+  ('MARIA VALENTINA MOTA BITENCOURT','Portugues',9.0,8.8),
+  ('MARIA VALENTINA MOTA BITENCOURT','Historia',8.4,8.9),
+  ('MARIA VALENTINA MOTA BITENCOURT','Geografia',7.7,7.9),
+  ('MARIA VALENTINA MOTA BITENCOURT','Artes',10.0,10.0),
+  ('MARIA VALENTINA MOTA BITENCOURT','Educacao Fisica',10.0,10.0),
+  ('MARIA VALENTINA MOTA BITENCOURT','Ingles',9.6,9.8),
+  ('MARIANE ALVES LEMES AGUIAR','Redacao',9.5,10.0),
+  ('MARIANE ALVES LEMES AGUIAR','Literatura',9.5,10.0),
+  ('MARIANE ALVES LEMES AGUIAR','Filosofia',10.0,10.0),
+  ('MARIANE ALVES LEMES AGUIAR','Ciencias da Natureza',8.3,9.0),
+  ('MARIANE ALVES LEMES AGUIAR','Matematica Complementar',8.8,9.7),
+  ('MARIANE ALVES LEMES AGUIAR','Matematica',9.7,9.6),
+  ('MARIANE ALVES LEMES AGUIAR','Portugues',8.3,8.2),
+  ('MARIANE ALVES LEMES AGUIAR','Historia',9.4,7.6),
+  ('MARIANE ALVES LEMES AGUIAR','Geografia',8.0,8.8),
+  ('MARIANE ALVES LEMES AGUIAR','Artes',10.0,10.0),
+  ('MARIANE ALVES LEMES AGUIAR','Educacao Fisica',10.0,10.0),
+  ('MARIANE ALVES LEMES AGUIAR','Ingles',9.3,9.9),
+  ('MIGUEL AZARA BORGES DE ARAUJO BARBOSA','Redacao',9.5,10.0),
+  ('MIGUEL AZARA BORGES DE ARAUJO BARBOSA','Literatura',9.5,10.0),
+  ('MIGUEL AZARA BORGES DE ARAUJO BARBOSA','Filosofia',10.0,10.0),
+  ('MIGUEL AZARA BORGES DE ARAUJO BARBOSA','Ciencias da Natureza',9.0,9.5),
+  ('MIGUEL AZARA BORGES DE ARAUJO BARBOSA','Matematica Complementar',10.0,9.5),
+  ('MIGUEL AZARA BORGES DE ARAUJO BARBOSA','Matematica',9.5,9.3),
+  ('MIGUEL AZARA BORGES DE ARAUJO BARBOSA','Portugues',9.5,9.3),
+  ('MIGUEL AZARA BORGES DE ARAUJO BARBOSA','Historia',8.7,9.1),
+  ('MIGUEL AZARA BORGES DE ARAUJO BARBOSA','Geografia',8.0,8.2),
+  ('MIGUEL AZARA BORGES DE ARAUJO BARBOSA','Artes',10.0,10.0),
+  ('MIGUEL AZARA BORGES DE ARAUJO BARBOSA','Educacao Fisica',10.0,10.0),
+  ('MIGUEL AZARA BORGES DE ARAUJO BARBOSA','Ingles',9.6,9.3),
+  ('NICKOLAS RAFAEL NEVES SILVA','Redacao',9.5,10.0),
+  ('NICKOLAS RAFAEL NEVES SILVA','Literatura',9.5,10.0),
+  ('NICKOLAS RAFAEL NEVES SILVA','Filosofia',10.0,10.0),
+  ('NICKOLAS RAFAEL NEVES SILVA','Ciencias da Natureza',8.1,7.7),
+  ('NICKOLAS RAFAEL NEVES SILVA','Matematica Complementar',8.5,7.2),
+  ('NICKOLAS RAFAEL NEVES SILVA','Matematica',8.9,8.3),
+  ('NICKOLAS RAFAEL NEVES SILVA','Portugues',8.2,7.8),
+  ('NICKOLAS RAFAEL NEVES SILVA','Historia',7.5,8.3),
+  ('NICKOLAS RAFAEL NEVES SILVA','Geografia',7.5,7.5),
+  ('NICKOLAS RAFAEL NEVES SILVA','Artes',10.0,10.0),
+  ('NICKOLAS RAFAEL NEVES SILVA','Educacao Fisica',10.0,10.0),
+  ('NICKOLAS RAFAEL NEVES SILVA','Ingles',9.3,9.6),
+  ('PAMELA FERNANDES BORGES','Redacao',9.5,10.0),
+  ('PAMELA FERNANDES BORGES','Literatura',10.0,10.0),
+  ('PAMELA FERNANDES BORGES','Filosofia',10.0,10.0),
+  ('PAMELA FERNANDES BORGES','Ciencias da Natureza',8.6,7.8),
+  ('PAMELA FERNANDES BORGES','Matematica Complementar',9.0,8.5),
+  ('PAMELA FERNANDES BORGES','Matematica',9.2,9.6),
+  ('PAMELA FERNANDES BORGES','Portugues',9.4,9.1),
+  ('PAMELA FERNANDES BORGES','Historia',8.2,9.3),
+  ('PAMELA FERNANDES BORGES','Geografia',7.5,9.0),
+  ('PAMELA FERNANDES BORGES','Artes',10.0,10.0),
+  ('PAMELA FERNANDES BORGES','Educacao Fisica',10.0,10.0),
+  ('PAMELA FERNANDES BORGES','Ingles',8.3,8.6),
+  ('PEDRO JORGE SIQUEIRA','Redacao',9.5,10.0),
+  ('PEDRO JORGE SIQUEIRA','Literatura',9.5,10.0),
+  ('PEDRO JORGE SIQUEIRA','Filosofia',10.0,10.0),
+  ('PEDRO JORGE SIQUEIRA','Ciencias da Natureza',8.3,9.6),
+  ('PEDRO JORGE SIQUEIRA','Matematica Complementar',9.5,8.6),
+  ('PEDRO JORGE SIQUEIRA','Matematica',9.4,8.7),
+  ('PEDRO JORGE SIQUEIRA','Portugues',8.9,8.6),
+  ('PEDRO JORGE SIQUEIRA','Historia',9.5,8.6),
+  ('PEDRO JORGE SIQUEIRA','Geografia',9.2,8.8),
+  ('PEDRO JORGE SIQUEIRA','Artes',10.0,10.0),
+  ('PEDRO JORGE SIQUEIRA','Educacao Fisica',10.0,10.0),
+  ('PEDRO JORGE SIQUEIRA','Ingles',9.3,9.6),
+  ('RAFAELA LEMES DE OLIVEIRA','Redacao',9.5,9.0),
+  ('RAFAELA LEMES DE OLIVEIRA','Literatura',9.5,9.0),
+  ('RAFAELA LEMES DE OLIVEIRA','Filosofia',10.0,10.0),
+  ('RAFAELA LEMES DE OLIVEIRA','Ciencias da Natureza',8.0,8.1),
+  ('RAFAELA LEMES DE OLIVEIRA','Matematica Complementar',7.0,7.0),
+  ('RAFAELA LEMES DE OLIVEIRA','Matematica',8.2,7.7),
+  ('RAFAELA LEMES DE OLIVEIRA','Portugues',8.6,8.3),
+  ('RAFAELA LEMES DE OLIVEIRA','Historia',8.9,7.6),
+  ('RAFAELA LEMES DE OLIVEIRA','Geografia',8.8,8.2),
+  ('RAFAELA LEMES DE OLIVEIRA','Artes',10.0,10.0),
+  ('RAFAELA LEMES DE OLIVEIRA','Educacao Fisica',10.0,10.0),
+  ('RAFAELA LEMES DE OLIVEIRA','Ingles',8.0,8.3),
+  ('SAMUEL SALES ANDRADE DE OLIVEIRA','Redacao',10.0,10.0),
+  ('SAMUEL SALES ANDRADE DE OLIVEIRA','Literatura',10.0,10.0),
+  ('SAMUEL SALES ANDRADE DE OLIVEIRA','Filosofia',10.0,10.0),
+  ('SAMUEL SALES ANDRADE DE OLIVEIRA','Ciencias da Natureza',10.0,9.7),
+  ('SAMUEL SALES ANDRADE DE OLIVEIRA','Matematica Complementar',9.0,9.2),
+  ('SAMUEL SALES ANDRADE DE OLIVEIRA','Matematica',9.8,9.7),
+  ('SAMUEL SALES ANDRADE DE OLIVEIRA','Portugues',9.6,9.5),
+  ('SAMUEL SALES ANDRADE DE OLIVEIRA','Historia',9.8,9.4),
+  ('SAMUEL SALES ANDRADE DE OLIVEIRA','Geografia',9.2,9.2),
+  ('SAMUEL SALES ANDRADE DE OLIVEIRA','Artes',10.0,10.0),
+  ('SAMUEL SALES ANDRADE DE OLIVEIRA','Educacao Fisica',10.0,10.0),
+  ('SAMUEL SALES ANDRADE DE OLIVEIRA','Ingles',10.0,10.0),
+  ('STHEFANNY VITORIA OLIVEIRA DE CARVALHO','Redacao',9.5,9.0),
+  ('STHEFANNY VITORIA OLIVEIRA DE CARVALHO','Literatura',9.5,9.0),
+  ('STHEFANNY VITORIA OLIVEIRA DE CARVALHO','Filosofia',10.0,10.0),
+  ('STHEFANNY VITORIA OLIVEIRA DE CARVALHO','Ciencias da Natureza',8.0,7.4),
+  ('STHEFANNY VITORIA OLIVEIRA DE CARVALHO','Matematica Complementar',8.0,7.2),
+  ('STHEFANNY VITORIA OLIVEIRA DE CARVALHO','Matematica',7.6,7.0),
+  ('STHEFANNY VITORIA OLIVEIRA DE CARVALHO','Portugues',8.4,8.4),
+  ('STHEFANNY VITORIA OLIVEIRA DE CARVALHO','Historia',9.2,7.5),
+  ('STHEFANNY VITORIA OLIVEIRA DE CARVALHO','Geografia',7.2,8.0),
+  ('STHEFANNY VITORIA OLIVEIRA DE CARVALHO','Artes',10.0,10.0),
+  ('STHEFANNY VITORIA OLIVEIRA DE CARVALHO','Educacao Fisica',10.0,10.0),
+  ('STHEFANNY VITORIA OLIVEIRA DE CARVALHO','Ingles',7.8,8.0),
+  ('THEO MARQUES COSTA','Redacao',9.5,10.0),
+  ('THEO MARQUES COSTA','Literatura',10.0,10.0),
+  ('THEO MARQUES COSTA','Filosofia',10.0,10.0),
+  ('THEO MARQUES COSTA','Ciencias da Natureza',8.3,8.3),
+  ('THEO MARQUES COSTA','Matematica Complementar',7.4,9.0),
+  ('THEO MARQUES COSTA','Matematica',9.3,7.8),
+  ('THEO MARQUES COSTA','Portugues',8.8,7.9),
+  ('THEO MARQUES COSTA','Historia',7.7,8.3),
+  ('THEO MARQUES COSTA','Geografia',8.0,8.8),
+  ('THEO MARQUES COSTA','Artes',10.0,10.0),
+  ('THEO MARQUES COSTA','Educacao Fisica',10.0,10.0),
+  ('THEO MARQUES COSTA','Ingles',9.3,9.0),
+  ('VALENTINA GONCALVES BARBOSA DIAS','Redacao',9.5,10.0),
+  ('VALENTINA GONCALVES BARBOSA DIAS','Literatura',9.5,10.0),
+  ('VALENTINA GONCALVES BARBOSA DIAS','Filosofia',10.0,10.0),
+  ('VALENTINA GONCALVES BARBOSA DIAS','Ciencias da Natureza',8.0,8.3),
+  ('VALENTINA GONCALVES BARBOSA DIAS','Matematica Complementar',7.2,7.0),
+  ('VALENTINA GONCALVES BARBOSA DIAS','Matematica',7.8,7.1),
+  ('VALENTINA GONCALVES BARBOSA DIAS','Portugues',7.9,7.7),
+  ('VALENTINA GONCALVES BARBOSA DIAS','Historia',7.9,8.6),
+  ('VALENTINA GONCALVES BARBOSA DIAS','Geografia',7.7,8.6),
+  ('VALENTINA GONCALVES BARBOSA DIAS','Artes',10.0,10.0),
+  ('VALENTINA GONCALVES BARBOSA DIAS','Educacao Fisica',10.0,10.0),
+  ('VALENTINA GONCALVES BARBOSA DIAS','Ingles',8.0,8.0),
+  ('VICENTE VIEIRA DE MOURA','Redacao',9.5,10.0),
+  ('VICENTE VIEIRA DE MOURA','Literatura',9.5,10.0),
+  ('VICENTE VIEIRA DE MOURA','Filosofia',10.0,10.0),
+  ('VICENTE VIEIRA DE MOURA','Ciencias da Natureza',8.3,9.7),
+  ('VICENTE VIEIRA DE MOURA','Matematica Complementar',9.3,9.0),
+  ('VICENTE VIEIRA DE MOURA','Matematica',9.3,9.7),
+  ('VICENTE VIEIRA DE MOURA','Portugues',8.6,8.5),
+  ('VICENTE VIEIRA DE MOURA','Historia',8.4,8.3),
+  ('VICENTE VIEIRA DE MOURA','Geografia',8.9,9.7),
+  ('VICENTE VIEIRA DE MOURA','Artes',10.0,10.0),
+  ('VICENTE VIEIRA DE MOURA','Educacao Fisica',10.0,10.0),
+  ('VICENTE VIEIRA DE MOURA','Ingles',9.6,10.0),
+  ('VITORIA BORGES SEABRA','Redacao',9.5,10.0),
+  ('VITORIA BORGES SEABRA','Literatura',9.5,10.0),
+  ('VITORIA BORGES SEABRA','Filosofia',10.0,10.0),
+  ('VITORIA BORGES SEABRA','Ciencias da Natureza',8.0,7.0),
+  ('VITORIA BORGES SEABRA','Matematica Complementar',9.0,8.5),
+  ('VITORIA BORGES SEABRA','Matematica',8.8,8.7),
+  ('VITORIA BORGES SEABRA','Portugues',8.8,8.6),
+  ('VITORIA BORGES SEABRA','Historia',8.2,8.3),
+  ('VITORIA BORGES SEABRA','Geografia',7.7,9.6),
+  ('VITORIA BORGES SEABRA','Artes',10.0,9.9),
+  ('VITORIA BORGES SEABRA','Educacao Fisica',10.0,10.0),
+  ('VITORIA BORGES SEABRA','Ingles',8.3,8.6);
+
+create temp table stg_turma_alvo_7a (turma_id uuid) on commit drop;
+
+insert into stg_turma_alvo_7a (turma_id)
+select m.turma_id
+from stg_boletim_7ano_a s
+join alunos al on pg_temp.norm_nome(al.nome) = pg_temp.norm_nome(s.aluno_nome)
+join matriculas m on m.aluno_id = al.id and m.ano_letivo = 2026
+group by m.turma_id
+order by count(*) desc
+limit 1;
+
+do $$
+begin
+  if (select count(*) from stg_turma_alvo_7a) <> 1 then
+    raise exception 'nao foi possivel resolver uma unica turma para os alunos do boletim (7o ANO A)';
+  end if;
+end $$;
+
+insert into avaliacoes (escola_id, disciplina_id, turma_id, bimestre, ano_letivo, titulo, tipo, peso, valor_maximo)
+select distinct
+  '00000000-0000-0000-0000-000000000001'::uuid,
+  d.id,
+  t.turma_id,
+  b.bimestre,
+  2026,
+  'Media Bimestral',
+  'outro'::tipo_avaliacao,
+  1::numeric,
+  10::numeric
+from stg_boletim_7ano_a s
+join disciplinas d on d.serie_id = '8945a508-93f4-421b-a0c2-cc813a00c90c' and d.nome = s.disciplina
+cross join stg_turma_alvo_7a t
+cross join (values (1), (2)) as b(bimestre)
+where not exists (
+  select 1 from avaliacoes a
+  where a.turma_id = t.turma_id
+    and a.disciplina_id = d.id
+    and a.bimestre = b.bimestre
+    and a.ano_letivo = 2026
+    and a.titulo = 'Media Bimestral'
+);
+
+insert into notas (escola_id, avaliacao_id, aluno_id, matricula_id, valor)
+select '00000000-0000-0000-0000-000000000001'::uuid, a.id, al.id, m.id, s.b1
+from stg_boletim_7ano_a s
+join alunos al on pg_temp.norm_nome(al.nome) = pg_temp.norm_nome(s.aluno_nome)
+cross join stg_turma_alvo_7a t
+join matriculas m on m.aluno_id = al.id and m.ano_letivo = 2026 and m.turma_id = t.turma_id
+join disciplinas d on d.serie_id = '8945a508-93f4-421b-a0c2-cc813a00c90c' and d.nome = s.disciplina
+join avaliacoes a on a.turma_id = t.turma_id and a.disciplina_id = d.id
+  and a.bimestre = 1 and a.ano_letivo = 2026 and a.titulo = 'Media Bimestral'
+on conflict (avaliacao_id, aluno_id) do update set valor = excluded.valor;
+
+insert into notas (escola_id, avaliacao_id, aluno_id, matricula_id, valor)
+select '00000000-0000-0000-0000-000000000001'::uuid, a.id, al.id, m.id, s.b2
+from stg_boletim_7ano_a s
+join alunos al on pg_temp.norm_nome(al.nome) = pg_temp.norm_nome(s.aluno_nome)
+cross join stg_turma_alvo_7a t
+join matriculas m on m.aluno_id = al.id and m.ano_letivo = 2026 and m.turma_id = t.turma_id
+join disciplinas d on d.serie_id = '8945a508-93f4-421b-a0c2-cc813a00c90c' and d.nome = s.disciplina
+join avaliacoes a on a.turma_id = t.turma_id and a.disciplina_id = d.id
+  and a.bimestre = 2 and a.ano_letivo = 2026 and a.titulo = 'Media Bimestral'
+on conflict (avaliacao_id, aluno_id) do update set valor = excluded.valor;
