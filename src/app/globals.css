@@ -412,6 +412,21 @@ textarea {
   .ds-button-historico   { --doc-c: var(--c-violet); }
   .ds-button-certificado { --doc-c: var(--c-green); }
 
+  /* Spinner de loading do Button/RowActionButton — herda cor via currentColor,
+     funciona em qualquer variante. */
+  .ds-spinner {
+    border: 2px solid color-mix(in oklab, currentColor 25%, transparent);
+    border-top-color: currentColor;
+    border-radius: 50%;
+    animation: ds-spin 0.7s linear infinite;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .ds-spinner {
+      animation-duration: 2s;
+    }
+  }
+
   /* Eyebrow / kicker — §4 */
   .ds-kicker,
   .rb-eyebrow {
@@ -1003,6 +1018,7 @@ textarea {
 }
 
 /* ===================== Animações (§11) ===================== */
+@keyframes ds-spin { to { transform: rotate(360deg); } }
 @keyframes rbGrow { from { transform: scaleY(0); opacity: 0; } to { transform: scaleY(1); opacity: 1; } }
 @keyframes rbSlideDown { from { transform: translateY(-8px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
 @keyframes drift {
