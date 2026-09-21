@@ -69,7 +69,8 @@ export function AbaNotas({ historico }: { historico: HistoricoData | null }) {
         </p>
       )}
 
-      <table className="w-full text-sm">
+      <div className="overflow-x-auto">
+      <table className="w-full min-w-[560px] text-sm">
         <thead className="bg-muted text-left">
           <tr>
             <th className="p-2">Disciplina</th>
@@ -138,6 +139,7 @@ export function AbaNotas({ historico }: { historico: HistoricoData | null }) {
               ))}
         </tbody>
       </table>
+      </div>
 
       {!somenteLeitura && ano && (
         <div className="flex items-center gap-3">

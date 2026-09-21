@@ -148,7 +148,10 @@ export function AbaAnos({ alunoId, nivel, series, historico, anosMatriculados }:
           Não há nada para mostrar aqui
         </p>
       ) : (
-        <table className="w-full text-sm">
+        // 8 colunas não cabem no celular: sem o container a tabela é cortada
+        // e as últimas colunas ficam inalcançáveis.
+        <div className="overflow-x-auto">
+        <table className="w-full min-w-[640px] text-sm">
           <thead className="bg-muted text-left">
             <tr>
               <th className="p-2">Ano</th>
@@ -204,6 +207,7 @@ export function AbaAnos({ alunoId, nivel, series, historico, anosMatriculados }:
             ))}
           </tbody>
         </table>
+        </div>
       )}
     </div>
   );

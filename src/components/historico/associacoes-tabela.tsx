@@ -54,7 +54,8 @@ export function AssociacoesTabela({ associacoes }: { associacoes: NivelEnsinoRow
   }
 
   return (
-    <table className="w-full text-sm">
+    <div className="overflow-x-auto">
+    <table className="w-full min-w-[560px] text-sm">
       <thead className="bg-muted text-left">
         <tr>
           <th className="p-2">Série</th>
@@ -70,5 +71,6 @@ export function AssociacoesTabela({ associacoes }: { associacoes: NivelEnsinoRow
         ))}
       </tbody>
     </table>
+    </div>
   );
 }

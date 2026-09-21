@@ -24,7 +24,9 @@ export function TemplatesTable({ templates }: { templates: TemplateRow[] }) {
 
   return (
     <div className="overflow-hidden rounded-ui border border-line bg-surface">
-      <table className="w-full text-sm">
+      {/* overflow-hidden no shell recorta; o scroll tem de ficar aqui dentro. */}
+      <div className="overflow-x-auto">
+      <table className="w-full min-w-[560px] text-sm">
         <thead className="bg-paper text-left text-xs uppercase tracking-kicker text-ink/60">
           <tr>
             <th className="px-4 py-3">Nome</th>
@@ -90,6 +92,7 @@ export function TemplatesTable({ templates }: { templates: TemplateRow[] }) {
           })}
         </tbody>
       </table>
+      </div>
     </div>
   );
 }
