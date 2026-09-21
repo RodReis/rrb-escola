@@ -1,5 +1,9 @@
-import Link from "next/link";
+"use client";
+
+import { useRouter } from "next/navigation";
+import { useState, useTransition } from "react";
 import { BookOpen, ClipboardList, ShoppingBag, Wallet, type LucideIcon } from "lucide-react";
+import { Spinner } from "@/components/ui/spinner";
 
 type Tab = "financeiro" | "comercial" | "secretaria" | "pedagogico";
 
@@ -19,31 +23,51 @@ export function DashboardTabs({
   competencia?: string;
   visible?: ReadonlyArray<Tab>;
 }) {
+  const router = useRouter();
+  // useTransition mostra o spinner na aba clicada enquanto o RSC do
+  // dashboard busca os dados da nova aba (navegacao entre paginas, nao
+  // Server Action — useAction nao se aplica aqui). Troca <Link> por
+  // <button>+router.push: mantem back/forward do browser, mas perde
+  // Ctrl/Cmd+click para abrir em nova aba e prefetch automatico.
+  const [isPending, startTransition] = useTransition();
+  const [pendingTab, setPendingTab] = useState<Tab | null>(null);
   const allowed = visible ?? (["financeiro", "comercial", "secretaria", "pedagogico"] as const);
+
+  function go(id: Tab, href: string) {
+    setPendingTab(id);
+    startTransition(() => {
+      router.push(href, { scroll: false });
+    });
+  }
+
   return (
     <nav className="flex gap-1 border-b border-line">
       {TABS.filter((t) => allowed.includes(t.id)).map((t) => {
         const Icon = t.icon;
         const isActive = t.id === active;
+        const isLoadingThis = isPending && pendingTab === t.id;
         const qs = new URLSearchParams({ aba: t.id });
         if (competencia) qs.set("competencia", competencia);
+        const href = `/?${qs.toString()}`;
         return (
-          <Link
+          <button
             key={t.id}
-            href={`/?${qs.toString()}`}
-            scroll={false}
-            className={`relative inline-flex items-center gap-2 px-4 py-2.5 text-sm font-semibold transition-colors ${
+            type="button"
+            onClick={() => go(t.id, href)}
+            disabled={isPending}
+            aria-busy={isLoadingThis || undefined}
+            className={`relative inline-flex items-center gap-2 px-4 py-2.5 text-sm font-semibold transition-colors disabled:cursor-wait ${
               isActive
                 ? "text-brand"
                 : "text-ink/60 hover:text-ink"
             }`}
           >
-            <Icon size={14} />
+            {isLoadingThis ? <Spinner size={14} /> : <Icon size={14} />}
             {t.label}
             {isActive && (
               <span className="absolute inset-x-0 -bottom-px h-0.5 rounded-full bg-brand" />
             )}
-          </Link>
+          </button>
         );
       })}
     </nav>
