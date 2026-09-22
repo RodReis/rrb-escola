@@ -320,19 +320,32 @@ Importados **3 dos 4** repasses disponíveis, pela tela, agosto antes de setembr
 
 Agosto também confirmou a tabela de referência deste spec (213.545,72 / −2.346,55 / 211.199,17 / 15.509,88 / 195.689,29 e 175.736,61 / −2.070,00 / 173.666,61 / 12.654,60 / 161.012,01), e o resumo de agosto fecha com `valor final − crédito = total transferido` (195.689,29 − 23.146,54 = 172.542,75).
 
-**Achado de negócio — 2 alunos que o isaac cobra e não deveria.** O bloqueio de EPG Trindade/set é real e nominal:
+**Achado de negócio — 2 cadastros errados, RESOLVIDO (Rodrigo, 22/09).** O bloqueio de EPG Trindade/set era real e nominal. Os dois estavam como `BOLSA_INTEGRAL` aqui, mas o isaac cobrava — e o cadastro daqui é que estava errado:
 
-| Aluno | Cadastro aqui | isaac cobrou |
-|---|---|---|
-| IZABELA SANTANA CÔRTES | `BOLSA_INTEGRAL` | R$ 445,00 (Fund. 8º ano) |
-| MATEUS PRAXEDES LOBO | `BOLSA_INTEGRAL` | R$ 745,00 (Fund. 1º ano) |
+| Aluno | Era | Virou | Por quê |
+|---|---|---|---|
+| IZABELA SANTANA CÔRTES | `BOLSA_INTEGRAL` | `NORMAL` | A cobrança de R$ 445,00 é legítima; nunca foi cancelada em nenhum mês. |
+| MATEUS PRAXEDES LOBO | `BOLSA_INTEGRAL` | `PERMUTA` (praticado 690) | Permuta de valor variável. |
 
-**Em agosto nenhum dos dois foi cobrado** — o problema começou em setembro, o que sugere que a bolsa foi concedida aqui e não refletida no isaac. Ação: corrigir no portal do isaac (e pedir estorno das duas parcelas), ou, se a cobrança for legítima, ajustar o `tipo_vaga` da matrícula. Enquanto não resolver, aquele mês não importa — que é exatamente o desenho pretendido.
+O caso do Mateus só ficou claro olhando três meses seguidos no analítico:
+
+| Competência | isaac lançou | Mudança | Resultado |
+|---|---|---|---|
+| Jul | — | −761,10 "Recebido na escola" | zerado |
+| Ago | 745,00 | −745,00 "Cancelado" | zerado |
+| Set | 745,00 | *nenhuma* | **cobrado** |
+
+O isaac lança R$ 745,00 todo mês e alguém neutraliza a parcela manualmente — em agosto foi **o único cancelamento entre 307 parcelas**. Em setembro ninguém cancelou. Como a permuta não tem valor fixo, `PERMUTA` é a classificação certa: o importador manda toda mensalidade dele para revisão manual, em vez de assumir um valor.
+
+Nota: o `valor_mensalidade_praticado = 690` bate com o **líquido** do isaac (745 − 54,30 de taxa), não com o bruto, e o plano de 2026 diz 680 — três números de origens diferentes. Mantido 690 como referência.
+
+Aplicado no banco local **e em produção** (22/09). Depois da correção, EPG Trindade/set **desbloqueia**: 313 parcelas viram cobrança (as 311 anteriores + a da Izabela), e a do Mateus aparece na fila como "Permuta — revisar valor".
 
 ### Ainda falta
 
 - **Fev a Jul/2026 × 2 unidades**: ~12 analíticos `.xlsx` + ~12 resumos `.pdf` para baixar do Meu Arco. Sem o resumo o importador recusa o mês, porque o crédito de curto prazo e as transferências só existem no PDF.
-- Reimportar EPG Trindade/set depois de resolver os dois alunos acima.
+- Importar EPG Trindade/set no banco de verdade (validado no local, não executado em produção).
+- Decidir o que fazer com a parcela de setembro do Mateus: ou o isaac estorna, ou a permuta daquele mês é registrada aqui.
 
 ### Testes (vitest)
 
