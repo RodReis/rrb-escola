@@ -8,7 +8,7 @@ import { DataTableShell } from "@/components/ui/data-table";
 import { StatusPill } from "@/components/ui/status-pill";
 import { RowActionButton } from "@/components/ui/row-action-button";
 import { MatriculaFullEditDialog } from "@/components/matriculas/matricula-full-edit-dialog";
-import { TIPO_VAGA_LABEL } from "@/components/matriculas/tipo-vaga";
+import { TIPO_VAGA_LABEL, TIPO_VAGA_STYLE, TIPO_VAGA_ICON } from "@/components/matriculas/tipo-vaga";
 
 type Option = { id: string; nome: string };
 type TurmaOption = { id: string; nome: string; serieId: string };
@@ -85,7 +85,17 @@ function MatriculaRow({
       <td className="text-ink/80">{item.ano_letivo}</td>
       <td className="text-ink/80">{dateText(item.data_matricula)}</td>
       <td>
-        <StatusPill tone="neutral">{TIPO_VAGA_LABEL[item.tipo_vaga] ?? item.tipo_vaga}</StatusPill>
+        {(() => {
+          const Icon = TIPO_VAGA_ICON[item.tipo_vaga];
+          return (
+            <span
+              className={`inline-flex items-center gap-1 rounded-pill px-2 py-0.5 text-xs font-semibold whitespace-nowrap ${TIPO_VAGA_STYLE[item.tipo_vaga] ?? "bg-line/60 text-ink/70"}`}
+            >
+              {Icon ? <Icon size={12} /> : null}
+              {TIPO_VAGA_LABEL[item.tipo_vaga] ?? item.tipo_vaga}
+            </span>
+          );
+        })()}
       </td>
       <td>
         <StatusPill tone={tone}>{item.status}</StatusPill>

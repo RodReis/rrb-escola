@@ -64,7 +64,7 @@ export function StudentCombobox({
     <div ref={containerRef} className="relative">
       <input type="hidden" name="aluno_id" value={selected?.id ?? ""} required />
       <div className="relative">
-        <Search size={14} className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-ink/40" />
+        <Search size={15} className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-brand" />
         <input
           type="text"
           placeholder="Buscar aluno por nome ou matrícula..."
@@ -72,7 +72,7 @@ export function StudentCombobox({
           onChange={handleChange}
           onFocus={() => query.length > 0 && setOpen(true)}
           autoComplete="off"
-          className="!pl-8"
+          className="!border-2 !border-ink/20 !pl-9 font-medium transition-colors focus:!border-brand hover:!border-ink/35"
           required={!selected}
         />
       </div>
