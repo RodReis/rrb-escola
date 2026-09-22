@@ -2,14 +2,12 @@ import { ArrowLeft, Calendar, Pencil, Receipt, Wallet, History } from "lucide-re
 import { Badge } from "@/components/ui/badge";
 import { ButtonLink } from "@/components/ui/button";
 import { Card, Panel } from "@/components/ui/card";
-import { GenerateChargesButton } from "@/components/finance/generate-charges-button";
 import { DocumentGenerator } from "@/components/matriculas/document-generator";
 import { EnrollmentTabs } from "@/components/matriculas/enrollment-tabs";
 import { StudentCombobox } from "@/components/matriculas/student-combobox";
 import { updateEnrollmentAction, updateEnrollmentStatusAction } from "@/lib/actions/academics";
 import { money } from "@/lib/constants";
 import { getEnrollmentDetail } from "@/lib/data/enrollments";
-import { getEnrollmentChargesPreview } from "@/lib/data/finance";
 import { getAcademicData } from "@/lib/data/lookups";
 import { getMatriculaDocumentos } from "@/lib/data/documents";
 import { requirePermission } from "@/lib/auth/session";
@@ -44,10 +42,9 @@ export default async function EnrollmentDetailPage({
   const { id } = await params;
   const { tab = "cadastro", rematricula } = await searchParams;
 
-  const [{ alunos, series, turmas, planos }, detail, chargesPreview] = await Promise.all([
+  const [{ alunos, series, turmas, planos }, detail] = await Promise.all([
     getAcademicData(),
     getEnrollmentDetail(id),
-    getEnrollmentChargesPreview(id),
   ]);
   const enrollment = detail.enrollment;
   const documentos = await getMatriculaDocumentos(enrollment.aluno_id);
@@ -170,7 +167,6 @@ export default async function EnrollmentDetailPage({
                   <Receipt size={20} className="text-brand" />
                   Histórico financeiro
                 </h2>
-                <GenerateChargesButton matriculaId={enrollment.id} preview={chargesPreview} />
               </div>
               <div className="grid gap-2">
                 {detail.charges.length === 0 ? (

@@ -67,37 +67,6 @@ export async function getStudentStatement(alunoId: string, de: string, ate: stri
   };
 }
 
-export async function getEnrollmentChargesPreview(matriculaId: string) {
-  const supabase = await createServerClient();
-  const matricula = await supabase
-    .from("matriculas")
-    .select("id, plano_id, ano_letivo, planos(quantidade_parcelas, valor_matricula)")
-    .eq("id", matriculaId)
-    .single();
-
-  if (matricula.error) throw matricula.error;
-
-  const existing = await supabase
-    .from("cobrancas")
-    .select("id, competencia, numero_parcela", { count: "exact", head: false })
-    .eq("matricula_id", matriculaId)
-    .neq("status", "cancelada");
-
-  if (existing.error) throw existing.error;
-
-  const plano = Array.isArray(matricula.data?.planos) ? matricula.data?.planos?.[0] : matricula.data?.planos;
-  const totalPlano = plano
-    ? Number(plano.quantidade_parcelas ?? 0) + (Number(plano.valor_matricula ?? 0) > 0 ? 1 : 0)
-    : 0;
-
-  return {
-    temPlano: Boolean(matricula.data?.plano_id),
-    existentes: existing.data?.length ?? 0,
-    totalPlano,
-    aGerar: Math.max(totalPlano - (existing.data?.length ?? 0), 0)
-  };
-}
-
 export type DelinquencyFilters = {
   de: string;
   ate: string;
