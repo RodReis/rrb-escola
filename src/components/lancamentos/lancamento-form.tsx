@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { CurrencyInput } from "@/components/ui/currency-input";
 import { FORMAS_PAGAMENTO, type TipoLancamento } from "@/lib/validation/lancamentos";
 import type { CategoriaFinanceira, LancamentoRow } from "@/lib/data/lancamentos";
+import { SubmitButton } from "@/components/ui/submit-button";
 
 type Props = {
   action: (formData: FormData) => void | Promise<void>;
@@ -113,7 +114,7 @@ export function LancamentoForm({ action, categorias, initial, submitLabel }: Pro
       </label>
 
       <div className="md:col-span-2 flex justify-end gap-2">
-        <Button type="submit" variant="primary">{submitLabel}</Button>
+        <SubmitButton>{submitLabel}</SubmitButton>
       </div>
     </form>
   );

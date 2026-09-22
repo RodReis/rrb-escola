@@ -63,7 +63,8 @@ export default async function EditarProdutoPage({
         </h2>
 
         {produto.variacoes.length > 0 && (
-          <table className="mb-5 w-full text-sm">
+          <div className="mb-5 overflow-x-auto">
+          <table className="w-full min-w-[560px] text-sm">
             <thead>
               <tr className="border-b border-line text-left text-[0.66rem] font-bold uppercase tracking-kicker text-ink/60">
                 <th className="py-1.5 px-2">SKU</th>
@@ -80,6 +81,7 @@ export default async function EditarProdutoPage({
               ))}
             </tbody>
           </table>
+          </div>
         )}
 
         <VariacaoForm action={createVariacaoAction} produtoId={produto.id} />

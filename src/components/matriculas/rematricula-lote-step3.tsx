@@ -3,6 +3,7 @@ import { Panel } from "@/components/ui/card";
 import { rematricularLoteAction } from "@/lib/actions/academics";
 import { listAlunosCandidatosLote } from "@/lib/data/enrollments";
 import { getSignedFotoUrls } from "@/lib/storage/photos";
+import { SubmitButton } from "@/components/ui/submit-button";
 
 type Props = {
   ano: number;
@@ -81,9 +82,9 @@ export async function RematricularLoteStep3({ ano, turma_id, serie_dest_id, turm
           >
             ← Voltar
           </a>
-          <button type="submit" className="ds-button ds-button-primary">
+          <SubmitButton>
             Re-matricular {candidatos.length} aluno{candidatos.length !== 1 ? "s" : ""}
-          </button>
+          </SubmitButton>
         </div>
       </form>
     </Panel>

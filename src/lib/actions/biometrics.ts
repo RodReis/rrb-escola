@@ -5,6 +5,7 @@ import { redirect } from "next/navigation";
 import { requirePermission } from "@/lib/auth/session";
 import { createServerClient } from "@/lib/supabase/server";
 import { formText } from "@/lib/utils";
+import { assertOk } from "@/lib/actions/assert-ok";
 
 export async function setConsentAction(formData: FormData) {
   await requirePermission("portaria", "update");
@@ -16,16 +17,21 @@ export async function setConsentAction(formData: FormData) {
   if (autorizado && !responsavelId) redirect(`/alunos/${alunoId}/editar?erro=responsavel`);
 
   const supabase = await createServerClient();
-  await supabase.from("consentimentos_biometria").upsert(
-    {
-      aluno_id: alunoId,
-      autorizado,
-      responsavel_id: responsavelId,
-      data_consentimento: autorizado ? new Date().toISOString() : null,
-      data_revogacao: autorizado ? null : new Date().toISOString(),
-      observacao
-    },
-    { onConflict: "aluno_id" }
+  // Dado sensível (LGPD): a tela não pode confirmar um consentimento que o
+  // banco recusou.
+  assertOk(
+    await supabase.from("consentimentos_biometria").upsert(
+      {
+        aluno_id: alunoId,
+        autorizado,
+        responsavel_id: responsavelId,
+        data_consentimento: autorizado ? new Date().toISOString() : null,
+        data_revogacao: autorizado ? null : new Date().toISOString(),
+        observacao
+      },
+      { onConflict: "aluno_id" }
+    ),
+    "Não foi possível salvar o consentimento de biometria",
   );
 
   if (!autorizado) {
@@ -39,17 +45,22 @@ export async function setConsentAction(formData: FormData) {
       if (bio.foto_referencia_path) {
         await supabase.storage.from("biometrias-alunos").remove([bio.foto_referencia_path]);
       }
-      await supabase
-        .from("biometrias_aluno")
-        .update({
-          ativo: false,
-          embedding: null,
-          embedding_hash: null,
-          embedding_encrypted: null,
-          foto_referencia_path: null,
-          data_revogacao: new Date().toISOString()
-        })
-        .eq("id", bio.id);
+      // Revogação apaga o dado biométrico: falha aqui deixaria o embedding
+      // vivo com o consentimento já revogado.
+      assertOk(
+        await supabase
+          .from("biometrias_aluno")
+          .update({
+            ativo: false,
+            embedding: null,
+            embedding_hash: null,
+            embedding_encrypted: null,
+            foto_referencia_path: null,
+            data_revogacao: new Date().toISOString()
+          })
+          .eq("id", bio.id),
+        "Não foi possível revogar a biometria",
+      );
     }
   }
 

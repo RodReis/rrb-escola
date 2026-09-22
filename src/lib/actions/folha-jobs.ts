@@ -4,6 +4,7 @@ import { gerarRunEspecial } from "@/lib/folha/runs-especiais";
 import { marcarVencidos } from "@/lib/folha/aquisitivos";
 import { nthDiaUtil } from "@/lib/folha/date-utils";
 import { DEFAULT_SCHOOL_ID } from "@/lib/constants";
+import { logSeFalhou } from "@/lib/actions/assert-ok";
 
 type GerarResult = { company_id: string; runId: string; criada: boolean };
 
@@ -26,7 +27,9 @@ export async function jobGerarFolha(hoje: Date): Promise<GerarResult[]> {
     resultados.push({ company_id: cfg.company_id as string, ...r });
 
     if (r.criada) {
-      await supabase.from("notificacoes").insert({
+      // A folha já foi gerada: falha no aviso não pode abortar o cron nem
+      // impedir as outras empresas da lista.
+      logSeFalhou(await supabase.from("notificacoes").insert({
         escola_id: (cfg.escola_id as string) ?? DEFAULT_SCHOOL_ID,
         perfil_id: null,
         tipo: "folha",
@@ -34,7 +37,7 @@ export async function jobGerarFolha(hoje: Date): Promise<GerarResult[]> {
         descricao: "Folha iniciada aguardando andamento.",
         href: `/rh/folha-v2/${r.runId}`,
         severidade: "info",
-      });
+      }), "notificação de folha gerada");
     }
   }
 

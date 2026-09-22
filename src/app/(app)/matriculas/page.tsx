@@ -11,6 +11,7 @@ import { MatriculasTable } from "@/components/matriculas/matriculas-table";
 import { MatriculasFilters } from "@/components/matriculas/matriculas-filters";
 import { requirePermission } from "@/lib/auth/session";
 import { anoLetivoDaData } from "@/lib/matriculas/ano-letivo";
+import { SubmitButton } from "@/components/ui/submit-button";
 
 export default async function MatriculasPage({
   searchParams,
@@ -110,9 +111,9 @@ export default async function MatriculasPage({
           </div>
           {/* Ação fora da grade de campos: separada por borda, não compete por coluna. */}
           <div className="flex border-t border-line pt-4">
-            <button className="ds-button ds-button-primary">
+            <SubmitButton>
               <Plus size={14} /> Matricular
-            </button>
+            </SubmitButton>
           </div>
         </form>
       </Panel>

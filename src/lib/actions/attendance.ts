@@ -7,6 +7,7 @@ import { createServerClient } from "@/lib/supabase/server";
 import { formBoolean, formText } from "@/lib/utils";
 import { getCalendario } from "@/lib/data/calendario";
 import { isDiaLetivo } from "@/lib/calendario/dias-letivos";
+import { assertOk } from "@/lib/actions/assert-ok";
 
 export async function createAttendanceAction(formData: FormData) {
   await requirePermission("frequencias", "create");
@@ -14,15 +15,18 @@ export async function createAttendanceAction(formData: FormData) {
   if (!alunoId) return;
 
   const supabase = await createServerClient();
-  await supabase.from("frequencias").upsert(
-    {
-      escola_id: DEFAULT_SCHOOL_ID,
-      aluno_id: alunoId,
-      data_aula: formText(formData, "data_aula") ?? new Date().toISOString().slice(0, 10),
-      presente: formBoolean(formData, "presente"),
-      justificativa: formText(formData, "justificativa")
-    },
-    { onConflict: "aluno_id,data_aula" }
+  assertOk(
+    await supabase.from("frequencias").upsert(
+      {
+        escola_id: DEFAULT_SCHOOL_ID,
+        aluno_id: alunoId,
+        data_aula: formText(formData, "data_aula") ?? new Date().toISOString().slice(0, 10),
+        presente: formBoolean(formData, "presente"),
+        justificativa: formText(formData, "justificativa")
+      },
+      { onConflict: "aluno_id,data_aula" }
+    ),
+    "Não foi possível salvar a frequência",
   );
 
   revalidatePath("/frequencias");
@@ -52,7 +56,10 @@ export async function saveClassAttendanceAction(formData: FormData) {
   }));
 
   const supabase = await createServerClient();
-  await supabase.from("frequencias").upsert(rows, { onConflict: "aluno_id,data_aula" });
+  assertOk(
+    await supabase.from("frequencias").upsert(rows, { onConflict: "aluno_id,data_aula" }),
+    "Não foi possível salvar a chamada",
+  );
 
   revalidatePath("/frequencias");
   revalidatePath("/frequencias/chamada");

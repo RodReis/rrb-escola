@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { requirePermission } from "@/lib/auth/session";
 import { createServerClient } from "@/lib/supabase/server";
 import { syncExtratoSicoob } from "@/lib/conciliacao/sync-extrato";
+import { assertOk } from "@/lib/actions/assert-ok";
 
 export type AtualizarExtratoResult =
   | { ok: true; movimentos: number; descartados: number }
@@ -61,28 +62,33 @@ export async function conciliarExtratoAction(formData: FormData) {
     .maybeSingle();
 
   if (pagamentoId) {
-    await supabase.from("conciliacao_vinculo").upsert({
+    assertOk(await supabase.from("conciliacao_vinculo").upsert({
       extrato_id: id,
       alvo_tipo: "pagamento",
       alvo_id: pagamentoId,
       valor: Number(linha?.valor ?? 0),
       origem: "manual",
       criado_por: session.profile.id,
-    }, { onConflict: "extrato_id,alvo_tipo,alvo_id" });
+    }, { onConflict: "extrato_id,alvo_tipo,alvo_id" }), "Não foi possível vincular o pagamento");
   }
 
   if (lancamentoId) {
-    await supabase.from("conciliacao_vinculo").upsert({
+    assertOk(await supabase.from("conciliacao_vinculo").upsert({
       extrato_id: id,
       alvo_tipo: "lancamento",
       alvo_id: lancamentoId,
       valor: Number(linha?.valor ?? 0),
       origem: "manual",
       criado_por: session.profile.id,
-    }, { onConflict: "extrato_id,alvo_tipo,alvo_id" });
+    }, { onConflict: "extrato_id,alvo_tipo,alvo_id" }), "Não foi possível vincular o lançamento");
   }
 
-  await supabase.from("extrato_bancario").update({ status_conciliacao: "manual" }).eq("id", id);
+  // So marca como conciliado depois que o vinculo foi gravado: falhar aqui em
+  // silencio deixaria o extrato "conciliado" sem vinculo nenhum.
+  assertOk(
+    await supabase.from("extrato_bancario").update({ status_conciliacao: "manual" }).eq("id", id),
+    "Não foi possível atualizar o status do extrato",
+  );
 
   revalidatePath("/financeiro/tesouraria/conciliacao");
 }
