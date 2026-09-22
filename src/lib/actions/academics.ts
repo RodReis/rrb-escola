@@ -154,6 +154,27 @@ export async function updatePlanAction(formData: FormData) {
   revalidatePath("/financeiro");
 }
 
+const TIPOS_VAGA = [
+  "NORMAL",
+  "BOLSA_50_PORCENTO",
+  "BOLSA_INTEGRAL",
+  "FILHO_PROFESSORA",
+  "FILHO_PROFESSORA_INTEGRAL",
+  "PERMUTA",
+  "ISENTO",
+] as const;
+type TipoVagaInput = (typeof TIPOS_VAGA)[number];
+
+function readTipoVaga(formData: FormData): TipoVagaInput {
+  const raw = formText(formData, "tipo_vaga");
+  return raw && (TIPOS_VAGA as readonly string[]).includes(raw) ? (raw as TipoVagaInput) : "NORMAL";
+}
+
+/** BOLSA_50_PORCENTO e FILHO_PROFESSORA descontam 50% fixo; os demais tipos não têm percentual. */
+function percentualBolsaFor(tipo: TipoVagaInput): number {
+  return tipo === "BOLSA_50_PORCENTO" || tipo === "FILHO_PROFESSORA" ? 50 : 0;
+}
+
 export async function createEnrollmentAction(formData: FormData) {
   await requirePermission("matriculas", "create");
   const alunoId = formText(formData, "aluno_id");
@@ -165,6 +186,7 @@ export async function createEnrollmentAction(formData: FormData) {
   const planoId = formText(formData, "plano_id");
   const dataMatricula = formText(formData, "data_matricula") ?? new Date().toISOString().slice(0, 10);
   const anoLetivo = formNumber(formData, "ano_letivo") ?? new Date().getFullYear();
+  const tipoVaga = readTipoVaga(formData);
 
   // Nova matrícula sempre encerra qualquer matrícula ativa anterior do aluno
   // (mesma regra da re-matrícula) — evita duas matrículas "ativa" simultâneas.
@@ -186,6 +208,8 @@ export async function createEnrollmentAction(formData: FormData) {
     ano_letivo: anoLetivo,
     idade_na_matricula: formNumber(formData, "idade_na_matricula"),
     status: "ativa",
+    tipo_vaga: tipoVaga,
+    percentual_bolsa: percentualBolsaFor(tipoVaga),
     observacoes: formText(formData, "observacoes")
   });
 
@@ -248,6 +272,66 @@ export async function updateEnrollmentStatusAction(formData: FormData) {
     revalidatePath(`/alunos/${alunoId}`);
     revalidatePath(`/alunos/${alunoId}/editar`);
   }
+}
+
+/** Alterna o status da matrícula entre "ativa" e "cancelada" (ícone da grid). */
+export async function toggleEnrollmentStatusAction(formData: FormData) {
+  await requirePermission("matriculas", "update");
+  const id = formText(formData, "id");
+  const alunoId = formText(formData, "aluno_id");
+  const proximoStatus = formText(formData, "status") === "ativa" ? "ativa" : "cancelada";
+  if (!id) return;
+
+  const supabase = await createServerClient();
+  await supabase
+    .from("matriculas")
+    .update({ status: proximoStatus })
+    .eq("id", id)
+    .eq("escola_id", DEFAULT_SCHOOL_ID);
+
+  revalidatePath("/matriculas");
+  revalidatePath(`/matriculas/${id}`);
+  if (alunoId) {
+    revalidatePath(`/alunos/${alunoId}`);
+    revalidatePath(`/alunos/${alunoId}/editar`);
+  }
+}
+
+/** Edita série, turma, plano, tipo de vaga e status de uma matrícula (dialog "Editar" na grid de matrículas). */
+export async function updateEnrollmentFullAction(formData: FormData): Promise<ActionResult> {
+  await requirePermission("matriculas", "update");
+  const id = formText(formData, "id");
+  const alunoId = formText(formData, "aluno_id");
+  const serieId = formText(formData, "serie_id");
+  const turmaId = formText(formData, "turma_id");
+  const status = formText(formData, "status");
+  if (!id || !serieId || !turmaId || !status) {
+    return { ok: false, error: "Série, turma e status são obrigatórios." };
+  }
+
+  const tipoVaga = readTipoVaga(formData);
+  const supabase = await createServerClient();
+  const { error } = await supabase
+    .from("matriculas")
+    .update({
+      serie_id: serieId,
+      turma_id: turmaId,
+      plano_id: formText(formData, "plano_id"),
+      tipo_vaga: tipoVaga,
+      percentual_bolsa: percentualBolsaFor(tipoVaga),
+      status,
+    })
+    .eq("id", id)
+    .eq("escola_id", DEFAULT_SCHOOL_ID);
+  if (error) return { ok: false, error: "Erro ao atualizar a matrícula. Tente novamente." };
+
+  revalidatePath("/matriculas");
+  revalidatePath(`/matriculas/${id}`);
+  if (alunoId) {
+    revalidatePath(`/alunos/${alunoId}`);
+    revalidatePath(`/alunos/${alunoId}/editar`);
+  }
+  return { ok: true, data: undefined };
 }
 
 export async function toggleSerieAction(formData: FormData) {

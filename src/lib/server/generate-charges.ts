@@ -22,7 +22,14 @@ type Plan = {
   dia_vencimento: number;
 };
 
-export type TipoVagaCobranca = "paga" | "bolsa_integral" | "bolsa_parcial" | "permuta" | "gratuita";
+export type TipoVagaCobranca =
+  | "NORMAL"
+  | "BOLSA_50_PORCENTO"
+  | "BOLSA_INTEGRAL"
+  | "FILHO_PROFESSORA"
+  | "FILHO_PROFESSORA_INTEGRAL"
+  | "PERMUTA"
+  | "ISENTO";
 
 type GenerateChargesInput = {
   supabase: SupabaseLike;
@@ -51,10 +58,15 @@ function dueDate(year: number, monthIndex: number, day: number) {
 export async function generateChargesForEnrollment(input: GenerateChargesInput) {
   if (!input.planoId) return;
 
-  const tipoVaga: TipoVagaCobranca = input.tipoVaga ?? "paga";
+  const tipoVaga: TipoVagaCobranca = input.tipoVaga ?? "NORMAL";
   const percentualBolsa = Math.max(0, Math.min(100, input.percentualBolsa ?? 0));
 
-  if (tipoVaga === "bolsa_integral" || tipoVaga === "permuta" || tipoVaga === "gratuita") {
+  if (
+    tipoVaga === "BOLSA_INTEGRAL" ||
+    tipoVaga === "FILHO_PROFESSORA_INTEGRAL" ||
+    tipoVaga === "PERMUTA" ||
+    tipoVaga === "ISENTO"
+  ) {
     return;
   }
 
@@ -92,9 +104,10 @@ export async function generateChargesForEnrollment(input: GenerateChargesInput) 
     });
   }
 
-  const descontoMensal = (!usaPraticado && tipoVaga === "bolsa_parcial")
-    ? Math.round(monthlyFee * (percentualBolsa / 100) * 100) / 100
-    : 0;
+  const descontoMensal =
+    !usaPraticado && (tipoVaga === "BOLSA_50_PORCENTO" || tipoVaga === "FILHO_PROFESSORA")
+      ? Math.round(monthlyFee * (percentualBolsa / 100) * 100) / 100
+      : 0;
 
   for (let index = 0; index < installments; index += 1) {
     const monthIndex = index % 12;

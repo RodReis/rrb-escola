@@ -1,16 +1,17 @@
 "use client";
 
-import { useRef } from "react";
 import Link from "next/link";
 import Image from "next/image";
-import { Eye, Inbox } from "lucide-react";
-import { updateEnrollmentStatusAction } from "@/lib/actions/academics";
+import { Eye, FileText, Inbox, Power, PowerOff } from "lucide-react";
+import { toggleEnrollmentStatusAction } from "@/lib/actions/academics";
 import { DataTableShell } from "@/components/ui/data-table";
 import { StatusPill } from "@/components/ui/status-pill";
-import { Button } from "@/components/ui/button";
-import { useAction } from "@/lib/hooks/use-action";
+import { RowActionButton } from "@/components/ui/row-action-button";
+import { MatriculaFullEditDialog } from "@/components/matriculas/matricula-full-edit-dialog";
+import { TIPO_VAGA_LABEL } from "@/components/matriculas/tipo-vaga";
 
-const statuses = ["ativa", "cancelada", "transferida", "concluida"];
+type Option = { id: string; nome: string };
+type TurmaOption = { id: string; nome: string; serieId: string };
 
 const statusTone = {
   ativa: "success",
@@ -27,27 +28,33 @@ function dateText(value: string | null | undefined) {
 type Matricula = {
   id: string;
   aluno_id: string;
+  serie_id: string | null;
+  turma_id: string | null;
+  plano_id: string | null;
   ano_letivo: number | null;
   data_matricula: string | null;
   status: string;
+  tipo_vaga: string;
   alunos: { nome: string | null; matricula_codigo: string | null; foto_url: string | null } | null;
   series: { nome: string | null } | null;
   turmas: { nome: string | null } | null;
   planos: { nome: string | null } | null;
 };
 
-/** Uma linha da tabela — hook `useAction` exige componente proprio, nao pode
- * rodar dentro do `.map()` de `MatriculasTable` (regra de hooks). */
-function MatriculaRow({ item }: { item: Matricula }) {
+function MatriculaRow({
+  item,
+  series,
+  turmas,
+  planos,
+}: {
+  item: Matricula;
+  series: Option[];
+  turmas: TurmaOption[];
+  planos: Option[];
+}) {
   const tone = statusTone[item.status as keyof typeof statusTone] ?? "neutral";
-  const formRef = useRef<HTMLFormElement>(null);
-  const { run, pending } = useAction(updateEnrollmentStatusAction, {
-    error: "Falha ao salvar o status.",
-  });
-
-  function handleSave() {
-    if (formRef.current) run(new FormData(formRef.current));
-  }
+  const ativa = item.status === "ativa";
+  const podeAlternarStatus = item.status === "ativa" || item.status === "cancelada";
 
   return (
     <tr>
@@ -78,27 +85,58 @@ function MatriculaRow({ item }: { item: Matricula }) {
       <td className="text-ink/80">{item.ano_letivo}</td>
       <td className="text-ink/80">{dateText(item.data_matricula)}</td>
       <td>
-        <form ref={formRef} className="flex items-center gap-2" onSubmit={(e) => e.preventDefault()}>
-          <input type="hidden" name="id" value={item.id} />
-          <input type="hidden" name="aluno_id" value={item.aluno_id} />
-          <StatusPill tone={tone}>{item.status}</StatusPill>
-          <select name="status" defaultValue={item.status} className="min-w-[120px]">
-            {statuses.map((s) => (
-              <option key={s} value={s}>{s}</option>
-            ))}
-          </select>
-          <Button type="button" variant="secondary" loading={pending} onClick={handleSave} className="min-h-0 px-2.5 py-1.5 text-xs">
-            Salvar
-          </Button>
-        </form>
+        <StatusPill tone="neutral">{TIPO_VAGA_LABEL[item.tipo_vaga] ?? item.tipo_vaga}</StatusPill>
+      </td>
+      <td>
+        <StatusPill tone={tone}>{item.status}</StatusPill>
       </td>
       <td className="text-right">
-        <div className="inline-flex gap-2">
-          <Link href={`/matriculas/${item.id}`} className="ds-button ds-button-secondary min-h-0 px-2.5 py-1.5 text-xs">
-            <Eye size={12} /> Histórico
+        <div className="inline-flex items-center justify-end gap-1">
+          <MatriculaFullEditDialog
+            matriculaId={item.id}
+            alunoId={item.aluno_id}
+            alunoNome={item.alunos?.nome ?? ""}
+            serieId={item.serie_id ?? ""}
+            turmaId={item.turma_id ?? ""}
+            planoId={item.plano_id}
+            tipoVaga={item.tipo_vaga}
+            status={item.status}
+            series={series}
+            turmas={turmas}
+            planos={planos}
+          />
+          {podeAlternarStatus ? (
+            <RowActionButton
+              action={toggleEnrollmentStatusAction}
+              args={{ id: item.id, aluno_id: item.aluno_id, status: ativa ? "cancelada" : "ativa" }}
+              icon={ativa ? PowerOff : Power}
+              label={ativa ? "Cancelar matrícula" : "Reativar matrícula"}
+              tone={ativa ? "warning" : "success"}
+              confirm={{
+                title: ativa ? "Cancelar matrícula" : "Reativar matrícula",
+                message: `Tem certeza que quer ${ativa ? "cancelar" : "reativar"} a matrícula de "${item.alunos?.nome}"?`,
+                confirmLabel: ativa ? "Cancelar" : "Reativar",
+                variant: ativa ? "warning" : "default",
+              }}
+              success={ativa ? "Matrícula cancelada." : "Matrícula reativada."}
+              error="Falha ao alterar status."
+            />
+          ) : null}
+          <Link
+            href={`/matriculas/${item.id}`}
+            title="Histórico"
+            aria-label="Histórico"
+            className="inline-flex h-8 w-8 items-center justify-center rounded-md text-brand hover:bg-brand/10"
+          >
+            <Eye size={15} />
           </Link>
-          <Link href={`/alunos/${item.aluno_id}`} className="ds-button ds-button-secondary min-h-0 px-2.5 py-1.5 text-xs">
-            Ficha
+          <Link
+            href={`/alunos/${item.aluno_id}`}
+            title="Ficha"
+            aria-label="Ficha"
+            className="inline-flex h-8 w-8 items-center justify-center rounded-md text-brand hover:bg-brand/10"
+          >
+            <FileText size={15} />
           </Link>
         </div>
       </td>
@@ -106,10 +144,20 @@ function MatriculaRow({ item }: { item: Matricula }) {
   );
 }
 
-export function MatriculasTable({ matriculas }: { matriculas: Matricula[] }) {
+export function MatriculasTable({
+  matriculas,
+  series,
+  turmas,
+  planos,
+}: {
+  matriculas: Matricula[];
+  series: Option[];
+  turmas: TurmaOption[];
+  planos: Option[];
+}) {
   return (
     <DataTableShell>
-      <table className="ds-dt min-w-[1020px]">
+      <table className="ds-dt min-w-[1120px]">
         <thead>
           <tr>
             <th>Aluno</th>
@@ -118,6 +166,7 @@ export function MatriculasTable({ matriculas }: { matriculas: Matricula[] }) {
             <th>Plano</th>
             <th>Ano</th>
             <th>Data</th>
+            <th>Tipo de vaga</th>
             <th>Status</th>
             <th className="text-right">Ações</th>
           </tr>
@@ -125,7 +174,7 @@ export function MatriculasTable({ matriculas }: { matriculas: Matricula[] }) {
         <tbody>
           {matriculas.length === 0 ? (
             <tr>
-              <td colSpan={8} className="py-12">
+              <td colSpan={9} className="py-12">
                 <div className="flex flex-col items-center justify-center gap-2 text-ink/60">
                   <Inbox size={28} />
                   <p className="text-sm font-medium">Nenhuma matrícula encontrada.</p>
@@ -134,7 +183,7 @@ export function MatriculasTable({ matriculas }: { matriculas: Matricula[] }) {
             </tr>
           ) : null}
           {matriculas.map((item) => (
-            <MatriculaRow key={item.id} item={item} />
+            <MatriculaRow key={item.id} item={item} series={series} turmas={turmas} planos={planos} />
           ))}
         </tbody>
       </table>

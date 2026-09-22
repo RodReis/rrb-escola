@@ -5,9 +5,23 @@ import { getAlunosAtivosAnoCorrente } from "./students";
 
 export type GestaoFinanceira = "propria" | "terceirizada";
 
-export type TipoVaga = 'paga' | 'bolsa_integral' | 'bolsa_parcial' | 'permuta' | 'gratuita';
+export type TipoVaga =
+  | 'NORMAL'
+  | 'BOLSA_50_PORCENTO'
+  | 'BOLSA_INTEGRAL'
+  | 'FILHO_PROFESSORA'
+  | 'FILHO_PROFESSORA_INTEGRAL'
+  | 'PERMUTA'
+  | 'ISENTO';
 
-const BENEFICIARIO_TIPOS: TipoVaga[] = ['bolsa_integral', 'bolsa_parcial', 'permuta', 'gratuita'];
+const BENEFICIARIO_TIPOS: TipoVaga[] = [
+  'BOLSA_50_PORCENTO',
+  'BOLSA_INTEGRAL',
+  'FILHO_PROFESSORA',
+  'FILHO_PROFESSORA_INTEGRAL',
+  'PERMUTA',
+  'ISENTO',
+];
 
 export type EscolaConfig = {
   gestaoFinanceira: GestaoFinanceira;
@@ -424,7 +438,7 @@ export async function getTicketMedio(
           .select("id", { count: "exact", head: true })
           .eq("escola_id", escolaId)
           .eq("status", "ativa")
-          .in("tipo_vaga", ["paga", "bolsa_parcial"]),
+          .in("tipo_vaga", ["NORMAL", "BOLSA_50_PORCENTO", "FILHO_PROFESSORA"]),
       ]);
       const total = (cobrancas ?? []).reduce((s, r) => s + Number(r.valor_final ?? 0), 0);
       return pagantesCount && pagantesCount > 0 ? total / pagantesCount : 0;
@@ -853,11 +867,13 @@ export async function getBeneficios(
   }
 
   const porTipo: Record<TipoVaga, number> = {
-    paga: 0,
-    bolsa_integral: 0,
-    bolsa_parcial: 0,
-    permuta: 0,
-    gratuita: 0,
+    NORMAL: 0,
+    BOLSA_50_PORCENTO: 0,
+    BOLSA_INTEGRAL: 0,
+    FILHO_PROFESSORA: 0,
+    FILHO_PROFESSORA_INTEGRAL: 0,
+    PERMUTA: 0,
+    ISENTO: 0,
   };
 
   let receitaPerdida = 0;
@@ -877,7 +893,7 @@ export async function getBeneficios(
     const valorSegmento = segmento ? valorPorSegmento.get(segmento) : undefined;
     const valorReferencia = valorSegmento ?? fallback;
 
-    if (tipo === "bolsa_parcial") {
+    if (tipo === "BOLSA_50_PORCENTO" || tipo === "FILHO_PROFESSORA") {
       const pct = Number(m.percentual_bolsa ?? 0) / 100;
       receitaPerdida += valorReferencia * pct;
     } else {

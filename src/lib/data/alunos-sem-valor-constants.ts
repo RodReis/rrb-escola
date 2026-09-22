@@ -4,15 +4,24 @@
  * Do NOT add any server-only imports (e.g. next/headers, supabase server) here.
  */
 
-export type TipoVaga = "paga" | "bolsa_integral" | "bolsa_parcial" | "permuta" | "gratuita";
+export type TipoVaga =
+  | "NORMAL"
+  | "BOLSA_50_PORCENTO"
+  | "BOLSA_INTEGRAL"
+  | "FILHO_PROFESSORA"
+  | "FILHO_PROFESSORA_INTEGRAL"
+  | "PERMUTA"
+  | "ISENTO";
 
 export type MotivoSemValor =
   | "sem_matricula"
   | "sem_valor"
-  | "bolsa_integral"
-  | "bolsa_parcial"
-  | "permuta"
-  | "gratuita";
+  | "BOLSA_50_PORCENTO"
+  | "BOLSA_INTEGRAL"
+  | "FILHO_PROFESSORA"
+  | "FILHO_PROFESSORA_INTEGRAL"
+  | "PERMUTA"
+  | "ISENTO";
 
 export type RawResponsavel = {
   nome: string;
@@ -82,15 +91,17 @@ export type AlunosSemValorFilters = {
 export const MOTIVO_LABEL: Record<MotivoSemValor, string> = {
   sem_matricula: "Sem matrícula",
   sem_valor: "Sem valor",
-  bolsa_integral: "Bolsa integral",
-  bolsa_parcial: "Bolsa parcial",
-  permuta: "Permuta",
-  gratuita: "Gratuita",
+  BOLSA_50_PORCENTO: "Bolsa 50%",
+  BOLSA_INTEGRAL: "Bolsa integral",
+  FILHO_PROFESSORA: "Filho de professora",
+  FILHO_PROFESSORA_INTEGRAL: "Filho de professora integral",
+  PERMUTA: "Permuta",
+  ISENTO: "Isento",
 };
 
 export function motivoTone(motivo: MotivoSemValor): "danger" | "warning" | "neutral" {
   if (motivo === "sem_matricula" || motivo === "sem_valor") return "danger";
-  if (motivo === "bolsa_integral" || motivo === "bolsa_parcial") return "warning";
+  if (motivo === "BOLSA_50_PORCENTO" || motivo === "BOLSA_INTEGRAL" || motivo === "FILHO_PROFESSORA_INTEGRAL") return "warning";
   return "neutral";
 }
 
@@ -108,9 +119,9 @@ export function isSemValor(
 /**
  * Returns the Motivo for an aluno, or null if the aluno should NOT appear in the grid.
  * - No 2026 matrícula -> "sem_matricula".
- * - Has matrícula, tipo_vaga non-paga -> the tipo_vaga (precedence over sem_valor).
- * - Has matrícula, paga, no value -> "sem_valor".
- * - Has matrícula, paga, valid value (plan or praticado) -> null (not shown).
+ * - Has matrícula, tipo_vaga non-NORMAL -> the tipo_vaga (precedence over sem_valor).
+ * - Has matrícula, NORMAL, no value -> "sem_valor".
+ * - Has matrícula, NORMAL, valid value (plan or praticado) -> null (not shown).
  */
 export function deriveMotivo(
   tipoVaga: TipoVaga,
@@ -120,7 +131,7 @@ export function deriveMotivo(
   hasMatricula: boolean
 ): MotivoSemValor | null {
   if (!hasMatricula) return "sem_matricula";
-  if (tipoVaga !== "paga") return tipoVaga;
+  if (tipoVaga !== "NORMAL") return tipoVaga;
   if (isSemValor(planoId, valorMatricula, valorMensalidadePraticado)) return "sem_valor";
   return null;
 }
@@ -132,7 +143,7 @@ export function buildRow(raw: RawAluno): AlunoSemValorRow | null {
   const valor = matricula?.planos?.valor_matricula ?? null;
   const valorPraticado = matricula?.valor_mensalidade_praticado ?? null;
   const motivo = deriveMotivo(
-    matricula?.tipo_vaga ?? "paga",
+    matricula?.tipo_vaga ?? "NORMAL",
     matricula?.plano_id ?? null,
     valor,
     valorPraticado,

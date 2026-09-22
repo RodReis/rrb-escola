@@ -32,42 +32,42 @@ describe("isSemValor", () => {
 });
 
 describe("deriveMotivo", () => {
-  it("paga + no plano + no praticado -> sem_valor", () => {
-    expect(deriveMotivo("paga", null, null, null, true)).toBe("sem_valor");
+  it("NORMAL + no plano + no praticado -> sem_valor", () => {
+    expect(deriveMotivo("NORMAL", null, null, null, true)).toBe("sem_valor");
   });
-  it("paga + plano valor 0 + no praticado -> sem_valor", () => {
-    expect(deriveMotivo("paga", "plan-1", 0, null, true)).toBe("sem_valor");
+  it("NORMAL + plano valor 0 + no praticado -> sem_valor", () => {
+    expect(deriveMotivo("NORMAL", "plan-1", 0, null, true)).toBe("sem_valor");
   });
-  it("paga + no plano + praticado > 0 -> null (not shown)", () => {
-    expect(deriveMotivo("paga", null, null, 700, true)).toBeNull();
+  it("NORMAL + no plano + praticado > 0 -> null (not shown)", () => {
+    expect(deriveMotivo("NORMAL", null, null, 700, true)).toBeNull();
   });
-  it("bolsa_integral + valid plano -> bolsa_integral (tipo_vaga wins)", () => {
-    expect(deriveMotivo("bolsa_integral", "plan-1", 250, null, true)).toBe("bolsa_integral");
+  it("BOLSA_INTEGRAL + valid plano -> BOLSA_INTEGRAL (tipo_vaga wins)", () => {
+    expect(deriveMotivo("BOLSA_INTEGRAL", "plan-1", 250, null, true)).toBe("BOLSA_INTEGRAL");
   });
-  it("bolsa_integral + no plano -> bolsa_integral (tipo_vaga wins over sem_valor)", () => {
-    expect(deriveMotivo("bolsa_integral", null, null, null, true)).toBe("bolsa_integral");
+  it("BOLSA_INTEGRAL + no plano -> BOLSA_INTEGRAL (tipo_vaga wins over sem_valor)", () => {
+    expect(deriveMotivo("BOLSA_INTEGRAL", null, null, null, true)).toBe("BOLSA_INTEGRAL");
   });
-  it("permuta -> permuta", () => {
-    expect(deriveMotivo("permuta", "plan-1", 250, null, true)).toBe("permuta");
+  it("PERMUTA -> PERMUTA", () => {
+    expect(deriveMotivo("PERMUTA", "plan-1", 250, null, true)).toBe("PERMUTA");
   });
-  it("gratuita -> gratuita", () => {
-    expect(deriveMotivo("gratuita", "plan-1", 250, null, true)).toBe("gratuita");
+  it("ISENTO -> ISENTO", () => {
+    expect(deriveMotivo("ISENTO", "plan-1", 250, null, true)).toBe("ISENTO");
   });
-  it("bolsa_parcial -> bolsa_parcial", () => {
-    expect(deriveMotivo("bolsa_parcial", "plan-1", 100, null, true)).toBe("bolsa_parcial");
+  it("BOLSA_50_PORCENTO -> BOLSA_50_PORCENTO", () => {
+    expect(deriveMotivo("BOLSA_50_PORCENTO", "plan-1", 100, null, true)).toBe("BOLSA_50_PORCENTO");
   });
-  it("paga + valid plano -> null (not included)", () => {
-    expect(deriveMotivo("paga", "plan-1", 250, null, true)).toBeNull();
+  it("NORMAL + valid plano -> null (not included)", () => {
+    expect(deriveMotivo("NORMAL", "plan-1", 250, null, true)).toBeNull();
   });
 });
 
 // sem_matricula path — the other deriveMotivo cases are covered in the main block above.
 describe("deriveMotivo sem_matricula", () => {
   it("no matrícula -> sem_matricula (hasMatricula false)", () => {
-    expect(deriveMotivo("paga", null, null, null, false)).toBe("sem_matricula");
+    expect(deriveMotivo("NORMAL", null, null, null, false)).toBe("sem_matricula");
   });
-  it("non-paga + no matrícula still resolves sem_matricula (precedence)", () => {
-    expect(deriveMotivo("bolsa_integral", null, null, null, false)).toBe("sem_matricula");
+  it("non-NORMAL + no matrícula still resolves sem_matricula (precedence)", () => {
+    expect(deriveMotivo("BOLSA_INTEGRAL", null, null, null, false)).toBe("sem_matricula");
   });
 });
 
@@ -93,7 +93,7 @@ describe("buildRow", () => {
     matriculas: [
       {
         id: "m1",
-        tipo_vaga: "paga",
+        tipo_vaga: "NORMAL",
         plano_id: null,
         status: "ativa",
         valor_mensalidade_praticado: null,
@@ -124,7 +124,7 @@ describe("buildRow", () => {
     expect(row!.turmaId).toBe("t1");
     expect(row!.motivo).toBe("sem_valor");
     expect(row!.status).toBe("ativa");
-    expect(row!.tipoVaga).toBe("paga");
+    expect(row!.tipoVaga).toBe("NORMAL");
     expect(row!.planoId).toBeNull();
   });
 
@@ -157,7 +157,7 @@ describe("buildRow", () => {
       matriculas: [
         {
           id: "m1",
-          tipo_vaga: "paga",
+          tipo_vaga: "NORMAL",
           plano_id: "p1",
           status: "ativa",
           valor_mensalidade_praticado: null,
@@ -175,17 +175,17 @@ describe("motivoTone", () => {
   it("sem_valor -> danger", () => {
     expect(motivoTone("sem_valor")).toBe("danger");
   });
-  it("bolsa_integral -> warning", () => {
-    expect(motivoTone("bolsa_integral")).toBe("warning");
+  it("BOLSA_INTEGRAL -> warning", () => {
+    expect(motivoTone("BOLSA_INTEGRAL")).toBe("warning");
   });
-  it("bolsa_parcial -> warning", () => {
-    expect(motivoTone("bolsa_parcial")).toBe("warning");
+  it("BOLSA_50_PORCENTO -> warning", () => {
+    expect(motivoTone("BOLSA_50_PORCENTO")).toBe("warning");
   });
-  it("permuta -> neutral", () => {
-    expect(motivoTone("permuta")).toBe("neutral");
+  it("PERMUTA -> neutral", () => {
+    expect(motivoTone("PERMUTA")).toBe("neutral");
   });
-  it("gratuita -> neutral", () => {
-    expect(motivoTone("gratuita")).toBe("neutral");
+  it("ISENTO -> neutral", () => {
+    expect(motivoTone("ISENTO")).toBe("neutral");
   });
 });
 

@@ -19,7 +19,7 @@ export default async function MatriculasPage({
   searchParams: Promise<Record<string, string>>;
 }) {
   await requirePermission("matriculas", "read");
-  const { status = "", nome = "", aluno_id = "", sucesso = "", erro = "" } = await searchParams;
+  const { status = "", nome = "", aluno_id = "", sucesso = "", erro = "", tipo_vaga = "" } = await searchParams;
 
   const [{ alunos, series, turmas, planos }, alunosDisponiveis, all, filtered] = await Promise.all([
     getAcademicData(),
@@ -28,7 +28,7 @@ export default async function MatriculasPage({
     // secretaria precisa achar para rematricular (Critical C1).
     getAlunosSemMatriculaNoAno(anoLetivoDaData(new Date())),
     getEnrollments(),
-    getEnrollments({ status: status || undefined, nome: nome || undefined }),
+    getEnrollments({ status: status || undefined, nome: nome || undefined, tipoVaga: tipo_vaga || undefined }),
   ]);
 
   // Combo de nova matrícula: só alunos ativos sem matrícula no ano corrente
@@ -107,6 +107,17 @@ export default async function MatriculasPage({
               </select>
             </label>
             <label className="self-start">Data<input name="data_matricula" type="date" defaultValue={new Date().toISOString().slice(0, 10)} /></label>
+            <label className="self-start">Tipo de vaga
+              <select name="tipo_vaga" defaultValue="NORMAL">
+                <option value="NORMAL">Normal</option>
+                <option value="BOLSA_50_PORCENTO">Bolsa 50%</option>
+                <option value="BOLSA_INTEGRAL">Bolsa integral</option>
+                <option value="FILHO_PROFESSORA">Filho de professora</option>
+                <option value="FILHO_PROFESSORA_INTEGRAL">Filho de professora integral</option>
+                <option value="PERMUTA">Permuta</option>
+                <option value="ISENTO">Isento</option>
+              </select>
+            </label>
             <label className="self-start md:col-span-2">Observações<input name="observacoes" /></label>
           </div>
           {/* Ação fora da grade de campos: separada por borda, não compete por coluna. */}
@@ -120,7 +131,12 @@ export default async function MatriculasPage({
 
       <div className="grid gap-4">
         <MatriculasFilters counts={counts} />
-        <MatriculasTable matriculas={filtered} />
+        <MatriculasTable
+          matriculas={filtered}
+          series={series.map((s) => ({ id: s.id, nome: s.nome }))}
+          turmas={turmas.map((t) => ({ id: t.id, nome: t.nome, serieId: t.serie_id }))}
+          planos={planos.map((p) => ({ id: p.id, nome: p.nome }))}
+        />
       </div>
       {alunoPre && (
         <script

@@ -1,7 +1,13 @@
 import { createServerClient } from "@/lib/supabase/server";
 import { DEFAULT_SCHOOL_ID } from "@/lib/constants";
 
-export type TipoVagaBolsa = "bolsa_integral" | "bolsa_parcial" | "permuta" | "gratuita";
+export type TipoVagaBolsa =
+  | "BOLSA_50_PORCENTO"
+  | "BOLSA_INTEGRAL"
+  | "FILHO_PROFESSORA"
+  | "FILHO_PROFESSORA_INTEGRAL"
+  | "PERMUTA"
+  | "ISENTO";
 
 export type BolsistaRow = {
   matriculaId: string;
@@ -58,7 +64,14 @@ export async function listBolsistas(escolaId: string = DEFAULT_SCHOOL_ID): Promi
       .eq("status", "ativa")
       .eq("ano_letivo", anoLetivo)
       .eq("alunos.ativo", true)
-      .in("tipo_vaga", ["bolsa_integral", "bolsa_parcial", "permuta", "gratuita"]),
+      .in("tipo_vaga", [
+        "BOLSA_50_PORCENTO",
+        "BOLSA_INTEGRAL",
+        "FILHO_PROFESSORA",
+        "FILHO_PROFESSORA_INTEGRAL",
+        "PERMUTA",
+        "ISENTO",
+      ]),
     supabase
       .from("valores_praticados")
       .select("segmento, valor_mensalidade")
@@ -94,7 +107,7 @@ export async function listBolsistas(escolaId: string = DEFAULT_SCHOOL_ID): Promi
     const tipoVaga = m.tipo_vaga as TipoVagaBolsa;
     const percentualBolsa = Number(m.percentual_bolsa ?? 0);
     const receitaPerdidaMes =
-      tipoVaga === "bolsa_parcial"
+      tipoVaga === "BOLSA_50_PORCENTO" || tipoVaga === "FILHO_PROFESSORA"
         ? valorReferencia * (percentualBolsa / 100)
         : valorReferencia;
 

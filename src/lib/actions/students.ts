@@ -10,22 +10,33 @@ import { formBoolean, formNumber, formText } from "@/lib/utils";
 import { assertOk } from "@/lib/actions/assert-ok";
 import type { ActionResult } from "@/lib/actions/types";
 
-type TipoVagaInput = "paga" | "bolsa_integral" | "bolsa_parcial" | "permuta" | "gratuita";
+type TipoVagaInput =
+  | "NORMAL"
+  | "BOLSA_50_PORCENTO"
+  | "BOLSA_INTEGRAL"
+  | "FILHO_PROFESSORA"
+  | "FILHO_PROFESSORA_INTEGRAL"
+  | "PERMUTA"
+  | "ISENTO";
 
 function readTipoVaga(formData: FormData): TipoVagaInput {
   const raw = formText(formData, "tipo_vaga");
-  const valid: TipoVagaInput[] = ["paga", "bolsa_integral", "bolsa_parcial", "permuta", "gratuita"];
+  const valid: TipoVagaInput[] = [
+    "NORMAL",
+    "BOLSA_50_PORCENTO",
+    "BOLSA_INTEGRAL",
+    "FILHO_PROFESSORA",
+    "FILHO_PROFESSORA_INTEGRAL",
+    "PERMUTA",
+    "ISENTO",
+  ];
   if (raw && (valid as string[]).includes(raw)) return raw as TipoVagaInput;
-  return "paga";
+  return "NORMAL";
 }
 
-function readPercentualBolsa(formData: FormData, tipo: TipoVagaInput): number {
-  if (tipo !== "bolsa_parcial") return 0;
-  const raw = formNumber(formData, "percentual_bolsa") ?? 0;
-  if (raw <= 0 || raw >= 100) {
-    throw new Error("Bolsa parcial exige percentual entre 1 e 99.");
-  }
-  return raw;
+/** BOLSA_50_PORCENTO é sempre 50% fixo; os demais tipos não têm percentual. */
+function readPercentualBolsa(_formData: FormData, tipo: TipoVagaInput): number {
+  return tipo === "BOLSA_50_PORCENTO" ? 50 : 0;
 }
 
 export async function createStudentAction(formData: FormData) {

@@ -8,24 +8,30 @@ import { money } from "@/lib/constants";
 import { requirePermission } from "@/lib/auth/session";
 
 const TIPO_LABEL: Record<TipoVagaBolsa, string> = {
-  bolsa_integral: "Bolsa integral",
-  bolsa_parcial: "Bolsa parcial",
-  permuta: "Permuta",
-  gratuita: "Gratuidade",
+  BOLSA_50_PORCENTO: "Bolsa 50%",
+  BOLSA_INTEGRAL: "Bolsa integral",
+  FILHO_PROFESSORA: "Filho de professora",
+  FILHO_PROFESSORA_INTEGRAL: "Filho de professora integral",
+  PERMUTA: "Permuta",
+  ISENTO: "Isento",
 };
 
 const TIPO_STYLE: Record<TipoVagaBolsa, string> = {
-  bolsa_integral: "bg-brand/10 text-brand",
-  bolsa_parcial: "bg-accent/10 text-accent",
-  permuta: "bg-warning/10 text-warning",
-  gratuita: "bg-success/10 text-success",
+  BOLSA_50_PORCENTO: "bg-accent/10 text-accent",
+  BOLSA_INTEGRAL: "bg-brand/10 text-brand",
+  FILHO_PROFESSORA: "bg-brand/10 text-brand",
+  FILHO_PROFESSORA_INTEGRAL: "bg-brand/10 text-brand",
+  PERMUTA: "bg-warning/10 text-warning",
+  ISENTO: "bg-success/10 text-success",
 };
 
 const TIPO_ICON: Record<TipoVagaBolsa, LucideIcon> = {
-  bolsa_integral: GraduationCap,
-  bolsa_parcial: GraduationCap,
-  permuta: HandCoins,
-  gratuita: Sparkles,
+  BOLSA_50_PORCENTO: GraduationCap,
+  BOLSA_INTEGRAL: GraduationCap,
+  FILHO_PROFESSORA: GraduationCap,
+  FILHO_PROFESSORA_INTEGRAL: GraduationCap,
+  PERMUTA: HandCoins,
+  ISENTO: Sparkles,
 };
 
 const SEGMENTO_LABEL: Record<string, string> = {
@@ -47,7 +53,14 @@ export default async function BolsistasPage() {
       acc[b.tipoVaga] = (acc[b.tipoVaga] ?? 0) + 1;
       return acc;
     },
-    { bolsa_integral: 0, bolsa_parcial: 0, permuta: 0, gratuita: 0 }
+    {
+      BOLSA_50_PORCENTO: 0,
+      BOLSA_INTEGRAL: 0,
+      FILHO_PROFESSORA: 0,
+      FILHO_PROFESSORA_INTEGRAL: 0,
+      PERMUTA: 0,
+      ISENTO: 0,
+    }
   );
 
   return (
@@ -181,7 +194,6 @@ export default async function BolsistasPage() {
                         <span className={`inline-flex items-center gap-1 rounded-pill px-2 py-0.5 text-xs font-semibold whitespace-nowrap ${TIPO_STYLE[b.tipoVaga]}`}>
                           <Icon size={12} />
                           {TIPO_LABEL[b.tipoVaga]}
-                          {b.tipoVaga === "bolsa_parcial" && ` ${b.percentualBolsa.toFixed(0)}%`}
                         </span>
                       </td>
                       <td className="px-4 py-3 text-right whitespace-nowrap">

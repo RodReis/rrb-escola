@@ -3,22 +3,33 @@ import { money } from "@/lib/constants";
 import type { BeneficiosData, TipoVaga } from "@/lib/data/dashboard-executive";
 
 const LABELS: Record<TipoVaga, string> = {
-  paga: "Pagantes",
-  bolsa_integral: "Bolsa integral",
-  bolsa_parcial: "Bolsa parcial",
-  permuta: "Permuta",
-  gratuita: "Gratuidade",
+  NORMAL: "Pagantes",
+  BOLSA_50_PORCENTO: "Bolsa 50%",
+  BOLSA_INTEGRAL: "Bolsa integral",
+  FILHO_PROFESSORA: "Filho de professora",
+  FILHO_PROFESSORA_INTEGRAL: "Filho de professora integral",
+  PERMUTA: "Permuta",
+  ISENTO: "Isento",
 };
 
 const ICONS: Record<TipoVaga, LucideIcon> = {
-  paga: BookOpen,
-  bolsa_integral: GraduationCap,
-  bolsa_parcial: GraduationCap,
-  permuta: HandCoins,
-  gratuita: Sparkles,
+  NORMAL: BookOpen,
+  BOLSA_50_PORCENTO: GraduationCap,
+  BOLSA_INTEGRAL: GraduationCap,
+  FILHO_PROFESSORA: GraduationCap,
+  FILHO_PROFESSORA_INTEGRAL: GraduationCap,
+  PERMUTA: HandCoins,
+  ISENTO: Sparkles,
 };
 
-const ORDEM: TipoVaga[] = ["bolsa_integral", "bolsa_parcial", "permuta", "gratuita"];
+const ORDEM: TipoVaga[] = [
+  "BOLSA_50_PORCENTO",
+  "BOLSA_INTEGRAL",
+  "FILHO_PROFESSORA",
+  "FILHO_PROFESSORA_INTEGRAL",
+  "PERMUTA",
+  "ISENTO",
+];
 
 export function BeneficiosCard({ data }: { data: BeneficiosData }) {
   return (
