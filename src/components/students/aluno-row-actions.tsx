@@ -1,8 +1,8 @@
 "use client";
 
 import Link from "next/link";
-import { Pencil, UserCheck, UserX, Trash2 } from "lucide-react";
-import { toggleStudentAction, deleteStudentAction } from "@/lib/actions/students";
+import { Pencil, UserCheck, UserX, FileText } from "lucide-react";
+import { toggleStudentAction } from "@/lib/actions/students";
 import { RowActionButton } from "@/components/ui/row-action-button";
 
 type Props = {
@@ -58,23 +58,14 @@ export function AlunoRowActions({ alunoId, alunoNome, ativo }: Props) {
         />
       )}
 
-      <RowActionButton
-        action={deleteStudentAction}
-        args={{ aluno_id: alunoId }}
-        icon={Trash2}
-        label="Excluir"
-        tone="danger"
-        confirm={{
-          title: "Excluir aluno",
-          message: `Tem certeza que quer excluir "${alunoNome}"? Esta operação remove todos os dados vinculados e não pode ser desfeita.`,
-          confirmLabel: "Excluir",
-          variant: "danger",
-        }}
-        // deleteStudentAction faz redirect() no sucesso: useAction (dentro de
-        // RowActionButton) deixa a excecao NEXT_REDIRECT subir e o Next
-        // navega para /alunos.
-        error="Falha ao excluir aluno."
-      />
+      <Link
+        href={`/alunos/${alunoId}/boletim`}
+        title="Boletim"
+        aria-label="Boletim"
+        className="inline-flex h-8 w-8 items-center justify-center rounded-md text-brand hover:bg-brand/10"
+      >
+        <FileText size={15} />
+      </Link>
     </div>
   );
 }
