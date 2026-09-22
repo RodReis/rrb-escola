@@ -39,7 +39,7 @@ export async function getConciliacaoData(filters: ConciliacaoFilters) {
       .limit(200),
     supabase
       .from("contas_bancarias")
-      .select("id, conta, agencia, chave_pix, ativo")
+      .select("id, apelido, conta, agencia, chave_pix, ativo, company_id, companies(name)")
       .eq("ativo", true),
   ]);
 
@@ -57,7 +57,60 @@ export async function getConciliacaoData(filters: ConciliacaoFilters) {
     extrato: extrato.data ?? [],
     pagamentos: pagamentos.data ?? [],
     lancamentos: lancamentos.data ?? [],
-    contas: contas.data ?? [],
+    contas: (contas.data ?? []).map((conta) => {
+      const empresa = Array.isArray(conta.companies) ? conta.companies[0] : conta.companies;
+      return { ...conta, empresaNome: (empresa?.name as string | undefined) ?? null };
+    }),
     totalExtrato,
   };
+}
+
+export type TransferenciaIsaacPendente = {
+  id: string;
+  dataPrevista: string;
+  valor: number;
+  competenciaRepasse: string;
+  unidadeNome: string;
+  /** Dias de atraso. Negativo = ainda não venceu. */
+  atrasoDias: number;
+};
+
+/**
+ * Transferências do repasse isaac que ainda não casaram com um crédito.
+ *
+ * O repasse chega em duas parcelas (dia 05 e dia 15). Transferência prevista
+ * que não apareceu no extrato é dinheiro que a escola deveria ter recebido e
+ * não recebeu — silêncio aqui é o pior resultado possível.
+ */
+export async function getTransferenciasIsaacPendentes(
+  hoje = new Date(),
+): Promise<TransferenciaIsaacPendente[]> {
+  const supabase = await createServerClient();
+  const { data, error } = await supabase
+    .from("isaac_transferencia")
+    .select("id, data_prevista, valor, isaac_repasse(competencia_repasse, isaac_unidade(nome_isaac))")
+    .is("extrato_id", null)
+    .order("data_prevista");
+
+  if (error) throw error;
+
+  const hojeMs = new Date(`${hoje.toISOString().slice(0, 10)}T12:00:00Z`).getTime();
+
+  return (data ?? []).map((row) => {
+    const repasse = Array.isArray(row.isaac_repasse) ? row.isaac_repasse[0] : row.isaac_repasse;
+    const unidade = repasse
+      ? Array.isArray(repasse.isaac_unidade)
+        ? repasse.isaac_unidade[0]
+        : repasse.isaac_unidade
+      : null;
+    const prevista = new Date(`${row.data_prevista as string}T12:00:00Z`).getTime();
+    return {
+      id: row.id as string,
+      dataPrevista: row.data_prevista as string,
+      valor: Number(row.valor),
+      competenciaRepasse: (repasse?.competencia_repasse as string) ?? "—",
+      unidadeNome: (unidade?.nome_isaac as string) ?? "—",
+      atrasoDias: Math.round((hojeMs - prevista) / 86_400_000),
+    };
+  });
 }

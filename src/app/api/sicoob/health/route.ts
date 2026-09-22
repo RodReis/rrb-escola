@@ -8,66 +8,100 @@ import { createServerClient } from "@/lib/supabase/server";
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
+type ContaSaude = {
+  conta: string;
+  apelido: string | null;
+  credencialRef: string | null;
+  ok: boolean;
+  token: "ok" | "falhou" | "nao_configurado";
+  certNotAfter: string | null;
+  certExpiraEmDias: number | null;
+  saldo?: unknown;
+  reason?: string;
+};
+
+/**
+ * Saúde do Sicoob POR CONTA.
+ *
+ * Antes verificava uma credencial e uma conta arbitrária. Com dois CNPJs, cada
+ * um tem app e certificado A1 próprios: um certificado vencido no segundo CNPJ
+ * passaria despercebido enquanto o primeiro respondesse — e o alerta de
+ * vencimento existe justamente para isso.
+ */
 export async function GET() {
   await requirePermission("financeiro.conciliacao", "read");
 
-  const config = readSicoobConfig();
-  if (!config) {
-    return NextResponse.json({ ok: false, reason: "Sicoob não configurado" }, { status: 503 });
-  }
-
-  const certNotAfter = config.certNotAfter ?? null;
-  const certExpiraEmDias = certNotAfter
-    ? Math.ceil((new Date(certNotAfter).getTime() - Date.now()) / 86400000)
-    : null;
-
-  try {
-    await getSicoobAccessToken(config, "cco_saldo");
-  } catch (err) {
-    return NextResponse.json({
-      ok: false,
-      certNotAfter,
-      certExpiraEmDias,
-      reason: err instanceof Error ? err.message : "falha ao obter token Sicoob",
-    }, { status: 502 });
-  }
-
   const supabase = await createServerClient();
-  const { data: conta } = await supabase
+  const { data: contas } = await supabase
     .from("contas_bancarias")
-    .select("conta")
+    .select("conta, apelido, credencial_ref")
     .eq("provedor", "sicoob")
     .eq("ativo", true)
-    .limit(1)
-    .maybeSingle();
+    .order("apelido");
 
-  if (!conta?.conta) {
+  if (!contas || contas.length === 0) {
     return NextResponse.json({
       ok: true,
-      token: "ok",
-      certNotAfter,
-      certExpiraEmDias,
-      saldo: "nao_consultado",
+      contas: [],
       reason: "Nenhuma conta Sicoob ativa cadastrada",
     });
   }
 
-  const saldo = await consultarSaldo(conta.conta);
-  if (!saldo.ok) {
-    return NextResponse.json({
-      ok: false,
+  const resultados: ContaSaude[] = [];
+
+  for (const linha of contas) {
+    const credencialRef = (linha.credencial_ref as string | null) ?? null;
+    const base = {
+      conta: linha.conta as string,
+      apelido: (linha.apelido as string | null) ?? null,
+      credencialRef,
+    };
+
+    const config = readSicoobConfig(undefined, credencialRef);
+    if (!config) {
+      resultados.push({
+        ...base,
+        ok: false,
+        token: "nao_configurado",
+        certNotAfter: null,
+        certExpiraEmDias: null,
+        reason: credencialRef
+          ? `Faltam as variáveis SICOOB_${credencialRef}_*`
+          : "Sicoob não configurado",
+      });
+      continue;
+    }
+
+    const certNotAfter = config.certNotAfter ?? null;
+    const certExpiraEmDias = certNotAfter
+      ? Math.ceil((new Date(certNotAfter).getTime() - Date.now()) / 86400000)
+      : null;
+
+    try {
+      await getSicoobAccessToken(config, "cco_saldo");
+    } catch (err) {
+      resultados.push({
+        ...base,
+        ok: false,
+        token: "falhou",
+        certNotAfter,
+        certExpiraEmDias,
+        reason: err instanceof Error ? err.message : "falha ao obter token Sicoob",
+      });
+      continue;
+    }
+
+    const saldo = await consultarSaldo(linha.conta as string, credencialRef);
+    resultados.push({
+      ...base,
+      ok: saldo.ok,
       token: "ok",
       certNotAfter,
       certExpiraEmDias,
-      reason: saldo.reason,
-    }, { status: 502 });
+      ...(saldo.ok ? { saldo: saldo.data } : { reason: saldo.reason }),
+    });
   }
 
-  return NextResponse.json({
-    ok: true,
-    token: "ok",
-    certNotAfter,
-    certExpiraEmDias,
-    saldo: saldo.data,
-  });
+  const todasOk = resultados.every((r) => r.ok);
+  return NextResponse.json({ ok: todasOk, contas: resultados }, { status: todasOk ? 200 : 502 });
 }

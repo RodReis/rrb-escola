@@ -1,9 +1,10 @@
-import { Filter } from "lucide-react";
+import { AlertTriangle, Filter } from "lucide-react";
 import { PageHeader } from "@/components/ui/page-header";
 import { Panel } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { AtualizarExtratoButton } from "@/components/finance/atualizar-extrato-button";
-import { getConciliacaoData } from "@/lib/data/conciliacao";
+import { getConciliacaoData, getTransferenciasIsaacPendentes } from "@/lib/data/conciliacao";
+import { JANELA_DIAS } from "@/lib/conciliacao/casar-transferencia-isaac";
 import { conciliarExtratoAction, ignorarExtratoAction } from "@/lib/actions/conciliacao";
 import { requirePermission } from "@/lib/auth/session";
 import { money } from "@/lib/constants";
@@ -20,12 +21,19 @@ export default async function ConciliacaoPage({
   await requirePermission("financeiro.conciliacao", "read");
   const params = await searchParams;
   const status = params.status ?? "pendente";
-  const data = await getConciliacaoData({
-    status,
-    contaId: params.conta || undefined,
-    de: params.de || undefined,
-    ate: params.ate || undefined,
-  });
+  const [data, transferenciasIsaac] = await Promise.all([
+    getConciliacaoData({
+      status,
+      contaId: params.conta || undefined,
+      de: params.de || undefined,
+      ate: params.ate || undefined,
+    }),
+    getTransferenciasIsaacPendentes(),
+  ]);
+
+  // Vencida sem crédito é dinheiro que deveria ter entrado. O resto ainda está
+  // dentro do prazo e aparece só como informação.
+  const isaacAtrasadas = transferenciasIsaac.filter((t) => t.atrasoDias > JANELA_DIAS);
 
   return (
     <div className="grid gap-6">
@@ -42,6 +50,51 @@ export default async function ConciliacaoPage({
         ]}
       />
 
+      {transferenciasIsaac.length > 0 ? (
+        <Panel className={isaacAtrasadas.length > 0 ? "border border-danger/30" : undefined}>
+          <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
+            <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-kicker text-ink/60">
+              <AlertTriangle size={12} className={isaacAtrasadas.length > 0 ? "text-danger" : "text-ink/60"} />
+              Repasse isaac aguardando crédito
+            </div>
+            <span className="text-xs text-ink/60">
+              {isaacAtrasadas.length > 0
+                ? `${isaacAtrasadas.length} vencida(s) sem crédito no extrato`
+                : "Nenhuma vencida — dentro do prazo"}
+            </span>
+          </div>
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="border-b border-line text-left text-[0.66rem] font-bold uppercase tracking-kicker text-ink/60">
+                  <th className="px-3 py-2">Prevista</th>
+                  <th className="px-3 py-2">Unidade</th>
+                  <th className="px-3 py-2">Competência</th>
+                  <th className="px-3 py-2 text-right">Valor</th>
+                  <th className="px-3 py-2">Situação</th>
+                </tr>
+              </thead>
+              <tbody>
+                {transferenciasIsaac.map((t) => {
+                  const atrasada = t.atrasoDias > JANELA_DIAS;
+                  return (
+                    <tr key={t.id} className="border-b border-line/60">
+                      <td className="px-3 py-2 text-ink">{dateText(t.dataPrevista)}</td>
+                      <td className="px-3 py-2 text-ink/70">{t.unidadeNome}</td>
+                      <td className="px-3 py-2 text-ink/70">{t.competenciaRepasse}</td>
+                      <td className="px-3 py-2 text-right font-semibold text-ink">{money.format(t.valor)}</td>
+                      <td className={`px-3 py-2 ${atrasada ? "font-semibold text-danger" : "text-ink/60"}`}>
+                        {atrasada ? `${t.atrasoDias} dias de atraso` : "no prazo"}
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+        </Panel>
+      ) : null}
+
       <Panel>
         <div className="mb-3 flex items-center gap-2 text-xs font-bold uppercase tracking-kicker text-ink/60">
           <Filter size={12} />
@@ -54,7 +107,8 @@ export default async function ConciliacaoPage({
               <option value="">Todas as contas</option>
               {data.contas.map((conta) => (
                 <option key={conta.id} value={conta.id}>
-                  {conta.agencia ?? "-"} / {conta.conta}
+                  {conta.apelido ?? `${conta.agencia ?? "-"} / ${conta.conta}`}
+                  {conta.empresaNome ? ` — ${conta.empresaNome}` : " — sem empresa"}
                 </option>
               ))}
             </select>

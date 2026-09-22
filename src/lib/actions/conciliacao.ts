@@ -7,7 +7,15 @@ import { syncExtratoSicoob } from "@/lib/conciliacao/sync-extrato";
 import { assertOk } from "@/lib/actions/assert-ok";
 
 export type AtualizarExtratoResult =
-  | { ok: true; movimentos: number; descartados: number }
+  | {
+      ok: true;
+      movimentos: number;
+      descartados: number;
+      /** Contas que falharam. Vazio = todas sincronizaram. */
+      falhas: string[];
+      /** Transferências do repasse isaac casadas com crédito nesta execução. */
+      repassesCasados: number;
+    }
   | { ok: false; error: string };
 
 // Erros do Supabase são objetos simples com `message`/`details`, não instâncias
@@ -30,7 +38,18 @@ export async function atualizarExtratoAction(
   try {
     const resultado = await syncExtratoSicoob();
     revalidatePath("/financeiro/tesouraria/conciliacao");
-    return { ok: true, movimentos: resultado.movimentos, descartados: resultado.descartados };
+    // Uma conta com certificado vencido não derruba mais a sincronização das
+    // outras, então a falha precisa chegar à tela — senão some em silêncio.
+    if (resultado.falhas.length > 0) {
+      console.error("[conciliacao] contas com falha:", resultado.falhas);
+    }
+    return {
+      ok: true,
+      movimentos: resultado.movimentos,
+      descartados: resultado.descartados,
+      falhas: resultado.falhas,
+      repassesCasados: resultado.repasses.casadas,
+    };
   } catch (err) {
     console.error("[conciliacao] falha ao sincronizar extrato", err);
     return { ok: false, error: descreverErro(err) };

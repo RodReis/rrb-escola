@@ -108,7 +108,7 @@ A Fase B não cabe num PR: são 6 tabelas, 2 parsers, uma RPC transacional, 3 te
 | 3 | `parse-resumo.ts` + `parse-analitico.ts` + classificação + normalização/match — funções puras + testes | **feito** (52 testes) |
 | 4 | RPC `importar_repasse_isaac` + tela de upload/preview + fila de pendências | — |
 | 5 | Reimport de agosto + validação contra os totais conferidos | — |
-| 6 | Conciliação das transferências + Fase C (multi-CNPJ) | — |
+| 6 | Conciliação das transferências + Fase C (multi-CNPJ) | **feito** |
 
 As colunas `company_id` entram já no PR 2 (Fase B depende delas para gravar a despesa da taxa no CNPJ certo); o resto da Fase C fica para o PR 6.
 
@@ -291,7 +291,13 @@ Levantadas ao conferir o código antes de implementar; nenhuma delas é impediti
 
 ### Conciliação
 
-No sync do extrato, **cada** `isaac_transferencia` é casada separadamente com um crédito na conta do CNPJ da unidade, de mesmo valor (tolerância 0,01) e em até ±3 dias úteis de `data_prevista`. O casamento gera `conciliacao_vinculo(alvo_tipo='repasse_isaac')` e preenche `isaac_transferencia.extrato_id`. Transferência sem crédito até D+3 vira alerta. Diferença de valor também vira alerta, sem ajuste silencioso.
+No sync do extrato, **cada** `isaac_transferencia` é casada separadamente com um crédito na conta do CNPJ da unidade, de mesmo valor e dentro da janela de `data_prevista`. O casamento gera `conciliacao_vinculo(alvo_tipo='repasse_isaac')` e preenche `isaac_transferencia.extrato_id`. Transferência vencida sem crédito aparece na tela de conciliação como atraso. Implementado (PR 6), com estas decisões:
+
+- **Janela de ±5 dias corridos, não ±3 dias úteis.** O sistema não tem calendário de feriados; como o repasse cai em dia fixo (05 e 15) e o atraso observado é de fim de semana, 5 corridos cobrem o mesmo intervalo sem inventar um calendário.
+- **Tolerância comparada em centavos inteiros.** `Math.abs(125479.02 - 125479.01)` em float dá 0.0100000000093 — maior que 0.01 — e um crédito com um centavo de diferença deixaria de casar. Os dois lados vêm de `numeric(12,2)`, então arredondar para centavo é exato.
+- **Empate não casa.** Dois créditos do mesmo valor na janela viram alerta em vez de escolha arbitrária: as duas parcelas do repasse têm valores diferentes (70/30), mas duas unidades podem repassar o mesmo valor no mesmo dia, e escolher errado ligaria o dinheiro ao CNPJ errado.
+- **Conta sem `company_id` ainda casa.** A coluna entrou sem backfill, então conta não classificada tem `null` — bloquear por isso impediria a conciliação de quem ainda não classificou.
+- **Falha de uma conta não derruba as outras.** O sync antes fazia `throw` na primeira falha: com dois CNPJs, um certificado vencido deixaria o outro banco sem extrato nenhum. Agora acumula as falhas e as devolve para a tela mostrar.
 
 ### Reprocessamento de 2026
 
@@ -347,13 +353,13 @@ alter table contas_bancarias     add column if not exists credencial_ref text;  
 
 ### Identificador de transação do extrato
 
-Quando `numeroDocumento` vier vazio ou repetido na mesma resposta, usar:
+Quando `numeroDocumento` vier vazio, usar:
 
 `sha256(conta | data | tipo | valor | descricao | descInfComplementar | ordinal)`
 
-onde `ordinal` é a posição do item entre os itens idênticos da mesma resposta.
+onde `ordinal` é a posição do item **entre os itens idênticos** da mesma resposta — não a posição absoluta. Usar a posição absoluta faria qualquer movimento novo no meio do mês deslocar a chave de todos os seguintes, e o extrato inteiro reimportaria como se fosse movimento novo. (`mapearLote` em `sync-extrato.ts`, com teste.)
 
-**Risco conhecido:** se o Sicoob mudar a ordem entre consultas, pode surgir uma duplicata. Isso é mitigado por um teste que compara duas consultas seguidas da mesma janela em produção antes de ativar o cron.
+**Risco conhecido:** se o Sicoob mudar a ordem dos itens idênticos entre consultas, pode surgir uma duplicata. É preferível a perder movimento — que é o que o fallback anterior (`data-descricao-valor`) fazia: dois débitos iguais no mesmo dia colidiam no `unique (conta_id, id_transacao)` e o segundo era descartado no upsert, sem erro. Mitigar comparando duas consultas seguidas da mesma janela em produção antes de confiar no cron.
 
 ### UI
 
@@ -361,9 +367,29 @@ onde `ordinal` é a posição do item entre os itens idênticos da mesma respost
 - **Livro-razão, Tesouraria, Conciliação:** filtro por Empresa + visão consolidada.
 
 **Aceite C:**
-- duas contas Sicoob ativas sincronizando com credenciais distintas;
-- teste unitário prova que o cache não mistura tokens;
-- dois débitos idênticos no mesmo dia geram duas linhas.
+- duas contas Sicoob ativas sincronizando com credenciais distintas — **pendente de teste com as credenciais reais**: o código está pronto, mas só a segunda conta cadastrada com `credencial_ref` e as variáveis `SICOOB_<REF>_*` preenchidas prova de ponta a ponta;
+- teste unitário prova que o cache não mistura tokens — **feito**;
+- dois débitos idênticos no mesmo dia geram duas linhas — **feito**.
+
+---
+
+## Achado fora do escopo: `exists (select 1 from current_perfil())` não filtra nada
+
+Descoberto ao escrever as policies do bucket do isaac (PR 4b) e confirmado ao revisar as do Storage.
+
+`current_perfil()` é `returns perfis` e, **sem sessão, devolve UMA linha de nulos em vez de zero linhas**. Então:
+
+```sql
+exists (select 1 from current_perfil())   -- sempre TRUE
+if not found                              -- nunca dispara
+```
+
+Onde isso aparece hoje:
+
+- **Policies de Storage** (`202605300001_rbac_permissoes.sql:255-300`): as 12 policies dos buckets `alunos-fotos`, `documentos-alunos` e `importacoes` usam esse `exists`. Na prática, qualquer requisição `authenticated` passa — inclusive uma sem perfil ativo. As policies do bucket `isaac-repasses` (PR 4b) usam `p.id is not null and p.perfil in (...)` e não têm o problema.
+- **RPCs** que guardam por `if not found` depois de `select * into ... from current_perfil()`. A `importar_repasse_isaac` foi corrigida (testa o `id`); outras não foram auditadas.
+
+Não corrigido aqui porque muda o comportamento de permissão de módulos fora desta frente. **Merece uma varredura própria** — é diferença entre "restringe" e "não restringe nada".
 
 ---
 

@@ -8,10 +8,11 @@ export type SicoobSaldo = {
   [key: string]: unknown;
 };
 
-export function consultarSaldo(contaCorrente: string) {
+export function consultarSaldo(contaCorrente: string, credencialRef?: string | null) {
   const endpoints = getSicoobEndpoints();
   const query = new URLSearchParams({ numeroContaCorrente: contaCorrente });
   return sicoobRequest<SicoobSaldo>(`${endpoints.contaCorrenteBasePath}/saldo?${query}`, {
     scope: "cco_saldo",
+    credencialRef,
   });
 }

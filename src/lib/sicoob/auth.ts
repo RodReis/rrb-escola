@@ -6,23 +6,50 @@ import type { SicoobConfig } from "@/lib/sicoob/config";
 type TokenCache = {
   token: string;
   expiresAt: number;
-  scope: string;
 };
 
-let tokenCache: TokenCache | null = null;
+/**
+ * Cache de token por (clientId, scope).
+ *
+ * Era um slot único chaveado só por scope. Com dois CNPJs — cada um com seu app
+ * e seu certificado — o token do primeiro seria devolvido para o segundo, que
+ * então consultaria a conta errada sem erro nenhum. O clientId entra na chave
+ * porque é o que distingue as credenciais.
+ */
+const tokenCache = new Map<string, TokenCache>();
+
+function chaveToken(clientId: string, scope: string): string {
+  return `${clientId}|${scope}`;
+}
 
 export function resetSicoobTokenCacheForTests() {
-  tokenCache = null;
+  tokenCache.clear();
+  dispatcherCache.clear();
 }
+
+/**
+ * Um `Agent` por certificado, reaproveitado.
+ *
+ * Antes era criado um Agent novo a cada request, o que abre um pool TLS por
+ * chamada — com o sync iterando contas e competências, isso multiplica
+ * handshakes. A chave é o próprio certificado, então dois CNPJs mantêm
+ * conexões separadas, como precisam.
+ */
+const dispatcherCache = new Map<string, Agent>();
 
 export function getSicoobDispatcher(config: SicoobConfig) {
   if (config.env === "sandbox") return undefined;
-  return new Agent({
+  const chave = config.certPem;
+  const existente = dispatcherCache.get(chave);
+  if (existente) return existente;
+  const agent = new Agent({
     connect: {
       cert: config.certPem,
       key: config.keyPem,
     },
   });
+  dispatcherCache.set(chave, agent);
+  return agent;
 }
 
 export async function getSicoobAccessToken(
@@ -32,8 +59,10 @@ export async function getSicoobAccessToken(
   if (config.env === "sandbox") return config.sandboxToken;
 
   const now = Date.now();
-  if (tokenCache && tokenCache.scope === scope && tokenCache.expiresAt > now) {
-    return tokenCache.token;
+  const chave = chaveToken(config.clientId, scope);
+  const emCache = tokenCache.get(chave);
+  if (emCache && emCache.expiresAt > now) {
+    return emCache.token;
   }
 
   const endpoints = getSicoobEndpoints(config.env);
@@ -64,10 +93,9 @@ export async function getSicoobAccessToken(
     throw new Error(json?.error_description ?? json?.error ?? `Sicoob auth HTTP ${response.status}`);
   }
 
-  tokenCache = {
+  tokenCache.set(chave, {
     token: json.access_token,
     expiresAt: now + Math.max((json.expires_in ?? 300) - 60, 30) * 1000,
-    scope,
-  };
+  });
   return json.access_token;
 }

@@ -27,11 +27,13 @@ export function consultarExtrato(input: {
   contaCorrente: string;
   mes: number;
   ano: number;
+  /** Credencial da conta. Ausente usa as variáveis globais. */
+  credencialRef?: string | null;
 }) {
   const endpoints = getSicoobEndpoints();
   const query = new URLSearchParams({ numeroContaCorrente: input.contaCorrente });
   return sicoobRequest<SicoobExtratoResponse>(
     `${endpoints.contaCorrenteBasePath}/extrato/${input.mes}/${input.ano}?${query}`,
-    { scope: "cco_extrato" },
+    { scope: "cco_extrato", credencialRef: input.credencialRef },
   );
 }
