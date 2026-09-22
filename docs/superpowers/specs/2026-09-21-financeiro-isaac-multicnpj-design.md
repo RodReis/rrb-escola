@@ -104,8 +104,8 @@ A Fase B não cabe num PR: são 6 tabelas, 2 parsers, uma RPC transacional, 3 te
 | PR | Conteúdo | Estado |
 |---|---|---|
 | 1 | Fase A1 + A2 | **feito** (`11cf691f`, `d472703f`) |
-| 2 | Migrations: enums (arquivo próprio) + tabelas isaac + `company_id` + RLS + RBAC | — |
-| 3 | `parse-resumo.ts` + `parse-analitico.ts` + classificação + normalização/match — funções puras + testes | — |
+| 2 | Migrations: enums (arquivo próprio) + tabelas isaac + `company_id` + RLS + RBAC | **feito** (`0fb1dec5`) |
+| 3 | `parse-resumo.ts` + `parse-analitico.ts` + classificação + normalização/match — funções puras + testes | **feito** (52 testes) |
 | 4 | RPC `importar_repasse_isaac` + tela de upload/preview + fila de pendências | — |
 | 5 | Reimport de agosto + validação contra os totais conferidos | — |
 | 6 | Conciliação das transferências + Fase C (multi-CNPJ) | — |
@@ -241,8 +241,18 @@ Levantadas ao conferir o código antes de implementar; nenhuma delas é impediti
    - **Dupla validação de graça:** `soma(linhas) = total` **e** `soma(transferências) = total`. Duas equações independentes sobre a mesma extração; mudança de layout que passe por uma dificilmente passa pelas duas.
    - **Campo extra, fora do modelo de valores:** o cabeçalho "Recebimentos" traz `<n> alunos | <n> cobranças` (ex.: "307 alunos | 327 cobranças") — cross-check de graça contra `isaac_parcela` daquela unidade/competência, gravado em `isaac_repasse.alunos_informados` / `cobrancas_informadas` (nullable, só conferência), com divergência mostrada na pré-visualização.
    - A checagem de fechamento (passo 8) valida os valores extraídos (ou digitados) contra o analítico de qualquer forma — o parser economiza a digitação, não substitui a validação.
-2. **Parser puro** (`src/lib/isaac/parse-analitico.ts`, exceljs) lê as abas "Repasse de Mensalidades" e "Mudanças". Valida colunas pelo nome e falha com mensagem clara se o layout mudar.
-3. **Classificação do produto** (`classificarProduto`, função pura): `Mensalidade*`/`Anuidade*` → `mensalidade`; `Materia*`/`Material*` → `material`; o resto → `outro`.
+2. **Parser puro** (`src/lib/isaac/parse-analitico.ts`, exceljs) lê as abas "Repasse de Mensalidades" e "Mudanças". Valida colunas pelo nome (aceita reordenação, recusa renomeação) e falha com mensagem clara se o layout mudar.
+
+   **O que os analíticos reais de ago e set/2026 mostraram, e o rascunho anterior não previa:**
+   - **`valor_base` pode ser negativo.** São estornos reais (−690, −550, −890, com tipo "Recebido na escola" ou "Cancelado"). A regra "grava cobrança se `valor_base > 0`" do passo 7 continua válida, mas essas linhas **não podem ser descartadas em silêncio** — entram em `isaac_parcela` como qualquer outra e contam nos totais. É por elas que o arquivo fecha.
+   - **`valor_base = 0` com `taxa = 0,01`** existe (ajuste de centavo de antecipação). Não é lixo.
+   - **"Novo contrato" tem `Mensalidades = 0`** e o valor inteiro na coluna `Mudanças em mensalidades` (R$ 5.960,00 em set/2026, EPG Trindade). Somar só a coluna "Mensalidades" perderia essa receita inteira.
+   - **A coluna "Tipo mudança" pode trazer DOIS tipos numa célula só**, separados por barra: `"Adicional desc. antecipação / Recebido na escola"`. Tratar a célula como rótulo único faz o bucket "Recebido na escola" da Educação Infantil em set/2026 dar −3.224,96 em vez dos −3.874,96 do resumo. A agregação por tipo (`mudancasPorTipo`) conta a parcela em **cada** tipo que a compõe — o que significa que a soma dos buckets pode passar do total de mudanças do arquivo: serve para conferir linha a linha contra o resumo, nunca para somar num total.
+   - **Competência vem em PT-BR por extenso** ("Agosto/2026"), convertida para `YYYY-MM`; e pode ser **anterior** à do repasse (parcelas de 2025 apareceram no repasse de set/2026).
+
+   **Reconciliação provada com os arquivos reais** (4 analíticos × 2 resumos, set/2026): cada linha do resumo tem contrapartida no analítico, a contagem de cobranças do PDF bate o número de parcelas do xlsx, e — para EPG Trindade — `valor final do analítico (202.402,26) − crédito de curto prazo (23.146,54) = 179.255,72`, o total transferido do resumo. Para Educação Infantil, que não tem crédito, o valor final do analítico **é** o total do resumo (164.594,34). Isso confirma que o crédito é a única linha que o xlsx não traz e que os dois arquivos são obrigatórios.
+
+3. **Classificação do produto** (`classificarProduto`, função pura): `Mensalidade*`/`Anuidade*` → `mensalidade`; `Materia*` → `material`; o resto → `outro`. O teste é por prefixo normalizado porque a grafia do isaac é inconsistente — no mesmo arquivo aparecem "Materia De Apoio Pedagogico Infantil 4" (sem acento), "Material Apoio Pedagógico Fund 2" (sem "de") e "Material Didático".
 4. **Casamento de aluno**, nesta ordem:
    - (a) `aluno_alias` (fonte `isaac`);
    - (b) `alunos.nome_normalizado`;
