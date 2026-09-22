@@ -1,5 +1,3 @@
-import { Plus } from "lucide-react";
-import { ButtonLink } from "@/components/ui/button";
 import { PageHeader } from "@/components/ui/page-header";
 import { QuickLinks } from "@/components/dashboard/quick-links";
 import { requireSession } from "@/lib/auth/session";
@@ -180,9 +178,6 @@ export default async function DashboardPage({
   const competencia = isValidCompetencia(params.competencia) ? params.competencia : currentCompetencia();
   const anoLetivo = isValidAno(params.ano) ? Number(params.ano) : new Date().getFullYear();
 
-  // Header action button flags
-  const showNovoAluno = isAdmin || can(perms, "alunos", "create");
-
   // Empty state when zero tabs available
   if (tabsVisiveis.length === 0) {
     return (
@@ -299,15 +294,6 @@ export default async function DashboardPage({
         title="Dashboard"
         counter={mesLabel(competencia)}
         description="Visão executiva para tomada de decisão."
-        actions={
-          <>
-            {showNovoAluno && (
-              <ButtonLink href="/alunos/novo" variant="primary">
-                <Plus size={14} /> Novo aluno
-              </ButtonLink>
-            )}
-          </>
-        }
       />
 
       <QuickLinks initialLinks={quickLinks} allowedHrefs={allowedHrefs} />
