@@ -341,11 +341,31 @@ Nota: o `valor_mensalidade_praticado = 690` bate com o **líquido** do isaac (74
 
 Aplicado no banco local **e em produção** (22/09). Depois da correção, EPG Trindade/set **desbloqueia**: 313 parcelas viram cobrança (as 311 anteriores + a da Izabela), e a do Mateus aparece na fila como "Permuta — revisar valor".
 
+### Aplicado em produção (22/09)
+
+Executado nesta ordem, com backup antes de qualquer escrita (18.096 linhas em `histo/backup-prod-2026-09-22/`):
+
+1. **Migrations.** Produção tinha 8 migrations não registradas. Três delas (`202609210001` quick-links, `202609220001`/`202609220002` tipo_vaga v2) **já estavam aplicadas por fora** e **não são idempotentes** — um `db push` direto tentaria `create type` de enum existente e `drop column` de coluna já removida, podendo abortar no meio. Foram marcadas com `supabase migration repair --status applied` (só mexe no histórico), e aí o push aplicou apenas as 5 do isaac.
+2. **A2.** Apagou 6.032 cobranças, 6.032 pagamentos (cascade) e 6.032 lançamentos de origem `cobranca`. Intactos: 789 alunos, 2.286 matrículas e os 5 lançamentos de origem diferente — os únicos do razão que não vieram de script.
+3. **Importação** dos 4 repasses pela tela.
+
+| Repasse | Líquido |
+|---|---|
+| EPG Trindade ago/2026 | 172.542,75 |
+| Educação Infantil ago/2026 | 161.012,01 |
+| EPG Trindade set/2026 | 179.255,72 |
+| Educação Infantil set/2026 | 164.594,34 |
+| **Total** | **677.404,82** |
+
+Resultado: 1.719 cobranças, 1.719 pagamentos ativos, 1.779 parcelas espelhadas, 27 pendências (26 `sem_aluno` + 1 `permuta_manual`), 8 transferências a conciliar. No razão, 4 lançamentos de taxa (um por unidade/mês) e 2 de amortização do crédito — só EPG Trindade, que é quem tem o empréstimo. **Os 4 repasses fecham**: soma das parcelas = base do analítico.
+
+**A RPC recusou a service role key** ("Sessão sem perfil ativo") — o guard do PR4a funcionando: chave de serviço não tem perfil e não deve burlar permissão. A importação foi feita com sessão de admin real.
+
 ### Ainda falta
 
-- **Fev a Jul/2026 × 2 unidades**: ~12 analíticos `.xlsx` + ~12 resumos `.pdf` para baixar do Meu Arco. Sem o resumo o importador recusa o mês, porque o crédito de curto prazo e as transferências só existem no PDF.
-- Importar EPG Trindade/set no banco de verdade (validado no local, não executado em produção).
-- Decidir o que fazer com a parcela de setembro do Mateus: ou o isaac estorna, ou a permuta daquele mês é registrada aqui.
+- **Fev a Jul/2026 × 2 unidades**: ~12 analíticos `.xlsx` + ~12 resumos `.pdf` para baixar do Meu Arco. Sem o resumo o importador recusa o mês, porque o crédito de curto prazo e as transferências só existem no PDF. Com os arquivos na pasta, `scripts/importar_repasse_isaac.mjs` faz o lote.
+- Resolver as 27 pendências na fila (`/financeiro/isaac/pendencias`), incluindo a permuta de setembro do Mateus.
+- Conciliar as 8 transferências quando o extrato Sicoob for sincronizado.
 
 ### Testes (vitest)
 
