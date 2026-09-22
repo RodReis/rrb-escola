@@ -1,6 +1,13 @@
 import "server-only";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { createHash } from "node:crypto";
 import { consultarExtrato, type SicoobExtratoItem } from "@/lib/sicoob/extrato";
+import {
+  casarTransferenciasIsaac,
+  JANELA_DIAS,
+  type CreditoExtrato,
+  type TransferenciaPendente,
+} from "@/lib/conciliacao/casar-transferencia-isaac";
 
 function normalizarTipo(tipo: string | undefined, valor: number): "credito" | "debito" {
   const t = (tipo ?? "").toLowerCase();
@@ -33,14 +40,48 @@ export function parseValor(valor: string | number | undefined): number | null {
   return Number.isFinite(n) ? n : null;
 }
 
-function mapItem(item: SicoobExtratoItem, contaId: string, escolaId: string) {
+/**
+ * Identificador estável da linha do extrato.
+ *
+ * Quando o Sicoob manda `numeroDocumento`, ele é a chave. Sem ele, o fallback
+ * anterior era `data-descricao-valor` — e dois débitos idênticos no mesmo dia
+ * (duas tarifas iguais, dois pagamentos ao mesmo fornecedor) geravam a MESMA
+ * chave: o `unique (conta_id, id_transacao)` descartava o segundo no upsert e
+ * o dinheiro sumia do extrato sem erro.
+ *
+ * O `ordinal` é a posição do item entre os itens idênticos da mesma resposta,
+ * o que separa as duas linhas. Risco conhecido: se o Sicoob mudar a ORDEM dos
+ * itens entre consultas, a mesma linha pode receber ordinal diferente e entrar
+ * duplicada. Isso é preferível a perder movimento, e só afeta linhas sem
+ * numeroDocumento.
+ */
+export function idTransacao(
+  item: SicoobExtratoItem,
+  contaId: string,
+  data: string,
+  ordinal: number,
+): string {
+  if (item.numeroDocumento) return String(item.numeroDocumento);
+  const partes = [
+    contaId,
+    data,
+    String(item.tipo ?? ""),
+    String(item.valor ?? ""),
+    String(item.descricao ?? ""),
+    String(item.descInfComplementar ?? ""),
+    String(ordinal),
+  ].join("|");
+  return `sha:${createHash("sha256").update(partes).digest("hex").slice(0, 32)}`;
+}
+
+function mapItem(item: SicoobExtratoItem, contaId: string, escolaId: string, ordinal: number) {
   const valorBruto = parseValor(item.valor);
   if (valorBruto === null) return null;
   const data = normalizarData(item.data);
   return {
     escola_id: escolaId,
     conta_id: contaId,
-    id_transacao: String(item.numeroDocumento ?? `${data}-${item.descricao}-${item.valor}`),
+    id_transacao: idTransacao(item, contaId, data, ordinal),
     data,
     tipo: normalizarTipo(item.tipo, valorBruto),
     valor: Math.abs(valorBruto),
@@ -49,6 +90,33 @@ function mapItem(item: SicoobExtratoItem, contaId: string, escolaId: string) {
     contraparte_doc: item.cpfCnpj ?? null,
     payload: item,
   };
+}
+
+/**
+ * Mapeia a resposta do extrato para linhas do banco.
+ *
+ * O `ordinal` conta APENAS entre itens idênticos (mesma data, tipo, valor e
+ * descrição), não a posição absoluta na resposta. Usar a posição absoluta faria
+ * qualquer item novo no meio do mês deslocar todos os seguintes e reimportar o
+ * extrato inteiro como se fosse movimento novo.
+ */
+export function mapearLote(itens: SicoobExtratoItem[], contaId: string, escolaId: string) {
+  const vistos = new Map<string, number>();
+  const rows = [];
+  for (const item of itens) {
+    const assinatura = [
+      normalizarData(item.data),
+      String(item.tipo ?? ""),
+      String(item.valor ?? ""),
+      String(item.descricao ?? ""),
+      String(item.descInfComplementar ?? ""),
+    ].join("|");
+    const ordinal = vistos.get(assinatura) ?? 0;
+    vistos.set(assinatura, ordinal + 1);
+    const row = mapItem(item, contaId, escolaId, ordinal);
+    if (row !== null) rows.push(row);
+  }
+  return rows;
 }
 
 // A janela de 3 dias pode cruzar a virada do mês, e o extrato do Sicoob é
@@ -70,7 +138,7 @@ export async function syncExtratoSicoob(input?: { mes?: number; ano?: number }) 
 
   const { data: contas, error } = await supabase
     .from("contas_bancarias")
-    .select("id, escola_id, conta")
+    .select("id, escola_id, conta, credencial_ref")
     .eq("provedor", "sicoob")
     .eq("ativo", true);
 
@@ -78,19 +146,24 @@ export async function syncExtratoSicoob(input?: { mes?: number; ano?: number }) 
 
   let inseridos = 0;
   let descartados = 0;
+  // Falha de uma conta não pode derrubar a sincronização das outras: com dois
+  // CNPJs, um certificado vencido deixaria o outro banco sem extrato nenhum.
+  const falhas: string[] = [];
   for (const conta of contas ?? []) {
     for (const competencia of competencias) {
       const extrato = await consultarExtrato({
         contaCorrente: conta.conta,
         mes: competencia.mes,
         ano: competencia.ano,
+        credencialRef: conta.credencial_ref,
       });
-      if (!extrato.ok) throw new Error(extrato.reason);
+      if (!extrato.ok) {
+        falhas.push(`conta ${conta.conta} (${competencia.mes}/${competencia.ano}): ${extrato.reason}`);
+        continue;
+      }
 
       const itens = extrato.data.transacoes ?? [];
-      const rows = itens
-        .map((item) => mapItem(item, conta.id, conta.escola_id))
-        .filter((row): row is NonNullable<typeof row> => row !== null);
+      const rows = mapearLote(itens, conta.id, conta.escola_id);
       descartados += itens.length - rows.length;
       if (rows.length === 0) continue;
 
@@ -152,11 +225,104 @@ export async function syncExtratoSicoob(input?: { mes?: number; ano?: number }) 
       .eq("id", linha.id);
   }
 
+  const repasses = await conciliarTransferenciasIsaac(supabase);
+
   return {
     ok: true,
     competencias,
     contas: contas?.length ?? 0,
     movimentos: inseridos,
     descartados,
+    falhas,
+    repasses,
+  };
+}
+
+/**
+ * Casa as transferências do repasse isaac com créditos do extrato.
+ *
+ * Roda depois do upsert, sobre o que está no banco — não sobre a resposta da
+ * API — porque a transferência do dia 05 pode casar com um crédito importado
+ * numa execução anterior.
+ */
+async function conciliarTransferenciasIsaac(supabase: ReturnType<typeof createAdminClient>) {
+  const { data: pendentesRaw } = await supabase
+    .from("isaac_transferencia")
+    .select("id, repasse_id, data_prevista, valor, isaac_repasse(unidade_id, isaac_unidade(company_id))")
+    .is("extrato_id", null);
+
+  const pendentes: TransferenciaPendente[] = (pendentesRaw ?? []).map((row) => {
+    const repasse = Array.isArray(row.isaac_repasse) ? row.isaac_repasse[0] : row.isaac_repasse;
+    const unidade = repasse
+      ? Array.isArray(repasse.isaac_unidade)
+        ? repasse.isaac_unidade[0]
+        : repasse.isaac_unidade
+      : null;
+    return {
+      id: row.id as string,
+      repasseId: row.repasse_id as string,
+      dataPrevista: row.data_prevista as string,
+      valor: Number(row.valor),
+      companyId: (unidade?.company_id as string | undefined) ?? null,
+    };
+  });
+
+  if (pendentes.length === 0) return { casadas: 0, alertas: [] as string[] };
+
+  // Só créditos ainda não conciliados, na janela das transferências pendentes.
+  const datas = pendentes.map((t) => t.dataPrevista).sort();
+  const de = new Date(`${datas[0]}T12:00:00Z`);
+  de.setDate(de.getDate() - JANELA_DIAS);
+  const ate = new Date(`${datas[datas.length - 1]}T12:00:00Z`);
+  ate.setDate(ate.getDate() + JANELA_DIAS);
+
+  const { data: creditosRaw } = await supabase
+    .from("extrato_bancario")
+    .select("id, conta_id, data, valor, descricao, contas_bancarias(company_id)")
+    .eq("tipo", "credito")
+    .eq("status_conciliacao", "pendente")
+    .gte("data", de.toISOString().slice(0, 10))
+    .lte("data", ate.toISOString().slice(0, 10));
+
+  const creditos: CreditoExtrato[] = (creditosRaw ?? []).map((row) => {
+    const conta = Array.isArray(row.contas_bancarias) ? row.contas_bancarias[0] : row.contas_bancarias;
+    return {
+      id: row.id as string,
+      contaId: row.conta_id as string,
+      companyId: (conta?.company_id as string | undefined) ?? null,
+      data: row.data as string,
+      valor: Number(row.valor),
+      descricao: String(row.descricao ?? ""),
+    };
+  });
+
+  const { casamentos, alertas } = casarTransferenciasIsaac(pendentes, creditos);
+
+  for (const casamento of casamentos) {
+    await supabase
+      .from("isaac_transferencia")
+      .update({ extrato_id: casamento.extratoId })
+      .eq("id", casamento.transferenciaId);
+
+    await supabase.from("conciliacao_vinculo").upsert(
+      {
+        extrato_id: casamento.extratoId,
+        alvo_tipo: "repasse_isaac",
+        alvo_id: casamento.transferenciaId,
+        valor: casamento.valor,
+        origem: "auto",
+      },
+      { onConflict: "extrato_id,alvo_tipo,alvo_id" },
+    );
+
+    await supabase
+      .from("extrato_bancario")
+      .update({ status_conciliacao: "auto" })
+      .eq("id", casamento.extratoId);
+  }
+
+  return {
+    casadas: casamentos.length,
+    alertas: alertas.map((a) => `${a.dataPrevista} (${a.tipo}): ${a.detalhe}`),
   };
 }

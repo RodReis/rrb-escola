@@ -5,7 +5,6 @@ import { redirect } from "next/navigation";
 import { requirePermission } from "@/lib/auth/session";
 import { DEFAULT_SCHOOL_ID } from "@/lib/constants";
 import { normalizeNome } from "@/lib/format/normalize-nome";
-import { generateChargesForEnrollment } from "@/lib/server/generate-charges";
 import { parsePdfStudents, parseSpreadsheetStudents, type StudentImportData } from "@/lib/server/student-import-parser";
 import { createServerClient } from "@/lib/supabase/server";
 import { formNumber, formText } from "@/lib/utils";
@@ -307,9 +306,8 @@ export async function processImportStudentBatchAction(formData: FormData) {
 
     const dataMatricula = data.data_matricula ?? new Date().toISOString().slice(0, 10);
     const anoLetivo = data.ano_letivo ?? new Date().getFullYear();
-    const { data: enrollment } = await supabase
-      .from("matriculas")
-      .insert({
+    logSeFalhou(
+      await supabase.from("matriculas").insert({
         escola_id: DEFAULT_SCHOOL_ID,
         aluno_id: aluno.id,
         serie_id: serie.id,
@@ -321,21 +319,9 @@ export async function processImportStudentBatchAction(formData: FormData) {
         idade_na_matricula: data.idade_na_matricula,
         status: "ativa",
         observacoes: `Importado do lote ${arquivoId}`
-      })
-      .select("id")
-      .single();
-
-    if (enrollment) {
-      await generateChargesForEnrollment({
-        supabase,
-        escolaId: DEFAULT_SCHOOL_ID,
-        alunoId: aluno.id,
-        matriculaId: enrollment.id,
-        planoId: plano?.id ?? null,
-        dataMatricula,
-        anoLetivo
-      });
-    }
+      }),
+      `criar matrícula da linha ${row.id}`,
+    );
 
     // Dentro do laço por linha: lançar abortaria o lote inteiro no meio e
     // deixaria as linhas seguintes sem processar. A falha vai para o log e o

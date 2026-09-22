@@ -114,6 +114,15 @@ const FINANCEIRO_ITEMS: DropdownItem[] = [
       { href: "/financeiro/tesouraria/conciliacao", label: "Conciliação", iconName: "ReceiptText" },
     ],
   },
+  {
+    href: "/financeiro/isaac",
+    label: "Repasse isaac",
+    iconName: "Receipt",
+    children: [
+      { href: "/financeiro/isaac", label: "Importar repasse", iconName: "Receipt" },
+      { href: "/financeiro/isaac/pendencias", label: "Pendências", iconName: "ReceiptText" },
+    ],
+  },
   { href: "/financeiro/lancamentos", label: "Livro-Razão", iconName: "ReceiptText" },
   { href: "/financeiro/contratos", label: "Contratos de Receita", iconName: "FileText" },
   { href: "/valores-praticados", label: "Valores praticados", iconName: "ReceiptText" },

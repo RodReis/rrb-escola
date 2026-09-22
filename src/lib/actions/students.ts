@@ -4,7 +4,6 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { requirePermission } from "@/lib/auth/session";
 import { DEFAULT_SCHOOL_ID } from "@/lib/constants";
-import { generateChargesForEnrollment } from "@/lib/server/generate-charges";
 import { createServerClient } from "@/lib/supabase/server";
 import { formBoolean, formNumber, formText } from "@/lib/utils";
 import { assertOk } from "@/lib/actions/assert-ok";
@@ -138,10 +137,9 @@ export async function createStudentAction(formData: FormData) {
     const tipoVaga = readTipoVaga(formData);
     const percentualBolsa = readPercentualBolsa(formData, tipoVaga);
 
-    // Sem o assertOk, uma matrícula recusada devolvia `enrollment` null, o
-    // `if` abaixo pulava a geração de cobranças e a tela confirmava a
-    // matrícula: aluno sem matrícula e sem cobrança, ninguém avisado.
-    const enrollment = assertOk(await supabase.from("matriculas").insert({
+    // Sem o assertOk, uma matrícula recusada seguia silenciosamente e a tela
+    // confirmava a matrícula: aluno sem matrícula, ninguém avisado.
+    assertOk(await supabase.from("matriculas").insert({
       escola_id: DEFAULT_SCHOOL_ID,
       aluno_id: alunoId,
       serie_id: serieId,
@@ -155,20 +153,6 @@ export async function createStudentAction(formData: FormData) {
       tipo_vaga: tipoVaga,
       percentual_bolsa: percentualBolsa
     }).select("id").single(), "Não foi possível criar a matrícula");
-
-    if (enrollment) {
-      await generateChargesForEnrollment({
-        supabase,
-        escolaId: DEFAULT_SCHOOL_ID,
-        alunoId,
-        matriculaId: enrollment.id,
-        planoId,
-        dataMatricula,
-        anoLetivo,
-        tipoVaga,
-        percentualBolsa
-      });
-    }
   }
 
   revalidatePath("/alunos");

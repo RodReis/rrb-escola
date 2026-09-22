@@ -26,10 +26,22 @@ export async function sicoobRequest<T>(
     method?: "GET" | "POST" | "PUT" | "PATCH" | "DELETE";
     scope: string;
     body?: unknown;
+    /**
+     * Credencial da conta (`contas_bancarias.credencial_ref`). Ausente usa as
+     * variáveis globais — o comportamento de quem só tem um CNPJ.
+     */
+    credencialRef?: string | null;
   },
 ): Promise<SicoobHttpResult<T>> {
-  const config = readSicoobConfig();
-  if (!config) return { ok: false, reason: "Sicoob não configurado" };
+  const config = readSicoobConfig(undefined, options.credencialRef);
+  if (!config) {
+    return {
+      ok: false,
+      reason: options.credencialRef
+        ? `Credencial Sicoob "${options.credencialRef}" não configurada (falta SICOOB_${options.credencialRef}_CLIENT_ID ou o certificado).`
+        : "Sicoob não configurado",
+    };
+  }
 
   try {
     const token = await getSicoobAccessToken(config, options.scope);
