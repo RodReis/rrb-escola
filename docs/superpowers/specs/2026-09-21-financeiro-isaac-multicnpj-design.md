@@ -1,8 +1,8 @@
 # Financeiro — Repasse isaac real + Multi-CNPJ — Design
 
 **Data:** 2026-09-21
-**Status:** Fase B aprovada (Rodrigo, 2026-09-22) — execução por fases, implementação via Claude Code
-**Histórico:** aprovado para spec 2026-09-21; Fase B detalhada e aprovada 2026-09-22 (inclui checagem `tipo_vaga` × parcela de mensalidade, pós PR #27)
+**Status:** em execução — Fase A1 implementada, A2 escrita e pendente de rodar; Fase B aprovada, quebrada em 5 PRs
+**Histórico:** aprovado para spec 2026-09-21; Fase B detalhada e aprovada 2026-09-22 (inclui checagem `tipo_vaga` × parcela de mensalidade, pós PR #27); revisado contra o código e o PDF real em 2026-09-22 (parser de resumo validado, restrições de schema levantadas, ordem de PRs definida)
 **Frente:** Financeiro — sucede `2026-09-11-sicoob-pix-conciliacao-design.md` (Fases 0–2 daquele spec continuam válidas para Pix de venda/evento/avulso)
 
 ## Objetivo
@@ -22,7 +22,7 @@
 
 | Achado | Onde | Efeito |
 |---|---|---|
-| `generateChargesForEnrollment` roda automaticamente ao criar/importar matrícula | `src/lib/actions/students.ts:149`, `src/lib/actions/imports.ts:329` | Toda matrícula nova gera 12 cobranças com o valor do plano |
+| `generateChargesForEnrollment` roda automaticamente ao criar/importar matrícula | `src/lib/actions/students.ts:160`, `src/lib/actions/imports.ts:329`, `src/lib/actions/finance.ts:138` | Toda matrícula nova gera 12 cobranças com o valor do plano |
 | Script gera 12 cobranças/aluno a partir de `MATRICULADOS2026.xlsx` | `scripts/gerar_cobrancas_2026.js` | Base de desenvolvimento tratada como real |
 | Script marca **todas** as cobranças abertas como pagas no dia 05 com `valor_pago = valor_final` | `scripts/registrar_repasse_isaac.js` | Razão set/2026: R$ 321.432,50 de receita "paga"; inadimplência sempre zero; sem taxa isaac; sem material |
 | Trigger espelha todo pagamento como receita "Mensalidades" | `espelhar_pagamento_cobranca_razao()` (`202609110001`) | Material e mensalidade caem na mesma categoria |
@@ -66,36 +66,28 @@ Os totais de agosto (analítico) e de setembro (resumo) são o **critério de ac
 
 ## Fase A — Limpeza e desligamento da geração automática
 
-### A1. Código
+**Status: A1 implementada** (branch `feat/isaac-fase-a`, commit `11cf691f`, 22/09). A2 escrita, **ainda não executada** no banco.
 
-- Remover as chamadas a `generateChargesForEnrollment` em `students.ts` e `imports.ts`.
-- Remover `GenerateChargesButton` de `matriculas/[id]` e a action `generateChargesForEnrollmentAction`.
-- Remover `src/lib/server/generate-charges.ts` e os testes associados.
-- Remover `scripts/gerar_cobrancas_2026.js` e `scripts/registrar_repasse_isaac.js`.
-- **Manter** o formulário "Gerar lançamento avulso" da tela Cobranças (caso "pagou na escola").
+### A1. Código — feito
+
+- Removidas as chamadas a `generateChargesForEnrollment` nos **três** callers: `students.ts`, `imports.ts` e `finance.ts` (dentro da própria `generateChargesForEnrollmentAction`, que o rascunho anterior deste spec não listava).
+- Removidos `GenerateChargesButton`, `generateChargesForEnrollmentAction` e `getEnrollmentChargesPreview` (`src/lib/data/finance.ts`) — esta última só existia para alimentar o botão e ficou órfã.
+- Removido `src/lib/server/generate-charges.ts`. **Não havia testes associados** — o rascunho anterior supunha uma rede de segurança que nunca existiu; o refactor foi validado por `typecheck` + `build` + suíte completa (508/508).
+- Removidos `scripts/gerar_cobrancas_2026.js` e `scripts/registrar_repasse_isaac.js`.
+- **Mantido** o formulário "Gerar lançamento avulso" da tela Cobranças (caso "pagou na escola").
+- **Correção de rota adjacente:** em `imports.ts` o insert da matrícula descartava o erro do Supabase em silêncio (`const { data: enrollment }` sem checagem, usado só para gerar cobrança). Passou a registrar via `logSeFalhou`, que é o padrão do laço — lançar abortaria o lote no meio e deixaria as linhas seguintes sem processar.
+
+Total: 531 linhas removidas, 9 adicionadas.
 
 ### A2. Dados — script único `scripts/limpar_financeiro_dev.sql`
 
-Roda **manualmente**, local primeiro e produção depois, sempre após backup (`scripts/backup_matriculas.mjs` + dump das tabelas abaixo).
+Escrito (commit `d472703f`), **pendente de execução**. Roda **manualmente**, local primeiro e produção depois, sempre após backup (`scripts/backup_matriculas.mjs` + dump das tabelas abaixo), com ensaio em `rollback` antes do `commit`.
 
-```sql
-begin;
--- 1) razão espelhado de cobranças (sem FK: precisa ser explícito)
-delete from lancamento_financeiro where origem_tipo = 'cobranca';
--- 2) vínculos de conciliação que apontam para pagamentos
-delete from conciliacao_vinculo where alvo_tipo = 'pagamento';
--- 3) pix de cobrança (se houver) ligados a cobranças
-delete from pix_cobranca where origem_tipo = 'cobranca';
--- 4) cobranças (cascade apaga pagamentos)
-delete from cobrancas where escola_id = '00000000-0000-0000-0000-000000000001';
--- conferência antes do commit
-select (select count(*) from cobrancas) cobrancas,
-       (select count(*) from pagamentos) pagamentos,
-       (select count(*) from lancamento_financeiro where origem_tipo='cobranca') razao_cobranca,
-       (select count(*) from alunos) alunos,
-       (select count(*) from matriculas) matriculas;
-commit;  -- trocar por rollback no ensaio
-```
+O SQL definitivo está no arquivo. Três correções sobre o rascunho anterior deste spec:
+
+1. **`conciliacao_vinculo` ganhou escopo.** `delete ... where alvo_tipo = 'pagamento'` apagava *todos* os vínculos de pagamento, inclusive de pagamentos que não vêm de cobrança. Passou a ser `where alvo_tipo = 'pagamento' and alvo_id in (select id from pagamentos)`.
+2. **`cobrancas` perdeu o `escola_id` hardcoded.** Se o id divergir entre local e produção, o `delete` não apaga nada e o script "passa" em silêncio. A base é mono-escola; sem filtro é mais seguro que com filtro errado.
+3. **A ordem é obrigatória, não estética.** `conciliacao_vinculo.alvo_id` e `pix_cobranca.origem_id` são `uuid` solto, sem FK (confirmado em `202609110001:56` e `:105`), então o cascade de `cobrancas` não os alcança e os subselects precisam rodar enquanto as linhas ainda existem.
 
 **Não toca:** `alunos`, `matriculas`, `planos`, `responsaveis_aluno`, folha, `lancamento_financeiro` de origem diferente de `cobranca`, `contas_bancarias`, `extrato_bancario`.
 
@@ -105,9 +97,33 @@ commit;  -- trocar por rollback no ensaio
 
 ---
 
+## Ordem de execução
+
+A Fase B não cabe num PR: são 6 tabelas, 2 parsers, uma RPC transacional, 3 telas e a conciliação. Quebrada assim (aprovado 22/09):
+
+| PR | Conteúdo | Estado |
+|---|---|---|
+| 1 | Fase A1 + A2 | **feito** (`11cf691f`, `d472703f`) |
+| 2 | Migrations: enums (arquivo próprio) + tabelas isaac + `company_id` + RLS + RBAC | — |
+| 3 | `parse-resumo.ts` + `parse-analitico.ts` + classificação + normalização/match — funções puras + testes | — |
+| 4 | RPC `importar_repasse_isaac` + tela de upload/preview + fila de pendências | — |
+| 5 | Reimport de agosto + validação contra os totais conferidos | — |
+| 6 | Conciliação das transferências + Fase C (multi-CNPJ) | — |
+
+As colunas `company_id` entram já no PR 2 (Fase B depende delas para gravar a despesa da taxa no CNPJ certo); o resto da Fase C fica para o PR 6.
+
+---
+
 ## Fase B — Importador do analítico isaac
 
 ### Modelo de dados
+
+**Duas migrations, não uma.** `alter type ... add value` não pode ser usado na mesma transação que o cria nem na mesma em que o valor novo é referenciado. Portanto:
+
+- `202609220003_isaac_enums.sql` — só os `add value` (`origem_lancamento` → `'isaac'`, `alvo_conciliacao` → `'repasse_isaac'`), em arquivo próprio.
+- `202609220004_isaac_repasse.sql` — tabelas, colunas, índices, RLS e RBAC.
+
+(`202609220002` já está ocupada por `tipo_vaga_filho_professora_50.sql`, do PR #27 — o rascunho anterior deste spec propunha esse número.)
 
 ```sql
 -- CNPJ de cada unidade isaac: configurado, nunca inferido do nome do arquivo
@@ -130,6 +146,8 @@ create table isaac_repasse (
   base numeric(12,2) not null,
   taxa numeric(12,2) not null,
   liquido numeric(12,2) not null,
+  alunos_informados int,                 -- "307 alunos | 327 cobranças" do resumo:
+  cobrancas_informadas int,              -- só conferência contra isaac_parcela, nunca fonte de valor
   arquivo_path text,                     -- storage privado, não versionado
   importado_por uuid references perfis(id),
   importado_em timestamptz not null default now(),
@@ -200,27 +218,37 @@ alter table cobrancas add column if not exists origem text not null default 'man
 alter table cobrancas add column if not exists id_externo text;
 alter table cobrancas add column if not exists categoria_id uuid references categorias_financeiras(id);
 create unique index if not exists cobrancas_id_externo_uidx on cobrancas (origem, id_externo) where id_externo is not null;
-
-alter type origem_lancamento add value if not exists 'isaac';
-alter type alvo_conciliacao add value if not exists 'repasse_isaac';
 ```
 
 RLS: mesmo padrão admin/financeiro via `current_perfil()`. RBAC: módulo `financeiro.isaac` (admin: tudo; financeiro: ler/criar).
 
+#### Restrições do schema existente que o importador tem que respeitar
+
+Levantadas ao conferir o código antes de implementar; nenhuma delas é impeditiva, mas todas mudam como a gravação (passo 7) tem que ser escrita.
+
+- **`pagamentos` aceita um único pagamento ativo por cobrança.** Índice único parcial `pagamentos(cobranca_id) where cancelado_em is null` (`202605170001:9`). Uma parcela isaac vira uma cobrança com um pagamento, então o fluxo normal cabe. O que **não** cabe: baixa parcial, ou reimport que tente gravar um segundo pagamento sem cancelar o primeiro. O upsert do passo 7 tem que atualizar o pagamento existente, nunca inserir outro.
+- **`cobrancas.valor_final` é coluna GENERATED** (`valor_original - valor_desconto + valor_acrescimo`, `202605130001`). O importador grava `valor_original = valor_base` (o valor pós-ajuste que o isaac de fato considerou) e **deixa desconto e acréscimo em zero**. Os descontos já vêm aplicados pelo isaac; recalcular aqui produziria um número que não existe em lugar nenhum. O desconto concedido fica rastreável em `isaac_parcela.valor_mensalidade` × `valor_base`, não em `cobrancas`.
+- **O trigger do razão usa `origem_id = pagamento.id`**, e o lançamento da taxa isaac usa `origem_id = repasse.id`, ambos sob o índice único `(origem_tipo, origem_id)` (`202606140001:75`). Não colidem, porque `origem_tipo` difere (`'cobranca'` × `'isaac'`). Vale registrar porque o índice é parcial e a colisão seria silenciosa.
+- **`companies` não tem vínculo com `escolas`.** `isaac_unidade` carrega `escola_id` (para RLS) e `company_id` (para o CNPJ) lado a lado, sem FK entre eles. É o mesmo arranjo que o RH já usa; não é dívida nova, mas significa que nada no banco impede apontar uma unidade para a company de outra escola.
+
 ### Fluxo de importação
 
 1. Upload do analítico `.xlsx` **e** do resumo `.pdf` do mesmo mês → escolhe a unidade isaac (o CNPJ vem dela) e a competência do repasse.
-   - **Voltou a ser parser primário (v1), corrigindo a nota anterior.** Testado com `pdftotext` contra os dois resumos reais de setembro/2026: a extração de texto sai em ordem sequencial estável — rótulo seguido do valor, sem embaralhar colunas — mesmo sem preservar layout visual (`pdftotext` sem `-layout`, que é o modo mais parecido com o que `pdf-parse` faz). "Transferências programadas" sai como `data1, data2, valor1, valor2`, pareável por índice. Não é o risco de layout bagunçado que eu tinha suposto; o parser (`src/lib/isaac/parse-resumo.ts`, `pdf-parse`) faz regex ancorado em cada rótulo conhecido (`Mensalidades`, `Novo contrato`, `Taxa isaac`, `Recebido na escola`, `Cancelado`, `Débito da parcela do crédito de curto prazo`) sobre o texto extraído — não depende de posição/tabela, só do rótulo aparecer seguido de um valor em reais.
-   - **Falha segura, não silenciosa:** se algum rótulo esperado não for encontrado no texto extraído (Meu Arco muda o texto do rótulo, ou muda de PDF pra outro formato de export), o parser não adivinha — a tela cai para os mesmos campos digitáveis à mão, pré-preenchidos com o que o parser conseguiu casar. **Nunca inferir** continua valendo: o parser só aceita match exato de rótulo, nunca aproximação.
-   - **Campo extra, fora do modelo de valores:** o cabeçalho "Recebimentos" traz `<n> alunos | <n> cobranças` (ex.: "307 alunos | 327 cobranças") — cross-check de graça contra `isaac_parcela` daquela unidade/competência. Parser extrai também; `isaac_repasse.alunos_informados int` e `isaac_repasse.cobrancas_informadas int` (nullable, só conferência), com divergência mostrada na pré-visualização se não bater com `count(distinct aluno_id)`/`count(*)`.
+   - **Parser é o caminho primário na v1. Validado com protótipo, não suposto** (22/09). Rodado com a própria `pdf-parse` do projeto (API v2: `new PDFParse({ data }).getText()`) contra os dois resumos reais de setembro/2026, o parser fechou **centavo a centavo** nas duas unidades: soma das linhas = total, e soma das transferências = total, batendo 179.255,72 (EPG Trindade) e 164.594,34 (Educação Infantil), com as transferências de 05 e 15 corretas. Ou seja: os números do Aceite B saem do parser, não de digitação.
+   - **O texto extraído é sequencial e limpo** — rótulo, `\t`, valor; sem colunas embaralhadas. O parser (`src/lib/isaac/parse-resumo.ts`) varre linha a linha mantendo a seção corrente (`Recebimentos` / `Descontos` / `Outros valores` → `grupo`), e o sinal vem do próprio texto (`- R$`), nunca inferido pelo grupo.
+   - **Seções somem quando vazias.** A unidade Educação Infantil não tem "Cancelado" nem "Outros valores" no resumo de setembro. O parser tem que ser orientado a seção/rótulo, **nunca a posição de linha**.
+   - **Falha segura, não silenciosa.** Rótulos de ruído (`Valores referentes a parcelas de mensalidades`, `Mudanças em mensalidades`, `Crédito`, `Débito`) são ignorados por lista explícita — se o isaac introduzir um rótulo novo, ele **entra como linha** em vez de sumir, e a dupla validação abaixo quebra ruidosamente. Se um rótulo esperado sumir, a tela cai para os campos digitáveis à mão, pré-preenchidos com o que o parser conseguiu casar. **Nunca inferir** continua valendo: match exato de rótulo, nunca aproximação.
+   - **Dupla validação de graça:** `soma(linhas) = total` **e** `soma(transferências) = total`. Duas equações independentes sobre a mesma extração; mudança de layout que passe por uma dificilmente passa pelas duas.
+   - **Campo extra, fora do modelo de valores:** o cabeçalho "Recebimentos" traz `<n> alunos | <n> cobranças` (ex.: "307 alunos | 327 cobranças") — cross-check de graça contra `isaac_parcela` daquela unidade/competência, gravado em `isaac_repasse.alunos_informados` / `cobrancas_informadas` (nullable, só conferência), com divergência mostrada na pré-visualização.
    - A checagem de fechamento (passo 8) valida os valores extraídos (ou digitados) contra o analítico de qualquer forma — o parser economiza a digitação, não substitui a validação.
-   - `src/lib/isaac/parse-resumo.ts` fica marcado como **v2, não fazer agora** — só se o volume crescer (mais unidades, mais meses) a ponto de justificar automatizar.
 2. **Parser puro** (`src/lib/isaac/parse-analitico.ts`, exceljs) lê as abas "Repasse de Mensalidades" e "Mudanças". Valida colunas pelo nome e falha com mensagem clara se o layout mudar.
 3. **Classificação do produto** (`classificarProduto`, função pura): `Mensalidade*`/`Anuidade*` → `mensalidade`; `Materia*`/`Material*` → `material`; o resto → `outro`.
 4. **Casamento de aluno**, nesta ordem:
    - (a) `aluno_alias` (fonte `isaac`);
-   - (b) `alunos.nome_normalizado` = nome normalizado (sem acento, minúsculo, espaço único);
+   - (b) `alunos.nome_normalizado`;
    - (c) sem casamento → `aluno_id = null`, `motivo_pendencia='sem_aluno'`, vai para a fila.
+
+   **A normalização do importador tem que ser idêntica à da coluna, senão o match falha em silêncio.** `alunos.nome_normalizado` é GENERATED `lower(immutable_unaccent(nome))` (`202609190002`) — tira acento e caixa, mas **não colapsa espaço duplo nem apara as pontas**. O rascunho anterior deste spec dizia "espaço único", o que produziria uma chave diferente da que está no banco para qualquer nome com espaço duplo. Duas saídas, a decidir na implementação: normalizar no importador exatamente como a coluna (aceitando que "Ana  Silva" com dois espaços não casa), ou comparar contra `regexp_replace(nome_normalizado, '\s+', ' ', 'g')` dos dois lados. Em qualquer caso, **uma função só, compartilhada, com teste que prova a paridade contra a definição da coluna** — é o tipo de divergência que não aparece em erro, só em "esse aluno não casou".
 
    **Fuzzy nunca casa automaticamente.** Ele só sugere, porque irmãos têm sobrenome igual (ex.: "Laura Rodrigues da Silva" × "Amanda Rodrigues da Silva").
 5. **Checagem `tipo_vaga` × parcela de mensalidade** (só roda para parcela com aluno casado e `tipo = 'mensalidade'`; parcela de material nunca é bloqueada por isso). Lê `matriculas.tipo_vaga` da matrícula **ativa** do aluno no ano da competência:
@@ -239,7 +267,7 @@ RLS: mesmo padrão admin/financeiro via `current_perfil()`. RBAC: módulo `finan
    - parcelas cujo valor difere do `valor_mensalidade_praticado`.
 7. **Gravação**, numa transação via RPC `importar_repasse_isaac(jsonb)`:
    - `isaac_repasse` + `isaac_parcela` + `isaac_mudanca` (todas as parcelas, inclusive as pendentes — `isaac_parcela` é o espelho fiel do que o isaac mandou);
-   - para cada parcela com `valor_base > 0`, aluno casado **e `motivo_pendencia is null`**: upsert em `cobrancas` (`origem='isaac'`, `id_externo=id_parcela`, `valor_original=valor_base`, `categoria_id` pelo tipo) + `pagamentos` (`valor_pago=valor_base`, `data_pagamento=data_repasse`, `forma_pagamento='transferencia'`, `observacao='isaac <competencia_repasse>'`);
+   - para cada parcela com `valor_base > 0`, aluno casado **e `motivo_pendencia is null`**: upsert em `cobrancas` (`origem='isaac'`, `id_externo=id_parcela`, `valor_original=valor_base`, `valor_desconto=0`, `valor_acrescimo=0`, `categoria_id` pelo tipo) + **upsert** em `pagamentos` (`valor_pago=valor_base`, `data_pagamento=data_repasse`, `forma_pagamento='transferencia'`, `observacao='isaac <competencia_repasse>'`). O pagamento é **update quando já existe um ativo para aquela cobrança**, nunca insert — o índice único parcial `pagamentos(cobranca_id) where cancelado_em is null` recusa o segundo, e um reimport ingênuo quebraria aqui;
    - parcelas com `motivo_pendencia` não nulo **não geram `cobranca`/`pagamento` nesta importação** — ficam disponíveis numa tela de resolução (`/financeiro/isaac/pendencias` ou equivalente) para tratar depois, sem travar o fechamento do mês;
    - **um** `lancamento_financeiro` de despesa "Taxa isaac" (`origem_tipo='isaac'`, `origem_id=repasse.id`, `status='paga'`, `company_id` da unidade).
    - Linha "Débito da parcela do crédito de curto prazo": **um** `lancamento_financeiro` de despesa na categoria "Amortização crédito isaac", marcada como **não operacional**, para ficar fora do resultado operacional. A separação entre principal e juros depende do contrato do crédito (decisão em aberto).
