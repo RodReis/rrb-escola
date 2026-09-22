@@ -25,7 +25,7 @@ export function SearchInline({
     <label
       className={cn(
         "ds-search-inline",
-        bordered && "rounded-ui border border-line bg-paper px-3 py-1.5 transition focus-within:border-brand/60 focus-within:bg-surface focus-within:shadow-ring",
+        bordered && "rounded-ui border-2 border-ink/30 bg-surface px-3 py-1.5 transition hover:border-ink/45 focus-within:border-brand focus-within:shadow-ring",
         containerClassName
       )}
     >

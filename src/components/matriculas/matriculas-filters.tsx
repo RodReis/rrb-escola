@@ -3,12 +3,12 @@
 import { useRouter, useSearchParams, usePathname } from "next/navigation";
 import { useCallback, useTransition } from "react";
 import { FilterChips } from "@/components/ui/filter-chips";
+import { FilterDropdown } from "@/components/ui/filter-dropdown";
 import { SearchInline } from "@/components/ui/search-inline";
 
 type Counts = { all: number; ativa: number; concluida: number; cancelada: number; transferida: number };
 
 const TIPO_VAGA_OPTIONS = [
-  { value: "", label: "Todos" },
   { value: "NORMAL", label: "Normal" },
   { value: "BOLSA_50_PORCENTO", label: "Bolsa 50%" },
   { value: "BOLSA_INTEGRAL", label: "Bolsa integral" },
@@ -47,26 +47,20 @@ export function MatriculasFilters({ counts }: { counts: Counts }) {
   ];
 
   return (
-    <div className="grid w-full gap-3">
-      <div className="flex w-full flex-wrap items-center gap-4">
+    <div className="flex w-full flex-col gap-3">
+      <div className="flex flex-wrap items-center gap-4">
         <FilterChips
           items={chips}
           value={status}
           onChange={(v) => update("status", v)}
         />
 
-        <label className="text-xs font-medium text-ink/70">
-          Tipo da vaga
-          <select
-            value={tipoVaga}
-            onChange={(e) => update("tipo_vaga", e.target.value)}
-            className="ml-2 min-w-[160px]"
-          >
-            {TIPO_VAGA_OPTIONS.map((t) => (
-              <option key={t.value} value={t.value}>{t.label}</option>
-            ))}
-          </select>
-        </label>
+        <FilterDropdown
+          label="Tipo da vaga"
+          value={tipoVaga}
+          options={TIPO_VAGA_OPTIONS}
+          onChange={(v) => update("tipo_vaga", v)}
+        />
 
         {(nome || status || tipoVaga) && (
           <button
@@ -79,21 +73,23 @@ export function MatriculasFilters({ counts }: { counts: Counts }) {
         )}
       </div>
 
-      <SearchInline
-        defaultValue={nome}
-        placeholder="Buscar por aluno ou matrícula..."
-        bordered
-        loading={isPending}
-        containerClassName="w-full max-w-md"
-        onChange={(e) => {
-          const val = (e.target as HTMLInputElement).value;
-          clearTimeout((window as unknown as Record<string, ReturnType<typeof setTimeout>>)._matriculaTimer);
-          (window as unknown as Record<string, ReturnType<typeof setTimeout>>)._matriculaTimer = setTimeout(
-            () => update("nome", val),
-            300
-          );
-        }}
-      />
+      <div className="flex w-full items-center gap-4">
+        <SearchInline
+          defaultValue={nome}
+          placeholder="Buscar por aluno ou matrícula..."
+          bordered
+          loading={isPending}
+          containerClassName="flex-1 min-w-0"
+          onChange={(e) => {
+            const val = (e.target as HTMLInputElement).value;
+            clearTimeout((window as unknown as Record<string, ReturnType<typeof setTimeout>>)._matriculaTimer);
+            (window as unknown as Record<string, ReturnType<typeof setTimeout>>)._matriculaTimer = setTimeout(
+              () => update("nome", val),
+              300
+            );
+          }}
+        />
+      </div>
     </div>
   );
 }
