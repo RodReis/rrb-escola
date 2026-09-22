@@ -1,7 +1,7 @@
 "use client";
 
 import { useRouter, useSearchParams, usePathname } from "next/navigation";
-import { useCallback } from "react";
+import { useCallback, useTransition } from "react";
 import { FilterChips } from "@/components/ui/filter-chips";
 import { FilterDropdown } from "@/components/ui/filter-dropdown";
 import { SearchInline } from "@/components/ui/search-inline";
@@ -18,6 +18,7 @@ export function EmployeeFilters({ companies, counts, canViewInactive }: Props) {
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
+  const [isPending, startTransition] = useTransition();
 
   const search = searchParams.get("search") ?? "";
   const segmento = searchParams.get("segmento") ?? "";
@@ -31,7 +32,7 @@ export function EmployeeFilters({ companies, counts, canViewInactive }: Props) {
       if (value) params.set(key, value);
       else params.delete(key);
       for (const k of clear ?? []) params.delete(k);
-      router.push(`${pathname}?${params.toString()}`);
+      startTransition(() => router.push(`${pathname}?${params.toString()}`));
     },
     [router, pathname, searchParams]
   );
@@ -56,6 +57,7 @@ export function EmployeeFilters({ companies, counts, canViewInactive }: Props) {
         defaultValue={search}
         placeholder="Buscar por nome, CPF ou e-mail..."
         bordered
+        loading={isPending}
         containerClassName="flex-1 min-w-[260px]"
         onChange={(e) => {
           const value = (e.target as HTMLInputElement).value;
@@ -104,7 +106,7 @@ export function EmployeeFilters({ companies, counts, canViewInactive }: Props) {
         <button
           type="button"
           className="text-xs font-semibold text-ink/60 hover:text-brand"
-          onClick={() => router.push(pathname)}
+          onClick={() => startTransition(() => router.push(pathname))}
         >
           Limpar filtros
         </button>

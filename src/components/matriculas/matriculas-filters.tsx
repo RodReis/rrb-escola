@@ -1,7 +1,7 @@
 "use client";
 
 import { useRouter, useSearchParams, usePathname } from "next/navigation";
-import { useCallback } from "react";
+import { useCallback, useTransition } from "react";
 import { FilterChips } from "@/components/ui/filter-chips";
 import { SearchInline } from "@/components/ui/search-inline";
 
@@ -11,6 +11,7 @@ export function MatriculasFilters({ counts }: { counts: Counts }) {
   const router   = useRouter();
   const pathname = usePathname();
   const params   = useSearchParams();
+  const [isPending, startTransition] = useTransition();
 
   const status = params.get("status") ?? "";
   const nome   = params.get("nome")   ?? "";
@@ -20,7 +21,7 @@ export function MatriculasFilters({ counts }: { counts: Counts }) {
       const p = new URLSearchParams(params.toString());
       if (value) p.set(key, value); else p.delete(key);
       for (const k of clear ?? []) p.delete(k);
-      router.push(`${pathname}?${p.toString()}`);
+      startTransition(() => router.push(`${pathname}?${p.toString()}`));
     },
     [router, pathname, params]
   );
@@ -45,6 +46,7 @@ export function MatriculasFilters({ counts }: { counts: Counts }) {
         defaultValue={nome}
         placeholder="Buscar por aluno ou matrícula..."
         bordered
+        loading={isPending}
         containerClassName="flex-1 min-w-[280px]"
         onChange={(e) => {
           const val = (e.target as HTMLInputElement).value;
@@ -60,7 +62,7 @@ export function MatriculasFilters({ counts }: { counts: Counts }) {
         <button
           type="button"
           className="text-xs font-semibold text-ink/60 hover:text-brand"
-          onClick={() => router.push(pathname)}
+          onClick={() => startTransition(() => router.push(pathname))}
         >
           Limpar filtros
         </button>

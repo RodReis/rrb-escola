@@ -1,7 +1,7 @@
 "use client";
 
 import { useRouter, useSearchParams, usePathname } from "next/navigation";
-import { useCallback } from "react";
+import { useCallback, useTransition } from "react";
 import { FilterChips } from "@/components/ui/filter-chips";
 import { FilterDropdown, type DropdownOption } from "@/components/ui/filter-dropdown";
 import { SearchInline } from "@/components/ui/search-inline";
@@ -41,6 +41,9 @@ export function StudentFilters({
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
+  // Cada mudança de filtro navega (troca searchParams) e o Server Component
+  // refaz a busca — useTransition mostra o spinner na busca enquanto isso.
+  const [isPending, startTransition] = useTransition();
 
   const nome     = searchParams.get("nome") ?? "";
   const segmento = searchParams.get("segmento") ?? "";
@@ -55,7 +58,7 @@ export function StudentFilters({
       if (value) params.set(key, value);
       else params.delete(key);
       for (const k of clear ?? []) params.delete(k);
-      router.push(`${pathname}?${params.toString()}`);
+      startTransition(() => router.push(`${pathname}?${params.toString()}`));
     },
     [router, pathname, searchParams]
   );
@@ -148,6 +151,7 @@ export function StudentFilters({
           defaultValue={nome}
           placeholder="Buscar por nome, matrícula ou responsável..."
           bordered
+          loading={isPending}
           containerClassName="flex-1 min-w-0"
           onChange={(e) => {
             const value = (e.target as HTMLInputElement).value;
@@ -163,7 +167,7 @@ export function StudentFilters({
           <button
             type="button"
             className="shrink-0 text-xs font-semibold text-ink/60 hover:text-brand"
-            onClick={() => router.push(pathname)}
+            onClick={() => startTransition(() => router.push(pathname))}
           >
             Limpar filtros
           </button>
