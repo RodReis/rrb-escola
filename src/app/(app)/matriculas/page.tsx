@@ -1,17 +1,14 @@
-import { CheckCircle2, Plus, RefreshCcw, UserPlus } from "lucide-react";
-import { createEnrollmentAction } from "@/lib/actions/academics";
+import { RefreshCcw } from "lucide-react";
 import { getEnrollments } from "@/lib/data/enrollments";
 import { getAcademicData } from "@/lib/data/lookups";
 import { getAlunosSemMatriculaNoAno } from "@/lib/data/students";
 import { PageHeader } from "@/components/ui/page-header";
-import { Panel } from "@/components/ui/card";
 import { ButtonLink } from "@/components/ui/button";
-import { NovaMatriculaFields } from "@/components/matriculas/nova-matricula-fields";
+import { NovaMatriculaDialog } from "@/components/matriculas/nova-matricula-dialog";
 import { MatriculasTable } from "@/components/matriculas/matriculas-table";
 import { MatriculasFilters } from "@/components/matriculas/matriculas-filters";
 import { requirePermission } from "@/lib/auth/session";
 import { anoLetivoDaData } from "@/lib/matriculas/ano-letivo";
-import { SubmitButton } from "@/components/ui/submit-button";
 
 export default async function MatriculasPage({
   searchParams,
@@ -72,62 +69,22 @@ export default async function MatriculasPage({
           { label: "Canceladas",   value: counts.cancelada.toLocaleString("pt-BR"), tone: "danger" },
         ]}
         actions={
-          <ButtonLink href="/matriculas/rematricula-lote?step=1" variant="warn">
-            <RefreshCcw size={14} /> Re-matricular em lote
-          </ButtonLink>
+          <>
+            <NovaMatriculaDialog
+              alunos={alunosParaCombo}
+              series={series}
+              turmas={turmas}
+              planos={planos.map((p) => ({ id: p.id, nome: p.nome }))}
+              alunoPre={alunoPre}
+              sucesso={Boolean(sucesso)}
+              erro={Boolean(erro)}
+            />
+            <ButtonLink href="/matriculas/rematricula-lote?step=1" variant="warn">
+              <RefreshCcw size={14} /> Re-matricular em lote
+            </ButtonLink>
+          </>
         }
       />
-
-      <Panel id="nova-matricula" className="grid gap-5">
-        <div>
-          <p className="text-[0.66rem] font-bold uppercase tracking-[0.14em] text-ink/60">Nova matrícula</p>
-          <h2 className="mt-1 flex items-center gap-2 text-xl font-bold text-ink">
-            <UserPlus size={20} className="text-brand" />
-            Cadastrar vínculo acadêmico
-          </h2>
-        </div>
-        {sucesso ? (
-          <p className="flex items-center gap-2 rounded-ui bg-moss/10 p-3 text-sm font-bold text-moss">
-            <CheckCircle2 size={16} />
-            Matrícula cadastrada com sucesso.
-          </p>
-        ) : null}
-        {erro ? (
-          <p className="flex items-center gap-2 rounded-ui bg-clay/10 p-3 text-sm font-bold text-clay">
-            Erro ao cadastrar matrícula. Tente novamente.
-          </p>
-        ) : null}
-        <form action={createEnrollmentAction} className="grid gap-5">
-          <div className="grid gap-4 md:grid-cols-4">
-            <NovaMatriculaFields alunos={alunosParaCombo} series={series} turmas={turmas} alunoPre={alunoPre} />
-            <label className="self-start">Plano
-              <select name="plano_id">
-                <option value="">Sem plano</option>
-                {planos.map((item) => <option key={item.id} value={item.id}>{item.nome}</option>)}
-              </select>
-            </label>
-            <label className="self-start">Data<input name="data_matricula" type="date" defaultValue={new Date().toISOString().slice(0, 10)} /></label>
-            <label className="self-start">Tipo de vaga
-              <select name="tipo_vaga" defaultValue="NORMAL">
-                <option value="NORMAL">Normal</option>
-                <option value="BOLSA_50_PORCENTO">Bolsa 50%</option>
-                <option value="BOLSA_INTEGRAL">Bolsa integral</option>
-                <option value="FILHO_PROFESSORA">Filho de professora</option>
-                <option value="FILHO_PROFESSORA_INTEGRAL">Filho de professora integral</option>
-                <option value="PERMUTA">Permuta</option>
-                <option value="ISENTO">Isento</option>
-              </select>
-            </label>
-            <label className="self-start md:col-span-2">Observações<input name="observacoes" /></label>
-          </div>
-          {/* Ação fora da grade de campos: separada por borda, não compete por coluna. */}
-          <div className="flex border-t border-line pt-4">
-            <SubmitButton>
-              <Plus size={14} /> Matricular
-            </SubmitButton>
-          </div>
-        </form>
-      </Panel>
 
       <div className="grid gap-4">
         <MatriculasFilters counts={counts} />
@@ -138,14 +95,6 @@ export default async function MatriculasPage({
           planos={planos.map((p) => ({ id: p.id, nome: p.nome }))}
         />
       </div>
-      {alunoPre && (
-        <script
-          dangerouslySetInnerHTML={{
-            __html:
-              "document.getElementById('nova-matricula')?.scrollIntoView({behavior:'smooth',block:'start'});",
-          }}
-        />
-      )}
     </div>
   );
 }

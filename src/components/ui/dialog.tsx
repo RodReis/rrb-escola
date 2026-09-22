@@ -9,13 +9,17 @@ type DialogProps = {
   title: string;
   onClose: () => void;
   children: React.ReactNode;
+  /** md (padrão, formulários curtos) ou lg (formulários com várias colunas/campos). */
+  size?: "md" | "lg";
 };
+
+const SIZE_CLASS = { md: "max-w-md", lg: "max-w-2xl" } as const;
 
 /**
  * Generic modal shell: portal to body, backdrop, ESC to close, click-outside to
  * close, X button. Contains no form logic — callers render their own content.
  */
-export function Dialog({ open, title, onClose, children }: DialogProps) {
+export function Dialog({ open, title, onClose, children, size = "md" }: DialogProps) {
   const titleId = useId();
   useEffect(() => {
     if (!open) return;
@@ -40,7 +44,7 @@ export function Dialog({ open, title, onClose, children }: DialogProps) {
         role="dialog"
         aria-modal="true"
         aria-labelledby={titleId}
-        className="relative w-full max-w-md rounded-[10px] border border-line bg-surface p-6 shadow-lift"
+        className={`relative w-full ${SIZE_CLASS[size]} rounded-[10px] border border-line bg-surface p-6 shadow-lift max-h-[90vh] overflow-y-auto`}
       >
         <div className="flex items-start justify-between gap-4">
           <p id={titleId} className="text-sm font-semibold text-ink">{title}</p>
