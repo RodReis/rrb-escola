@@ -1,7 +1,8 @@
 # Financeiro — Repasse isaac real + Multi-CNPJ — Design
 
 **Data:** 2026-09-21
-**Status:** aprovado para spec (Rodrigo, 2026-09-21) — execução por fases
+**Status:** Fase B aprovada (Rodrigo, 2026-09-22) — execução por fases, implementação via Claude Code
+**Histórico:** aprovado para spec 2026-09-21; Fase B detalhada e aprovada 2026-09-22 (inclui checagem `tipo_vaga` × parcela de mensalidade, pós PR #27)
 **Frente:** Financeiro — sucede `2026-09-11-sicoob-pix-conciliacao-design.md` (Fases 0–2 daquele spec continuam válidas para Pix de venda/evento/avulso)
 
 ## Objetivo
@@ -170,7 +171,8 @@ create table isaac_parcela (
   taxa numeric(12,2) not null,
   valor_final numeric(12,2) not null,
   tipo_mudanca text,
-  cobranca_id uuid references cobrancas(id),
+  cobranca_id uuid references cobrancas(id),   -- null enquanto pendente (sem casar OU tipo_vaga incompatível)
+  motivo_pendencia text,                       -- null = ok; 'sem_aluno' | 'tipo_vaga_incompativel' | 'permuta_manual'
   unique (repasse_id, id_parcela)
 );
 
@@ -208,28 +210,41 @@ RLS: mesmo padrão admin/financeiro via `current_perfil()`. RBAC: módulo `finan
 ### Fluxo de importação
 
 1. Upload do analítico `.xlsx` **e** do resumo `.pdf` do mesmo mês → escolhe a unidade isaac (o CNPJ vem dela) e a competência do repasse.
-   - O parser do resumo (`src/lib/isaac/parse-resumo.ts`, `pdf-parse` já está no projeto) extrai as linhas e as transferências programadas.
-   - Se o layout do PDF mudar, a tela permite digitar as linhas à mão. Nunca inferir.
+   - **Voltou a ser parser primário (v1), corrigindo a nota anterior.** Testado com `pdftotext` contra os dois resumos reais de setembro/2026: a extração de texto sai em ordem sequencial estável — rótulo seguido do valor, sem embaralhar colunas — mesmo sem preservar layout visual (`pdftotext` sem `-layout`, que é o modo mais parecido com o que `pdf-parse` faz). "Transferências programadas" sai como `data1, data2, valor1, valor2`, pareável por índice. Não é o risco de layout bagunçado que eu tinha suposto; o parser (`src/lib/isaac/parse-resumo.ts`, `pdf-parse`) faz regex ancorado em cada rótulo conhecido (`Mensalidades`, `Novo contrato`, `Taxa isaac`, `Recebido na escola`, `Cancelado`, `Débito da parcela do crédito de curto prazo`) sobre o texto extraído — não depende de posição/tabela, só do rótulo aparecer seguido de um valor em reais.
+   - **Falha segura, não silenciosa:** se algum rótulo esperado não for encontrado no texto extraído (Meu Arco muda o texto do rótulo, ou muda de PDF pra outro formato de export), o parser não adivinha — a tela cai para os mesmos campos digitáveis à mão, pré-preenchidos com o que o parser conseguiu casar. **Nunca inferir** continua valendo: o parser só aceita match exato de rótulo, nunca aproximação.
+   - **Campo extra, fora do modelo de valores:** o cabeçalho "Recebimentos" traz `<n> alunos | <n> cobranças` (ex.: "307 alunos | 327 cobranças") — cross-check de graça contra `isaac_parcela` daquela unidade/competência. Parser extrai também; `isaac_repasse.alunos_informados int` e `isaac_repasse.cobrancas_informadas int` (nullable, só conferência), com divergência mostrada na pré-visualização se não bater com `count(distinct aluno_id)`/`count(*)`.
+   - A checagem de fechamento (passo 8) valida os valores extraídos (ou digitados) contra o analítico de qualquer forma — o parser economiza a digitação, não substitui a validação.
+   - `src/lib/isaac/parse-resumo.ts` fica marcado como **v2, não fazer agora** — só se o volume crescer (mais unidades, mais meses) a ponto de justificar automatizar.
 2. **Parser puro** (`src/lib/isaac/parse-analitico.ts`, exceljs) lê as abas "Repasse de Mensalidades" e "Mudanças". Valida colunas pelo nome e falha com mensagem clara se o layout mudar.
 3. **Classificação do produto** (`classificarProduto`, função pura): `Mensalidade*`/`Anuidade*` → `mensalidade`; `Materia*`/`Material*` → `material`; o resto → `outro`.
 4. **Casamento de aluno**, nesta ordem:
    - (a) `aluno_alias` (fonte `isaac`);
    - (b) `alunos.nome_normalizado` = nome normalizado (sem acento, minúsculo, espaço único);
-   - (c) sem casamento → `aluno_id = null`, vai para a fila.
+   - (c) sem casamento → `aluno_id = null`, `motivo_pendencia='sem_aluno'`, vai para a fila.
 
    **Fuzzy nunca casa automaticamente.** Ele só sugere, porque irmãos têm sobrenome igual (ex.: "Laura Rodrigues da Silva" × "Amanda Rodrigues da Silva").
-5. **Pré-visualização** antes de gravar:
+5. **Checagem `tipo_vaga` × parcela de mensalidade** (só roda para parcela com aluno casado e `tipo = 'mensalidade'`; parcela de material nunca é bloqueada por isso). Lê `matriculas.tipo_vaga` da matrícula **ativa** do aluno no ano da competência:
+   - `NORMAL` e `BOLSA_50_PORCENTO` → esperado ter mensalidade no isaac. Segue para gravação normal (passo 7), sem checagem extra. O valor gravado é sempre o que o isaac de fato repassou, nunca o valor de tabela recalculado aqui.
+   - `BOLSA_INTEGRAL`, `FILHO_PROFESSORA_INTEGRAL`, `ISENTO`, `FILHO_PROFESSORA` → **não deveriam ter mensalidade cobrada pelo isaac.** Se a parcela tem `valor_base > 0`, isso é uma inconsistência entre o cadastro da escola e o cadastro do isaac (aluno marcado como beneficiário aqui, mas isaac ainda cobrando) — não vira `cobranca`/`pagamento` automaticamente. Grava em `isaac_parcela` com `cobranca_id = null`, `motivo_pendencia = 'tipo_vaga_incompativel'`, entra na fila de revisão.
+     - `FILHO_PROFESSORA` está neste grupo, e não junto de `BOLSA_50_PORCENTO`, apesar de os dois serem 50% (`percentual_bolsa = 50`, constraint da migration `202609220002`). Motivo: o desconto do filho de professora **é aplicado na folha de pagamento, não no isaac** — o aluno não é cobrado pelo isaac de forma alguma. Confirmado por Rodrigo (22/09) e consistente com os dados: todos os `FILHO_PROFESSORA` do levantamento aparecem na lista de alunos sem mensalidade no isaac. Os dois tipos compartilham o percentual, mas **não** o fluxo de cobrança — o `percentual_bolsa` igual não deve ser usado como critério de roteamento no importador.
+     - **Consequência para o razão (a definir):** a contrapartida desses 50% nunca passa pelo isaac nem entra como crédito no extrato Sicoob — ela aparece como dedução no líquido da folha da professora. Se o razão só registrar receita pelo repasse isaac + Pix conciliado, essa parcela de receita simplesmente não existe no livro. `lancamento_financeiro` já tem `folha_run_id`, então o caminho natural é a própria rodada de folha gerar o lançamento correspondente — mas isso é frente de RH/folha, fora do escopo desta Fase B. Fica registrado aqui para não virar buraco silencioso no fechamento.
+   - `PERMUTA` → não tem percentual fixo no schema (cada caso é negociado). **Toda parcela de mensalidade de aluno `PERMUTA` cai na fila de revisão manual** (`motivo_pendencia = 'permuta_manual'`), mesmo com `valor_base > 0`. Isso é uma escolha de modelagem deste spec, não uma regra que veio de você — se `PERMUTA` na prática sempre tiver valor previsível (ex.: sempre 30% da mensalidade), dá pra promover para checagem automática depois; até lá, mais seguro revisar caso a caso do que assumir um percentual.
+   - Esta checagem **não altera** os totais do repasse nem a checagem de fechamento do passo 8 — ela decide só se uma parcela vira `cobranca` automaticamente ou vai para revisão; o dinheiro que o isaac diz ter transferido é gravado em `isaac_repasse`/`isaac_repasse_linha` de qualquer forma.
+6. **Pré-visualização** antes de gravar:
    - totais do arquivo × totais calculados;
-   - parcelas sem aluno;
-   - alunos ativos pagantes (`tipo_vaga in ('paga','bolsa_parcial')`) sem parcela de mensalidade;
+   - parcelas sem aluno (`motivo_pendencia='sem_aluno'`);
+   - parcelas com `tipo_vaga` incompatível (`motivo_pendencia='tipo_vaga_incompativel'`) — **lista bloqueante**, precisa de decisão manual (corrigir cadastro no isaac, ou confirmar que a cobrança é legítima e ajustar `tipo_vaga` aqui) antes de prosseguir;
+   - parcelas de `PERMUTA` para revisão (`motivo_pendencia='permuta_manual'`) — informativo, não bloqueia;
+   - alunos com matrícula ativa e `tipo_vaga in ('NORMAL','BOLSA_50_PORCENTO')` sem nenhuma parcela de mensalidade no repasse — sinal de aluno pagante que sumiu do isaac;
    - parcelas cujo valor difere do `valor_mensalidade_praticado`.
-6. **Gravação**, numa transação via RPC `importar_repasse_isaac(jsonb)`:
-   - `isaac_repasse` + `isaac_parcela` + `isaac_mudanca`;
-   - para cada parcela com `valor_base > 0` e aluno casado: upsert em `cobrancas` (`origem='isaac'`, `id_externo=id_parcela`, `valor_original=valor_base`, `categoria_id` pelo tipo) + `pagamentos` (`valor_pago=valor_base`, `data_pagamento=data_repasse`, `forma_pagamento='transferencia'`, `observacao='isaac <competencia_repasse>'`);
+7. **Gravação**, numa transação via RPC `importar_repasse_isaac(jsonb)`:
+   - `isaac_repasse` + `isaac_parcela` + `isaac_mudanca` (todas as parcelas, inclusive as pendentes — `isaac_parcela` é o espelho fiel do que o isaac mandou);
+   - para cada parcela com `valor_base > 0`, aluno casado **e `motivo_pendencia is null`**: upsert em `cobrancas` (`origem='isaac'`, `id_externo=id_parcela`, `valor_original=valor_base`, `categoria_id` pelo tipo) + `pagamentos` (`valor_pago=valor_base`, `data_pagamento=data_repasse`, `forma_pagamento='transferencia'`, `observacao='isaac <competencia_repasse>'`);
+   - parcelas com `motivo_pendencia` não nulo **não geram `cobranca`/`pagamento` nesta importação** — ficam disponíveis numa tela de resolução (`/financeiro/isaac/pendencias` ou equivalente) para tratar depois, sem travar o fechamento do mês;
    - **um** `lancamento_financeiro` de despesa "Taxa isaac" (`origem_tipo='isaac'`, `origem_id=repasse.id`, `status='paga'`, `company_id` da unidade).
    - Linha "Débito da parcela do crédito de curto prazo": **um** `lancamento_financeiro` de despesa na categoria "Amortização crédito isaac", marcada como **não operacional**, para ficar fora do resultado operacional. A separação entre principal e juros depende do contrato do crédito (decisão em aberto).
-   - Checagem de fechamento: mensalidades + novo contrato − taxa − recebido na escola − cancelado ± outros = soma das transferências. Se não fechar, a importação é **bloqueada**.
-7. **Reimportar** o mesmo arquivo é idempotente (`unique` em `id_parcela` e em `(unidade, competencia)`).
+8. **Checagem de fechamento**: mensalidades + novo contrato − taxa − recebido na escola − cancelado ± outros = soma das transferências (independe do que virou `cobranca` ou ficou pendente — é conferência do dinheiro do isaac, não do nosso cadastro). Se não fechar, a importação é **bloqueada**.
+9. **Reimportar** o mesmo arquivo é idempotente (`unique` em `id_parcela` e em `(unidade, competencia)`); parcelas resolvidas manualmente numa fila continuam resolvidas (o reimport não reabre `motivo_pendencia` já tratado).
 
 ### Ajuste no trigger `espelhar_pagamento_cobranca_razao`
 
@@ -242,7 +257,9 @@ No sync do extrato, **cada** `isaac_transferencia` é casada separadamente com u
 
 ### Reprocessamento de 2026
 
-Importar os analíticos de cada mês de 2026 disponíveis no Meu Arco, por unidade. Mês sem analítico fica sem receita no razão, com aviso explícito no dashboard. **Não inventar valor.**
+Importar os analíticos de cada mês de 2026 disponíveis no Meu Arco, por unidade. Escopo esperado: **Fev a Set/2026 × 2 unidades** (~16 analíticos + ~16 resumos; ver decisão 3). Mês sem analítico fica sem receita no razão, com aviso explícito no dashboard. **Não inventar valor.**
+
+Ordem sugerida: importar **um** mês fechado primeiro (agosto, que já tem os números conferidos neste spec), validar o resultado no razão contra o resumo, e só então processar o resto em lote. Reprocessar 8 meses de uma vez sem ter validado o primeiro é como o banco ficou sujo da primeira vez.
 
 ### Testes (vitest)
 
@@ -253,7 +270,8 @@ Importar os analíticos de cada mês de 2026 disponíveis no Meu Arco, por unida
 **Aceite B:**
 - os analíticos reais de agosto/2026 batem os totais de agosto;
 - analítico + resumo de setembro/2026 batem R$ 164.594,34 e R$ 179.255,72, com as transferências de 05 e 15 corretas, centavo a centavo;
-- a linha do crédito de curto prazo aparece fora do resultado operacional.
+- a linha do crédito de curto prazo aparece fora do resultado operacional;
+- nenhum dos 58 alunos com `tipo_vaga` em `BOLSA_INTEGRAL`/`FILHO_PROFESSORA_INTEGRAL`/`ISENTO`/`FILHO_PROFESSORA` (classificados via PR #27) gera `cobranca` automática de mensalidade ao reprocessar agosto/2026 — se algum deles tiver `valor_base > 0` no analítico daquele mês, tem que aparecer na fila de pendência, não no livro-razão.
 
 ---
 
@@ -319,6 +337,7 @@ onde `ordinal` é a posição do item entre os itens idênticos da mesma respost
 4. Previsto × realizado.
 5. MCP read-only para o Claude.
 6. Pagamentos via API. As regras de aprovação são decisão dos sócios e não estão definidas aqui.
+7. **Contrapartida em folha do desconto de `FILHO_PROFESSORA`** (ver Fase B, passo 5). Os 50% que a escola recebe via dedução no líquido da folha não passam pelo isaac nem pelo extrato Sicoob — hoje essa receita não existe em lugar nenhum do razão. Caminho natural: a rodada de folha gerar o `lancamento_financeiro` correspondente via `folha_run_id`. É frente de RH/folha, não deste spec, mas precisa existir para o fechamento fechar de verdade.
 
 ## Decisões em aberto (do Rodrigo, não assumidas)
 
@@ -326,8 +345,15 @@ onde `ordinal` é a posição do item entre os itens idênticos da mesma respost
    - Unidade isaac **"EPG Trindade"** → **Escola Pinguinho de Gente LTDA**, CNPJ 11.714.876/0001-16.
    - Unidade isaac **"EPG Trindade - Educação Infantil"** → **Colégio Integrado EPG**, CNPJ 35.027.047/0001-23.
    - Isso é o oposto do que o nome da unidade sugeria. O importador (Fase B) e o `isaac_unidade` devem gravar esse vínculo explicitamente (não inferir por nome), e o de-para deve ficar comentado no código/migration citando esta confirmação — se o isaac renomear unidades no futuro, o vínculo quebra silenciosamente.
-2. Categoria do material didático: uma só ou por segmento.
-3. Quais meses de 2026 têm analítico disponível no Meu Arco.
+2. ~~Categoria do material didático~~ — **DECIDIDO: por segmento** (Rodrigo, 22/09), usando a hierarquia que `categorias_financeiras` já suporta: categoria pai "Material didático" com filhas `Infantil`, `Fund I`, `Fund II`, `Médio`.
+   - **Segmento ≠ editora.** A tabela de material 2027 tem três editoras (COC → Infantil 3/4/5; POLIEDRO → 1º ao 9º ano; OLIMPO → 1ª a 3ª série), mas o POLIEDRO cobre **dois** segmentos (Fund I e Fund II). Categorizar por editora daria 3 categorias; por segmento dá 4. Escolhido segmento porque a editora é renegociada de ano para ano (se trocar o Poliedro em 2028, a série histórica do razão quebra), enquanto o segmento é estável e é o eixo em que se analisa margem. A editora entra como texto no lançamento/`isaac_parcela.produto`, não como categoria.
+   - Maternal só tem agenda (R$ 70,00, sem apostilado) — cai em `Infantil`, não vira categoria própria.
+   - **Todo o material está num CNPJ só.** Em ago/2026 a unidade "EPG Trindade - Educação Infantil" (= Colégio Integrado EPG) faturou R$ 81.456,61 de material — Infantil, Fund I **e** Fund II — enquanto a unidade "EPG Trindade" (Pinguinho) faturou **R$ 0,00** de material. Com categoria por segmento isso fica explícito no razão: receita de `Fund I`/`Fund II` sob o `company_id` do Integrado. Não é erro do importador, é como o isaac está configurado.
+   - **Não corrigir isso no isaac: o material sai do isaac no próximo ano** (Rodrigo, 22/09) e passa a ser vendido na loja da própria editora. Ou seja, esta categorização serve para o **histórico** (2026 e o que sobrar de 2027), não para o regime permanente. Não vale investir em granularidade maior nem em ajuste de unidade isaac para algo que está saindo.
+   - **Impacto a dimensionar fora deste spec:** material é parcelado em 10x, então os R$ 81,4 mil/mês de agosto sugerem ordem de ~R$ 800 mil/ano de receita bruta de material. Quando isso migra para a loja da editora, some a receita **e** o custo correspondente do DRE — o efeito líquido no EBITDA é a margem que a escola tinha nessa revenda, que não está apurada em lugar nenhum hoje. Isso afeta diretamente o modelo de valuation (`VALUATION_EPG_AGO_2026.xlsx`), que projeta a partir de um EBITDA que inclui essa margem. **Apurar a margem de material antes de usar aquele valuation para qualquer decisão de venda.**
+3. ~~Quais meses de 2026 têm analítico~~ — **PARCIALMENTE RESOLVIDO.** O seletor do Meu Arco lista os 12 meses de 2026, mas listar não é ter dado: Out/Nov/Dez ainda não aconteceram (hoje é 22/09/2026) e Jan precisa ser verificado (o ano letivo começa em fevereiro). Na prática o backlog é de Fev a Set/2026, **× 2 unidades**, analítico `.xlsx` + resumo `.pdf` = ~32 arquivos para baixar à mão antes de reprocessar. Confirmar abrindo os meses antes de começar; mês sem dado fica sem receita no razão, com aviso — **não inventar valor**.
+   - **Defasagem de competência (confirmado na tela):** o repasse rotulado "Setembro de 2026" cobre o período de atualizações de 30/jul a 31/ago. Ou seja, `competencia_repasse` ≠ competência da mensalidade — o que o spec já trata gravando os dois campos separados (`isaac_repasse.competencia_repasse` e `isaac_parcela.competencia`). Consequência: o ano letivo 2026 completo só fecha incluindo o repasse de jan/2027. Definir na tela de relatório qual eixo é o padrão (caixa = data do repasse, ou competência = mês da mensalidade); o dado suporta os dois.
+   - **Estrutura do resumo confirmada pela tela:** Recebimentos − Descontos = Total a transferir (set/2026, unidade EPG Trindade: 221.134,95 − 41.879,23 = 179.255,72). Bate com o valor do Aceite B.
 4. ~~"Filho de professor"~~ — **RESOLVIDO E JÁ EM PRODUÇÃO.** Entrou como `tipo_vaga`, não como motivo de desconto avulso: PR #27 (`feat/tipo-vaga-matriculas`, merged 22/09) substituiu o enum antigo (`paga/bolsa_integral/bolsa_parcial/permuta/gratuita`) por `NORMAL | BOLSA_50_PORCENTO | BOLSA_INTEGRAL | FILHO_PROFESSORA | FILHO_PROFESSORA_INTEGRAL | PERMUTA | ISENTO` (migrations `202609220001`/`202609220002`), com `FILHO_PROFESSORA` cobrando 50% (mesma regra de `BOLSA_50_PORCENTO`, tipo separado só para relatório) e `FILHO_PROFESSORA_INTEGRAL` isento. Os 58 alunos levantados pela secretaria (planilha `alunos_fora_isaac_revisado.xlsx`, matrícula → tipo_vaga) já foram classificados um a um via `matricula-full-edit-dialog.tsx` em produção — não sobrou pendência de dados aqui, o que resta é o item 2 (categoria de material) e a leitura de `tipo_vaga` na conciliação isaac (Fase B) para não gerar cobrança de mensalidade para bolsista/isento/permuta.
    - Dois alunos do levantamento original (Alvino Arriel e o outro caso de mensalidade cancelada em agosto) não entraram na planilha final porque saíram da escola — confirmado, não é dado perdido.
    - Campo informal "dono" (quem autorizou o desconto: Rodrigo/Renato/Rafaela/Escola) ficou só na planilha de trabalho, não tem coluna no schema — é rastreio pessoal entre os sócios, não precisa de campo dedicado (confirmado por Rodrigo).
