@@ -107,7 +107,7 @@ A Fase B não cabe num PR: são 6 tabelas, 2 parsers, uma RPC transacional, 3 te
 | 2 | Migrations: enums (arquivo próprio) + tabelas isaac + `company_id` + RLS + RBAC | **feito** (`0fb1dec5`) |
 | 3 | `parse-resumo.ts` + `parse-analitico.ts` + classificação + normalização/match — funções puras + testes | **feito** (52 testes) |
 | 4 | RPC `importar_repasse_isaac` + tela de upload/preview + fila de pendências | — |
-| 5 | Reimport de agosto + validação contra os totais conferidos | — |
+| 5 | Reimport de agosto + validação contra os totais conferidos | **parcial** (ago e set validados; fev–jul faltam arquivos) |
 | 6 | Conciliação das transferências + Fase C (multi-CNPJ) | **feito** |
 
 As colunas `company_id` entram já no PR 2 (Fase B depende delas para gravar a despesa da taxa no CNPJ certo); o resto da Fase C fica para o PR 6.
@@ -304,6 +304,35 @@ No sync do extrato, **cada** `isaac_transferencia` é casada separadamente com u
 Importar os analíticos de cada mês de 2026 disponíveis no Meu Arco, por unidade. Escopo esperado: **Fev a Set/2026 × 2 unidades** (~16 analíticos + ~16 resumos; ver decisão 3). Mês sem analítico fica sem receita no razão, com aviso explícito no dashboard. **Não inventar valor.**
 
 Ordem sugerida: importar **um** mês fechado primeiro (agosto, que já tem os números conferidos neste spec), validar o resultado no razão contra o resumo, e só então processar o resto em lote. Reprocessar 8 meses de uma vez sem ter validado o primeiro é como o banco ficou sujo da primeira vez.
+
+### Resultado do reimport (PR 5, 22/09, banco local)
+
+Importados **3 dos 4** repasses disponíveis, pela tela, agosto antes de setembro:
+
+| Repasse | Líquido | Parcelas | Viraram cobrança | Situação |
+|---|---|---|---|---|
+| EPG Trindade ago/2026 | 172.542,75 | 307 | 301 | importado |
+| Educação Infantil ago/2026 | 161.012,01 | 558 | 544 | importado |
+| Educação Infantil set/2026 | 164.594,34 | 587 | 561 | importado |
+| EPG Trindade set/2026 | 179.255,72 | 327 | — | **bloqueado** |
+
+**Conferência que importa:** para os três importados, `soma de TODAS as parcelas = base do analítico`, centavo a centavo. As parcelas que não viram cobrança (pendências e estornos) continuam somando — o espelho é fiel mesmo quando o razão não recebe a linha. Em EPG Trindade/ago as cobranças somam 11,55 a MAIS que a base, porque os estornos negativos ficam de fora: 211.210,72 − 11,55 = 211.199,17.
+
+Agosto também confirmou a tabela de referência deste spec (213.545,72 / −2.346,55 / 211.199,17 / 15.509,88 / 195.689,29 e 175.736,61 / −2.070,00 / 173.666,61 / 12.654,60 / 161.012,01), e o resumo de agosto fecha com `valor final − crédito = total transferido` (195.689,29 − 23.146,54 = 172.542,75).
+
+**Achado de negócio — 2 alunos que o isaac cobra e não deveria.** O bloqueio de EPG Trindade/set é real e nominal:
+
+| Aluno | Cadastro aqui | isaac cobrou |
+|---|---|---|
+| IZABELA SANTANA CÔRTES | `BOLSA_INTEGRAL` | R$ 445,00 (Fund. 8º ano) |
+| MATEUS PRAXEDES LOBO | `BOLSA_INTEGRAL` | R$ 745,00 (Fund. 1º ano) |
+
+**Em agosto nenhum dos dois foi cobrado** — o problema começou em setembro, o que sugere que a bolsa foi concedida aqui e não refletida no isaac. Ação: corrigir no portal do isaac (e pedir estorno das duas parcelas), ou, se a cobrança for legítima, ajustar o `tipo_vaga` da matrícula. Enquanto não resolver, aquele mês não importa — que é exatamente o desenho pretendido.
+
+### Ainda falta
+
+- **Fev a Jul/2026 × 2 unidades**: ~12 analíticos `.xlsx` + ~12 resumos `.pdf` para baixar do Meu Arco. Sem o resumo o importador recusa o mês, porque o crédito de curto prazo e as transferências só existem no PDF.
+- Reimportar EPG Trindade/set depois de resolver os dois alunos acima.
 
 ### Testes (vitest)
 
