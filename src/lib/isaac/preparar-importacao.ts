@@ -73,6 +73,11 @@ export type Divergencia = {
   obtido: number;
   /** true = impede a importação. */
   bloqueia: boolean;
+  /**
+   * "dinheiro" formata como moeda; "contagem" mostra o número cru. Sem isso a
+   * tela exibia "2 parcelas de bolsista" como "R$ 2,00".
+   */
+  unidade?: "dinheiro" | "contagem";
 };
 
 export type PreparoImportacao = {
@@ -224,6 +229,7 @@ export function conferirFechamento(
       esperado: resumo.cobrancasInformadas,
       obtido: analitico.totais.linhas,
       bloqueia: false,
+      unidade: "contagem",
     });
   }
 
@@ -305,6 +311,7 @@ export function prepararImportacao(
       esperado: 0,
       obtido: contagens.tipoVagaIncompativel,
       bloqueia: true,
+      unidade: "contagem",
     });
   }
 

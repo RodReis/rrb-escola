@@ -37,6 +37,14 @@ const securityHeaders = [
 const nextConfig = {
   reactStrictMode: true,
   eslint: { ignoreDuringBuilds: true },
+  experimental: {
+    // pdf-parse carrega pdfjs-dist, que não sobrevive ao bundling do webpack
+    // em Server Action: o reempacotamento do ESM quebra com
+    // "Object.defineProperty called on non-object" na primeira importação.
+    // Marcar como externo faz o Node carregá-lo direto de node_modules.
+    // Afeta tanto a importação de repasse isaac quanto a de alunos por PDF.
+    serverComponentsExternalPackages: ["pdf-parse", "pdfjs-dist"],
+  },
   images: {
     remotePatterns: [
       { protocol: "http",  hostname: "127.0.0.1", port: "55421", pathname: "/storage/v1/object/public/**" },
