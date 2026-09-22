@@ -4,7 +4,7 @@
  * Do NOT add any server-only imports (e.g. next/headers, supabase server) here.
  */
 
-export type OrigemDesconto = "plano" | "bolsa_parcial" | "plano+bolsa";
+export type OrigemDesconto = "plano" | "bolsa_50" | "plano+bolsa";
 
 export type RawResponsavel = {
   nome: string;
@@ -16,7 +16,7 @@ export type RawResponsavel = {
 
 export type RawMatricula = {
   id: string;
-  tipo_vaga: "paga" | "bolsa_parcial";
+  tipo_vaga: "NORMAL" | "BOLSA_50_PORCENTO" | "FILHO_PROFESSORA";
   percentual_bolsa: number;
   valor_mensalidade_praticado: number | null;
   alunos: {
@@ -63,13 +63,13 @@ export type AlunosComDescontoFilters = {
 
 export const ORIGEM_LABEL: Record<OrigemDesconto, string> = {
   plano: "Plano",
-  bolsa_parcial: "Bolsa parcial",
-  "plano+bolsa": "Plano + Bolsa parcial",
+  bolsa_50: "Bolsa 50%",
+  "plano+bolsa": "Plano + Bolsa 50%",
 };
 
 export function origemTone(origem: OrigemDesconto): "neutral" | "warning" | "danger" {
   if (origem === "plano") return "neutral";
-  if (origem === "bolsa_parcial") return "warning";
+  if (origem === "bolsa_50") return "warning";
   return "danger";
 }
 
@@ -78,11 +78,11 @@ export function origemTone(origem: OrigemDesconto): "neutral" | "warning" | "dan
  *
  * Rules (in order):
  *   1. No plano / no segmento / empty valoresSeg -> null.
- *   2. If plano value matches ANY ordem_filho value AND tipo_vaga !== bolsa_parcial -> null
+ *   2. If plano value matches ANY ordem_filho value AND tipo_vaga !== BOLSA_50_PORCENTO -> null
  *      (paying official sibling price, not a discount).
- *   3. Enters if tipo_vaga === bolsa_parcial OR plano value < min(valoresSeg).
+ *   3. Enters if tipo_vaga === BOLSA_50_PORCENTO OR plano value < min(valoresSeg).
  *   4. Origem combines plano and bolsa.
- *   5. valorEfetivo applies the bolsa percentual to the plan; percentual is clamped to [0, 1].
+ *   5. valorEfetivo applies the fixed 50% to the plan.
  *
  * `valoresSeg` MUST start with the ordem_filho=1 value (caller orders it).
  */
@@ -104,31 +104,24 @@ export function buildDescontoRow(
   // Defensive: idempotent for numbers; converts any leaked Postgres numeric strings.
   const valoresSegNum = valoresSeg.map(Number);
   const minSeg = Math.min(...valoresSegNum);
-  // 0% and 100% on a bolsa_parcial vaga are data-quality anomalies (missing or
-  // invalid percentage); we treat them as "not a valid partial scholarship" so
-  // they fall through to the plano-discount check instead of dividing by zero
-  // or producing degenerate efetivo math.
-  const isBolsaParcial =
-    raw.tipo_vaga === "bolsa_parcial" &&
-    raw.percentual_bolsa > 0 &&
-    raw.percentual_bolsa < 100;
+  const isBolsa50 = raw.tipo_vaga === "BOLSA_50_PORCENTO" || raw.tipo_vaga === "FILHO_PROFESSORA";
 
   const bateValorOficial = valoresSegNum.some((v) => v === valorCobradoNum);
-  if (bateValorOficial && !isBolsaParcial) return null;
+  if (bateValorOficial && !isBolsa50) return null;
 
   const temDescontoPlano = valorCobradoNum < minSeg;
-  if (!temDescontoPlano && !isBolsaParcial) return null;
+  if (!temDescontoPlano && !isBolsa50) return null;
 
   const origem: OrigemDesconto =
-    temDescontoPlano && isBolsaParcial
+    temDescontoPlano && isBolsa50
       ? "plano+bolsa"
       : temDescontoPlano
       ? "plano"
-      : "bolsa_parcial";
+      : "bolsa_50";
 
   // Quando valor_mensalidade_praticado está setado, ele já é o valor final cobrado
   // (sem aplicar bolsa%). Bolsa só se aplica quando caímos no fallback do plano.
-  const valorEfetivo = isBolsaParcial && valorPraticadoMatricula == null
+  const valorEfetivo = isBolsa50 && valorPraticadoMatricula == null
     ? valorCobradoNum * (1 - raw.percentual_bolsa / 100)
     : valorCobradoNum;
 
@@ -157,7 +150,7 @@ export function buildDescontoRow(
     origem,
     valorPraticadoCheio,
     valorMensalidadePlano: valorCobradoNum,
-    percentualBolsaParcial: isBolsaParcial ? raw.percentual_bolsa : 0,
+    percentualBolsaParcial: isBolsa50 ? raw.percentual_bolsa : 0,
     percentualDescontoEfetivo,
     responsavelNome: resp?.nome ?? null,
     responsavelParentesco: resp?.parentesco ?? null,

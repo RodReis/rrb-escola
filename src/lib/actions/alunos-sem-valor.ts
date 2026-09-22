@@ -6,15 +6,30 @@ import { DEFAULT_SCHOOL_ID } from "@/lib/constants";
 import { requirePermission } from "@/lib/auth/session";
 import { formText } from "@/lib/utils";
 
-type TipoVagaInput = "paga" | "bolsa_integral" | "bolsa_parcial" | "permuta" | "gratuita";
+type TipoVagaInput =
+  | "NORMAL"
+  | "BOLSA_50_PORCENTO"
+  | "BOLSA_INTEGRAL"
+  | "FILHO_PROFESSORA"
+  | "FILHO_PROFESSORA_INTEGRAL"
+  | "PERMUTA"
+  | "ISENTO";
 type StatusInput = "ativa" | "cancelada" | "transferida" | "concluida";
 
-const TIPOS_VAGA: TipoVagaInput[] = ["paga", "bolsa_integral", "bolsa_parcial", "permuta", "gratuita"];
+const TIPOS_VAGA: TipoVagaInput[] = [
+  "NORMAL",
+  "BOLSA_50_PORCENTO",
+  "BOLSA_INTEGRAL",
+  "FILHO_PROFESSORA",
+  "FILHO_PROFESSORA_INTEGRAL",
+  "PERMUTA",
+  "ISENTO",
+];
 const STATUSES: StatusInput[] = ["ativa", "cancelada", "transferida", "concluida"];
 
 function readTipoVaga(formData: FormData): TipoVagaInput {
   const raw = formText(formData, "tipo_vaga");
-  return raw && (TIPOS_VAGA as string[]).includes(raw) ? (raw as TipoVagaInput) : "paga";
+  return raw && (TIPOS_VAGA as string[]).includes(raw) ? (raw as TipoVagaInput) : "NORMAL";
 }
 
 function readStatus(formData: FormData): StatusInput {
@@ -22,18 +37,9 @@ function readStatus(formData: FormData): StatusInput {
   return raw && (STATUSES as string[]).includes(raw) ? (raw as StatusInput) : "ativa";
 }
 
-/**
- * Reads percentual_bolsa, validating it is 1-99 when tipo_vaga is bolsa_parcial,
- * and 0 otherwise. Returns a number or an error string.
- */
-function readPercentualBolsa(formData: FormData, tipo: TipoVagaInput): number | { error: string } {
-  if (tipo !== "bolsa_parcial") return 0;
-  const raw = formData.get("percentual_bolsa");
-  const value = typeof raw === "string" && raw.trim() !== "" ? Number(raw) : NaN;
-  if (!Number.isFinite(value) || value <= 0 || value >= 100) {
-    return { error: "Bolsa parcial exige percentual entre 1 e 99." };
-  }
-  return value;
+/** BOLSA_50_PORCENTO é sempre 50% fixo; os demais tipos não têm percentual. */
+function percentualBolsaFor(tipo: TipoVagaInput): number {
+  return tipo === "BOLSA_50_PORCENTO" ? 50 : 0;
 }
 
 function readValorPraticado(formData: FormData): number | null {
@@ -64,10 +70,7 @@ export async function upsertMatriculaSemValorAction(
   const planoId = formText(formData, "plano_id");
   const tipoVaga = readTipoVaga(formData);
   const status = readStatus(formData);
-
-  const percentual = readPercentualBolsa(formData, tipoVaga);
-  if (typeof percentual !== "number") return percentual;
-
+  const percentual = percentualBolsaFor(tipoVaga);
   const valorPraticado = readValorPraticado(formData);
 
   if (!alunoId) return { error: "Aluno não informado." };

@@ -2,7 +2,7 @@ import { createServerClient } from "@/lib/supabase/server";
 import { DEFAULT_SCHOOL_ID } from "@/lib/constants";
 import { getSignedFotoUrls } from "@/lib/storage/photos";
 
-export async function getEnrollments(filters?: { status?: string; nome?: string }) {
+export async function getEnrollments(filters?: { status?: string; nome?: string; tipoVaga?: string }) {
   const supabase = await createServerClient();
   let query = supabase
     .from("matriculas")
@@ -11,6 +11,7 @@ export async function getEnrollments(filters?: { status?: string; nome?: string 
     .order("data_matricula", { ascending: false });
 
   if (filters?.status) query = query.eq("status", filters.status);
+  if (filters?.tipoVaga) query = query.eq("tipo_vaga", filters.tipoVaga);
 
   const { data, error } = await query;
   if (error) throw error;

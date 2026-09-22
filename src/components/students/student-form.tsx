@@ -84,29 +84,17 @@ export function StudentForm({ options }: { options: Options }) {
           <label>Idade<input name="idade_na_matricula" type="number" /></label>
           <label>Ano letivo<input name="ano_letivo" type="number" defaultValue={new Date().getFullYear()} /></label>
           <label>Tipo de vaga
-            <select name="tipo_vaga" defaultValue="paga">
-              <option value="paga">Paga</option>
-              <option value="bolsa_integral">Bolsa integral</option>
-              <option value="bolsa_parcial">Bolsa parcial</option>
-              <option value="permuta">Permuta</option>
-              <option value="gratuita">Gratuidade</option>
+            <select name="tipo_vaga" defaultValue="NORMAL">
+              <option value="NORMAL">Normal</option>
+              <option value="BOLSA_50_PORCENTO">Bolsa 50%</option>
+              <option value="BOLSA_INTEGRAL">Bolsa integral</option>
+              <option value="FILHO_PROFESSORA">Filho de professora</option>
+              <option value="FILHO_PROFESSORA_INTEGRAL">Filho de professora integral</option>
+              <option value="PERMUTA">Permuta</option>
+              <option value="ISENTO">Isento</option>
             </select>
           </label>
-          <label>% Bolsa parcial
-            <input
-              name="percentual_bolsa"
-              type="number"
-              min={0}
-              max={100}
-              step={1}
-              defaultValue={0}
-              placeholder="0-100"
-            />
-          </label>
         </div>
-        <p className="text-xs text-ink/60">
-          % Bolsa parcial só é considerado quando o tipo é &quot;Bolsa parcial&quot;. Para outros tipos, deixe em 0.
-        </p>
       </Section>
 
       <Section title="Informacoes Medicas">

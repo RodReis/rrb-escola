@@ -25,8 +25,8 @@ export {
 } from "./alunos-com-desconto-constants";
 
 /**
- * Fetches active 2026 matrículas of tipo_vaga `paga` or `bolsa_parcial` that
- * pay below the practiced value (plano below min sibling price OR bolsa_parcial),
+ * Fetches active 2026 matrículas of tipo_vaga `NORMAL` or `BOLSA_50_PORCENTO` that
+ * pay below the practiced value (plano below min sibling price OR BOLSA_50_PORCENTO),
  * excluding students who pay an official sibling price.
  * Sorted by série order, then student name.
  */
@@ -48,7 +48,7 @@ export async function getAlunosComDesconto(
     .eq("escola_id", DEFAULT_SCHOOL_ID)
     .eq("ano_letivo", anoLetivo)
     .eq("status", "ativa")
-    .in("tipo_vaga", ["paga", "bolsa_parcial"]);
+    .in("tipo_vaga", ["NORMAL", "BOLSA_50_PORCENTO", "FILHO_PROFESSORA"]);
 
   if (filters.nome) {
     query = query.or(`nome.ilike.%${filters.nome}%`, { foreignTable: "alunos" });

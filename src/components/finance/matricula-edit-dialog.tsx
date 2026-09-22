@@ -17,11 +17,13 @@ type Props = {
 };
 
 const TIPOS = [
-  { value: "paga", label: "Paga" },
-  { value: "bolsa_integral", label: "Bolsa integral" },
-  { value: "bolsa_parcial", label: "Bolsa parcial" },
-  { value: "permuta", label: "Permuta" },
-  { value: "gratuita", label: "Gratuita" },
+  { value: "NORMAL", label: "Normal" },
+  { value: "BOLSA_50_PORCENTO", label: "Bolsa 50%" },
+  { value: "BOLSA_INTEGRAL", label: "Bolsa integral" },
+  { value: "FILHO_PROFESSORA", label: "Filho de professora" },
+  { value: "FILHO_PROFESSORA_INTEGRAL", label: "Filho de professora integral" },
+  { value: "PERMUTA", label: "Permuta" },
+  { value: "ISENTO", label: "Isento" },
 ];
 
 const STATUSES = [
@@ -33,14 +35,11 @@ const STATUSES = [
 
 export function MatriculaEditDialog({ row, series, turmas, planos }: Props) {
   const [open, setOpen] = useState(false);
-  const [tipoVaga, setTipoVaga] = useState<string>(row.tipoVaga ?? "paga");
+  const [tipoVaga, setTipoVaga] = useState<string>(row.tipoVaga ?? "NORMAL");
   const [planoId, setPlanoId] = useState<string>(row.planoId ?? "");
   const [status, setStatus] = useState<string>(row.status ?? "ativa");
   const [serieId, setSerieId] = useState(row.serieId ?? "");
   const [turmaId, setTurmaId] = useState(row.turmaId ?? "");
-  const [percentualBolsa, setPercentualBolsa] = useState<string>(
-    row.percentualBolsa != null && row.percentualBolsa > 0 ? String(row.percentualBolsa) : ""
-  );
   const [valorMensalidade, setValorMensalidade] = useState<string>(
     row.valorMensalidadePraticado != null ? String(row.valorMensalidadePraticado) : ""
   );
@@ -65,16 +64,13 @@ export function MatriculaEditDialog({ row, series, turmas, planos }: Props) {
 
   function openDialog() {
     // Reset local state to the row's current values each time the modal opens.
-    setTipoVaga(row.tipoVaga ?? "paga");
+    setTipoVaga(row.tipoVaga ?? "NORMAL");
     setPlanoId(row.planoId ?? "");
     setStatus(row.status ?? "ativa");
     setSerieId(row.serieId ?? "");
     setTurmaId(row.turmaId ?? "");
     setValorMensalidade(
       row.valorMensalidadePraticado != null ? String(row.valorMensalidadePraticado) : ""
-    );
-    setPercentualBolsa(
-      row.percentualBolsa != null && row.percentualBolsa > 0 ? String(row.percentualBolsa) : ""
     );
     setError(null);
     setOpen(true);
@@ -113,22 +109,6 @@ export function MatriculaEditDialog({ row, series, turmas, planos }: Props) {
               ))}
             </select>
           </label>
-
-          {tipoVaga === "bolsa_parcial" ? (
-            <label className="text-xs font-medium text-ink/70">
-              Percentual da bolsa (1-99)
-              <input
-                name="percentual_bolsa"
-                type="number"
-                min={1}
-                max={99}
-                inputMode="numeric"
-                required
-                value={percentualBolsa}
-                onChange={(e) => setPercentualBolsa(e.target.value)}
-              />
-            </label>
-          ) : null}
 
           <label className="text-xs font-medium text-ink/70">
             Plano

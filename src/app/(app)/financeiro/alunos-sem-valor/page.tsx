@@ -99,7 +99,7 @@ export default async function AlunosSemValorPage({
       (r) => r.origem === "plano" || r.origem === "plano+bolsa"
     ).length;
     const bolsaCount = rows.filter(
-      (r) => r.origem === "bolsa_parcial" || r.origem === "plano+bolsa"
+      (r) => r.origem === "bolsa_50" || r.origem === "plano+bolsa"
     ).length;
     const mediaDesconto =
       rows.length === 0
@@ -214,10 +214,14 @@ export default async function AlunosSemValorPage({
   const semMatricula = rows.filter((r) => r.motivo === "sem_matricula").length;
   const semValor = rows.filter((r) => r.motivo === "sem_valor").length;
   const bolsistas = rows.filter(
-    (r) => r.motivo === "bolsa_integral" || r.motivo === "bolsa_parcial"
+    (r) =>
+      r.motivo === "BOLSA_INTEGRAL" ||
+      r.motivo === "BOLSA_50_PORCENTO" ||
+      r.motivo === "FILHO_PROFESSORA" ||
+      r.motivo === "FILHO_PROFESSORA_INTEGRAL"
   ).length;
   const permutaGratuita = rows.filter(
-    (r) => r.motivo === "permuta" || r.motivo === "gratuita"
+    (r) => r.motivo === "PERMUTA" || r.motivo === "ISENTO"
   ).length;
 
   return (
