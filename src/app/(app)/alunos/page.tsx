@@ -219,7 +219,7 @@ export default async function StudentsPage({
               <th className="w-[170px]">Plano</th>
               <th className="w-[200px]">Responsável</th>
               <th className="w-[160px]">Status</th>
-              <th className="w-[60px]"></th>
+              <th className="w-[132px] text-right">Ação</th>
             </tr>
           </thead>
           <tbody>

@@ -1,9 +1,9 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
-import { MoreHorizontal, Eye, Pencil, UserCheck, UserX, Trash2 } from "lucide-react";
+import Link from "next/link";
+import { Pencil, UserCheck, UserX, Trash2 } from "lucide-react";
 import { toggleStudentAction, deleteStudentAction } from "@/lib/actions/students";
-import { useAction } from "@/lib/hooks/use-action";
+import { RowActionButton } from "@/components/ui/row-action-button";
 
 type Props = {
   alunoId: string;
@@ -11,142 +11,70 @@ type Props = {
   ativo: boolean;
 };
 
+// "Ver ficha" nao vira icone: clicar no nome do aluno (celula anterior) ja
+// leva pra la — repetir a acao aqui seria redundante.
 export function AlunoRowActions({ alunoId, alunoNome, ativo }: Props) {
-  const [open, setOpen] = useState(false);
-  const ref = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    function onDocClick(e: MouseEvent) {
-      if (ref.current && !ref.current.contains(e.target as Node)) {
-        setOpen(false);
-      }
-    }
-    function onEsc(e: KeyboardEvent) {
-      if (e.key === "Escape") setOpen(false);
-    }
-    document.addEventListener("mousedown", onDocClick);
-    document.addEventListener("keydown", onEsc);
-    return () => {
-      document.removeEventListener("mousedown", onDocClick);
-      document.removeEventListener("keydown", onEsc);
-    };
-  }, []);
-
-  const label = ativo ? "desativar" : "ativar";
-
-  const toggle = useAction(toggleStudentAction, {
-    confirm: {
-      title: ativo ? "Desativar aluno" : "Ativar aluno",
-      message: `Tem certeza que quer ${label} o aluno "${alunoNome}"?`,
-      confirmLabel: ativo ? "Desativar" : "Ativar",
-      variant: ativo ? "warning" : "default",
-    },
-    success: `Aluno ${ativo ? "desativado" : "ativado"}.`,
-    error: "Falha ao alterar status.",
-  });
-
-  const remove = useAction(deleteStudentAction, {
-    confirm: {
-      title: "Excluir aluno",
-      message: `Tem certeza que quer excluir "${alunoNome}"? Esta operação remove todos os dados vinculados e não pode ser desfeita.`,
-      confirmLabel: "Excluir",
-      variant: "danger",
-    },
-    // deleteStudentAction faz redirect() no sucesso: o useAction deixa a
-    // excecao NEXT_REDIRECT subir e o Next navega para /alunos.
-    error: "Falha ao excluir aluno.",
-  });
-
-  const pending = toggle.pending || remove.pending;
-
-  function handleToggle() {
-    setOpen(false);
-    const fd = new FormData();
-    fd.append("aluno_id", alunoId);
-    fd.append("ativo", ativo ? "" : "on");
-    toggle.run(fd);
-  }
-
-  function handleDelete() {
-    setOpen(false);
-    const fd = new FormData();
-    fd.append("aluno_id", alunoId);
-    remove.run(fd);
-  }
-
   return (
-    <div ref={ref} className="relative inline-block">
-      <button
-        type="button"
-        disabled={pending}
-        onClick={() => setOpen((v) => !v)}
-        aria-haspopup="true"
-        aria-expanded={open}
-        aria-label="Mais ações"
-        className="flex h-7 w-7 items-center justify-center rounded-md text-ink/60 transition hover:bg-muted hover:text-ink disabled:opacity-40"
+    <div className="inline-flex items-center justify-center gap-1">
+      <Link
+        href={`/alunos/${alunoId}/editar`}
+        title="Editar"
+        aria-label="Editar"
+        className="inline-flex h-8 w-8 items-center justify-center rounded-md text-brand hover:bg-brand/10"
       >
-        <MoreHorizontal size={16} />
-      </button>
+        <Pencil size={15} />
+      </Link>
 
-      {open && (
-        <div
-          role="menu"
-          className="absolute right-0 top-full z-50 mt-1 w-52 rounded-lg border border-line bg-surface py-1 shadow-soft"
-        >
-          <a
-            href={`/alunos/${alunoId}`}
-            role="menuitem"
-            onClick={() => setOpen(false)}
-            className="flex items-center gap-2.5 px-3 py-2 text-sm text-ink hover:bg-muted"
-          >
-            <Eye size={14} className="text-ink/50" />
-            Ver ficha
-          </a>
-
-          <a
-            href={`/alunos/${alunoId}/editar`}
-            role="menuitem"
-            onClick={() => setOpen(false)}
-            className="flex items-center gap-2.5 px-3 py-2 text-sm text-ink hover:bg-muted"
-          >
-            <Pencil size={14} className="text-ink/50" />
-            Editar
-          </a>
-
-          <div className="my-1 border-t border-line" />
-
-          <button
-            type="button"
-            role="menuitem"
-            onClick={handleToggle}
-            className="flex w-full items-center gap-2.5 px-3 py-2 text-sm text-ink hover:bg-muted"
-          >
-            {ativo ? (
-              <>
-                <UserX size={14} className="text-warning/70" />
-                Desativar aluno
-              </>
-            ) : (
-              <>
-                <UserCheck size={14} className="text-success/70" />
-                Ativar aluno
-              </>
-            )}
-          </button>
-
-          <div className="my-1 border-t border-line" />
-
-          <button
-            type="button"
-            role="menuitem"
-            onClick={handleDelete}
-            className="flex w-full items-center gap-2.5 px-3 py-2 text-sm text-danger hover:bg-danger/5"
-          >
-            <Trash2 size={14} />
-            Excluir aluno
-          </button>
-        </div>
+      {ativo ? (
+        <RowActionButton
+          action={toggleStudentAction}
+          args={{ aluno_id: alunoId, ativo: "" }}
+          icon={UserX}
+          label="Desativar"
+          tone="warning"
+          confirm={{
+            title: "Desativar aluno",
+            message: `Tem certeza que quer desativar o aluno "${alunoNome}"?`,
+            confirmLabel: "Desativar",
+            variant: "warning",
+          }}
+          success="Aluno desativado."
+          error="Falha ao alterar status."
+        />
+      ) : (
+        <RowActionButton
+          action={toggleStudentAction}
+          args={{ aluno_id: alunoId, ativo: "on" }}
+          icon={UserCheck}
+          label="Ativar"
+          tone="success"
+          confirm={{
+            title: "Ativar aluno",
+            message: `Tem certeza que quer ativar o aluno "${alunoNome}"?`,
+            confirmLabel: "Ativar",
+          }}
+          success="Aluno ativado."
+          error="Falha ao alterar status."
+        />
       )}
+
+      <RowActionButton
+        action={deleteStudentAction}
+        args={{ aluno_id: alunoId }}
+        icon={Trash2}
+        label="Excluir"
+        tone="danger"
+        confirm={{
+          title: "Excluir aluno",
+          message: `Tem certeza que quer excluir "${alunoNome}"? Esta operação remove todos os dados vinculados e não pode ser desfeita.`,
+          confirmLabel: "Excluir",
+          variant: "danger",
+        }}
+        // deleteStudentAction faz redirect() no sucesso: useAction (dentro de
+        // RowActionButton) deixa a excecao NEXT_REDIRECT subir e o Next
+        // navega para /alunos.
+        error="Falha ao excluir aluno."
+      />
     </div>
   );
 }
