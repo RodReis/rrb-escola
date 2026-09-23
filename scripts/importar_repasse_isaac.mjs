@@ -93,7 +93,7 @@ async function acharPares(pasta) {
     // conteúdo, que é o único critério que não mente.
     let pdfCasado = null;
     for (const p of pdfs) {
-      const slugPdf = p.toLowerCase().replace(/^resumo-/, "").replace(/\s*\d*\.pdf$/, "");
+      const slugPdf = p.toLowerCase().replace(/^resumo-/, "").replace(/\s*(\(\d+\))?\.pdf$/, "");
       if (slugPdf !== unidadeSlug.toLowerCase()) continue;
       const resumo = await lerResumo(path.join(pasta, p));
       if (resumo.competencia === competencia) { pdfCasado = { arquivo: p, resumo }; break; }
@@ -111,6 +111,18 @@ const money = (v) => `R$ ${Number(v).toFixed(2)}`;
   const sb = createClient(url, key);
   console.log(`Banco: ${url}`);
   console.log(aplicar ? "Modo: APLICAR (vai gravar)\n" : "Modo: ENSAIO (nada é gravado)\n");
+
+  // A RPC exige sessão de usuário (guard current_perfil().id is not null) —
+  // service_role sozinho não passa. Login só entra quando for gravar de verdade.
+  if (aplicar) {
+    const email = process.env.ISAAC_EMAIL;
+    const senha = process.env.ISAAC_SENHA;
+    if (!email || !senha) {
+      throw new Error("Defina ISAAC_EMAIL e ISAAC_SENHA no ambiente antes de rodar com --aplicar.");
+    }
+    const { error: authError } = await sb.auth.signInWithPassword({ email, password: senha });
+    if (authError) throw new Error(`Login falhou: ${authError.message}`);
+  }
 
   const { data: unidades } = await sb.from("isaac_unidade").select("id, nome_isaac, company_id");
   if (!unidades?.length) throw new Error("Nenhuma unidade isaac configurada.");
