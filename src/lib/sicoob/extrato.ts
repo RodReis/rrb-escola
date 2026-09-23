@@ -34,6 +34,6 @@ export function consultarExtrato(input: {
   const query = new URLSearchParams({ numeroContaCorrente: input.contaCorrente });
   return sicoobRequest<SicoobExtratoResponse>(
     `${endpoints.contaCorrenteBasePath}/extrato/${input.mes}/${input.ano}?${query}`,
-    { scope: "cco_extrato", credencialRef: input.credencialRef },
+    { scope: "cco_consulta", credencialRef: input.credencialRef },
   );
 }

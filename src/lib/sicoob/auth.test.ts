@@ -51,13 +51,13 @@ describe("getSicoobAccessToken", () => {
       .mockResolvedValueOnce({ ok: true, json: async () => ({ access_token: "token-cnpj-2", expires_in: 300 }) });
     vi.stubGlobal("fetch", fetchMock);
 
-    await expect(getSicoobAccessToken(config, "cco_extrato")).resolves.toBe("token-cnpj-1");
-    await expect(getSicoobAccessToken(outroCnpj, "cco_extrato")).resolves.toBe("token-cnpj-2");
+    await expect(getSicoobAccessToken(config, "cco_consulta")).resolves.toBe("token-cnpj-1");
+    await expect(getSicoobAccessToken(outroCnpj, "cco_consulta")).resolves.toBe("token-cnpj-2");
     expect(fetchMock).toHaveBeenCalledTimes(2);
 
     // E cada um continua com o seu ao repetir.
-    await expect(getSicoobAccessToken(config, "cco_extrato")).resolves.toBe("token-cnpj-1");
-    await expect(getSicoobAccessToken(outroCnpj, "cco_extrato")).resolves.toBe("token-cnpj-2");
+    await expect(getSicoobAccessToken(config, "cco_consulta")).resolves.toBe("token-cnpj-1");
+    await expect(getSicoobAccessToken(outroCnpj, "cco_consulta")).resolves.toBe("token-cnpj-2");
     expect(fetchMock).toHaveBeenCalledTimes(2);
   });
 });

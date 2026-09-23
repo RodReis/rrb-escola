@@ -12,7 +12,7 @@ export function consultarSaldo(contaCorrente: string, credencialRef?: string | n
   const endpoints = getSicoobEndpoints();
   const query = new URLSearchParams({ numeroContaCorrente: contaCorrente });
   return sicoobRequest<SicoobSaldo>(`${endpoints.contaCorrenteBasePath}/saldo?${query}`, {
-    scope: "cco_saldo",
+    scope: "cco_consulta",
     credencialRef,
   });
 }

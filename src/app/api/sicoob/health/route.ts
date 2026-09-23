@@ -78,7 +78,7 @@ export async function GET() {
       : null;
 
     try {
-      await getSicoobAccessToken(config, "cco_saldo");
+      await getSicoobAccessToken(config, "cco_consulta");
     } catch (err) {
       resultados.push({
         ...base,
