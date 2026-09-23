@@ -9,7 +9,7 @@
  * Ref: docs/superpowers/specs/2026-09-21-financeiro-isaac-multicnpj-design.md
  */
 import type { AnaliticoIsaac, ParcelaAnalitico } from "./parse-analitico";
-import { mudancasPorTipo } from "./parse-analitico";
+import { mudancasPorTipo, separarTiposMudanca } from "./parse-analitico";
 import { normalizarNomeIsaac } from "./normalizar-nome";
 import { linhaPorTipo, type ResumoIsaac } from "./parse-resumo";
 
@@ -207,6 +207,18 @@ export function conferirFechamento(
     });
   }
 
+  // Parcela de tipo composto traz UM valor já somado para os dois efeitos
+  // ("Edição de desconto / Novo contrato" = 876,65, que é 890,00 − 13,35), sem
+  // dizer quanto cabe a cada um. O resumo separa; o analítico não. Enquanto
+  // houver uma dessas, a conferência por tipo não fecha por construção — então
+  // ela vira aviso, e o bloqueio fica por conta de mensalidades e taxa, que
+  // continuam exatos e são o que fecha o dinheiro.
+  const tiposCompostos = new Set<string>();
+  for (const p of analitico.parcelas) {
+    const tipos = separarTiposMudanca(p.tipoMudanca);
+    if (tipos.length > 1) for (const t of tipos) tiposCompostos.add(t);
+  }
+
   for (const rotulo of ["Novo contrato", "Recebido na escola", "Cancelado"]) {
     const noResumo = linhaPorTipo(resumo, rotulo);
     if (noResumo === null) continue;
@@ -216,7 +228,7 @@ export function conferirFechamento(
         o_que: `"${rotulo}" do analítico ≠ do resumo`,
         esperado: noResumo,
         obtido: noAnalitico,
-        bloqueia: true,
+        bloqueia: !tiposCompostos.has(rotulo),
       });
     }
   }

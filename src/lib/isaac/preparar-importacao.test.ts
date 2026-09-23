@@ -194,6 +194,34 @@ describe("conferirFechamento", () => {
     const contagem = d.find((x) => x.o_que.includes("nº de cobranças"));
     expect(contagem?.bloqueia).toBe(false);
   });
+
+  it("rebaixa a divergência a AVISO quando o tipo aparece numa parcela composta", () => {
+    // "Edição de desconto / Novo contrato" traz um valor só (890 − 13,35), sem
+    // dizer quanto é de cada — o resumo separa, o analítico não. Divergir aí é
+    // limitação do formato, não erro de dado: não pode barrar a importação.
+    const analitico: AnaliticoIsaac = {
+      ...ANALITICO,
+      parcelas: ANALITICO.parcelas.map((p) =>
+        p.idParcela === "p2" ? { ...p, tipoMudanca: "Edição de desconto / Novo contrato" } : p,
+      ),
+    };
+    const resumo: ResumoIsaac = { ...RESUMO, linhas: RESUMO.linhas.filter((l) => l.tipo !== "Recebido na escola") };
+    const d = conferirFechamento(analitico, resumo);
+    const novoContrato = d.find((x) => x.o_que.includes("Novo contrato"));
+    expect(novoContrato).toBeDefined();
+    expect(novoContrato?.bloqueia).toBe(false);
+  });
+
+  it("segue BLOQUEANDO a divergência de um tipo que só aparece sozinho", () => {
+    // Sem parcela composta envolvendo o tipo, divergir é erro de dado de verdade.
+    const resumo: ResumoIsaac = {
+      ...RESUMO,
+      linhas: RESUMO.linhas.filter((l) => l.tipo !== "Recebido na escola"),
+    };
+    const d = conferirFechamento(ANALITICO, resumo);
+    const novoContrato = d.find((x) => x.o_que.includes("Novo contrato"));
+    expect(novoContrato?.bloqueia).toBe(true);
+  });
 });
 
 describe("prepararImportacao", () => {
