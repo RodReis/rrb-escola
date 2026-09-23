@@ -361,11 +361,43 @@ Resultado: 1.719 cobranças, 1.719 pagamentos ativos, 1.779 parcelas espelhadas,
 
 **A RPC recusou a service role key** ("Sessão sem perfil ativo") — o guard do PR4a funcionando: chave de serviço não tem perfil e não deve burlar permissão. A importação foi feita com sessão de admin real.
 
+### Reprocessamento completo de 2026 (23/09) — 18 de 18 competências importadas
+
+Baixados do Meu Arco: Jan a Set/2026 × 2 unidades = 18 analíticos `.xlsx` + 18 resumos `.pdf`. Rodado via `scripts/importar_repasse_isaac.mjs --aplicar` em produção, autenticado com login real (a RPC exige `current_perfil().id is not null`; `--aplicar` faz `signInWithPassword` via `ISAAC_EMAIL`/`ISAAC_SENHA` em variável de ambiente — nunca em código).
+
+Dois bugs de código corrigidos no caminho, nenhum deles no dado do isaac:
+
+1. **Casamento PDF↔xlsx quebrado.** O regex que extrai o slug do nome do resumo (`resumo-epg-trindade (1).pdf`) não removia o sufixo `" (N)"`, então `slugPdf` ficava `"epg-trindade (1)"` contra `unidadeSlug = "epg-trindade"` — nunca casava. Corrigido em `scripts/importar_repasse_isaac.mjs:96` com `.replace(/\s*(\(\d+\))?\.pdf$/, "")`.
+2. **Conferência bloqueava parcela de tipo composto por design.** Uma parcela pode ter `tipoMudanca = "Edição de desconto / Novo contrato"` com **um valor só, já somado** (890,00 − 13,35 = 876,65) — o resumo separa os dois efeitos, o analítico não diz quanto é de cada. A conferência bucket-a-bucket (`conferirFechamento`) comparava contra o resumo e bloqueava a diferença como se fosse erro de dado. Agora, quando o tipo em divergência aparece em alguma parcela composta, a divergência vira aviso em vez de bloqueio — o bloqueio continua garantido por mensalidades, taxa e fechamento total, que são exatos e não sofrem desse problema. Dois testes novos em `preparar-importacao.test.ts` travam o comportamento nos dois sentidos (rebaixa quando há composto, continua bloqueando quando não há).
+
+Achado de negócio — mais 5 cadastros errados, mesma família do caso Izabela/Mateus (22/09): 5 alunos marcados como bolsista/filho-de-professora em 2026 que o isaac cobrava mensalidade cheia havia meses, sem nenhum cancelamento manual:
+
+| Aluno | Era | Virou | Evidência |
+|---|---|---|---|
+| Bernardo Flauzino Da Silva | `BOLSA_INTEGRAL` | `NORMAL` | `NORMAL` em 2024 e 2025; isaac cobrou 372,50 em fev–jun/2026 |
+| Heitor Correa Neri De Oliveira | `BOLSA_INTEGRAL` | `NORMAL` | isaac cobrou 745,00 em fev, mar e mai/2026 |
+| Heloisa Becker Tabalipa | `BOLSA_INTEGRAL` | `NORMAL` | `NORMAL` em 2024 e 2025; isaac cobrou 700,00 em fev, mar e mai/2026 |
+| Felipe Godoy De Araujo | `FILHO_PROFESSORA` | `NORMAL` | valor cobrado (623,00) já era o de 50% de desconto — não são filhos de professora de verdade |
+| José Afonso Godoy De Araújo | `FILHO_PROFESSORA` | `NORMAL` | valor cobrado (445,00) já era o de 50% de desconto — mesmo caso do Felipe |
+
+Nota técnica: `FILHO_PROFESSORA` tem constraint (`matriculas_bolsa_50_check`) que exige `percentual_bolsa = 50`; o `update` para `NORMAL` precisa zerar `percentual_bolsa` na mesma operação, senão a constraint rejeita.
+
+Todas as 6 competências que estavam bloqueadas (Trindade fev/mar/abr/mai/jun, Infantil mar) destravaram com essas duas correções — nenhuma precisou de decisão "importar mesmo assim".
+
+| Competência | Situação antes | Causa | Situação depois |
+|---|---|---|---|
+| Trindade fev, mar, mai | bloqueado | 3-4 alunos com tipo_vaga errado | importado |
+| Trindade jun | bloqueado | 1 aluno com tipo_vaga errado | importado |
+| Trindade abr | bloqueado | tipo_vaga errado **+** parcela composta (falso positivo) | importado |
+| Infantil mar | bloqueado | parcela composta com valor líquido zero (falso positivo) | importado |
+
+Resultado final: **18 de 18 competências de 2026 importadas**, zero bloqueios, jan a set, as duas unidades.
+
 ### Ainda falta
 
-- **Fev a Jul/2026 × 2 unidades**: ~12 analíticos `.xlsx` + ~12 resumos `.pdf` para baixar do Meu Arco. Sem o resumo o importador recusa o mês, porque o crédito de curto prazo e as transferências só existem no PDF. Com os arquivos na pasta, `scripts/importar_repasse_isaac.mjs` faz o lote.
-- Resolver as 27 pendências na fila (`/financeiro/isaac/pendencias`), incluindo a permuta de setembro do Mateus.
-- Conciliar as 8 transferências quando o extrato Sicoob for sincronizado.
+- Resolver as pendências na fila (`/financeiro/isaac/pendencias`) — cresceu para ~45 (`sem_aluno` + `permuta_manual`) com o lote completo; sendo resolvida manualmente, uma por vez.
+- Conciliar as transferências com o extrato Sicoob — destravado nesta sessão (ver Aceite C, resolvido em produção), ainda não executado para o lote completo.
+- Out/Nov/Dez/2026 e Jan/2027 ainda não existem no Meu Arco (meses futuros); reprocessar quando o isaac disponibilizar.
 
 ### Testes (vitest)
 
@@ -428,10 +460,14 @@ onde `ordinal` é a posição do item **entre os itens idênticos** da mesma res
 - **Novo lançamento:** campos Empresa (obrigatório) e Conta (opcional).
 - **Livro-razão, Tesouraria, Conciliação:** filtro por Empresa + visão consolidada.
 
-**Aceite C:**
-- duas contas Sicoob ativas sincronizando com credenciais distintas — **pendente de teste com as credenciais reais**: o código está pronto, mas só a segunda conta cadastrada com `credencial_ref` e as variáveis `SICOOB_<REF>_*` preenchidas prova de ponta a ponta;
+**Aceite C — validado de ponta a ponta em produção (23/09):**
+- duas contas Sicoob ativas sincronizando com credenciais distintas — **feito**. `contas_bancarias` tem as 2 linhas: `INTEGRADO` (Colégio Integrado EPG, conta 70572, `company_id` do CNPJ 35.027.047/0001-23) e `PINGUINHO` (Escola Pinguinho de Gente LTDA, conta 27570, CNPJ 11.714.876/0001-16). As 6 variáveis (`SICOOB_INTEGRADO_*` / `SICOOB_PINGUINHO_*`) configuradas na Vercel, `SICOOB_ENV=production`. `/api/sicoob/health` retorna `ok:true` para as duas contas, cada uma autenticando por mTLS com seu próprio certificado A1 e retornando saldo real (não o mock do sandbox — confirmado pelo formato da resposta: `resultado.saldo` como string, contra o número solto do sandbox).
 - teste unitário prova que o cache não mistura tokens — **feito**;
 - dois débitos idênticos no mesmo dia geram duas linhas — **feito**.
+
+**Bug corrigido no caminho — escopo OAuth errado.** `consultarSaldo` e `consultarExtrato` pediam token com `scope: "cco_saldo"` / `"cco_extrato"` — escopos que **nunca existiram** na API `conta-corrente/v4` do Sicoob. O spec OpenAPI oficial (`GET https://api.sicoob.com.br/portal-developers/v2/swaggers/conta-corrente`) declara só `cco_consulta` (leitura — cobre tanto `/saldo` quanto `/extrato/{mes}/{ano}`) e `cco_transferencias` (escrita). O erro `"Invalid scopes"` aparecia mesmo com certificado e client_id corretos, e havia uma terceira ocorrência duplicada dentro do próprio `route.ts` do health-check que mascarou a correção por um tempo (dois lugares chamavam o token, só um tinha sido corrigido). Corrigido nos 3 pontos — `conta-corrente.ts`, `extrato.ts`, `health/route.ts`.
+
+**Nota de portal Sicoob (não é bug nosso):** a aba "Segurança" de um app recém-criado no Portal Developers pode aparecer permanentemente desabilitada/cinza, mesmo com certificado A1 válido (confirmado: OID `1.3.6.1.5.5.7.3.2` presente, CNPJ do Subject correto) e autorização PJ já concedida no Sicoobnet Empresarial. O suporte Sicoob (WhatsApp `#API`) confirmou que a aba é dispensável — a API funciona normalmente com Client ID + certificado, sem precisar vinculá-lo por ali. Não investigar mais essa aba se acontecer de novo com uma terceira credencial.
 
 ---
 
