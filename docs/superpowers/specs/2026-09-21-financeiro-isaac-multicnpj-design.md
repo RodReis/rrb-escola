@@ -393,9 +393,22 @@ Todas as 6 competências que estavam bloqueadas (Trindade fev/mar/abr/mai/jun, I
 
 Resultado final: **18 de 18 competências de 2026 importadas**, zero bloqueios, jan a set, as duas unidades.
 
+### Fila de pendências zerada (23/09)
+
+As 148 pendências geradas pelo lote completo (143 `sem_aluno` + 5 `permuta_manual`) foram todas resolvidas. `/financeiro/isaac/pendencias` mostra "Abertas: 0".
+
+**As 143 `sem_aluno` foram resolvidas pela tela**, uma por vez, via `ResolverPendenciaForm`/`resolverPendenciaIsaacAction` — fluxo normal: vincula aluno, grava `aluno_alias`, marca `resolvido_em` e `resolvido_por`.
+
+**As 5 `permuta_manual` (Mateus Praxedes Lobo, fev/mar/jun/jul/set) não têm caminho pela tela** — a página só renderiza a coluna de ação quando `motivo === "sem_aluno"` (`pendencias/page.tsx:92,105-109`); para `permuta_manual` ela só lista, sem formulário. Isso não é bug: foi decisão de escopo explícita ("resolver na fila depois do import", sessão de 22/09) de não construir tela nova para permuta antes de ter volume real para justificar. Resolvidas manualmente via script direto no banco, replicando o mesmo insert de `cobrancas`/`pagamentos` que a RPC `importar_repasse_isaac` faz:
+
+- **Valor usado na cobrança: R$ 745,00** (o que o isaac de fato repassou), não os R$ 690,00 negociados na permuta (`matriculas.valor_mensalidade_praticado`, só referência). Decisão explícita: usar o valor negociado desalinharia o total das cobranças do dinheiro que entrou no banco naquele mês — o repasse já foi conferido com R$ 745 e precisa continuar fechando sozinho (soma das cobranças = base do analítico).
+- `origem='isaac'`, `id_externo=id_parcela`, `company_id` da unidade (Escola Pinguinho, mesmo de-para contra-intuitivo do spec), `categoria_id` de Mensalidades.
+- `isaac_parcela.resolvido_por` ficou **nulo** nas 5 — o script rodou via `service_role`, sem sessão de usuário associada. Diferença rastreável só pela `observacao` do pagamento ("resolvida manualmente na fila"), não pela coluna de auditoria.
+
+**Lacuna de produto que fica:** se o volume de permuta crescer, vale um formulário dedicado (valor a cobrar + botão "criar cobrança e resolver"), reaproveitando esse mesmo insert. Hoje, com 1 aluno e uso esporádico, script ad-hoc foi suficiente — não construir a tela adiantado.
+
 ### Ainda falta
 
-- Resolver as pendências na fila (`/financeiro/isaac/pendencias`) — cresceu para ~45 (`sem_aluno` + `permuta_manual`) com o lote completo; sendo resolvida manualmente, uma por vez.
 - Conciliar as transferências com o extrato Sicoob — destravado nesta sessão (ver Aceite C, resolvido em produção), ainda não executado para o lote completo.
 - Out/Nov/Dez/2026 e Jan/2027 ainda não existem no Meu Arco (meses futuros); reprocessar quando o isaac disponibilizar.
 
