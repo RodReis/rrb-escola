@@ -49,7 +49,9 @@ export default async function StudentPage({ params, searchParams }: { params: { 
         .sort((a, b) => (b.data_matricula ?? "").localeCompare(a.data_matricula ?? ""))
         .find((m) => m.cancelamento_data) ?? null;
   const cobrancasPendentesPosCancelamento = matriculaCanceladaRecente?.cancelamento_data
-    ? await listarCobrancasAbertasParaCancelamento(student.id, matriculaCanceladaRecente.cancelamento_data)
+    ? (await listarCobrancasAbertasParaCancelamento(student.id, matriculaCanceladaRecente.cancelamento_data)).filter(
+        (c) => c.preSelecionada,
+      )
     : [];
 
   return (
