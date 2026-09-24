@@ -55,6 +55,13 @@ export async function GET(req: Request) {
         )
       : null;
 
+    // Quantos valores DISTINTOS cada campo candidato a chave tem. Só contagem,
+    // nunca o conteúdo: é o que decide qual campo serve de id_transacao.
+    const distintos = (campo: string) =>
+      transacoes
+        ? new Set(transacoes.map((t) => String(t[campo] ?? ""))).size
+        : null;
+
     formas.push({
       credencial: conta.credencial_ref,
       ok: true,
@@ -63,6 +70,13 @@ export async function GET(req: Request) {
       transacoesNaRaiz: Array.isArray(raiz?.transacoes) ? (raiz.transacoes as unknown[]).length : null,
       transacoesNoResultado: transacoes ? transacoes.length : null,
       formaDoItem,
+      unicidade: transacoes
+        ? {
+            total: transacoes.length,
+            transactionId: distintos("transactionId"),
+            numeroDocumento: distintos("numeroDocumento"),
+          }
+        : null,
     });
   }
 
