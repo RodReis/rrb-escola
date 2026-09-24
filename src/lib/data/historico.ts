@@ -22,10 +22,10 @@ export type NivelEnsinoRow = {
 };
 
 /** `companies` (RH) fornece a identidade jurídica e os dados de cabeçalho do histórico. */
-function mapCredenciamento(row: Record<string, unknown>): HistoricoCredenciamento {
+export function mapCredenciamento(row: Record<string, unknown>): HistoricoCredenciamento {
   return {
     razaoSocial: (row.name as string) ?? "",
-    nomeFantasia: (row.name as string) ?? "",
+    nomeFantasia: (row.nome_fantasia as string) || (row.name as string) || "",
     cnpj: (row.cnpj as string) ?? null,
     resolucao: (row.resolucao as string) ?? null,
     endereco: (row.endereco as string) ?? null,
