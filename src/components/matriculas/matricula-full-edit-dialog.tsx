@@ -59,10 +59,13 @@ export function MatriculaFullEditDialog({
   });
 
   const turmasDaSerie = turmas.filter((t) => t.serieId === selSerie);
-  // "Cancelada" só aparece na lista se a matrícula já estava cancelada — esse
-  // diálogo manual não deve ser um atalho para cancelar por fora do fluxo
-  // dedicado (motivo, data, cientes, cobranças). Ver achado I4(b).
-  const statuses = status === "cancelada" ? [...STATUSES_BASE, STATUS_CANCELADA] : STATUSES_BASE;
+  // Este diálogo manual não deve ser um atalho para cancelar ou reativar por
+  // fora dos fluxos dedicados (cancelamento: motivo/data/cientes/cobranças;
+  // reativação: limpa cancelamento_*/ciente_*/alunos.ativo). Ver achado I4(b)
+  // e o achado de reabertura da re-revisão: se já cancelada, só oferece
+  // "Cancelada" (edição de série/turma/plano/tipo_vaga continua liberada);
+  // reativação só pelo botão dedicado "Reativar" na lista de matrículas.
+  const statuses = status === "cancelada" ? [STATUS_CANCELADA] : STATUSES_BASE;
 
   function openDialog() {
     setSelSerie(serieId);

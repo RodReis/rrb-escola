@@ -16,6 +16,16 @@ import { ReenrollButton } from "@/components/students/reenroll-button";
 
 const statuses = ["ativa", "cancelada", "transferida", "concluida"];
 
+// Este formulário manual não deve ser um atalho para cancelar (sem
+// motivo/data/cientes/cobranças) nem reativar (sem limpar cancelamento_*
+// nem restaurar alunos.ativo) por fora dos fluxos dedicados. Se a matrícula
+// já está cancelada, só oferece "cancelada" — reativação passa pelo botão
+// dedicado "Reativar" na lista de matrículas. Se não está cancelada, some com
+// a opção "cancelada" — cancelamento passa pelo diálogo dedicado.
+function statusOptionsFor(statusAtual: string): string[] {
+  return statusAtual === "cancelada" ? ["cancelada"] : statuses.filter((s) => s !== "cancelada");
+}
+
 function one<T>(value: T | T[] | null | undefined): T | null {
   if (Array.isArray(value)) return value[0] ?? null;
   return value ?? null;
@@ -148,7 +158,7 @@ export default async function EnrollmentDetailPage({
               <label>Idade<input name="idade_na_matricula" type="number" defaultValue={enrollment.idade_na_matricula ?? ""} /></label>
               <label>Status
                 <select name="status" defaultValue={enrollment.status}>
-                  {statuses.map((s) => <option key={s} value={s}>{s}</option>)}
+                  {statusOptionsFor(enrollment.status).map((s) => <option key={s} value={s}>{s}</option>)}
                 </select>
               </label>
               <label className="md:col-span-3">Observações<input name="observacoes" defaultValue={enrollment.observacoes ?? ""} /></label>
