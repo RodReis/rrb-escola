@@ -21,6 +21,11 @@ vi.mock("next/cache", () => ({ revalidatePath: vi.fn() }));
 
 import { uploadCompanyLogoAction, removeCompanyLogoAction } from "./rh";
 
+// IDs precisam ser uuid válido: uploadCompanyLogoAction/removeCompanyLogoAction
+// agora validam o formato antes de seguir (achado Minor #8).
+const COMPANY_ID_1 = "123e4567-e89b-12d3-a456-426614174001";
+const COMPANY_ID_42 = "123e4567-e89b-12d3-a456-426614174042";
+
 describe("uploadCompanyLogoAction", () => {
   beforeEach(() => {
     mockUpload.mockReset();
@@ -30,21 +35,55 @@ describe("uploadCompanyLogoAction", () => {
   it("rejeita arquivo maior que 2MB antes de chamar o storage", async () => {
     const bigFile = new File([new Uint8Array(3 * 1024 * 1024)], "logo.png", { type: "image/png" });
     const fd = new FormData();
-    fd.set("id", "company-1");
+    fd.set("id", COMPANY_ID_1);
     fd.set("logo", bigFile);
 
-    await expect(uploadCompanyLogoAction(fd)).rejects.toThrow("REDIRECT:/rh/empresas/company-1/editar?erro=arquivo_grande");
+    await expect(uploadCompanyLogoAction(fd)).rejects.toThrow(
+      `REDIRECT:/rh/empresas/${COMPANY_ID_1}/editar?erro=arquivo_grande`
+    );
     expect(mockUpload).not.toHaveBeenCalled();
   });
 
   it("rejeita extensao fora da lista permitida", async () => {
     const badFile = new File([new Uint8Array(10)], "logo.pdf", { type: "application/pdf" });
     const fd = new FormData();
-    fd.set("id", "company-1");
+    fd.set("id", COMPANY_ID_1);
     fd.set("logo", badFile);
 
-    await expect(uploadCompanyLogoAction(fd)).rejects.toThrow("REDIRECT:/rh/empresas/company-1/editar?erro=tipo_invalido");
+    await expect(uploadCompanyLogoAction(fd)).rejects.toThrow(
+      `REDIRECT:/rh/empresas/${COMPANY_ID_1}/editar?erro=tipo_invalido`
+    );
     expect(mockUpload).not.toHaveBeenCalled();
+  });
+
+  it("rejeita id que nao e uuid antes de qualquer acesso ao storage", async () => {
+    const file = new File([new Uint8Array(10)], "logo.png", { type: "image/png" });
+    const fd = new FormData();
+    fd.set("id", "company-1");
+    fd.set("logo", file);
+
+    await expect(uploadCompanyLogoAction(fd)).rejects.toThrow("REDIRECT:/rh/empresas?erro=ID inválido");
+    expect(mockUpload).not.toHaveBeenCalled();
+  });
+
+  it("com arquivo valido, envia para o storage e atualiza logo_path (caminho feliz)", async () => {
+    const file = new File([new Uint8Array(10)], "logo.png", { type: "image/png" });
+    mockUpload.mockResolvedValue({ data: { path: `companies/${COMPANY_ID_1}/123.png` }, error: null });
+    const fd = new FormData();
+    fd.set("id", COMPANY_ID_1);
+    fd.set("logo", file);
+
+    await expect(uploadCompanyLogoAction(fd)).rejects.toThrow(
+      `REDIRECT:/rh/empresas/${COMPANY_ID_1}/editar?logo_atualizada=1`
+    );
+
+    expect(mockUpload).toHaveBeenCalledWith(
+      expect.stringMatching(new RegExp(`^companies/${COMPANY_ID_1}/\\d+\\.png$`)),
+      expect.anything(),
+      { contentType: "image/png", upsert: false }
+    );
+    expect(mockUpdate).toHaveBeenCalledWith({ logo_path: `companies/${COMPANY_ID_1}/123.png` });
+    expect(mockUpdate().eq).toHaveBeenCalledWith("id", COMPANY_ID_1);
   });
 });
 
@@ -55,11 +94,13 @@ describe("removeCompanyLogoAction", () => {
 
   it("chama update com logo_path: null para o id correto", async () => {
     const fd = new FormData();
-    fd.set("id", "company-42");
+    fd.set("id", COMPANY_ID_42);
 
-    await expect(removeCompanyLogoAction(fd)).rejects.toThrow("REDIRECT:/rh/empresas/company-42/editar?logo_removida=1");
+    await expect(removeCompanyLogoAction(fd)).rejects.toThrow(
+      `REDIRECT:/rh/empresas/${COMPANY_ID_42}/editar?logo_removida=1`
+    );
     expect(mockUpdate).toHaveBeenCalledWith({ logo_path: null });
-    expect(mockUpdate().eq).toHaveBeenCalledWith("id", "company-42");
+    expect(mockUpdate().eq).toHaveBeenCalledWith("id", COMPANY_ID_42);
   });
 });
 
