@@ -239,7 +239,7 @@ export async function getStudentSheet(id: string) {
       pessoas_autorizadas(*),
       informacoes_medicas(*),
       autorizacoes_aluno(*),
-      matriculas(id, codigo, data_matricula, ano_letivo, idade_na_matricula, status, observacoes, series(nome), turmas(nome), planos(nome))
+      matriculas(id, codigo, data_matricula, ano_letivo, idade_na_matricula, status, observacoes, cancelamento_data, cancelamento_motivo, series(nome), turmas(nome), planos(nome))
     `)
     .eq("id", id)
     .single();

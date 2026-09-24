@@ -78,6 +78,8 @@ export type StudentSheet = {
     idade_na_matricula: number | null;
     status: string;
     observacoes: string | null;
+    cancelamento_data: string | null;
+    cancelamento_motivo: string | null;
     series: { nome: string } | null;
     turmas: { nome: string } | null;
     planos: { nome: string } | null;
