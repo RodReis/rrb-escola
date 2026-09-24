@@ -71,14 +71,18 @@ describe("CancelarMatriculaDialog", () => {
     expect(await screen.findByLabelText(/cancelada também no isaac/i)).toBeInTheDocument();
   });
 
-  it("chama a action e onSuccess apos confirmar com sucesso", async () => {
-    const { onSuccess } = renderDialog();
+  it("chama a action e so dispara onSuccess ao fechar o estado pos-sucesso", async () => {
+    const { onOpenChange, onSuccess } = renderDialog();
     fireEvent.click(screen.getByLabelText(/coordenação está ciente/i));
     fireEvent.click(screen.getByLabelText(/diretoria está ciente/i));
     fireEvent.click(screen.getByRole("button", { name: /confirmar/i }));
 
     await waitFor(() => expect(cancelarMatriculaActionMock).toHaveBeenCalled());
-    await waitFor(() => expect(onSuccess).toHaveBeenCalled());
+    expect(onSuccess).not.toHaveBeenCalled();
+
+    fireEvent.click(await screen.findByText("Fechar"));
+    expect(onOpenChange).toHaveBeenCalledWith(false);
+    expect(onSuccess).toHaveBeenCalled();
   });
 
   it("nao chama a action quando useConfirm resolve false", async () => {
@@ -90,5 +94,14 @@ describe("CancelarMatriculaDialog", () => {
 
     await waitFor(() => expect(useConfirmMock).toHaveBeenCalled());
     expect(cancelarMatriculaActionMock).not.toHaveBeenCalled();
+  });
+
+  it("mostra link para emitir declaracao apos cancelar com sucesso", async () => {
+    renderDialog();
+    fireEvent.click(screen.getByLabelText(/coordenação está ciente/i));
+    fireEvent.click(screen.getByLabelText(/diretoria está ciente/i));
+    fireEvent.click(screen.getByRole("button", { name: /confirmar/i }));
+
+    await waitFor(() => expect(screen.getByRole("link", { name: /emitir declaração/i })).toBeInTheDocument());
   });
 });

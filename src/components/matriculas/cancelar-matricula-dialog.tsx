@@ -43,6 +43,7 @@ export function CancelarMatriculaDialog({
   const temCobrancaIsaac = cobrancas.some((cobranca) => cobranca.origem === "isaac");
   const [submitting, setSubmitting] = useState(false);
   const [erro, setErro] = useState<string | null>(null);
+  const [sucesso, setSucesso] = useState(false);
 
   // Recarrega a lista de cobrancas toda vez que o dialogo abre ou a data muda -
   // a pre-selecao depende da data de cancelamento escolhida. O endpoint
@@ -109,6 +110,10 @@ export function CancelarMatriculaDialog({
       setErro(result.error ?? "Erro ao cancelar matrícula.");
       return;
     }
+    setSucesso(true);
+  }
+
+  function handleFechar() {
     onOpenChange(false);
     onSuccess();
   }
@@ -131,80 +136,97 @@ export function CancelarMatriculaDialog({
           {alunoNome} — {serieNome} {turmaNome} — {anoLetivo}
         </p>
 
-        <div className="mt-4 grid gap-3">
-          <label className="grid gap-1 text-sm">
-            Data do cancelamento
-            <input
-              type="date"
-              value={data}
-              onChange={(e) => setData(e.target.value)}
-              className="ds-input"
-            />
-          </label>
+        {sucesso ? (
+          <div className="mt-4 grid gap-3">
+            <p className="text-sm text-ink">Matrícula cancelada com sucesso.</p>
+            <a
+              href={`/declaracoes/emitir?aluno=${alunoId}`}
+              className="ds-button ds-button-primary text-xs w-fit"
+            >
+              Emitir Declaração de Transferência — Não Concluído
+            </a>
+            <button type="button" onClick={handleFechar} className="ds-button ds-button-secondary text-xs w-fit">
+              Fechar
+            </button>
+          </div>
+        ) : (
+          <>
+            <div className="mt-4 grid gap-3">
+              <label className="grid gap-1 text-sm">
+                Data do cancelamento
+                <input
+                  type="date"
+                  value={data}
+                  onChange={(e) => setData(e.target.value)}
+                  className="ds-input"
+                />
+              </label>
 
-          <label className="grid gap-1 text-sm">
-            Motivo
-            <select value={motivo} onChange={(e) => setMotivo(e.target.value as MotivoCancelamento)} className="ds-input">
-              {MOTIVOS_CANCELAMENTO.map((m) => (
-                <option key={m} value={m}>{MOTIVO_CANCELAMENTO_LABEL[m]}</option>
-              ))}
-            </select>
-          </label>
+              <label className="grid gap-1 text-sm">
+                Motivo
+                <select value={motivo} onChange={(e) => setMotivo(e.target.value as MotivoCancelamento)} className="ds-input">
+                  {MOTIVOS_CANCELAMENTO.map((m) => (
+                    <option key={m} value={m}>{MOTIVO_CANCELAMENTO_LABEL[m]}</option>
+                  ))}
+                </select>
+              </label>
 
-          <label className="grid gap-1 text-sm">
-            Observação {obsObrigatoria ? "(obrigatória)" : "(opcional)"}
-            <textarea value={obs} onChange={(e) => setObs(e.target.value)} className="ds-input" rows={2} />
-          </label>
+              <label className="grid gap-1 text-sm">
+                Observação {obsObrigatoria ? "(obrigatória)" : "(opcional)"}
+                <textarea value={obs} onChange={(e) => setObs(e.target.value)} className="ds-input" rows={2} />
+              </label>
 
-          {cobrancas.length > 0 ? (
-            <div className="grid gap-1 text-sm">
-              <p className="font-medium text-ink">Cobranças em aberto</p>
-              {cobrancas.map((c) => (
-                <label key={c.id} className="flex items-center gap-2 rounded-md border border-line px-2 py-1.5">
-                  <input
-                    type="checkbox"
-                    checked={cobrancaIdsSelecionadas.has(c.id)}
-                    onChange={() => toggleCobranca(c.id)}
-                  />
-                  <span className="flex-1">{c.descricao} — {c.competencia} — R$ {c.valorFinal.toFixed(2)}</span>
-                  {c.origem === "isaac" ? <span className="ds-badge">isaac</span> : null}
+              {cobrancas.length > 0 ? (
+                <div className="grid gap-1 text-sm">
+                  <p className="font-medium text-ink">Cobranças em aberto</p>
+                  {cobrancas.map((c) => (
+                    <label key={c.id} className="flex items-center gap-2 rounded-md border border-line px-2 py-1.5">
+                      <input
+                        type="checkbox"
+                        checked={cobrancaIdsSelecionadas.has(c.id)}
+                        onChange={() => toggleCobranca(c.id)}
+                      />
+                      <span className="flex-1">{c.descricao} — {c.competencia} — R$ {c.valorFinal.toFixed(2)}</span>
+                      {c.origem === "isaac" ? <span className="ds-badge">isaac</span> : null}
+                    </label>
+                  ))}
+                </div>
+              ) : null}
+
+              <label className="flex items-center gap-2 text-sm">
+                <input type="checkbox" checked={cienteCoordenacao} onChange={(e) => setCienteCoordenacao(e.target.checked)} />
+                A coordenação está ciente desse cancelamento de matrícula?
+              </label>
+              <label className="flex items-center gap-2 text-sm">
+                <input type="checkbox" checked={cienteDiretoria} onChange={(e) => setCienteDiretoria(e.target.checked)} />
+                A diretoria está ciente desse cancelamento de matrícula?
+              </label>
+
+              {temCobrancaIsaac ? (
+                <label className="flex items-center gap-2 text-sm">
+                  <input type="checkbox" checked={isaacConfirmado} onChange={(e) => setIsaacConfirmado(e.target.checked)} />
+                  Cancelada também no isaac?
                 </label>
-              ))}
+              ) : null}
+
+              {erro ? <p className="text-sm text-danger">{erro}</p> : null}
             </div>
-          ) : null}
 
-          <label className="flex items-center gap-2 text-sm">
-            <input type="checkbox" checked={cienteCoordenacao} onChange={(e) => setCienteCoordenacao(e.target.checked)} />
-            A coordenação está ciente desse cancelamento de matrícula?
-          </label>
-          <label className="flex items-center gap-2 text-sm">
-            <input type="checkbox" checked={cienteDiretoria} onChange={(e) => setCienteDiretoria(e.target.checked)} />
-            A diretoria está ciente desse cancelamento de matrícula?
-          </label>
-
-          {temCobrancaIsaac ? (
-            <label className="flex items-center gap-2 text-sm">
-              <input type="checkbox" checked={isaacConfirmado} onChange={(e) => setIsaacConfirmado(e.target.checked)} />
-              Cancelada também no isaac?
-            </label>
-          ) : null}
-
-          {erro ? <p className="text-sm text-danger">{erro}</p> : null}
-        </div>
-
-        <div className="mt-5 flex justify-end gap-2">
-          <button type="button" onClick={() => onOpenChange(false)} className="ds-button ds-button-secondary text-xs">
-            Cancelar
-          </button>
-          <button
-            type="button"
-            disabled={!podeConfirmar || submitting}
-            onClick={handleConfirmar}
-            className="ds-button text-xs bg-danger text-white hover:bg-danger/90 disabled:opacity-40"
-          >
-            Confirmar
-          </button>
-        </div>
+            <div className="mt-5 flex justify-end gap-2">
+              <button type="button" onClick={() => onOpenChange(false)} className="ds-button ds-button-secondary text-xs">
+                Cancelar
+              </button>
+              <button
+                type="button"
+                disabled={!podeConfirmar || submitting}
+                onClick={handleConfirmar}
+                className="ds-button text-xs bg-danger text-white hover:bg-danger/90 disabled:opacity-40"
+              >
+                Confirmar
+              </button>
+            </div>
+          </>
+        )}
       </div>
     </div>,
     document.body
