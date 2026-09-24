@@ -104,6 +104,51 @@ describe("DeclaracaoEmissaoForm", () => {
     });
   });
 
+  it("emissão em lote (sem aluno selecionado): campos de pré-visualização ficam somente leitura", async () => {
+    mockPrevisualizar.mockResolvedValue({ titulo: "DECLARAÇÃO", texto: "X ANA DA SILVA", fecho: "Trindade, hoje" });
+
+    render(
+      <DeclaracaoEmissaoForm
+        anoLetivo={2026}
+        series={[]}
+        turmas={[]}
+        alunosElegiveis={[
+          { matriculaId: "m1", alunoId: "a1", nome: "Ana" },
+          { matriculaId: "m2", alunoId: "a2", nome: "Bruno" }
+        ]}
+        modelos={[modeloBase]}
+      />
+    );
+
+    fireEvent.change(screen.getByLabelText(/modelo de declaração/i), { target: { value: "mod1" } });
+    await waitFor(() => expect(screen.getByDisplayValue("X ANA DA SILVA")).toBeInTheDocument());
+
+    expect(screen.getByLabelText(/título da declaração/i)).toHaveAttribute("readonly");
+    expect(screen.getByLabelText(/texto \(pré-visualização\)/i)).toHaveAttribute("readonly");
+    expect(screen.getByLabelText(/fecho \(pré-visualização\)/i)).toHaveAttribute("readonly");
+    expect(screen.getByText(/emissão em lote/i)).toBeInTheDocument();
+  });
+
+  it("emissão para um aluno específico: campos de pré-visualização ficam editáveis", async () => {
+    mockPrevisualizar.mockResolvedValue({ titulo: "DECLARAÇÃO", texto: "X ANA DA SILVA", fecho: "Trindade, hoje" });
+
+    render(
+      <DeclaracaoEmissaoForm
+        anoLetivo={2026}
+        series={[]}
+        turmas={[]}
+        alunosElegiveis={[{ matriculaId: "m1", alunoId: "a1", nome: "Ana" }]}
+        modelos={[modeloBase]}
+      />
+    );
+
+    fireEvent.change(screen.getByLabelText(/modelo de declaração/i), { target: { value: "mod1" } });
+    fireEvent.change(screen.getByLabelText(/^aluno$/i), { target: { value: "a1" } });
+    await waitFor(() => expect(screen.getByDisplayValue("X ANA DA SILVA")).toBeInTheDocument());
+
+    expect(screen.getByLabelText(/texto \(pré-visualização\)/i)).not.toHaveAttribute("readonly");
+  });
+
   it("edição na pré-visualização não persiste — reabrir o form limpo mostra o texto original do modelo, não o editado", async () => {
     mockPrevisualizar.mockResolvedValue({ titulo: "DECLARAÇÃO", texto: "X ANA DA SILVA", fecho: "Trindade, hoje" });
 
@@ -117,6 +162,9 @@ describe("DeclaracaoEmissaoForm", () => {
       />
     );
     fireEvent.change(screen.getByLabelText(/modelo de declaração/i), { target: { value: "mod1" } });
+    // Edição plena exige aluno específico selecionado — em lote os campos
+    // são somente leitura (ver achado CRITICAL da revisão final).
+    fireEvent.change(screen.getByLabelText(/^aluno$/i), { target: { value: "a1" } });
     await waitFor(() => expect(screen.getByDisplayValue("X ANA DA SILVA")).toBeInTheDocument());
 
     const textoPreview = screen.getByLabelText(/texto \(pré-visualização\)/i);

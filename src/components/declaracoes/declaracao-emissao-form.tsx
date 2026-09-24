@@ -33,8 +33,17 @@ export function DeclaracaoEmissaoForm({ anoLetivo, series, turmas, alunosElegive
   const [erro, setErro] = useState<string | null>(null);
   const [preview, setPreview] = useState<Preview | null>(null);
   const [carregandoPreview, setCarregandoPreview] = useState(false);
+  const [falhas, setFalhas] = useState<Array<{ nome: string; motivo: string }>>([]);
 
   const turmasDaSerie = serieSelecionada ? turmas.filter((t) => t.serieId === serieSelecionada) : turmas;
+
+  // Só há edição plena da pré-visualização quando a emissão é para UM aluno
+  // específico (filtro "Aluno" com valor escolhido, não "Todos"). Em lote,
+  // os campos ficam somente leitura e os overrides nunca são enviados —
+  // cada aluno do lote é resolvido com os PRÓPRIOS dados dentro da action
+  // (ver achado CRITICAL: vazamento de dados pessoais de um aluno para
+  // todos os demais quando o texto já resolvido era usado como "modelo").
+  const emitindoParaUmAluno = Boolean(alunoSelecionado);
 
   // Aluno de referência para a pré-visualização: o selecionado no filtro,
   // ou o primeiro da lista de elegíveis — mesma regra da spec ("resolvidos
@@ -89,12 +98,17 @@ export function DeclaracaoEmissaoForm({ anoLetivo, series, turmas, alunosElegive
     if (!podeEmitir) return;
     setEmitindo(true);
     setErro(null);
+    setFalhas([]);
     try {
       const matriculaIds = alunosElegiveis.map((a) => a.matriculaId);
-      // A edição da pré-visualização vale só para esta emissão — nunca é
-      // gravada no modelo (spec: "edições valem só para essa emissão").
-      const overrides = preview ? { titulo: preview.titulo, texto: preview.texto, fecho: preview.fecho } : undefined;
-      const paginas = await carregarDeclaracoesAction(matriculaIds, modeloSelecionado, overrides);
+      // A edição da pré-visualização só é aplicada quando a emissão é para
+      // UM aluno específico — em lote, overrides é sempre undefined, e cada
+      // aluno é resolvido com os próprios dados dentro da action (ver
+      // emitindoParaUmAluno).
+      const overrides =
+        emitindoParaUmAluno && preview ? { titulo: preview.titulo, texto: preview.texto, fecho: preview.fecho } : undefined;
+      const { paginas, falhas: falhasEmissao } = await carregarDeclaracoesAction(matriculaIds, modeloSelecionado, overrides);
+      setFalhas(falhasEmissao);
       if (paginas.length === 0) {
         setErro("Nenhuma declaração pôde ser gerada para os alunos selecionados.");
         return;
@@ -112,6 +126,14 @@ export function DeclaracaoEmissaoForm({ anoLetivo, series, turmas, alunosElegive
   return (
     <div className="grid gap-6">
       <div className="grid gap-4 md:grid-cols-4">
+        <label>
+          Ano Letivo
+          <input
+            type="number"
+            value={anoLetivo}
+            onChange={(e) => atualizar({ ano: e.target.value })}
+          />
+        </label>
         <label>
           Série
           <select value={serieSelecionada} onChange={(e) => atualizar({ serie: e.target.value, turma: null, aluno: null })}>
@@ -153,7 +175,9 @@ export function DeclaracaoEmissaoForm({ anoLetivo, series, turmas, alunosElegive
       {modeloSelecionado ? (
         <div className="grid gap-3 rounded-ui border border-line p-4">
           <p className="text-xs font-medium text-ink/60">
-            Visualização do modelo (edições aqui valem só para esta emissão — o modelo salvo não muda)
+            {emitindoParaUmAluno
+              ? "Visualização do modelo (edições aqui valem só para esta emissão — o modelo salvo não muda)"
+              : "Emissão em lote: a pré-visualização é somente leitura. Para editar o texto desta emissão, selecione um aluno específico."}
           </p>
           {carregandoPreview ? (
             <p className="text-sm text-ink/60">Carregando pré-visualização...</p>
@@ -163,14 +187,16 @@ export function DeclaracaoEmissaoForm({ anoLetivo, series, turmas, alunosElegive
                 Título da declaração
                 <input
                   value={preview.titulo}
-                  onChange={(e) => setPreview({ ...preview, titulo: e.target.value })}
+                  readOnly={!emitindoParaUmAluno}
+                  onChange={(e) => emitindoParaUmAluno && setPreview({ ...preview, titulo: e.target.value })}
                 />
               </label>
               <label>
                 Texto (pré-visualização)
                 <textarea
                   value={preview.texto}
-                  onChange={(e) => setPreview({ ...preview, texto: e.target.value })}
+                  readOnly={!emitindoParaUmAluno}
+                  onChange={(e) => emitindoParaUmAluno && setPreview({ ...preview, texto: e.target.value })}
                   rows={5}
                 />
               </label>
@@ -178,7 +204,8 @@ export function DeclaracaoEmissaoForm({ anoLetivo, series, turmas, alunosElegive
                 Fecho (pré-visualização)
                 <textarea
                   value={preview.fecho}
-                  onChange={(e) => setPreview({ ...preview, fecho: e.target.value })}
+                  readOnly={!emitindoParaUmAluno}
+                  onChange={(e) => emitindoParaUmAluno && setPreview({ ...preview, fecho: e.target.value })}
                   rows={2}
                 />
               </label>
@@ -190,6 +217,19 @@ export function DeclaracaoEmissaoForm({ anoLetivo, series, turmas, alunosElegive
       ) : null}
 
       {erro ? <p className="text-sm text-danger">{erro}</p> : null}
+
+      {falhas.length > 0 ? (
+        <div className="rounded-ui border border-warning/40 bg-warning/5 p-4 text-sm text-ink/80">
+          <p className="font-medium">{falhas.length} aluno(s) não tiveram declaração gerada:</p>
+          <ul className="mt-1 list-inside list-disc">
+            {falhas.map((f, i) => (
+              <li key={i}>
+                {f.nome}: {f.motivo}
+              </li>
+            ))}
+          </ul>
+        </div>
+      ) : null}
 
       <div className="flex justify-end">
         <Button type="button" variant="primary" disabled={!podeEmitir} loading={emitindo} onClick={emitir}>
