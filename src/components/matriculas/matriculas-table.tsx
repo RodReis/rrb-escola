@@ -1,13 +1,16 @@
 "use client";
 
+import { useState } from "react";
+import { useRouter } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
-import { Eye, FileText, Inbox, Power, PowerOff } from "lucide-react";
+import { Eye, FileText, Inbox, Power, XCircle } from "lucide-react";
 import { toggleEnrollmentStatusAction } from "@/lib/actions/academics";
 import { DataTableShell } from "@/components/ui/data-table";
 import { StatusPill } from "@/components/ui/status-pill";
 import { RowActionButton } from "@/components/ui/row-action-button";
 import { MatriculaFullEditDialog } from "@/components/matriculas/matricula-full-edit-dialog";
+import { CancelarMatriculaDialog } from "@/components/matriculas/cancelar-matricula-dialog";
 import { TIPO_VAGA_LABEL, TIPO_VAGA_STYLE, TIPO_VAGA_ICON } from "@/components/matriculas/tipo-vaga";
 
 type Option = { id: string; nome: string };
@@ -46,15 +49,17 @@ function MatriculaRow({
   series,
   turmas,
   planos,
+  onCancelar,
 }: {
   item: Matricula;
   series: Option[];
   turmas: TurmaOption[];
   planos: Option[];
+  onCancelar: (item: Matricula) => void;
 }) {
   const tone = statusTone[item.status as keyof typeof statusTone] ?? "neutral";
   const ativa = item.status === "ativa";
-  const podeAlternarStatus = item.status === "ativa" || item.status === "cancelada";
+  const podeReativar = item.status === "cancelada";
 
   return (
     <tr>
@@ -115,20 +120,31 @@ function MatriculaRow({
             turmas={turmas}
             planos={planos}
           />
-          {podeAlternarStatus ? (
+          {ativa ? (
+            <button
+              type="button"
+              onClick={() => onCancelar(item)}
+              title="Cancelar matrícula"
+              aria-label="Cancelar matrícula"
+              className="inline-flex h-8 w-8 items-center justify-center rounded-md text-danger hover:bg-danger/10"
+            >
+              <XCircle size={15} />
+            </button>
+          ) : null}
+          {podeReativar ? (
             <RowActionButton
               action={toggleEnrollmentStatusAction}
-              args={{ id: item.id, aluno_id: item.aluno_id, status: ativa ? "cancelada" : "ativa" }}
-              icon={ativa ? PowerOff : Power}
-              label={ativa ? "Cancelar matrícula" : "Reativar matrícula"}
-              tone={ativa ? "warning" : "success"}
+              args={{ id: item.id, aluno_id: item.aluno_id, status: "ativa" }}
+              icon={Power}
+              label="Reativar matrícula"
+              tone="success"
               confirm={{
-                title: ativa ? "Cancelar matrícula" : "Reativar matrícula",
-                message: `Tem certeza que quer ${ativa ? "cancelar" : "reativar"} a matrícula de "${item.alunos?.nome}"?`,
-                confirmLabel: ativa ? "Cancelar" : "Reativar",
-                variant: ativa ? "warning" : "default",
+                title: "Reativar matrícula",
+                message: `Tem certeza que quer reativar a matrícula de "${item.alunos?.nome}"?`,
+                confirmLabel: "Reativar",
+                variant: "default",
               }}
-              success={ativa ? "Matrícula cancelada." : "Matrícula reativada."}
+              success="Matrícula reativada."
               error="Falha ao alterar status."
             />
           ) : null}
@@ -165,6 +181,16 @@ export function MatriculasTable({
   turmas: TurmaOption[];
   planos: Option[];
 }) {
+  const router = useRouter();
+  const [matriculaParaCancelar, setMatriculaParaCancelar] = useState<{
+    id: string;
+    alunoId: string;
+    alunoNome: string;
+    serieNome: string;
+    turmaNome: string;
+    anoLetivo: number;
+  } | null>(null);
+
   return (
     <DataTableShell>
       <table className="ds-dt min-w-[1120px]">
@@ -193,10 +219,44 @@ export function MatriculasTable({
             </tr>
           ) : null}
           {matriculas.map((item) => (
-            <MatriculaRow key={item.id} item={item} series={series} turmas={turmas} planos={planos} />
+            <MatriculaRow
+              key={item.id}
+              item={item}
+              series={series}
+              turmas={turmas}
+              planos={planos}
+              onCancelar={(matricula) =>
+                setMatriculaParaCancelar({
+                  id: matricula.id,
+                  alunoId: matricula.aluno_id,
+                  alunoNome: matricula.alunos?.nome ?? "",
+                  serieNome: matricula.series?.nome ?? "",
+                  turmaNome: matricula.turmas?.nome ?? "",
+                  anoLetivo: matricula.ano_letivo ?? new Date().getFullYear(),
+                })
+              }
+            />
           ))}
         </tbody>
       </table>
+      {matriculaParaCancelar ? (
+        <CancelarMatriculaDialog
+          matriculaId={matriculaParaCancelar.id}
+          alunoId={matriculaParaCancelar.alunoId}
+          alunoNome={matriculaParaCancelar.alunoNome}
+          serieNome={matriculaParaCancelar.serieNome}
+          turmaNome={matriculaParaCancelar.turmaNome}
+          anoLetivo={matriculaParaCancelar.anoLetivo}
+          open={true}
+          onOpenChange={(open) => {
+            if (!open) setMatriculaParaCancelar(null);
+          }}
+          onSuccess={() => {
+            setMatriculaParaCancelar(null);
+            router.refresh();
+          }}
+        />
+      ) : null}
     </DataTableShell>
   );
 }
