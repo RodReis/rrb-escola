@@ -10,7 +10,11 @@ export async function cancelarMatriculaAction(formData: FormData): Promise<{ ok:
   await requirePermission("matriculas", "update");
 
   const alunoId = formText(formData, "alunoId");
-  const isaacRaw = formText(formData, "isaacCanceladoConfirmado");
+  // Lê o campo cru do FormData (não via `formText`, que colapsa "" -> null e
+  // esconderia a diferença entre "campo ausente" e "campo presente vazio").
+  // Contrato tri-state: ausente -> null (não aplicável, sem cobrança isaac);
+  // "on" -> true; qualquer outro valor presente (ex. "off") -> false.
+  const isaacRaw = formData.get("isaacCanceladoConfirmado");
 
   const parsed = CancelamentoMatriculaSchema.safeParse({
     matriculaId: formText(formData, "matriculaId"),
@@ -19,7 +23,7 @@ export async function cancelarMatriculaAction(formData: FormData): Promise<{ ok:
     obs: formText(formData, "obs") ?? "",
     cienteCoordenacao: formBoolean(formData, "cienteCoordenacao"),
     cienteDiretoria: formBoolean(formData, "cienteDiretoria"),
-    isaacCanceladoConfirmado: isaacRaw === undefined || isaacRaw === "" ? null : isaacRaw === "on",
+    isaacCanceladoConfirmado: isaacRaw === null ? null : isaacRaw === "on",
     cobrancaIds: formData.getAll("cobrancaIds").map(String),
   });
 

@@ -74,6 +74,30 @@ describe("cancelarMatriculaAction", () => {
     expect(result).toEqual({ ok: false, error: "Matrícula não está ativa." });
   });
 
+  it("mapeia isaacCanceladoConfirmado ausente para null (nao aplicavel)", async () => {
+    rpcMock.mockResolvedValue({ data: { ok: true }, error: null });
+    await cancelarMatriculaAction(buildFormData());
+    expect(rpcMock).toHaveBeenCalledWith("cancelar_matricula", expect.objectContaining({
+      p_isaac_cancelado_confirmado: null,
+    }));
+  });
+
+  it("mapeia isaacCanceladoConfirmado='on' para true", async () => {
+    rpcMock.mockResolvedValue({ data: { ok: true }, error: null });
+    await cancelarMatriculaAction(buildFormData({ isaacCanceladoConfirmado: "on" }));
+    expect(rpcMock).toHaveBeenCalledWith("cancelar_matricula", expect.objectContaining({
+      p_isaac_cancelado_confirmado: true,
+    }));
+  });
+
+  it("mapeia isaacCanceladoConfirmado='off' (switch desmarcado, mas presente) para false", async () => {
+    rpcMock.mockResolvedValue({ data: { ok: true }, error: null });
+    await cancelarMatriculaAction(buildFormData({ isaacCanceladoConfirmado: "off" }));
+    expect(rpcMock).toHaveBeenCalledWith("cancelar_matricula", expect.objectContaining({
+      p_isaac_cancelado_confirmado: false,
+    }));
+  });
+
   it("repassa o error de matricula nao encontrada / cross-tenant vindo da RPC", async () => {
     rpcMock.mockResolvedValue({ data: { ok: false, error: "Matrícula não encontrada." }, error: null });
 
