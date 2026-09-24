@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import {
   competenciasDaJanela,
   extrairEndToEndId,
+  extrairTransacoes,
   idTransacao,
   mapearLote,
   parseValor,
@@ -130,5 +131,27 @@ describe("mapearLote", () => {
       "escola-1",
     );
     expect(rows[0].id_transacao).toBe("999");
+  });
+});
+
+describe("extrairTransacoes", () => {
+  it("lê transações do envelope resultado, que é o que produção devolve", () => {
+    const resposta = { resultado: { transacoes: [{ valor: "10,00" }, { valor: "20,00" }] } };
+    expect(extrairTransacoes(resposta)).toHaveLength(2);
+  });
+
+  it("lê transações da raiz, que é o que o sandbox devolve", () => {
+    const resposta = { transacoes: [{ valor: "10,00" }] };
+    expect(extrairTransacoes(resposta)).toHaveLength(1);
+  });
+
+  it("devolve lista vazia quando não há transações em lugar nenhum", () => {
+    expect(extrairTransacoes({})).toEqual([]);
+    expect(extrairTransacoes(null)).toEqual([]);
+  });
+
+  it("ignora transacoes que não é array, em vez de quebrar", () => {
+    expect(extrairTransacoes({ transacoes: "nenhuma" })).toEqual([]);
+    expect(extrairTransacoes({ resultado: { transacoes: null } })).toEqual([]);
   });
 });
