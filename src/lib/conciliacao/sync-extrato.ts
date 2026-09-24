@@ -2,6 +2,7 @@ import "server-only";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createHash } from "node:crypto";
 import { consultarExtrato, type SicoobExtratoItem } from "@/lib/sicoob/extrato";
+import { extrairDocumentoContraparte } from "@/lib/conciliacao/documento-contraparte";
 import {
   casarTransferenciasIsaac,
   JANELA_DIAS,
@@ -137,7 +138,7 @@ function mapItem(item: SicoobExtratoItem, contaId: string, escolaId: string, ord
     valor: Math.abs(valorBruto),
     descricao: String(item.descricao ?? "Movimento Sicoob"),
     end_to_end_id: extrairEndToEndId(item),
-    contraparte_doc: item.cpfCnpj ?? null,
+    contraparte_doc: extrairDocumentoContraparte(item),
     payload: item,
   };
 }

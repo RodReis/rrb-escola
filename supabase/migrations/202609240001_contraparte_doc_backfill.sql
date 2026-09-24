@@ -1,0 +1,27 @@
+-- Preenche contraparte_doc das linhas já importadas, a partir do payload cru.
+--
+-- O mapItem lia `cpfCnpj`, campo que aparece em 2 dos 1.294 itens medidos em
+-- produção; o documento vem em `descInfComplementar`, entre os delimitadores
+-- `|@`, e só nos Pix emitidos. Como o payload inteiro já está gravado em
+-- extrato_bancario.payload, o backfill não precisa consultar a API de novo.
+--
+-- Mesma regra da função extrairDocumentoContraparte (TS): trecho entre |@,
+-- só os dígitos, null quando não sobra nada.
+--
+-- Idempotente: só toca linha cujo valor calculado difere do gravado.
+-- Ref: docs/superpowers/specs/2026-09-23-financeiro-debitos-transferencias-design.md
+
+update extrato_bancario e
+set contraparte_doc = calc.doc
+from (
+  select id,
+         nullif(regexp_replace(
+           coalesce(
+             substring(payload->>'descInfComplementar' from '\|@([^|]*)'),
+             payload->>'cpfCnpj',
+             ''
+           ), '\D', '', 'g'), '') as doc
+  from extrato_bancario
+) calc
+where calc.id = e.id
+  and e.contraparte_doc is distinct from calc.doc;
