@@ -33,6 +33,7 @@ import type {
 import { carregarImagens } from "@/lib/documents/pdf-utils";
 import { separarElegiveis, type AlunoElegivel } from "@/lib/historico/elegiveis";
 import type { HistoricoData, NivelEnsino } from "@/lib/historico/tipos";
+import { companyLogoUrl } from "@/lib/storage/company-logo-url";
 
 type Turma = {
   id: string;
@@ -124,7 +125,15 @@ export function CertificadoForm({
   // seleção de aluno — só mudam se `escola.logoPath` mudar entre navegações.
   useEffect(() => {
     let ativo = true;
-    carregarImagens([BRASAO_ESQUERDA_PATH, BRASAO_DIREITA_PATH, LOGO_PADRAO_PATH, escola.logoPath]).then((cache) => {
+    // `escola.logoPath` é o path cru salvo em `companies.logo_path` — precisa
+    // virar a URL pública do bucket antes de ir para `carregarImagens`
+    // (que só sabe fazer `fetch`), senão a busca sempre 404 e cai no padrão.
+    carregarImagens([
+      BRASAO_ESQUERDA_PATH,
+      BRASAO_DIREITA_PATH,
+      LOGO_PADRAO_PATH,
+      companyLogoUrl(escola.logoPath)
+    ]).then((cache) => {
       if (ativo) setImagens(cache);
     });
     return () => {

@@ -12,18 +12,32 @@ const optionalText = () =>
 export const CompanyUpdateSchema = CompanySchema.extend({
   id: z.string().uuid(),
   ativo: z.preprocess((v) => v === "on" || v === true, z.boolean()),
-  // Dados de cabecalho usados no historico escolar (endereco, resolucao, assinaturas).
+  // Endereco estruturado.
   endereco: optionalText(),
+  numero: optionalText(),
+  complemento: optionalText(),
+  bairro: optionalText(),
   cidade: optionalText(),
   uf: optionalText(),
   cep: optionalText(),
+  // Outras informacoes.
   resolucao: optionalText(),
   telefones: optionalText(),
   email: optionalText(),
+  site: optionalText(),
+  whatsapp: optionalText(),
+  nomeFantasia: optionalText(),
+  codigoInep: optionalText(),
+  mantenedora: optionalText(),
+  // Assinaturas.
   secretarioNome: optionalText(),
   secretarioCargo: optionalText(),
   diretorNome: optionalText(),
-  diretorCargo: optionalText()
+  diretorCargo: optionalText(),
+  coordenacaoNome: optionalText(),
+  coordenacaoCargo: optionalText(),
+  financeiroNome: optionalText(),
+  financeiroCargo: optionalText()
 });
 
 export const SchoolCategoryEnum = z.enum(["admin", "fund1", "fund2", "medio"]);

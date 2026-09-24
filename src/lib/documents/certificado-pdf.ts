@@ -4,6 +4,7 @@ import { renderHistoricos } from "./historico-pdf";
 import { imgFitInBox } from "./pdf-utils";
 import type { CertificadoData, CertificadoOptions } from "./certificado-tipos";
 import type { HistoricoData } from "@/lib/historico/tipos";
+import { companyLogoUrl } from "@/lib/storage/company-logo-url";
 
 export type ImagemCache = Map<string, { data: string; w: number; h: number }>;
 
@@ -143,8 +144,10 @@ function renderCabecalho(
   // Coluna central: logo da mantenedora e os dados da escola. Sem
   // `logoPath` cadastrado na company, cai no arquivo padrão — nem toda
   // company tem o campo preenchido, mas a escola tem uma marca só.
+  // A chave do cache é a URL pública resolvida (o que `carregarImagens`
+  // efetivamente baixou), não o path cru salvo em `escola.logoPath`.
   let y = yInicial;
-  const logo = imagens.get(data.escola.logoPath ?? LOGO_PADRAO_PATH) ?? imagens.get(LOGO_PADRAO_PATH);
+  const logo = imagens.get(companyLogoUrl(data.escola.logoPath) ?? LOGO_PADRAO_PATH) ?? imagens.get(LOGO_PADRAO_PATH);
   if (opts.leiaute.mostrarLogos && logo) {
     y = renderImagemCentralizada(doc, centro, y, logo, mm(85), mm(32)) + 8;
   }

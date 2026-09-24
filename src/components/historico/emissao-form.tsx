@@ -16,6 +16,7 @@ import { carregarHistoricosAction } from "@/lib/actions/historico";
 import { renderHistoricos } from "@/lib/documents/historico-pdf";
 import { separarElegiveis, type AlunoElegivel } from "@/lib/historico/elegiveis";
 import type { NivelEnsino } from "@/lib/historico/tipos";
+import { companyLogoUrl } from "@/lib/storage/company-logo-url";
 
 type Turma = {
   id: string;
@@ -51,9 +52,10 @@ function rotuloTurma(t: Turma): string {
   return `${nome}${t.serieNome} · ${turno}`;
 }
 
-async function logoParaDataUrl(): Promise<string | undefined> {
+async function logoParaDataUrl(logoPath: string | null): Promise<string | undefined> {
+  const url = companyLogoUrl(logoPath) ?? "/historico/logo-epg.png";
   try {
-    const resposta = await fetch("/historico/logo-epg.png");
+    const resposta = await fetch(url);
     if (!resposta.ok) return undefined;
     const blob = await resposta.blob();
     return await new Promise((resolve) => {
@@ -106,14 +108,12 @@ export function EmissaoForm({
     setEmitindo(true);
     setErro(null);
     try {
-      const [historicos, logoDataUrl] = await Promise.all([
-        carregarHistoricosAction(selecionados, nivel),
-        logoParaDataUrl()
-      ]);
+      const historicos = await carregarHistoricosAction(selecionados, nivel);
       if (historicos.length === 0) {
         setErro("Nenhum histórico pôde ser carregado para os alunos selecionados.");
         return;
       }
+      const logoDataUrl = await logoParaDataUrl(historicos[0].credenciamento.logoPath ?? null);
       renderHistoricos(historicos, { logoDataUrl }).save(`historicos-${anoLetivo}.pdf`);
     } catch (e) {
       setErro(e instanceof Error ? e.message : "Falha ao emitir os históricos.");
