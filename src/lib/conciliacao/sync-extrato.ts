@@ -9,6 +9,7 @@ import {
   type CreditoExtrato,
   type TransferenciaPendente,
 } from "@/lib/conciliacao/casar-transferencia-isaac";
+import { aplicarPipelineDebitos } from "@/lib/conciliacao/aplicar-pipeline";
 
 function normalizarTipo(tipo: string | undefined, valor: number): "credito" | "debito" {
   const t = (tipo ?? "").toLowerCase();
@@ -293,6 +294,18 @@ export async function syncExtratoSicoob(input?: { mes?: number; ano?: number }) 
 
   const repasses = await conciliarTransferenciasIsaac(supabase);
 
+  const escolaIds = Array.from(new Set((contas ?? []).map((c) => c.escola_id as string)));
+  let debitosResumo = { transferencias: 0, sugestoes: 0, aClassificar: 0, ambiguos: 0 };
+  for (const escolaId of escolaIds) {
+    const r = await aplicarPipelineDebitos(escolaId);
+    debitosResumo = {
+      transferencias: debitosResumo.transferencias + r.transferencias,
+      sugestoes: debitosResumo.sugestoes + r.sugestoes,
+      aClassificar: debitosResumo.aClassificar + r.aClassificar,
+      ambiguos: debitosResumo.ambiguos + r.ambiguos,
+    };
+  }
+
   return {
     ok: true,
     competencias,
@@ -301,6 +314,7 @@ export async function syncExtratoSicoob(input?: { mes?: number; ano?: number }) 
     descartados,
     falhas,
     repasses,
+    debitos: debitosResumo,
   };
 }
 
