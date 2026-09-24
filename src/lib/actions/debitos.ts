@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { requirePermission } from "@/lib/auth/session";
 import { createServerClient } from "@/lib/supabase/server";
 import { assertOk } from "@/lib/actions/assert-ok";
+import { DEFAULT_SCHOOL_ID } from "@/lib/constants";
 
 const CAMINHO = "/financeiro/tesouraria/conciliacao";
 
@@ -97,6 +98,86 @@ export async function classificarDebitoAction(formData: FormData): Promise<Class
   return { classificados, foraDaRegra, message };
 }
 
+/**
+ * Confirma um débito para CNPJ próprio sem par de crédito casado (D2 — ex.:
+ * a Caixa da folha, que paga fora do sistema) como transferência interna.
+ * Grava com `credito_extrato_id = null` (a conta de destino não tem extrato
+ * no sistema — comentário da Task 3 já previa esse caso) e marca o débito
+ * como resolvido (I2: antes desta action não havia NENHUMA ação para este
+ * balde, ele ficava para sempre fora de qualquer estado final).
+ */
+export async function confirmarContaPropriaAction(formData: FormData) {
+  await requirePermission("financeiro.conciliacao", "update");
+  const supabase = await createServerClient();
+  const extratoId = String(formData.get("extrato_id") ?? "");
+  if (!extratoId) throw new Error("Movimento inválido");
+
+  const { data: linha } = await supabase
+    .from("extrato_bancario")
+    .select("conta_id")
+    .eq("id", extratoId)
+    .maybeSingle();
+  if (!linha) throw new Error("Movimento não encontrado");
+
+  assertOk(
+    await supabase.from("transferencia_interna").insert({
+      escola_id: DEFAULT_SCHOOL_ID,
+      debito_extrato_id: extratoId,
+      credito_extrato_id: null,
+      conta_destino_id: linha.conta_id,
+      origem: "manual",
+    }),
+    "Não foi possível confirmar a transferência",
+  );
+  assertOk(
+    await supabase.from("extrato_bancario").update({ status_conciliacao: "manual" }).eq("id", extratoId),
+    "Não foi possível atualizar o status do movimento",
+  );
+
+  revalidatePath(CAMINHO);
+}
+
+/**
+ * Resolve um par ambíguo (dois ou mais créditos candidatos empatados em
+ * valor/janela, em contas diferentes) escolhendo manualmente qual crédito é
+ * o certo (I2). "Ignorar com motivo" via IgnorarDebitoForm é a outra saída
+ * válida para este balde — esta action cobre a escolha positiva.
+ */
+export async function resolverAmbiguoAction(formData: FormData) {
+  await requirePermission("financeiro.conciliacao", "update");
+  const supabase = await createServerClient();
+  const debitoId = String(formData.get("debito_id") ?? "");
+  const creditoId = String(formData.get("credito_id") ?? "");
+  if (!debitoId || !creditoId) throw new Error("Selecione o crédito correspondente");
+
+  const { data: credito } = await supabase
+    .from("extrato_bancario")
+    .select("conta_id")
+    .eq("id", creditoId)
+    .maybeSingle();
+  if (!credito) throw new Error("Crédito não encontrado");
+
+  assertOk(
+    await supabase.from("transferencia_interna").insert({
+      escola_id: DEFAULT_SCHOOL_ID,
+      debito_extrato_id: debitoId,
+      credito_extrato_id: creditoId,
+      conta_destino_id: credito.conta_id,
+      origem: "manual",
+    }),
+    "Não foi possível confirmar o par",
+  );
+  assertOk(
+    await supabase
+      .from("extrato_bancario")
+      .update({ status_conciliacao: "manual" })
+      .in("id", [debitoId, creditoId]),
+    "Não foi possível atualizar o status dos movimentos",
+  );
+
+  revalidatePath(CAMINHO);
+}
+
 /** Ignorar passa a exigir motivo — silêncio aqui é movimento financeiro sumindo. */
 export async function ignorarDebitoAction(formData: FormData) {
   await requirePermission("financeiro.conciliacao", "update");
@@ -117,7 +198,18 @@ export async function ignorarDebitoAction(formData: FormData) {
   revalidatePath(CAMINHO);
 }
 
-/** Desfaz um par de transferência interna detectado automaticamente. */
+/**
+ * Desfaz um par de transferência interna detectado automaticamente.
+ *
+ * Volta os dois movimentos para "pendente" não basta (I1): sem mais nada, o
+ * pipeline reclassifica o MESMO par no próximo carregamento, porque
+ * detectarTransferenciasInternas só olha valor/data/conta, sem memória de
+ * decisão humana. Por isso o débito (a perna que o usuário via na tela e
+ * mandou desfazer) é marcado com `pareamento_recusado` — os dois consumidores
+ * do pipeline (aplicar-pipeline.ts, data/debitos.ts) filtram esse débito
+ * antes de chamar classificarDebitos, mas ele segue disponível como crédito
+ * candidato de outro par, se for o caso.
+ */
 export async function desfazerTransferenciaAction(formData: FormData) {
   await requirePermission("financeiro.conciliacao", "update");
   const supabase = await createServerClient();
@@ -135,6 +227,13 @@ export async function desfazerTransferenciaAction(formData: FormData) {
   assertOk(
     await supabase.from("extrato_bancario").update({ status_conciliacao: "pendente" }).in("id", ids),
     "Não foi possível reabrir os movimentos do par",
+  );
+  assertOk(
+    await supabase
+      .from("extrato_bancario")
+      .update({ pareamento_recusado: true })
+      .eq("id", par.debito_extrato_id),
+    "Não foi possível marcar o movimento como recusado",
   );
   assertOk(
     await supabase.from("transferencia_interna").delete().eq("id", id),

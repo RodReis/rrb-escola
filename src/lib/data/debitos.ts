@@ -1,6 +1,7 @@
 import { DEFAULT_SCHOOL_ID } from "@/lib/constants";
 import { createServerClient } from "@/lib/supabase/server";
 import { classificarDebitos } from "@/lib/conciliacao/pipeline-debitos";
+import { carregarPendentes } from "@/lib/conciliacao/carregar-pendentes";
 import type { MovimentoConta } from "@/lib/conciliacao/transferencia-interna";
 import type { Regra } from "@/lib/conciliacao/classificar-regra";
 
@@ -64,24 +65,24 @@ export type DebitosData = {
 export async function getDebitosData(): Promise<DebitosData> {
   const supabase = await createServerClient();
 
-  const [contasRes, pendentesRes, categoriasRes, companiesRes, transferenciasRes] = await Promise.all([
+  const [contasRes, linhasSemOrdem, categoriasRes, companiesRes, transferenciasRes] = await Promise.all([
     supabase.from("contas_bancarias").select("id, company_id, companies(cnpj, name)").eq("escola_id", DEFAULT_SCHOOL_ID),
-    supabase
-      .from("extrato_bancario")
-      .select("id, conta_id, data, valor, tipo, descricao, contraparte_doc, status_conciliacao")
-      .eq("escola_id", DEFAULT_SCHOOL_ID)
-      .in("status_conciliacao", ["pendente", "auto"])
-      .order("valor", { ascending: false }),
+    // Pagina de verdade (C1) — um .select() simples corta em 1000 linhas
+    // (PostgREST max_rows) e derruba candidato de par fora do corte,
+    // arriscando gravar sozinho uma transferência que era pra ser ambígua.
+    carregarPendentes(supabase, DEFAULT_SCHOOL_ID, ["pendente", "auto"]),
     supabase.from("categorias_financeiras").select("id, nome").eq("escola_id", DEFAULT_SCHOOL_ID).eq("tipo", "despesa").eq("ativo", true).order("nome"),
     supabase.from("companies").select("id, name").eq("ativo", true).order("name"),
     supabase.from("transferencia_interna").select("id, debito_extrato_id, credito_extrato_id").eq("escola_id", DEFAULT_SCHOOL_ID),
   ]);
 
   if (contasRes.error) throw contasRes.error;
-  if (pendentesRes.error) throw pendentesRes.error;
   if (categoriasRes.error) throw categoriasRes.error;
   if (companiesRes.error) throw companiesRes.error;
   if (transferenciasRes.error) throw transferenciasRes.error;
+
+  // Preserva o comportamento pré-paginação (query ordenava por valor desc).
+  const pendentes = [...linhasSemOrdem].sort((a, b) => Number(b.valor) - Number(a.valor));
 
   const contas = contasRes.data ?? [];
   const contasProprias = new Set(contas.map((c) => c.id as string));
@@ -115,7 +116,7 @@ export async function getDebitosData(): Promise<DebitosData> {
     classeDespesa: (r.classe_despesa as "fixa" | "variavel" | null) ?? null,
   }));
 
-  const linhas = pendentesRes.data ?? [];
+  const linhas = pendentes;
   const porId = new Map(linhas.map((l) => [l.id as string, l]));
 
   // Um par de transferência pode referenciar um extrato que já saiu de
@@ -137,7 +138,9 @@ export async function getDebitosData(): Promise<DebitosData> {
 
   // O pipeline só olha "pendente" (é o que ainda não tem decisão); "auto" já
   // resolvido entra só para renderizar os pares de transferência automáticos.
-  const pendentesSemDecisao = linhas.filter((l) => l.status_conciliacao === "pendente");
+  // pareamento_recusado: usuário já desfez este par antes — não reclassifica
+  // como transferência de novo (I1); segue disponível como crédito de outro par.
+  const pendentesSemDecisao = linhas.filter((l) => l.status_conciliacao === "pendente" && !l.pareamento_recusado);
   const debitos: MovimentoConta[] = pendentesSemDecisao
     .filter((l) => l.tipo === "debito")
     .map((l) => ({ id: l.id as string, contaId: l.conta_id as string, data: l.data as string, valor: Number(l.valor), tipo: "debito" }));

@@ -1,6 +1,7 @@
 import "server-only";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { classificarDebitos } from "@/lib/conciliacao/pipeline-debitos";
+import { carregarPendentes } from "@/lib/conciliacao/carregar-pendentes";
 import type { MovimentoConta } from "@/lib/conciliacao/transferencia-interna";
 import type { Regra } from "@/lib/conciliacao/classificar-regra";
 
@@ -32,15 +33,14 @@ export async function aplicarPipelineDebitos(escolaId: string) {
       .filter((d): d is string => Boolean(d)),
   );
 
-  const { data: pendentes } = await supabase
-    .from("extrato_bancario")
-    .select("id, conta_id, data, valor, tipo, descricao, contraparte_doc")
-    .eq("escola_id", escolaId)
-    .eq("status_conciliacao", "pendente");
+  const linhas = await carregarPendentes(supabase, escolaId, ["pendente"]);
 
-  const linhas = pendentes ?? [];
+  // pareamento_recusado: usuário já desfez este débito como transferência
+  // interna antes — não tenta parear de novo (I1). Só entra na conta do
+  // pipeline como débito; segue disponível como CRÉDITO candidato de outro
+  // par (a recusa é sobre a decisão daquele débito específico).
   const debitos: MovimentoConta[] = linhas
-    .filter((l) => l.tipo === "debito")
+    .filter((l) => l.tipo === "debito" && !l.pareamento_recusado)
     .map((l) => ({ id: l.id as string, contaId: l.conta_id as string, data: l.data as string, valor: Number(l.valor), tipo: "debito" }));
   const creditos: MovimentoConta[] = linhas
     .filter((l) => l.tipo === "credito")
