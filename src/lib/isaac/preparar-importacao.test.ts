@@ -3,8 +3,10 @@ import {
   categoriaDaParcela,
   conferirFechamento,
   decidirPendencia,
+  escolherMatriculaParaCasamento,
   prepararImportacao,
   type AlunoCadastro,
+  type MatriculaParaCasamento,
   type TipoVaga,
 } from "./preparar-importacao";
 import type { AnaliticoIsaac, ParcelaAnalitico } from "./parse-analitico";
@@ -34,6 +36,18 @@ function aluno(over: Partial<AlunoCadastro> = {}): AlunoCadastro {
     tipoVaga: "NORMAL",
     valorMensalidadePraticado: null,
     matriculaCanceladaEm: null,
+    matriculaAnoLetivo: null,
+    ...over,
+  };
+}
+
+function matriculaCasamento(over: Partial<MatriculaParaCasamento> = {}): MatriculaParaCasamento {
+  return {
+    status: "ativa",
+    ano_letivo: 2026,
+    tipo_vaga: "NORMAL",
+    valor_mensalidade_praticado: null,
+    cancelamento_data: null,
     ...over,
   };
 }
@@ -128,6 +142,50 @@ describe("decidirPendencia — aluno_cancelado", () => {
 
   it("nao afeta aluno sem cancelamento", () => {
     const motivo = decidirPendencia(parcela({ competencia: "2026-10" }), aluno({ matriculaCanceladaEm: null }));
+    expect(motivo).toBeNull();
+  });
+});
+
+describe("escolherMatriculaParaCasamento — empate ativa × cancelada no mesmo ano", () => {
+  it("aluno com matricula cancelada E ativa de 2026 simultaneamente: escolhe a ativa", () => {
+    const escolhida = escolherMatriculaParaCasamento([
+      matriculaCasamento({ status: "cancelada", ano_letivo: 2026, cancelamento_data: "2026-05-10" }),
+      matriculaCasamento({ status: "ativa", ano_letivo: 2026 }),
+    ]);
+    expect(escolhida?.status).toBe("ativa");
+  });
+
+  it("cancelada de ano mais recente NAO vence uma ativa de ano anterior — ativa sempre prefere", () => {
+    const escolhida = escolherMatriculaParaCasamento([
+      matriculaCasamento({ status: "ativa", ano_letivo: 2026 }),
+      matriculaCasamento({ status: "cancelada", ano_letivo: 2027, cancelamento_data: "2027-01-10" }),
+    ]);
+    expect(escolhida?.status).toBe("ativa");
+    expect(escolhida?.ano_letivo).toBe(2026);
+  });
+
+  it("sem nenhuma ativa, escolhe a cancelada mais recente por ano_letivo", () => {
+    const escolhida = escolherMatriculaParaCasamento([
+      matriculaCasamento({ status: "cancelada", ano_letivo: 2025, cancelamento_data: "2025-11-10" }),
+      matriculaCasamento({ status: "cancelada", ano_letivo: 2026, cancelamento_data: "2026-05-10" }),
+    ]);
+    expect(escolhida?.ano_letivo).toBe(2026);
+  });
+});
+
+describe("decidirPendencia — matricula concluida seguida de ativa em ano seguinte", () => {
+  it("mensalidade de dezembro/2026 nao vira aluno_cancelado quando o cancelamento pertence a um ano letivo anterior ao ativo", () => {
+    // Cenario: matricula 2026 concluida (nao cancelada) -> matricula 2027 ativa.
+    // O casamento (Task 7 / I3) prefere a ativa: matriculaCanceladaEm fica null
+    // porque a matricula escolhida é a ativa de 2027, não a cancelada de outro
+    // aluno/ano. Mesmo assim, testamos a defesa em profundidade de decidirPendencia
+    // simulando um cancelamento de 2026 (ano anterior ao da competencia) chegando
+    // por engano: a competencia 2026-12 pertence ao ano letivo 2027 (calendario
+    // escolar cruza o ano civil), entao o guard não deveria disparar.
+    const motivo = decidirPendencia(
+      parcela({ competencia: "2026-12" }),
+      aluno({ matriculaCanceladaEm: "2026-11-10", matriculaAnoLetivo: 2027 }),
+    );
     expect(motivo).toBeNull();
   });
 });

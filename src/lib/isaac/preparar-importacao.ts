@@ -49,7 +49,31 @@ export type AlunoCadastro = {
   valorMensalidadePraticado: number | null;
   /** Data (YYYY-MM-DD) do cancelamento da matrícula do ano corrente, ou null se ativa/sem cancelamento. */
   matriculaCanceladaEm: string | null;
+  /** Ano letivo da matrícula escolhida (a `ativa` mais recente, ou a `cancelada` mais recente na ausência de uma ativa). */
+  matriculaAnoLetivo: number | null;
 };
+
+/** Matrícula crua, como a camada de dados lê da tabela, para a escolha da matrícula preferida. */
+export type MatriculaParaCasamento = {
+  status: "ativa" | "cancelada";
+  ano_letivo: number | null;
+  tipo_vaga: TipoVaga | null;
+  valor_mensalidade_praticado: number | null;
+  cancelamento_data: string | null;
+};
+
+/**
+ * Escolhe a matrícula que representa o aluno no casamento com o isaac:
+ * SEMPRE prefere uma `ativa` sobre uma `cancelada`, mesmo que a cancelada seja
+ * de ano letivo mais recente — só cai numa `cancelada` quando não houver
+ * nenhuma `ativa`. Dentro do mesmo status, a mais recente por ano_letivo vence.
+ */
+export function escolherMatriculaParaCasamento(
+  matriculas: MatriculaParaCasamento[],
+): MatriculaParaCasamento | null {
+  const ordenadas = [...matriculas].sort((a, b) => Number(b.ano_letivo ?? 0) - Number(a.ano_letivo ?? 0));
+  return ordenadas.find((m) => m.status === "ativa") ?? ordenadas[0] ?? null;
+}
 
 export type ParcelaPreparada = {
   idParcela: string;
@@ -94,6 +118,7 @@ export type PreparoImportacao = {
     semAluno: number;
     tipoVagaIncompativel: number;
     permutaManual: number;
+    alunoCancelado: number;
     estornos: number;
   };
 };
@@ -132,8 +157,18 @@ export function decidirPendencia(
   // Competencia é "YYYY-MM"; cancelamento_data é "YYYY-MM-DD". Compara por
   // prefixo de mês: competência posterior ao mês do cancelamento não gera
   // cobrança — a escola não deveria mais receber por esse aluno.
+  //
+  // Checagem defensiva extra: só aplica a trava se o ANO da competência for
+  // >= ao ano_letivo da própria matrícula cancelada. Sem isso, uma matrícula
+  // cancelada de um ano letivo ANTERIOR ao da competência da parcela não
+  // deveria nem ser relevante (a matrícula relevante já seria outra, ativa,
+  // de ano mais recente — e essa já teria sido a escolhida no casamento).
   if (aluno.matriculaCanceladaEm && parcela.competencia > aluno.matriculaCanceladaEm.slice(0, 7)) {
-    return "aluno_cancelado";
+    const competenciaAno = Number(parcela.competencia.slice(0, 4));
+    const matriculaAno = aluno.matriculaAnoLetivo ?? competenciaAno;
+    if (competenciaAno >= matriculaAno) {
+      return "aluno_cancelado";
+    }
   }
 
   const tipoVaga = aluno.tipoVaga ?? "NORMAL";
@@ -283,6 +318,7 @@ export function prepararImportacao(
     semAluno: 0,
     tipoVagaIncompativel: 0,
     permutaManual: 0,
+    alunoCancelado: 0,
     estornos: 0,
   };
 
@@ -299,6 +335,7 @@ export function prepararImportacao(
     if (motivo === "sem_aluno") contagens.semAluno += 1;
     if (motivo === "tipo_vaga_incompativel") contagens.tipoVagaIncompativel += 1;
     if (motivo === "permuta_manual") contagens.permutaManual += 1;
+    if (motivo === "aluno_cancelado") contagens.alunoCancelado += 1;
     if (parcela.valorBase < 0) contagens.estornos += 1;
 
     parcelas.push({

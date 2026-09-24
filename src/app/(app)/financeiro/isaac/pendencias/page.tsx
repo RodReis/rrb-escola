@@ -27,6 +27,12 @@ const MOTIVO: Record<string, { label: string; tom: "red" | "gold" | "gray"; expl
     tom: "gold",
     explicacao: "Permuta não tem percentual fixo: cada caso é negociado, então o valor é conferido à mão.",
   },
+  aluno_cancelado: {
+    label: "Aluno cancelado",
+    tom: "gray",
+    explicacao:
+      "A matrícula do aluno foi cancelada antes da competência desta parcela. Confirme se a mensalidade é mesmo indevida antes de resolver.",
+  },
 };
 
 export default async function PendenciasIsaacPage() {
