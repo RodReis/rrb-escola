@@ -10,6 +10,7 @@ import { getStudentSheet } from "@/lib/data/students";
 import { getSignedFotoUrl } from "@/lib/storage/photos";
 import { requirePermission } from "@/lib/auth/session";
 import { getTemplatesAtivos } from "@/lib/data/templates";
+import { listarCobrancasAbertasParaCancelamento } from "@/lib/data/cancelamento";
 
 export default async function StudentPage({ params, searchParams }: { params: { id: string }; searchParams: { ext_de?: string; ext_ate?: string } }) {
   const student = await getStudentSheet(params.id);
@@ -39,6 +40,17 @@ export default async function StudentPage({ params, searchParams }: { params: { 
     nome: t.nome,
     categoria: t.categoria ?? null
   }));
+
+  // Sem matrícula ativa: a mais recente é a cancelada, e a secretaria precisa
+  // saber se sobrou cobrança em aberto vencendo depois do cancelamento.
+  const matriculaCanceladaRecente = matriculaAtivaForDocs
+    ? null
+    : [...student.matriculas]
+        .sort((a, b) => (b.data_matricula ?? "").localeCompare(a.data_matricula ?? ""))
+        .find((m) => m.cancelamento_data) ?? null;
+  const cobrancasPendentesPosCancelamento = matriculaCanceladaRecente?.cancelamento_data
+    ? await listarCobrancasAbertasParaCancelamento(student.id, matriculaCanceladaRecente.cancelamento_data)
+    : [];
 
   return (
     <div className="grid gap-6">
@@ -75,6 +87,12 @@ export default async function StudentPage({ params, searchParams }: { params: { 
           <StudentHeaderActions student={student} matriculaAtiva={matriculaAtivaPayload} templates={templatesLite} />
         </div>
       </header>
+      {cobrancasPendentesPosCancelamento.length > 0 ? (
+        <div className="rounded-md border border-warning/40 bg-warning/10 px-4 py-2 text-sm text-warning">
+          Existem {cobrancasPendentesPosCancelamento.length} cobrança(s) em aberto com vencimento após o
+          cancelamento da matrícula. Revise se devem ser canceladas manualmente.
+        </div>
+      ) : null}
       <StudentSheetView student={student} fotoSrc={fotoSrc} geradoEm={new Date()} />
       <StudentStatementSection alunoId={params.id} searchParams={searchParams} />
       <AnamneseAlunoSection alunoId={params.id} />

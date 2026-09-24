@@ -2,6 +2,8 @@
 import { CheckSquare, Square } from "lucide-react";
 import type { StudentSheet } from "@/lib/types";
 import { dateFormat } from "@/lib/constants";
+import { Badge } from "@/components/ui/badge";
+import { MOTIVO_CANCELAMENTO_LABEL, type MotivoCancelamento } from "@/lib/validation/cancelamento";
 
 function text(value: unknown) {
   return value ? String(value) : "";
@@ -163,7 +165,17 @@ export function StudentSheetView({
               <td className="text-center">{text(item.turmas?.nome)}</td>
               <td className="text-center">{date(item.data_matricula)}</td>
               <td className="text-center">{text(item.idade_na_matricula)}</td>
-              <td className="text-center">{text(item.status)}</td>
+              <td className="text-center">
+                {text(item.status)}
+                {item.cancelamento_data ? (
+                  <Badge tone="red">
+                    Cancelado — {new Date(`${item.cancelamento_data}T00:00:00Z`).getFullYear()}
+                    {item.cancelamento_motivo
+                      ? ` (${MOTIVO_CANCELAMENTO_LABEL[item.cancelamento_motivo as MotivoCancelamento]})`
+                      : ""}
+                  </Badge>
+                ) : null}
+              </td>
             </tr>
           ))}
         </tbody>
