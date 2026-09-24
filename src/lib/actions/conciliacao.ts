@@ -56,10 +56,27 @@ export async function atualizarExtratoAction(
   }
 }
 
+/**
+ * Ignora um movimento SEM motivo obrigatório — por isso restrita a créditos.
+ * Débito precisa passar por `ignorarDebitoAction` (motivo obrigatório): um
+ * débito ignorado em silêncio é despesa que nunca mais aparece em relatório
+ * nenhum, e "esqueci de classificar" não pode ficar indistinguível de
+ * "decidi que não é despesa".
+ */
 export async function ignorarExtratoAction(formData: FormData) {
   await requirePermission("financeiro.conciliacao", "update");
   const id = String(formData.get("id") ?? "");
   const supabase = await createServerClient();
+
+  const { data: linha } = await supabase
+    .from("extrato_bancario")
+    .select("tipo")
+    .eq("id", id)
+    .maybeSingle();
+  if (linha?.tipo === "debito") {
+    throw new Error("Débito precisa de motivo para ser ignorado. Use a aba de classificação.");
+  }
+
   await supabase
     .from("extrato_bancario")
     .update({ status_conciliacao: "ignorado" })

@@ -47,11 +47,15 @@ export type ParAmbiguoResolvido = {
   candidatos: MovimentoExtrato[];
 };
 
+export type ContaPropriaSemParResolvido = MovimentoExtrato;
+
 export type DebitosData = {
   aClassificar: GrupoAClassificar[];
   sugestoes: SugestaoDebito[];
   transferenciasAuto: ParInternoResolvido[];
   transferenciasAmbiguas: ParAmbiguoResolvido[];
+  /** Débitos para CNPJ próprio sem par de crédito casado (D2, ex.: Caixa). */
+  contaPropriaSemPar: ContaPropriaSemParResolvido[];
   categorias: { id: string; nome: string }[];
   companies: { id: string; nome: string }[];
   contas: { id: string; companyId: string | null }[];
@@ -114,8 +118,13 @@ export async function getDebitosData(): Promise<DebitosData> {
   const linhas = pendentesRes.data ?? [];
   const porId = new Map(linhas.map((l) => [l.id as string, l]));
 
-  const toMovimento = (id: string): MovimentoExtrato => {
-    const l = porId.get(id)!;
+  // Um par de transferência pode referenciar um extrato que já saiu de
+  // pendente/auto por outro caminho (ex.: ignorado por engano antes desta
+  // tela existir) — `undefined` aqui não pode virar 500 na página inteira,
+  // então cada chamador filtra o `null` antes de usar.
+  const toMovimento = (id: string): MovimentoExtrato | null => {
+    const l = porId.get(id);
+    if (!l) return null;
     return {
       id,
       contaId: l.conta_id as string,
@@ -157,6 +166,7 @@ export async function getDebitosData(): Promise<DebitosData> {
   const grupos = new Map<string, GrupoAClassificar>();
   for (const debitoId of resultado.aClassificar) {
     const mov = toMovimento(debitoId);
+    if (!mov) continue;
     const chave = mov.documento ?? `desc:${mov.descricao}`;
     const grupo = grupos.get(chave);
     if (grupo) {
@@ -172,36 +182,63 @@ export async function getDebitosData(): Promise<DebitosData> {
       });
     }
   }
+  // Grupos ordenados por total decrescente (maiores em valor no topo), mas
+  // dentro de cada grupo os movimentos vêm ordenados por DATA, não por valor
+  // (a query-fonte ordena por valor desc; sem isto "primeiro"/"último" do
+  // card mostraria o intervalo errado — C4).
+  for (const grupo of Array.from(grupos.values())) {
+    grupo.movimentos.sort((a, b) => a.data.localeCompare(b.data));
+  }
   const aClassificar = Array.from(grupos.values()).sort((a, b) => b.total - a.total);
 
   const categoriaNomePor = new Map((categoriasRes.data ?? []).map((c) => [c.id as string, c.nome as string]));
-  const sugestoes: SugestaoDebito[] = resultado.sugestoes.map((s) => ({
-    ...toMovimento(s.debitoId),
-    regraId: s.regraId,
-    categoriaId: s.categoriaId,
-    categoriaNome: categoriaNomePor.get(s.categoriaId) ?? "—",
-    companyId: s.companyId,
-    classeDespesa: s.classeDespesa,
-  }));
+  const sugestoes: SugestaoDebito[] = resultado.sugestoes.flatMap((s) => {
+    const mov = toMovimento(s.debitoId);
+    if (!mov) return [];
+    return [{
+      ...mov,
+      regraId: s.regraId,
+      categoriaId: s.categoriaId,
+      categoriaNome: categoriaNomePor.get(s.categoriaId) ?? "—",
+      companyId: s.companyId,
+      classeDespesa: s.classeDespesa,
+    }];
+  });
 
   // Transferências: os pares já gravados (origem auto, do último sync) e os
-  // ambíguos calculados agora sobre o que ainda está pendente.
-  const transferenciasAuto: ParInternoResolvido[] = (transferenciasRes.data ?? []).map((t) => ({
-    id: t.id as string,
-    debito: toMovimento(t.debito_extrato_id as string),
-    credito: t.credito_extrato_id ? toMovimento(t.credito_extrato_id as string) : null,
-  }));
+  // ambíguos calculados agora sobre o que ainda está pendente. `debito` que
+  // não resolve mais (extrato saiu de pendente/auto por outro caminho) faz o
+  // par inteiro ser pulado — não derruba a página inteira (I2).
+  const transferenciasAuto: ParInternoResolvido[] = (transferenciasRes.data ?? []).flatMap((t) => {
+    const debito = toMovimento(t.debito_extrato_id as string);
+    if (!debito) return [];
+    const credito = t.credito_extrato_id ? toMovimento(t.credito_extrato_id as string) : null;
+    return [{ id: t.id as string, debito, credito }];
+  });
 
-  const transferenciasAmbiguas: ParAmbiguoResolvido[] = resultado.ambiguos.map((a) => ({
-    debito: toMovimento(a.debitoId),
-    candidatos: a.candidatos.map(toMovimento),
-  }));
+  const transferenciasAmbiguas: ParAmbiguoResolvido[] = resultado.ambiguos.flatMap((a) => {
+    const debito = toMovimento(a.debitoId);
+    if (!debito) return [];
+    const candidatos = a.candidatos.flatMap((id) => {
+      const c = toMovimento(id);
+      return c ? [c] : [];
+    });
+    return [{ debito, candidatos }];
+  });
+
+  // D2: débito para CNPJ próprio sem par de crédito casado (ex.: Caixa) —
+  // não é sugestão nem transferência, só precisa ficar visível (I3).
+  const contaPropriaSemPar: ContaPropriaSemParResolvido[] = resultado.contaPropriaSemPar.flatMap((c) => {
+    const mov = toMovimento(c.debitoId);
+    return mov ? [mov] : [];
+  });
 
   return {
     aClassificar,
     sugestoes,
     transferenciasAuto,
     transferenciasAmbiguas,
+    contaPropriaSemPar,
     categorias: (categoriasRes.data ?? []).map((c) => ({ id: c.id as string, nome: c.nome as string })),
     companies: (companiesRes.data ?? []).map((c) => ({ id: c.id as string, nome: c.name as string })),
     contas: contas.map((c) => ({ id: c.id as string, companyId: (c.company_id as string | null) ?? null })),

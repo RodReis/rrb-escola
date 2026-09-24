@@ -1,8 +1,7 @@
-import { AlertTriangle, ArrowLeftRight } from "lucide-react";
+import { AlertTriangle, ArrowLeftRight, Landmark } from "lucide-react";
 import { Panel } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
 import { money } from "@/lib/constants";
-import { desfazerTransferenciaAction } from "@/lib/actions/debitos";
+import { DesfazerTransferenciaButton } from "@/components/finance/desfazer-transferencia-button";
 import type { DebitosData } from "@/lib/data/debitos";
 
 function dateText(value: string) {
@@ -35,12 +34,7 @@ export function DebitosTransferencias({ data }: { data: DebitosData }) {
                   {par.credito ? money.format(par.credito.valor) : "—"}
                 </p>
               </div>
-              <form action={desfazerTransferenciaAction}>
-                <input type="hidden" name="id" value={par.id} />
-                <Button type="submit" variant="ghost" className="text-xs">
-                  Desfazer
-                </Button>
-              </form>
+              <DesfazerTransferenciaButton id={par.id} />
             </Panel>
           ))
         )}
@@ -73,6 +67,27 @@ export function DebitosTransferencias({ data }: { data: DebitosData }) {
                   ))}
                 </ul>
               </div>
+            </Panel>
+          ))
+        )}
+      </section>
+
+      <section className="grid gap-3">
+        <h3 className="text-xs font-bold uppercase tracking-kicker text-ink/60">
+          Conta própria sem par (D2)
+        </h3>
+        {data.contaPropriaSemPar.length === 0 ? (
+          <Panel>
+            <p className="py-6 text-center text-sm text-ink/60">Nenhum caso no momento.</p>
+          </Panel>
+        ) : (
+          data.contaPropriaSemPar.map((mov) => (
+            <Panel key={mov.id} className="grid gap-1 lg:grid-cols-[130px_1fr_auto] lg:items-center">
+              <span className="flex items-center gap-1.5 text-xs font-semibold text-ink/60">
+                <Landmark size={13} /> {dateText(mov.data)}
+              </span>
+              <p className="text-sm text-ink/70">{mov.descricao}</p>
+              <strong className="tabular-nums text-clay lg:text-right">{money.format(mov.valor)}</strong>
             </Panel>
           ))
         )}

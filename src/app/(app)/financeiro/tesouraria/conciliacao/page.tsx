@@ -108,7 +108,10 @@ export default async function ConciliacaoPage({
           counts={{
             "a-classificar": debitosData.aClassificar.reduce((n, g) => n + g.movimentos.length, 0),
             sugestoes: debitosData.sugestoes.length,
-            transferencias: debitosData.transferenciasAuto.length + debitosData.transferenciasAmbiguas.length,
+            transferencias:
+              debitosData.transferenciasAuto.length +
+              debitosData.transferenciasAmbiguas.length +
+              debitosData.contaPropriaSemPar.length,
           }}
         />
         {abaDebitos === "a-classificar" ? <DebitosAClassificar data={debitosData} /> : null}
@@ -175,10 +178,16 @@ export default async function ConciliacaoPage({
                   {linha.end_to_end_id ?? (linha.tipo === "credito" ? "sem candidato por E2E" : "sem E2E")}
                 </p>
               </div>
-              <form action={ignorarExtratoAction} className="justify-self-start lg:justify-self-end">
-                <input type="hidden" name="id" value={linha.id} />
-                <Button type="submit" variant="ghost" className="text-xs">Ignorar</Button>
-              </form>
+              {linha.tipo === "credito" ? (
+                <form action={ignorarExtratoAction} className="justify-self-start lg:justify-self-end">
+                  <input type="hidden" name="id" value={linha.id} />
+                  <Button type="submit" variant="ghost" className="text-xs">Ignorar</Button>
+                </form>
+              ) : (
+                <span className="justify-self-start text-xs text-ink/50 lg:justify-self-end">
+                  Débito: classifique ou ignore na aba acima
+                </span>
+              )}
             </div>
 
             {status === "pendente" ? (

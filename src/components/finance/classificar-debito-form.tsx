@@ -6,22 +6,26 @@ import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { CurrencyInput } from "@/components/ui/currency-input";
 import { FieldNote } from "@/components/ui/field-note";
+import { money } from "@/lib/constants";
 import { classificarDebitoAction } from "@/lib/actions/debitos";
 import { useAction } from "@/lib/hooks/use-action";
 
 type Categoria = { id: string; nome: string };
 type Company = { id: string; nome: string };
 
+export type MovimentoDoForm = {
+  id: string;
+  data: string;
+  valor: number;
+  descricao: string;
+};
+
 type Props = {
-  /** id do movimento (grupo com 1 item) ou "" quando é um grupo com vários — nesse caso extratoIds cobre todos. */
-  extratoId?: string;
-  /** Quando o formulário classifica um grupo inteiro de uma vez. */
-  extratoIds?: string[];
+  /** Movimentos deste formulário — 1 para um débito avulso, N para um grupo. */
+  movimentos: MovimentoDoForm[];
   documento: string | null;
-  /** Empresa dona da conta do primeiro movimento — padrão do select e base da comparação do aviso D4. */
+  /** Empresa dona da conta dos movimentos — padrão do select e base da comparação do aviso D4. */
   contaCompanyId: string | null;
-  /** Mês de `data_pagamento` no formato YYYY-MM, já calculado pelo caller (D3). */
-  competenciaPadrao: string;
   categorias: Categoria[];
   companies: Company[];
   /** Regra sugerida pelo pipeline, pré-selecionada quando a aba é "Sugestões". */
@@ -31,17 +35,27 @@ type Props = {
   onDone?: () => void;
 };
 
+function dateText(value: string) {
+  return new Date(`${value}T00:00:00`).toLocaleDateString("pt-BR");
+}
+
 /**
  * Formulário de classificação de um débito (ou de um grupo inteiro da fila
  * "A classificar"). D1: "salvar como regra" nasce DESMARCADO — os campos de
  * janela (D7) só aparecem depois que o usuário marca a caixa.
+ *
+ * Quando é um grupo (C3): cada movimento tem um checkbox próprio, todos
+ * marcados por padrão, para o usuário poder tirar do lote um movimento que
+ * não deveria levar a mesma categoria (ex.: retirada extraordinária no meio
+ * dos pagamentos regulares da mesma contraparte). A regra em si é criada
+ * UMA VEZ do lado do servidor (RPC `classificar_debito`), não uma vez por
+ * movimento — e lá, se a regra tem valor/janela, cada movimento selecionado é
+ * reconferido contra ela antes de virar lançamento.
  */
 export function ClassificarDebitoForm({
-  extratoId,
-  extratoIds,
+  movimentos,
   documento,
   contaCompanyId,
-  competenciaPadrao,
   categorias,
   companies,
   categoriaSugerida,
@@ -55,30 +69,59 @@ export function ClassificarDebitoForm({
   const [valorEsperado, setValorEsperado] = useState(0);
   const [diaInicio, setDiaInicio] = useState("");
   const [diaFim, setDiaFim] = useState("");
+  const [selecionados, setSelecionados] = useState<Set<string>>(
+    () => new Set(movimentos.map((m) => m.id)),
+  );
 
   const empresaDivergente = companyId !== "" && contaCompanyId !== null && companyId !== contaCompanyId;
   const nomeEmpresa = useMemo(() => new Map(companies.map((c) => [c.id, c.nome])), [companies]);
 
-  const ids = extratoIds && extratoIds.length > 0 ? extratoIds : extratoId ? [extratoId] : [];
+  const ehGrupo = movimentos.length > 1;
+  const idsSelecionados = movimentos.filter((m) => selecionados.has(m.id)).map((m) => m.id);
 
   const { run, pending } = useAction(
-    async (formData: FormData) => {
-      // Classificar um grupo inteiro repete a mesma decisão para cada movimento.
-      for (const id of ids) {
-        const copia = new FormData();
-        formData.forEach((v, k) => copia.set(k, v));
-        copia.set("extrato_id", id);
-        await classificarDebitoAction(copia);
-      }
+    (formData: FormData) => classificarDebitoAction(formData),
+    {
+      success: idsSelecionados.length > 1 ? `${idsSelecionados.length} movimentos classificados.` : "Movimento classificado.",
+      onSuccess: onDone,
     },
-    { success: ids.length > 1 ? `${ids.length} movimentos classificados.` : "Movimento classificado.", onSuccess: onDone },
   );
+
+  function toggle(id: string) {
+    setSelecionados((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  }
 
   return (
     <form
       action={(formData) => run(formData)}
       className="grid gap-3 border-t border-line pt-3 md:grid-cols-2"
     >
+      {ehGrupo ? (
+        <div className="md:col-span-2 grid gap-1 rounded-ui border border-line bg-muted/30 p-2">
+          {movimentos.map((m) => (
+            <label key={m.id} className="flex items-center gap-2 text-sm">
+              <input
+                type="checkbox"
+                name="extrato_id"
+                value={m.id}
+                checked={selecionados.has(m.id)}
+                onChange={() => toggle(m.id)}
+              />
+              <span className="text-ink/60">{dateText(m.data)}</span>
+              <span className="flex-1 truncate text-ink/70">{m.descricao}</span>
+              <strong className="tabular-nums text-clay">{money.format(m.valor)}</strong>
+            </label>
+          ))}
+        </div>
+      ) : (
+        <input type="hidden" name="extrato_id" value={movimentos[0]?.id ?? ""} />
+      )}
+
       <label>
         Categoria
         <select name="categoria_id" required defaultValue={categoriaSugerida ?? ""}>
@@ -115,10 +158,17 @@ export function ClassificarDebitoForm({
         ) : null}
       </label>
 
-      <label>
-        Competência
-        <input type="month" name="competencia" defaultValue={competenciaPadrao} required />
-      </label>
+      {!ehGrupo ? (
+        <FieldNote>
+          Competência: {dateText(movimentos[0]?.data ?? "")} — a RPC usa o mês da data de pagamento de cada
+          movimento automaticamente.
+        </FieldNote>
+      ) : (
+        <FieldNote>
+          Cada movimento marcado leva a competência do mês da SUA PRÓPRIA data de pagamento (D3) — não uma
+          competência única para o grupo.
+        </FieldNote>
+      )}
 
       <label>
         Classe
@@ -180,6 +230,12 @@ export function ClassificarDebitoForm({
                 onChange={(e) => setDiaFim(e.target.value)}
               />
             </label>
+            {valorEsperado > 0 && ehGrupo ? (
+              <FieldNote tone="warn" className="md:col-span-3">
+                Movimentos marcados que não baterem exatamente com esse valor e essa janela ficam de fora —
+                não são lançados com a categoria desta regra.
+              </FieldNote>
+            ) : null}
           </div>
         ) : null}
       </div>
@@ -192,8 +248,8 @@ export function ClassificarDebitoForm({
         ) : (
           <span />
         )}
-        <Button type="submit" variant="primary" loading={pending}>
-          {ids.length > 1 ? `Classificar ${ids.length} movimentos` : "Classificar"}
+        <Button type="submit" variant="primary" loading={pending} disabled={idsSelecionados.length === 0}>
+          {idsSelecionados.length > 1 ? `Classificar ${idsSelecionados.length} movimentos` : "Classificar"}
         </Button>
       </div>
     </form>
