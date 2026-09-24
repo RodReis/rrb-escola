@@ -18,6 +18,34 @@ possível cancelar nada no isaac a partir deste sistema.
 Depende da frente **Declarações Pedagógicas** (emite "Transferência — Não
 Concluído" ao final do cancelamento).
 
+### Dois eventos diferentes — só um deles é "cancelamento"
+
+Existem duas formas de um aluno deixar de estar matriculado, e este
+documento cobre **apenas a segunda**:
+
+1. **Não renovação** — o aluno termina o ano com a matrícula em dia (ou já
+   `concluida`) e simplesmente não é matriculado no ano seguinte. Não há
+   motivo a registrar, não há diálogo, não há cobrança a tratar: é ausência
+   de uma ação futura, não um evento datado. **Não gera nenhum registro
+   novo.** Continua sendo o que já acontece hoje: o aluno fica sem matrícula
+   ativa no ano corrente, e a frente **Lista de Alunos** já mostra o ícone
+   "Matricular" para esse caso. "Quem não renovou este ano" é uma consulta
+   derivada (matrícula no ano anterior, nenhuma no ano corrente), não um
+   campo gravado.
+2. **Cancelamento no meio do ano** — o aluno tinha matrícula `ativa` e ela é
+   encerrada antes do fim do ano letivo, por transferência, desistência,
+   mudança de cidade, inadimplência ou outro motivo. **É este o evento que o
+   restante deste documento descreve.** Ele grava data, motivo, quem
+   confirmou ciência, e é a fonte do relatório "quem saiu da escola este
+   ano" (ver seção Relatório).
+
+A distinção importa porque as duas coisas, sem essa separação, ficam
+indistinguíveis no banco: um aluno "sem matrícula no ano" poderia ser tanto
+alguém que só não voltou quanto alguém que a escola cancelou em março. Só o
+evento 2 grava `cancelamento_data`/`cancelamento_motivo` — por isso o
+relatório de saída filtra por essas colunas não-nulas, nunca por "ausência
+de matrícula".
+
 ## Decisões
 
 - Status final continua `cancelada` (não `transferida`) — libera o ano no
@@ -104,16 +132,41 @@ Transferência — Não Concluído" (abre a tela de Emitir da frente de
 Declarações, com aluno e modelo pré-selecionados).
 
 ### Ficha do aluno
-- Selo "Cancelado — {ano}" com motivo e data, ao lado do status atual.
+- Selo "Cancelado — {ano}" com motivo e data, ao lado do status atual — só
+  aparece para o evento 2 (cancelamento). Um aluno que não renovou não ganha
+  selo nenhum: ele simplesmente aparece sem matrícula ativa no ano corrente,
+  como já acontece hoje.
 - Aviso visível se existir cobrança em aberto com vencimento após a data do
   cancelamento (isto é, o passo 4 não cobriu tudo — cobrança criada depois,
   por exemplo).
+
+## Relatório — quem saiu da escola este ano
+
+Tela nova, simples: **Acadêmico › Matrículas › Saídas do ano**, com filtro de
+Ano Letivo (padrão: ano corrente).
+
+- Lista as matrículas com `status = 'cancelada'` **e** `cancelamento_data`
+  dentro do ano letivo filtrado — nunca por ausência de matrícula, que
+  incluiria quem apenas não renovou (evento 1, fora desta lista).
+  Query: `where ano_letivo = :ano and cancelamento_data is not null`.
+- Colunas: Aluno, Série/Turma, Motivo, Data do cancelamento, Ciente
+  coordenação (✓/—), Ciente diretoria (✓/—).
+- Contagem por motivo no topo (ex.: "6 transferências, 2 desistências, 1
+  mudança de cidade") — soma simples, sem gráfico.
+- Não lista quem não renovou: essa é uma pergunta diferente ("matrícula no
+  ano X, nenhuma no ano X+1"), fora do escopo deste relatório e desta
+  frente — se precisar, é uma tela própria de "não renovação", a criar
+  quando houver demanda real (YAGNI).
 
 ## Fora de escopo
 
 - Qualquer chamada de API ao isaac (não existe).
 - Alterar o enum `status_matricula` (não usa `transferida` neste fluxo).
 - Reversão/"reativar matrícula cancelada" (fluxo separado, não pedido aqui).
+- Qualquer registro ou flag para "não renovação" (evento 1) — é dado
+  derivado (matrícula ausente no ano corrente), não uma ação a registrar.
+  Um relatório dedicado a "quem não renovou" fica para quando houver pedido
+  explícito.
 
 ## Testes
 
@@ -123,12 +176,17 @@ Declarações, com aluno e modelo pré-selecionados).
   aluno, e grava todos os campos de auditoria.
 - Importação isaac: parcela de aluno cancelado com competência posterior vai
   para pendência com o motivo novo; competência anterior segue fluxo normal.
+- Relatório de saídas retorna só matrículas com `cancelamento_data`
+  preenchida no ano filtrado — uma matrícula `concluida` por não renovação
+  (sem `cancelamento_data`) não aparece na lista.
 - `npm run typecheck && npm run build` verdes.
 
 ## Critério de aceite
 
 - Diálogo funcional na ficha do aluno e na lista, com os 2 switches
   obrigatórios e o lembrete do isaac.
+- Relatório de Saídas do ano mostra só cancelamentos (evento 2), nunca quem
+  apenas não renovou (evento 1).
 - Cancelamento grava motivo/data/cientes, cancela cobranças selecionadas,
   inativa o aluno.
 - Botão de emitir declaração de transferência aparece após o cancelamento.
