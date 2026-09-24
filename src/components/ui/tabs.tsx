@@ -22,7 +22,6 @@ type Props = {
  */
 export function Tabs({ defaultValue, items, className }: Props) {
   const [active, setActive] = useState(defaultValue);
-  const activeItem = items.find((item) => item.value === active) ?? items[0];
 
   return (
     <div className={className}>
@@ -45,7 +44,15 @@ export function Tabs({ defaultValue, items, className }: Props) {
           </button>
         ))}
       </div>
-      <div className="pt-4">{activeItem?.content}</div>
+      {/* Painéis ficam sempre montados no DOM (só escondidos com `hidden`) para
+          que os inputs das abas inativas continuem existindo — se fossem
+          desmontados condicionalmente, o FormData do submit perderia os
+          campos de qualquer aba que não estivesse visível no momento. */}
+      {items.map((item) => (
+        <div key={item.value} role="tabpanel" hidden={item.value !== active} className="pt-4">
+          {item.content}
+        </div>
+      ))}
     </div>
   );
 }

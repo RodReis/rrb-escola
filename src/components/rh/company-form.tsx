@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Tabs } from "@/components/ui/tabs";
 import { maskCNPJ, maskPhone } from "@/lib/format/masks";
 import { uploadCompanyLogoAction, removeCompanyLogoAction } from "@/lib/actions/rh";
+import { companyLogoUrl } from "@/lib/storage/company-logo-url";
 import type { Company } from "@/lib/data/rh";
 
 type Props = {
@@ -14,9 +15,7 @@ type Props = {
 };
 
 function LogoUploader({ company }: { company: Company }) {
-  const logoUrl = company.logo_path
-    ? `${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/escola-logos/${company.logo_path}`
-    : null;
+  const logoUrl = companyLogoUrl(company.logo_path);
 
   return (
     <div className="flex items-center gap-4">
@@ -36,7 +35,7 @@ function LogoUploader({ company }: { company: Company }) {
             <input
               type="file"
               name="logo"
-              accept="image/png,image/jpeg,image/webp,image/svg+xml"
+              accept="image/png,image/jpeg,image/webp"
               className="sr-only"
               onChange={(e) => e.target.form?.requestSubmit()}
             />
@@ -60,10 +59,14 @@ export function CompanyForm({ action, company, submitLabel = "Salvar" }: Props) 
   const [telefones, setTelefones] = useState(maskPhone(company?.telefones ?? ""));
 
   return (
-    <form action={action} className="grid gap-6">
-      {company ? <input type="hidden" name="id" value={company.id} /> : null}
-
+    <div className="grid gap-6">
+      {/* Fora do <form> principal: LogoUploader tem seus próprios <form>s
+          (upload e remove) e HTML não permite <form> aninhado — isso causava
+          hydration mismatch quando ficava dentro do form de dados gerais. */}
       {company ? <LogoUploader company={company} /> : null}
+
+      <form action={action} className="grid gap-6">
+      {company ? <input type="hidden" name="id" value={company.id} /> : null}
 
       <div className="grid gap-4 md:grid-cols-2">
         <label className="md:col-span-2">
@@ -240,6 +243,7 @@ export function CompanyForm({ action, company, submitLabel = "Salvar" }: Props) 
           {submitLabel}
         </Button>
       </div>
-    </form>
+      </form>
+    </div>
   );
 }

@@ -67,4 +67,24 @@ describe("CompanyForm", () => {
     expect(screen.getByDisplayValue("EPG Trindade")).toBeInTheDocument();
     expect(screen.getByDisplayValue("Escola Teste")).toBeInTheDocument();
   });
+
+  it("mantem no FormData os campos de abas nao ativas ao submeter (regressao CRITICAL)", () => {
+    render(<CompanyForm action={vi.fn()} company={company} />);
+
+    // Aba padrão é "Endereço" — nunca clicamos em "Assinaturas".
+    expect(screen.getByRole("tab", { name: "Assinaturas" })).toHaveAttribute("aria-selected", "false");
+
+    // O form principal é o que contém o campo de Razão social — não o
+    // primeiro <form> do documento, que é o de upload de logo (LogoUploader
+    // fica fora do form principal desde a correção do achado #2).
+    const form = screen.getByDisplayValue("Escola Teste").closest("form");
+    expect(form).not.toBeNull();
+    const dados = new FormData(form as HTMLFormElement);
+
+    // Se a aba "Assinaturas" tivesse sido desmontada, este campo seria null.
+    expect(dados.get("secretarioNome")).toBe("Fulana");
+    expect(dados.get("diretorNome")).toBe("Ciclana");
+    // Campo da aba "Outras informações", também nunca visitada.
+    expect(dados.get("resolucao")).toBe("RESOLUCAO X");
+  });
 });
