@@ -41,6 +41,31 @@ export function parseValor(valor: string | number | undefined): number | null {
 }
 
 /**
+ * Tira as transações da resposta do extrato.
+ *
+ * Produção embrulha o corpo num `resultado` (mesmo envelope em que o saldo vem como
+ * `resultado.saldo`); o sandbox devolve os campos na raiz. O código lia só a raiz, então em
+ * produção `transacoes` era sempre `undefined` e o `?? []` transformava isso em "mês sem
+ * movimento" — HTTP 200, nenhum erro, extrato vazio todo dia.
+ *
+ * Aceita as duas formas de propósito: sandbox e produção têm que funcionar no mesmo código.
+ */
+export function extrairTransacoes(data: unknown): SicoobExtratoItem[] {
+  if (!data || typeof data !== "object") return [];
+
+  const raiz = data as Record<string, unknown>;
+  if (Array.isArray(raiz.transacoes)) return raiz.transacoes as SicoobExtratoItem[];
+
+  const resultado = raiz.resultado;
+  if (resultado && typeof resultado === "object") {
+    const dentro = (resultado as Record<string, unknown>).transacoes;
+    if (Array.isArray(dentro)) return dentro as SicoobExtratoItem[];
+  }
+
+  return [];
+}
+
+/**
  * Identificador estável da linha do extrato.
  *
  * Quando o Sicoob manda `numeroDocumento`, ele é a chave. Sem ele, o fallback
@@ -162,7 +187,7 @@ export async function syncExtratoSicoob(input?: { mes?: number; ano?: number }) 
         continue;
       }
 
-      const itens = extrato.data.transacoes ?? [];
+      const itens = extrairTransacoes(extrato.data);
       const rows = mapearLote(itens, conta.id, conta.escola_id);
       descartados += itens.length - rows.length;
       if (rows.length === 0) continue;
