@@ -107,6 +107,56 @@ export async function toggleCompanyAction(formData: FormData) {
   redirect(`/rh/empresas?ok=${ativo ? "ativada" : "desativada"}`);
 }
 
+const IMG_TYPES = new Set(["image/jpeg", "image/png", "image/webp", "image/svg+xml"]);
+
+export async function uploadCompanyLogoAction(formData: FormData) {
+  await requirePermission("rh.empresas", "update");
+  const id = String(formData.get("id") ?? "");
+  if (!id) redirect("/rh/empresas?erro=ID inválido");
+
+  const file = formData.get("logo");
+  if (!(file instanceof File) || file.size === 0) {
+    redirect(`/rh/empresas/${id}/editar?erro=sem_arquivo`);
+  }
+  if (file.size > 2 * 1024 * 1024) {
+    redirect(`/rh/empresas/${id}/editar?erro=arquivo_grande`);
+  }
+  if (!IMG_TYPES.has(file.type)) {
+    redirect(`/rh/empresas/${id}/editar?erro=tipo_invalido`);
+  }
+
+  const supabase = await createServerClient();
+  const ext = file.name.split(".").pop()?.toLowerCase() ?? "png";
+  const path = `companies/${id}/${Date.now()}.${ext}`;
+  const bytes = Buffer.from(await file.arrayBuffer());
+
+  const { data: uploaded, error: uploadErr } = await supabase.storage
+    .from("escola-logos")
+    .upload(path, bytes, { contentType: file.type, upsert: false });
+
+  if (uploadErr) redirect(`/rh/empresas/${id}/editar?erro=${encodeURIComponent(uploadErr.message)}`);
+
+  await supabase.from("companies").update({ logo_path: uploaded?.path ?? path }).eq("id", id);
+
+  revalidatePath(`/rh/empresas/${id}`);
+  revalidatePath(`/rh/empresas/${id}/editar`);
+  redirect(`/rh/empresas/${id}/editar?logo_atualizada=1`);
+}
+
+export async function removeCompanyLogoAction(formData: FormData) {
+  await requirePermission("rh.empresas", "update");
+  const id = String(formData.get("id") ?? "");
+  if (!id) redirect("/rh/empresas?erro=ID inválido");
+
+  const supabase = await createServerClient();
+  const { error } = await supabase.from("companies").update({ logo_path: null }).eq("id", id);
+  if (error) redirect(`/rh/empresas/${id}/editar?erro=${encodeURIComponent(error.message)}`);
+
+  revalidatePath(`/rh/empresas/${id}`);
+  revalidatePath(`/rh/empresas/${id}/editar`);
+  redirect(`/rh/empresas/${id}/editar?logo_removida=1`);
+}
+
 function readEmployeeForm(formData: FormData) {
   return {
     company_id: String(formData.get("company_id") ?? ""),
