@@ -1,7 +1,8 @@
 import jsPDF from "jspdf";
-import { dataLocalDeIso, formatarDataExtenso, montarCorpo, type Segmento } from "./certificado-texto";
+import { dataLocalDeIso, formatarDataExtenso, montarCorpo } from "./certificado-texto";
 import { renderHistoricos } from "./historico-pdf";
 import { imgFitInBox } from "./pdf-utils";
+import { medirAlturaCorpo, renderCorpo } from "./pdf-paragrafo";
 import type { CertificadoData, CertificadoOptions } from "./certificado-tipos";
 import type { HistoricoData } from "@/lib/historico/tipos";
 import { companyLogoUrl } from "@/lib/storage/company-logo-url";
@@ -197,108 +198,6 @@ function renderTitulo(doc: jsPDF, yInicial: number, opts: CertificadoOptions): n
   return yInicial + 52;
 }
 
-type Palavra = { texto: string; negrito: boolean; largura: number };
-
-/** Mede cada palavra com a fonte do seu segmento — jsPDF não tem rich text. */
-function medirPalavras(doc: jsPDF, segmentos: Segmento[], tamanho: number): Palavra[] {
-  doc.setFontSize(tamanho);
-  const palavras: Palavra[] = [];
-
-  for (const seg of segmentos) {
-    doc.setFont(FONTE, seg.negrito ? "bold" : "normal");
-    for (const bruta of seg.texto.split(" ")) {
-      if (bruta === "") continue;
-      palavras.push({ texto: bruta, negrito: seg.negrito, largura: doc.getTextWidth(bruta) });
-    }
-  }
-
-  return palavras;
-}
-
-function quebrarLinhas(palavras: Palavra[], util: number, larguraEspaco: number): Palavra[][] {
-  const linhas: Palavra[][] = [];
-  let atual: Palavra[] = [];
-  let largura = 0;
-
-  for (const palavra of palavras) {
-    const espaco = atual.length === 0 ? 0 : larguraEspaco;
-    if (atual.length > 0 && largura + espaco + palavra.largura > util) {
-      linhas.push(atual);
-      atual = [palavra];
-      largura = palavra.largura;
-    } else {
-      atual.push(palavra);
-      largura += espaco + palavra.largura;
-    }
-  }
-
-  if (atual.length > 0) linhas.push(atual);
-  return linhas;
-}
-
-/** Altura que `renderCorpo` vai ocupar, sem desenhar nada — para poder
- * centralizar o bloco (título+corpo+data) verticalmente antes de saber onde
- * ele começa. */
-function medirAlturaCorpo(doc: jsPDF, segmentos: Segmento[], opts: CertificadoOptions): number {
-  const margem = mm(opts.leiaute.margemMm);
-  const util = doc.internal.pageSize.getWidth() - margem * 2;
-  const tamanho = opts.leiaute.fonteCorpoPt;
-  const alturaLinha = tamanho * 1.9;
-
-  const palavras = medirPalavras(doc, segmentos, tamanho);
-  doc.setFont(FONTE, "normal");
-  const larguraEspaco = doc.getTextWidth(" ") * 1.6;
-  const linhas = quebrarLinhas(palavras, util, larguraEspaco);
-
-  return linhas.length * alturaLinha;
-}
-
-/**
- * Parágrafo justificado, palavra a palavra. A sobra de cada linha é distribuída
- * nos vãos; a última fica alinhada à esquerda, porque justificá-la abriria o
- * vão gigante clássico quando ela tem poucas palavras.
- */
-function renderCorpo(
-  doc: jsPDF,
-  yInicial: number,
-  segmentos: Segmento[],
-  opts: CertificadoOptions
-): number {
-  const margem = mm(opts.leiaute.margemMm);
-  const util = doc.internal.pageSize.getWidth() - margem * 2;
-  const tamanho = opts.leiaute.fonteCorpoPt;
-  const alturaLinha = tamanho * 1.9;
-
-  doc.setTextColor(...COR_TEXTO);
-  const palavras = medirPalavras(doc, segmentos, tamanho);
-
-  // A fonte core "times" do jsPDF mede o glifo de espaço bem mais estreito do
-  // que ele aparenta visualmente (~2.75pt em 11pt, ~25% do normal esperado) —
-  // sem esse reforço, "SILVA VITOR natural" saía quase colado. 1.6× aproxima
-  // a largura real de leitura sem abrir vão visível de mais nas justificadas.
-  doc.setFont(FONTE, "normal");
-  const larguraEspaco = doc.getTextWidth(" ") * 1.6;
-  const linhas = quebrarLinhas(palavras, util, larguraEspaco);
-
-  let y = yInicial;
-  linhas.forEach((linha, i) => {
-    const somaPalavras = linha.reduce((soma, p) => soma + p.largura, 0);
-    const vaos = linha.length - 1;
-    const ultima = i === linhas.length - 1;
-    const espaco = ultima || vaos === 0 ? larguraEspaco : (util - somaPalavras) / vaos;
-
-    let x = margem;
-    for (const palavra of linha) {
-      doc.setFont(FONTE, palavra.negrito ? "bold" : "normal");
-      doc.text(palavra.texto, x, y);
-      x += palavra.largura + espaco;
-    }
-    y += alturaLinha;
-  });
-
-  return y;
-}
-
 function renderDataLocal(
   doc: jsPDF,
   yInicial: number,
@@ -376,11 +275,12 @@ function renderPaginaCertificado(
   // início das assinaturas — sem isso ele nascia colado no topo, com um vão
   // vazio grande antes das assinaturas em qualquer certificado curto.
   const segmentos = montarCorpo(data, opts);
+  const opcoesParagrafo = { fonte: FONTE, fonteCorpoPt: opts.leiaute.fonteCorpoPt, margemPt: margem };
   const ALTURA_TITULO = 52;
   const GAP_TITULO_CORPO = 16;
   const ALTURA_DATA = 40;
   const alturaBlocoTexto =
-    ALTURA_TITULO + GAP_TITULO_CORPO + medirAlturaCorpo(doc, segmentos, opts) + ALTURA_DATA;
+    ALTURA_TITULO + GAP_TITULO_CORPO + medirAlturaCorpo(doc, segmentos, opcoesParagrafo) + ALTURA_DATA;
 
   const alturaBlocoAssinaturas = mm(22);
   const yBaseAssinaturas = alturaPagina - margem - alturaBlocoAssinaturas;
@@ -388,7 +288,7 @@ function renderPaginaCertificado(
   const yInicioBloco = yTopo + Math.max(0, (espacoDisponivel - alturaBlocoTexto) / 2);
 
   let y = renderTitulo(doc, yInicioBloco, opts);
-  y = renderCorpo(doc, y + GAP_TITULO_CORPO, segmentos, opts);
+  y = renderCorpo(doc, y + GAP_TITULO_CORPO, segmentos, opcoesParagrafo);
   y = renderDataLocal(doc, y, data, opts);
 
   // Assinaturas ancoradas ao rodapé; um corpo longo (que estoura o espaço
