@@ -283,6 +283,53 @@ export async function toggleEnrollmentStatusAction(formData: FormData) {
   if (!id) return;
 
   const supabase = await createServerClient();
+
+  // Reativação (cancelada -> ativa) contorna o fluxo de cancelamento se só
+  // trocar o status: precisa também religar o aluno e limpar os campos de
+  // cancelamento, senão a matrícula fica "ativa" com selo/motivo de
+  // cancelamento fantasma e o aluno continua inativo no cadastro.
+  if (proximoStatus === "ativa") {
+    const { data: atual } = await supabase
+      .from("matriculas")
+      .select("status, aluno_id")
+      .eq("id", id)
+      .eq("escola_id", DEFAULT_SCHOOL_ID)
+      .single();
+
+    if (atual?.status === "cancelada") {
+      await supabase
+        .from("matriculas")
+        .update({
+          status: "ativa",
+          cancelamento_data: null,
+          cancelamento_motivo: null,
+          cancelamento_obs: null,
+          cancelado_por: null,
+          ciente_coordenacao: false,
+          ciente_diretoria: false,
+          isaac_cancelado_confirmado: null,
+        })
+        .eq("id", id)
+        .eq("escola_id", DEFAULT_SCHOOL_ID);
+
+      if (atual.aluno_id) {
+        await supabase
+          .from("alunos")
+          .update({ ativo: true })
+          .eq("id", atual.aluno_id)
+          .eq("escola_id", DEFAULT_SCHOOL_ID);
+      }
+
+      revalidatePath("/matriculas");
+      revalidatePath(`/matriculas/${id}`);
+      if (alunoId) {
+        revalidatePath(`/alunos/${alunoId}`);
+        revalidatePath(`/alunos/${alunoId}/editar`);
+      }
+      return;
+    }
+  }
+
   await supabase
     .from("matriculas")
     .update({ status: proximoStatus })
