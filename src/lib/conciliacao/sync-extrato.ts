@@ -30,13 +30,32 @@ export function extrairEndToEndId(item: SicoobExtratoItem): string | null {
   return texto.match(/E\d{8}\d{12}[a-zA-Z0-9]{11}/)?.[0] ?? null;
 }
 
-// O valor chega como string ("1234,56" ou "1234.56"). O sandbox devolve texto
-// fictício, que viraria NaN e seria rejeitado pela coluna numeric — por isso o
-// movimento é descartado em vez de derrubar a sincronização inteira.
+/**
+ * Converte o valor do extrato em número.
+ *
+ * O Sicoob manda string no formato americano (`"120779.92"`). A versão anterior
+ * removia TODOS os pontos antes de trocar a vírgula, tratando o ponto sempre
+ * como separador de milhar: `"120779.92"` virava `12077992` — o valor em
+ * centavos, cem vezes maior, gravado no extrato sem erro nenhum. O teste que
+ * existia (`"1.234,56"`) passava porque ali o ponto É milhar.
+ *
+ * Regra: o ponto só é separador de milhar quando a string também tem vírgula,
+ * que é quem marca o decimal no formato brasileiro.
+ *
+ * O sandbox devolve texto fictício, que viraria NaN e seria rejeitado pela
+ * coluna numeric — por isso o movimento é descartado em vez de derrubar a
+ * sincronização inteira.
+ */
 export function parseValor(valor: string | number | undefined): number | null {
   if (typeof valor === "number") return Number.isFinite(valor) ? valor : null;
   if (!valor) return null;
-  const n = Number(String(valor).replace(/\./g, "").replace(",", "."));
+
+  const texto = String(valor).trim();
+  const normalizado = texto.includes(",")
+    ? texto.replace(/\./g, "").replace(",", ".")
+    : texto;
+
+  const n = Number(normalizado);
   return Number.isFinite(n) ? n : null;
 }
 

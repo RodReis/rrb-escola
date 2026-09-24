@@ -134,6 +134,24 @@ describe("mapearLote", () => {
   });
 });
 
+describe("parseValor no formato que produção devolve", () => {
+  it("lê o ponto como separador decimal quando não há vírgula", () => {
+    // O Sicoob manda "120779.92". Removendo o ponto vinha 12077992 — o valor
+    // em centavos, cem vezes maior, gravado no extrato sem erro nenhum.
+    expect(parseValor("120779.92")).toBe(120779.92);
+    expect(parseValor("48303.61")).toBe(48303.61);
+  });
+
+  it("continua lendo o formato brasileiro, onde o ponto é milhar", () => {
+    expect(parseValor("1.234,56")).toBe(1234.56);
+    expect(parseValor("120.779,92")).toBe(120779.92);
+  });
+
+  it("lê valor sem separador nenhum", () => {
+    expect(parseValor("1234")).toBe(1234);
+  });
+});
+
 describe("idTransacao com transactionId", () => {
   it("prefere transactionId, que é único por transação", () => {
     const item = { transactionId: "abc123", numeroDocumento: "000", valor: 10 };
