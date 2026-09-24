@@ -15,7 +15,6 @@ type Props = {
   serieNome: string;
   turmaNome: string;
   anoLetivo: number;
-  temCobrancaIsaac: boolean;
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onSuccess: () => void;
@@ -28,7 +27,6 @@ export function CancelarMatriculaDialog({
   serieNome,
   turmaNome,
   anoLetivo,
-  temCobrancaIsaac,
   open,
   onOpenChange,
   onSuccess,
@@ -42,6 +40,7 @@ export function CancelarMatriculaDialog({
   const [isaacConfirmado, setIsaacConfirmado] = useState(false);
   const [cobrancas, setCobrancas] = useState<CobrancaParaCancelamento[]>([]);
   const [cobrancaIdsSelecionadas, setCobrancaIdsSelecionadas] = useState<Set<string>>(new Set());
+  const temCobrancaIsaac = cobrancas.some((cobranca) => cobranca.origem === "isaac");
   const [submitting, setSubmitting] = useState(false);
   const [erro, setErro] = useState<string | null>(null);
 

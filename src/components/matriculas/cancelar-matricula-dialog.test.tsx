@@ -12,6 +12,13 @@ vi.mock("@/components/ui/confirm-dialog", () => ({ useConfirm: () => useConfirmM
 
 import { CancelarMatriculaDialog } from "./cancelar-matricula-dialog";
 
+function mockFetchCobrancas(comIsaac: boolean) {
+  const rows = comIsaac
+    ? [{ id: "c1", descricao: "Mensalidade", competencia: "2026-09", valorFinal: 500, dataVencimento: "2026-10-05", origem: "isaac", preSelecionada: false }]
+    : [];
+  vi.stubGlobal("fetch", vi.fn().mockResolvedValue({ json: () => Promise.resolve(rows) }));
+}
+
 beforeEach(() => {
   cancelarMatriculaActionMock.mockReset().mockResolvedValue({ ok: true });
   useConfirmMock.mockReset().mockResolvedValue(true);
@@ -29,7 +36,6 @@ function renderDialog(props = {}) {
       serieNome="5º Ano"
       turmaNome="A"
       anoLetivo={2026}
-      temCobrancaIsaac={false}
       open={true}
       onOpenChange={onOpenChange}
       onSuccess={onSuccess}
@@ -52,14 +58,17 @@ describe("CancelarMatriculaDialog", () => {
     expect(screen.getByRole("button", { name: /confirmar/i })).toBeEnabled();
   });
 
-  it("nao mostra switch do isaac quando temCobrancaIsaac é false", () => {
-    renderDialog({ temCobrancaIsaac: false });
+  it("nao mostra switch do isaac quando nao ha cobranca isaac", async () => {
+    mockFetchCobrancas(false);
+    renderDialog();
+    await waitFor(() => expect(global.fetch).toHaveBeenCalled());
     expect(screen.queryByLabelText(/cancelada também no isaac/i)).not.toBeInTheDocument();
   });
 
-  it("mostra switch do isaac quando temCobrancaIsaac é true", () => {
-    renderDialog({ temCobrancaIsaac: true });
-    expect(screen.getByLabelText(/cancelada também no isaac/i)).toBeInTheDocument();
+  it("mostra switch do isaac quando ha cobranca isaac", async () => {
+    mockFetchCobrancas(true);
+    renderDialog();
+    expect(await screen.findByLabelText(/cancelada também no isaac/i)).toBeInTheDocument();
   });
 
   it("chama a action e onSuccess apos confirmar com sucesso", async () => {

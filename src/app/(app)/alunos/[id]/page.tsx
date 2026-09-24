@@ -17,7 +17,13 @@ export default async function StudentPage({ params, searchParams }: { params: { 
   const activeEnrollment = student.matriculas.find((item) => item.status === "ativa") ?? student.matriculas[0];
   const matriculaAtivaForDocs = student.matriculas.find((m) => m.status === "ativa") ?? null;
   const matriculaAtivaPayload = matriculaAtivaForDocs
-    ? { id: matriculaAtivaForDocs.id, codigo: matriculaAtivaForDocs.codigo ?? null }
+    ? {
+        id: matriculaAtivaForDocs.id,
+        codigo: matriculaAtivaForDocs.codigo ?? null,
+        serieNome: matriculaAtivaForDocs.series?.nome ?? "",
+        turmaNome: matriculaAtivaForDocs.turmas?.nome ?? "",
+        anoLetivo: matriculaAtivaForDocs.ano_letivo,
+      }
     : null;
 
   // Emissão direta pelo id do aluno. As duas telas aceitam ?aluno= e derivam
