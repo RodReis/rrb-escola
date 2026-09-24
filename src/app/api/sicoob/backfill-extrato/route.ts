@@ -33,14 +33,30 @@ export async function GET(req: Request) {
     return NextResponse.json({ erro: competencia.erro }, { status: 400 });
   }
 
-  const resultado = await syncExtratoSicoob({ mes: competencia.mes, ano: competencia.ano });
+  // Sem isto, uma falha no upsert (constraint, enum, escala de numeric) vira um
+  // 500 mudo: a Vercel não guarda o stack e o motivo real se perde.
+  try {
+    const resultado = await syncExtratoSicoob({ mes: competencia.mes, ano: competencia.ano });
 
-  return NextResponse.json({
-    competencia: `${String(competencia.mes).padStart(2, "0")}/${competencia.ano}`,
-    movimentos: resultado.movimentos,
-    descartados: resultado.descartados,
-    falhas: resultado.falhas,
-    repassesCasados: resultado.repasses.casadas,
-    alertasRepasse: resultado.repasses.alertas,
-  });
+    return NextResponse.json({
+      competencia: `${String(competencia.mes).padStart(2, "0")}/${competencia.ano}`,
+      movimentos: resultado.movimentos,
+      descartados: resultado.descartados,
+      falhas: resultado.falhas,
+      repassesCasados: resultado.repasses.casadas,
+      alertasRepasse: resultado.repasses.alertas,
+    });
+  } catch (err) {
+    const erro = err as { message?: string; code?: string; details?: string; hint?: string };
+    return NextResponse.json(
+      {
+        competencia: `${String(competencia.mes).padStart(2, "0")}/${competencia.ano}`,
+        erro: erro?.message ?? "falha ao sincronizar extrato",
+        code: erro?.code ?? null,
+        details: erro?.details ?? null,
+        hint: erro?.hint ?? null,
+      },
+      { status: 500 },
+    );
+  }
 }
