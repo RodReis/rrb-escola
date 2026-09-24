@@ -1,7 +1,8 @@
 import { requirePermission } from "@/lib/auth/session";
 import { listarSaidasDoAno } from "@/lib/data/saidas-ano";
 import { Badge } from "@/components/ui/badge";
-import { anoLetivoDaData } from "@/lib/matriculas/ano-letivo";
+
+const ANOS_NO_FILTRO = 5;
 
 export default async function SaidasAnoPage({
   searchParams,
@@ -10,8 +11,12 @@ export default async function SaidasAnoPage({
 }) {
   await requirePermission("matriculas", "read");
   const { ano = "" } = await searchParams;
-  const anoLetivo = ano ? parseInt(ano, 10) : anoLetivoDaData(new Date());
+  const anoAtual = new Date().getFullYear();
+  const anoParseado = ano ? parseInt(ano, 10) : NaN;
+  const anoLetivo = Number.isFinite(anoParseado) ? anoParseado : anoAtual;
   const saidas = await listarSaidasDoAno(anoLetivo);
+
+  const opcoesAno = Array.from({ length: ANOS_NO_FILTRO }, (_, i) => anoAtual - i);
 
   const contagemPorMotivo = saidas.reduce<Record<string, number>>((acc, s) => {
     acc[s.motivoLabel] = (acc[s.motivoLabel] ?? 0) + 1;
@@ -27,6 +32,20 @@ export default async function SaidasAnoPage({
           {Object.entries(contagemPorMotivo).map(([label, n]) => `${n} ${label.toLowerCase()}`).join(", ") || "Nenhuma saída registrada."}
         </p>
       </header>
+
+      <form method="get" className="flex items-end gap-2">
+        <label className="grid gap-1 text-sm">
+          Ano
+          <select name="ano" defaultValue={anoLetivo} className="ds-input">
+            {opcoesAno.map((a) => (
+              <option key={a} value={a}>{a}</option>
+            ))}
+          </select>
+        </label>
+        <button type="submit" className="ds-button ds-button-secondary text-xs">
+          Filtrar
+        </button>
+      </form>
 
       <table className="ds-table">
         <thead>
