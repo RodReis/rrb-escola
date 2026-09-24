@@ -23,12 +23,19 @@ const CAMINHO = "/financeiro/tesouraria/conciliacao";
  * realmente casam nela (valor exato + janela de dias), deixando o resto de
  * fora do lote em vez de lançar errado.
  *
- * D3: a competência de cada movimento é o mês da SUA PRÓPRIA data de
- * pagamento (calculada dentro da RPC a partir de `extrato_bancario.data`) —
- * não um valor único aplicado ao grupo inteiro.
+ * D3: a competência padrão é o mês da data de pagamento de cada movimento
+ * (calculada dentro da RPC), mas o formulário pode sobrescrever com uma
+ * competência única para o lote inteiro (`p_competencia`) — é assim que um
+ * pró-labore de março pago em abril continua lançável em março.
  * D4: a empresa pode ser diferente da dona da conta; a tela avisa quando é.
  */
-export async function classificarDebitoAction(formData: FormData) {
+export type ClassificarDebitoResult = {
+  classificados: number;
+  foraDaRegra: number;
+  message: string;
+};
+
+export async function classificarDebitoAction(formData: FormData): Promise<ClassificarDebitoResult> {
   await requirePermission("financeiro.conciliacao", "update");
   const supabase = await createServerClient();
 
@@ -36,6 +43,7 @@ export async function classificarDebitoAction(formData: FormData) {
   const categoriaId = String(formData.get("categoria_id") ?? "");
   const companyId = String(formData.get("company_id") ?? "") || null;
   const classeDespesa = String(formData.get("classe_despesa") ?? "") || null;
+  const competencia = String(formData.get("competencia") ?? "").trim() || null;
   const salvarRegra = formData.get("salvar_regra") === "on";
   const soDestaConta = formData.get("regra_so_desta_conta") === "on";
   // "0" é o valor inicial do CurrencyInput (campo deixado em branco), não um
@@ -65,13 +73,28 @@ export async function classificarDebitoAction(formData: FormData) {
     p_regra_valor_esperado: valorEsperado,
     p_regra_dia_inicio: diaInicio,
     p_regra_dia_fim: diaFim,
+    p_competencia: competencia,
   });
 
   if (error) throw error;
-  const resultado = data as { ok?: boolean; error?: string } | null;
+  const resultado = data as { ok?: boolean; error?: string; classificados?: number; fora_da_regra?: number } | null;
   if (!resultado?.ok) throw new Error(resultado?.error ?? "Não foi possível classificar o(s) movimento(s)");
 
   revalidatePath(CAMINHO);
+
+  const classificados = resultado.classificados ?? 0;
+  const foraDaRegra = resultado.fora_da_regra ?? 0;
+  // O toast tem que refletir o que a RPC REALMENTE lançou, não a quantidade
+  // que o usuário selecionou — se a regra tem valor/janela, parte do lote
+  // pode ter ficado de fora por não bater (fica pendente, não vira despesa).
+  const message =
+    foraDaRegra > 0
+      ? `${classificados} classificado(s), ${foraDaRegra} fora da janela da regra (continuam pendentes).`
+      : classificados > 1
+        ? `${classificados} movimentos classificados.`
+        : "Movimento classificado.";
+
+  return { classificados, foraDaRegra, message };
 }
 
 /** Ignorar passa a exigir motivo — silêncio aqui é movimento financeiro sumindo. */

@@ -72,6 +72,8 @@ export function ClassificarDebitoForm({
   const [selecionados, setSelecionados] = useState<Set<string>>(
     () => new Set(movimentos.map((m) => m.id)),
   );
+  // D3: padrão o mês de data_pagamento do primeiro movimento, editável.
+  const [competencia, setCompetencia] = useState(movimentos[0]?.data.slice(0, 7) ?? "");
 
   const empresaDivergente = companyId !== "" && contaCompanyId !== null && companyId !== contaCompanyId;
   const nomeEmpresa = useMemo(() => new Map(companies.map((c) => [c.id, c.nome])), [companies]);
@@ -79,12 +81,12 @@ export function ClassificarDebitoForm({
   const ehGrupo = movimentos.length > 1;
   const idsSelecionados = movimentos.filter((m) => selecionados.has(m.id)).map((m) => m.id);
 
+  // A action devolve `{ classificados, foraDaRegra, message }` — o toast usa
+  // a mensagem que ela monta (reflete o que a RPC realmente lançou), não uma
+  // contagem fixa calculada aqui a partir do que foi selecionado.
   const { run, pending } = useAction(
     (formData: FormData) => classificarDebitoAction(formData),
-    {
-      success: idsSelecionados.length > 1 ? `${idsSelecionados.length} movimentos classificados.` : "Movimento classificado.",
-      onSuccess: onDone,
-    },
+    { onSuccess: onDone },
   );
 
   function toggle(id: string) {
@@ -158,17 +160,24 @@ export function ClassificarDebitoForm({
         ) : null}
       </label>
 
-      {!ehGrupo ? (
-        <FieldNote>
-          Competência: {dateText(movimentos[0]?.data ?? "")} — a RPC usa o mês da data de pagamento de cada
-          movimento automaticamente.
-        </FieldNote>
-      ) : (
-        <FieldNote>
-          Cada movimento marcado leva a competência do mês da SUA PRÓPRIA data de pagamento (D3) — não uma
-          competência única para o grupo.
-        </FieldNote>
-      )}
+      <label>
+        Competência
+        <input
+          type="month"
+          name="competencia"
+          value={competencia}
+          onChange={(e) => setCompetencia(e.target.value)}
+          required={!ehGrupo}
+        />
+        {ehGrupo ? (
+          <FieldNote>
+            Vale para todos os movimentos marcados. Para deixar cada um na competência da SUA PRÓPRIA data
+            (padrão), apague este campo antes de classificar.
+          </FieldNote>
+        ) : (
+          <FieldNote>Padrão: mês do pagamento ({dateText(movimentos[0]?.data ?? "")}). Editável.</FieldNote>
+        )}
+      </label>
 
       <label>
         Classe
