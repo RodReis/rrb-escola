@@ -57,6 +57,7 @@ const SECRETARIA_ITEMS: DropdownItem[] = [
       { href: "/turmas", label: "Turmas", iconName: "GraduationCap" },
       { href: "/disciplinas", label: "Disciplinas", iconName: "ClipboardList" },
       { href: "/professores/atribuicoes", label: "Atribuições", iconName: "UserCheck" },
+      { href: "/declaracoes/modelos", label: "Declarações", iconName: "FileText" },
     ],
   },
   {
