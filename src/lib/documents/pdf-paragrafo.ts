@@ -18,6 +18,14 @@ export type OpcoesParagrafo = {
   margemPt: number;
 };
 
+/** Marcador de quebra de parágrafo forçada (\n no texto original), inserido
+ * na lista de "palavras" para `quebrarLinhas` forçar uma nova linha ali —
+ * sem essa marcação, o \n vira parte de uma palavra gigante e corrompe a
+ * justificação (achado da revisão final: modelos-seed de Transferência têm
+ * \n\n separando o corpo do aviso de validade). Nunca aparece dentro de uma
+ * linha desenhável: `quebrarLinhas` sempre o consome fechando a linha atual. */
+const MARCADOR_QUEBRA = "\n";
+
 /** Mede cada palavra com a fonte do seu segmento — jsPDF não tem rich text. */
 export function medirPalavras(doc: jsPDF, segmentos: Segmento[], tamanhoPt: number): Palavra[] {
   doc.setFontSize(tamanhoPt);
@@ -25,10 +33,14 @@ export function medirPalavras(doc: jsPDF, segmentos: Segmento[], tamanhoPt: numb
 
   for (const seg of segmentos) {
     doc.setFont("times", seg.negrito ? "bold" : "normal");
-    for (const bruta of seg.texto.split(" ")) {
-      if (bruta === "") continue;
-      palavras.push({ texto: bruta, negrito: seg.negrito, largura: doc.getTextWidth(bruta) });
-    }
+    const paragrafos = seg.texto.split(/\r?\n/);
+    paragrafos.forEach((paragrafo, i) => {
+      if (i > 0) palavras.push({ texto: MARCADOR_QUEBRA, negrito: seg.negrito, largura: 0 });
+      for (const bruta of paragrafo.split(" ")) {
+        if (bruta === "") continue;
+        palavras.push({ texto: bruta, negrito: seg.negrito, largura: doc.getTextWidth(bruta) });
+      }
+    });
   }
 
   return palavras;
@@ -40,6 +52,12 @@ export function quebrarLinhas(palavras: Palavra[], larguraUtilPt: number, largur
   let largura = 0;
 
   for (const palavra of palavras) {
+    if (palavra.texto === MARCADOR_QUEBRA) {
+      linhas.push(atual);
+      atual = [];
+      largura = 0;
+      continue;
+    }
     const espaco = atual.length === 0 ? 0 : larguraEspacoPt;
     if (atual.length > 0 && largura + espaco + palavra.largura > larguraUtilPt) {
       linhas.push(atual);

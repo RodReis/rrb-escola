@@ -43,6 +43,46 @@ describe("quebrarLinhas", () => {
   });
 });
 
+describe("quebra de parágrafo (\\n) — achado da revisão final", () => {
+  it("medirPalavras preserva o \\n como marcador dedicado, nunca dentro do texto de uma palavra real", () => {
+    const doc = docTeste();
+    const segmentos: Segmento[] = [{ texto: "Primeira parte.\n\nSegunda parte.", negrito: false }];
+    const palavras = medirPalavras(doc, segmentos, 11);
+
+    // "\n\n" faz split(/\r?\n/) produzir um parágrafo vazio entre os dois —
+    // ou seja, dois marcadores de quebra (um só \n já teria produzido 1).
+    expect(palavras.some((p) => p.texto.includes("\n") && p.texto !== "\n")).toBe(false);
+    expect(palavras.map((p) => p.texto)).toEqual(["Primeira", "parte.", "\n", "\n", "Segunda", "parte."]);
+  });
+
+  it("quebrarLinhas força uma nova linha em cada marcador, sem deixá-lo dentro de nenhuma linha desenhável", () => {
+    const doc = docTeste();
+    const segmentos: Segmento[] = [{ texto: "Primeira parte.\n\nSegunda parte.", negrito: false }];
+    const palavras = medirPalavras(doc, segmentos, 11);
+    const linhas = quebrarLinhas(palavras, 500, 5);
+
+    expect(linhas.length).toBeGreaterThanOrEqual(2);
+    for (const linha of linhas) {
+      expect(linha.some((p) => p.texto === "\n")).toBe(false);
+    }
+    expect(linhas[0].map((p) => p.texto)).toEqual(["Primeira", "parte."]);
+    // Linha do meio (entre os dois \n) fica vazia — é o parágrafo em branco.
+    expect(linhas[1]).toEqual([]);
+    expect(linhas[2].map((p) => p.texto)).toEqual(["Segunda", "parte."]);
+  });
+
+  it("renderCorpo desenha o texto com \\n sem lançar exceção e produz mais de uma linha", () => {
+    const doc = docTeste();
+    const segmentos: Segmento[] = [{ texto: "Primeira parte.\n\nSegunda parte.", negrito: false }];
+    const opts = { fonte: "times", fonteCorpoPt: 11, margemPt: 40 };
+    const alturaPrevista = medirAlturaCorpo(doc, segmentos, opts);
+    const yFinal = renderCorpo(doc, 100, segmentos, opts);
+    expect(yFinal - 100).toBeCloseTo(alturaPrevista, 9);
+    // 2 parágrafos => pelo menos 2 linhas de altura (fonteCorpoPt * 1.9 cada).
+    expect(alturaPrevista).toBeGreaterThanOrEqual(11 * 1.9 * 2);
+  });
+});
+
 describe("medirAlturaCorpo / renderCorpo", () => {
   it("medirAlturaCorpo prevê a mesma quantidade de linhas que renderCorpo desenha", () => {
     const doc = docTeste();
