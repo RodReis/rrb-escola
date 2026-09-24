@@ -3,6 +3,12 @@ import { getSicoobEndpoints } from "@/lib/sicoob/endpoints";
 import { sicoobRequest } from "@/lib/sicoob/http";
 
 export type SicoobExtratoItem = {
+  /**
+   * Identificador único da transação no Sicoob. Medido em produção em
+   * 24/09/2026: 87/87 e 50/50 valores distintos nas duas contas, contra
+   * 23 e 12 de `numeroDocumento` — é a única chave confiável do extrato.
+   */
+  transactionId?: string;
   data?: string;
   dataLote?: string;
   descricao?: string;

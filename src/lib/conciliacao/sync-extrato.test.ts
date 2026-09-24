@@ -134,6 +134,45 @@ describe("mapearLote", () => {
   });
 });
 
+describe("idTransacao com transactionId", () => {
+  it("prefere transactionId, que é único por transação", () => {
+    const item = { transactionId: "abc123", numeroDocumento: "000", valor: 10 };
+    expect(idTransacao(item, "conta-1", "2026-08-05", 0)).toBe("abc123");
+  });
+
+  it("não deixa numeroDocumento repetido colapsar duas transações distintas", () => {
+    // Medido em produção: 87 transações compartilhavam 23 numeroDocumento.
+    // Com numeroDocumento como chave, o unique (conta_id, id_transacao)
+    // descartava 64 movimentos no upsert — sem erro nenhum.
+    const a = { transactionId: "tx-1", numeroDocumento: "0", valor: 10 };
+    const b = { transactionId: "tx-2", numeroDocumento: "0", valor: 20 };
+    expect(idTransacao(a, "conta-1", "2026-08-05", 0)).not.toBe(
+      idTransacao(b, "conta-1", "2026-08-05", 0),
+    );
+  });
+
+  it("cai em numeroDocumento quando não há transactionId", () => {
+    const item = { numeroDocumento: "999", valor: 10 };
+    expect(idTransacao(item, "conta-1", "2026-08-05", 0)).toBe("999");
+  });
+});
+
+describe("mapearLote sem chave duplicada", () => {
+  it("não produz id_transacao repetido num lote real, que derrubava o upsert", () => {
+    // ON CONFLICT DO UPDATE command cannot affect row a second time (21000):
+    // o Postgres recusa o lote inteiro quando duas linhas do mesmo comando
+    // trazem a mesma chave.
+    const itens = [
+      { transactionId: "tx-1", numeroDocumento: "0", data: "05/08/2026", valor: "10,00", descricao: "A" },
+      { transactionId: "tx-2", numeroDocumento: "0", data: "05/08/2026", valor: "20,00", descricao: "B" },
+      { transactionId: "tx-3", numeroDocumento: "0", data: "06/08/2026", valor: "30,00", descricao: "C" },
+    ];
+    const rows = mapearLote(itens, "conta-1", "escola-1");
+    const chaves = rows.map((r) => r.id_transacao);
+    expect(new Set(chaves).size).toBe(rows.length);
+  });
+});
+
 describe("extrairTransacoes", () => {
   it("lê transações do envelope resultado, que é o que produção devolve", () => {
     const resposta = { resultado: { transacoes: [{ valor: "10,00" }, { valor: "20,00" }] } };

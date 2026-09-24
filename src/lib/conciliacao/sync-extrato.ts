@@ -68,17 +68,22 @@ export function extrairTransacoes(data: unknown): SicoobExtratoItem[] {
 /**
  * Identificador estável da linha do extrato.
  *
- * Quando o Sicoob manda `numeroDocumento`, ele é a chave. Sem ele, o fallback
- * anterior era `data-descricao-valor` — e dois débitos idênticos no mesmo dia
- * (duas tarifas iguais, dois pagamentos ao mesmo fornecedor) geravam a MESMA
- * chave: o `unique (conta_id, id_transacao)` descartava o segundo no upsert e
- * o dinheiro sumia do extrato sem erro.
+ * `transactionId` é a chave. Medido em produção em 24/09/2026: 87/87 e 50/50
+ * valores distintos nas duas contas — um por transação.
+ *
+ * `numeroDocumento` era a chave antes e NÃO serve: as mesmas 87 transações
+ * tinham só 23 números distintos (50 para 12 na outra conta). Isso derrubava o
+ * upsert inteiro com `ON CONFLICT DO UPDATE command cannot affect row a second
+ * time` (21000) e, sem o erro, teria feito o `unique (conta_id, id_transacao)`
+ * colapsar 87 movimentos em 23 — 64 linhas sumindo em silêncio. Ele fica só
+ * como fallback para resposta que não traga `transactionId`.
  *
  * O `ordinal` é a posição do item entre os itens idênticos da mesma resposta,
- * o que separa as duas linhas. Risco conhecido: se o Sicoob mudar a ORDEM dos
- * itens entre consultas, a mesma linha pode receber ordinal diferente e entrar
- * duplicada. Isso é preferível a perder movimento, e só afeta linhas sem
- * numeroDocumento.
+ * o que separa duas linhas iguais quando não há identificador nenhum. Risco
+ * conhecido: se o Sicoob mudar a ORDEM dos itens entre consultas, a mesma
+ * linha pode receber ordinal diferente e entrar duplicada. Isso é preferível a
+ * perder movimento, e só afeta linhas sem `transactionId` nem
+ * `numeroDocumento`.
  */
 export function idTransacao(
   item: SicoobExtratoItem,
@@ -86,6 +91,7 @@ export function idTransacao(
   data: string,
   ordinal: number,
 ): string {
+  if (item.transactionId) return String(item.transactionId);
   if (item.numeroDocumento) return String(item.numeroDocumento);
   const partes = [
     contaId,
@@ -124,9 +130,16 @@ function mapItem(item: SicoobExtratoItem, contaId: string, escolaId: string, ord
  * descrição), não a posição absoluta na resposta. Usar a posição absoluta faria
  * qualquer item novo no meio do mês deslocar todos os seguintes e reimportar o
  * extrato inteiro como se fosse movimento novo.
+ *
+ * O lote sai com `id_transacao` único: o upsert manda tudo num comando só, e o
+ * Postgres recusa o comando INTEIRO quando duas linhas trazem a mesma chave
+ * (`ON CONFLICT DO UPDATE command cannot affect row a second time`, 21000).
+ * Hoje `transactionId` já garante isso; a guarda existe para a resposta que não
+ * o traga — melhor uma chave desambiguada do que o mês inteiro sem gravar.
  */
 export function mapearLote(itens: SicoobExtratoItem[], contaId: string, escolaId: string) {
   const vistos = new Map<string, number>();
+  const chavesUsadas = new Set<string>();
   const rows = [];
   for (const item of itens) {
     const assinatura = [
@@ -139,7 +152,15 @@ export function mapearLote(itens: SicoobExtratoItem[], contaId: string, escolaId
     const ordinal = vistos.get(assinatura) ?? 0;
     vistos.set(assinatura, ordinal + 1);
     const row = mapItem(item, contaId, escolaId, ordinal);
-    if (row !== null) rows.push(row);
+    if (row === null) continue;
+
+    if (chavesUsadas.has(row.id_transacao)) {
+      let sufixo = 2;
+      while (chavesUsadas.has(`${row.id_transacao}#${sufixo}`)) sufixo += 1;
+      row.id_transacao = `${row.id_transacao}#${sufixo}`;
+    }
+    chavesUsadas.add(row.id_transacao);
+    rows.push(row);
   }
   return rows;
 }
