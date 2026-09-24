@@ -22,7 +22,7 @@ export type TipoVaga =
   | "PERMUTA"
   | "ISENTO";
 
-export type MotivoPendencia = "sem_aluno" | "tipo_vaga_incompativel" | "permuta_manual";
+export type MotivoPendencia = "sem_aluno" | "tipo_vaga_incompativel" | "permuta_manual" | "aluno_cancelado";
 
 /**
  * Tipos de vaga que NÃO deveriam ter mensalidade cobrada pelo isaac.
@@ -47,6 +47,8 @@ export type AlunoCadastro = {
   nomeNormalizado: string;
   tipoVaga: TipoVaga | null;
   valorMensalidadePraticado: number | null;
+  /** Data (YYYY-MM-DD) do cancelamento da matrícula do ano corrente, ou null se ativa/sem cancelamento. */
+  matriculaCanceladaEm: string | null;
 };
 
 export type ParcelaPreparada = {
@@ -126,6 +128,13 @@ export function decidirPendencia(
   // Estorno e ajuste de centavo não são cobrança de ninguém: não há o que
   // revisar, a linha só precisa ficar registrada no espelho.
   if (parcela.valorBase <= 0) return null;
+
+  // Competencia é "YYYY-MM"; cancelamento_data é "YYYY-MM-DD". Compara por
+  // prefixo de mês: competência posterior ao mês do cancelamento não gera
+  // cobrança — a escola não deveria mais receber por esse aluno.
+  if (aluno.matriculaCanceladaEm && parcela.competencia > aluno.matriculaCanceladaEm.slice(0, 7)) {
+    return "aluno_cancelado";
+  }
 
   const tipoVaga = aluno.tipoVaga ?? "NORMAL";
 

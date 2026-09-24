@@ -33,6 +33,7 @@ function aluno(over: Partial<AlunoCadastro> = {}): AlunoCadastro {
     nomeNormalizado: "aluno um",
     tipoVaga: "NORMAL",
     valorMensalidadePraticado: null,
+    matriculaCanceladaEm: null,
     ...over,
   };
 }
@@ -105,6 +106,29 @@ describe("decidirPendencia — tipo_vaga × parcela de mensalidade", () => {
 
   it("aluno sem tipo_vaga é tratado como NORMAL", () => {
     expect(decidirPendencia(parcela(), aluno({ tipoVaga: null }))).toBeNull();
+  });
+});
+
+describe("decidirPendencia — aluno_cancelado", () => {
+  it("recusa mensalidade com competencia posterior ao cancelamento", () => {
+    const motivo = decidirPendencia(
+      parcela({ competencia: "2026-10" }),
+      aluno({ matriculaCanceladaEm: "2026-09-15" }),
+    );
+    expect(motivo).toBe("aluno_cancelado");
+  });
+
+  it("aceita mensalidade com competencia anterior ao cancelamento", () => {
+    const motivo = decidirPendencia(
+      parcela({ competencia: "2026-09" }),
+      aluno({ matriculaCanceladaEm: "2026-09-15" }),
+    );
+    expect(motivo).toBeNull();
+  });
+
+  it("nao afeta aluno sem cancelamento", () => {
+    const motivo = decidirPendencia(parcela({ competencia: "2026-10" }), aluno({ matriculaCanceladaEm: null }));
+    expect(motivo).toBeNull();
   });
 });
 
