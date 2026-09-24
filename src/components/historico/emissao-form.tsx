@@ -16,6 +16,7 @@ import { carregarHistoricosAction } from "@/lib/actions/historico";
 import { renderHistoricos } from "@/lib/documents/historico-pdf";
 import { separarElegiveis, type AlunoElegivel } from "@/lib/historico/elegiveis";
 import type { NivelEnsino } from "@/lib/historico/tipos";
+import { companyLogoUrl } from "@/lib/storage/company-logo-url";
 
 type Turma = {
   id: string;
@@ -52,9 +53,7 @@ function rotuloTurma(t: Turma): string {
 }
 
 async function logoParaDataUrl(logoPath: string | null): Promise<string | undefined> {
-  const url = logoPath
-    ? `${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/escola-logos/${logoPath}`
-    : "/historico/logo-epg.png";
+  const url = companyLogoUrl(logoPath) ?? "/historico/logo-epg.png";
   try {
     const resposta = await fetch(url);
     if (!resposta.ok) return undefined;

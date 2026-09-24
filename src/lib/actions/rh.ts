@@ -2,6 +2,7 @@
 
 import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
+import { z } from "zod";
 import { requirePermission } from "@/lib/auth/session";
 import { createServerClient } from "@/lib/supabase/server";
 import { CompanySchema, CompanyUpdateSchema, EmployeeSchema, EmployeeUpdateSchema } from "@/lib/validation/rh";
@@ -131,19 +132,21 @@ export async function toggleCompanyAction(formData: FormData) {
   redirect(`/rh/empresas?ok=${ativo ? "ativada" : "desativada"}`);
 }
 
-const IMG_TYPES = new Set(["image/jpeg", "image/png", "image/webp", "image/svg+xml"]);
+// SVG fica de fora: jsPDF (`doc.addImage(..., "PNG", ...)` no histórico) não
+// sabe rasterizar SVG e derruba a emissão de histórico com "wrong PNG
+// signature" para qualquer escola que tenha subido um logo SVG.
+const IMG_TYPES = new Set(["image/jpeg", "image/png", "image/webp"]);
 
 const EXT_BY_TYPE: Record<string, string> = {
   "image/jpeg": "jpg",
   "image/png": "png",
-  "image/webp": "webp",
-  "image/svg+xml": "svg"
+  "image/webp": "webp"
 };
 
 export async function uploadCompanyLogoAction(formData: FormData) {
   await requirePermission("rh.empresas", "update");
   const id = String(formData.get("id") ?? "");
-  if (!id) redirect("/rh/empresas?erro=ID inválido");
+  if (!z.string().uuid().safeParse(id).success) redirect("/rh/empresas?erro=ID inválido");
 
   const file = formData.get("logo");
   if (!(file instanceof File) || file.size === 0) {
@@ -167,7 +170,11 @@ export async function uploadCompanyLogoAction(formData: FormData) {
 
   if (uploadErr) redirect(`/rh/empresas/${id}/editar?erro=${encodeURIComponent(uploadErr.message)}`);
 
-  await supabase.from("companies").update({ logo_path: uploaded?.path ?? path }).eq("id", id);
+  const { error: updateErr } = await supabase
+    .from("companies")
+    .update({ logo_path: uploaded?.path ?? path })
+    .eq("id", id);
+  if (updateErr) redirect(`/rh/empresas/${id}/editar?erro=${encodeURIComponent(updateErr.message)}`);
 
   revalidatePath(`/rh/empresas/${id}`);
   revalidatePath(`/rh/empresas/${id}/editar`);
@@ -177,7 +184,7 @@ export async function uploadCompanyLogoAction(formData: FormData) {
 export async function removeCompanyLogoAction(formData: FormData) {
   await requirePermission("rh.empresas", "update");
   const id = String(formData.get("id") ?? "");
-  if (!id) redirect("/rh/empresas?erro=ID inválido");
+  if (!z.string().uuid().safeParse(id).success) redirect("/rh/empresas?erro=ID inválido");
 
   const supabase = await createServerClient();
   const { error } = await supabase.from("companies").update({ logo_path: null }).eq("id", id);
