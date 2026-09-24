@@ -6,17 +6,29 @@ export type Company = {
   name: string;
   ativo: boolean;
   endereco: string | null;
+  numero: string | null;
+  complemento: string | null;
+  bairro: string | null;
   cidade: string | null;
   uf: string | null;
   cep: string | null;
   resolucao: string | null;
   telefones: string | null;
   email: string | null;
+  site: string | null;
+  whatsapp: string | null;
+  nome_fantasia: string | null;
+  codigo_inep: string | null;
+  mantenedora: string | null;
   logo_path: string | null;
   secretario_nome: string | null;
   secretario_cargo: string;
   diretor_nome: string | null;
   diretor_cargo: string;
+  coordenacao_nome: string | null;
+  coordenacao_cargo: string;
+  financeiro_nome: string | null;
+  financeiro_cargo: string;
   created_at: string | null;
   updated_at: string | null;
 };
@@ -33,7 +45,7 @@ export async function listCompanies(opts?: { includeInactive?: boolean }): Promi
   let query = supabase
     .from("companies")
     .select(
-      "id, cnpj, name, ativo, endereco, cidade, uf, cep, resolucao, telefones, email, logo_path, secretario_nome, secretario_cargo, diretor_nome, diretor_cargo, created_at, updated_at"
+      "id, cnpj, name, ativo, endereco, numero, complemento, bairro, cidade, uf, cep, resolucao, telefones, email, site, whatsapp, nome_fantasia, codigo_inep, mantenedora, logo_path, secretario_nome, secretario_cargo, diretor_nome, diretor_cargo, coordenacao_nome, coordenacao_cargo, financeiro_nome, financeiro_cargo, created_at, updated_at"
     )
     .order("name");
   if (!opts?.includeInactive) query = query.eq("ativo", true);
@@ -47,7 +59,7 @@ export async function getCompanyById(id: string): Promise<Company | null> {
   const { data, error } = await supabase
     .from("companies")
     .select(
-      "id, cnpj, name, ativo, endereco, cidade, uf, cep, resolucao, telefones, email, logo_path, secretario_nome, secretario_cargo, diretor_nome, diretor_cargo, created_at, updated_at"
+      "id, cnpj, name, ativo, endereco, numero, complemento, bairro, cidade, uf, cep, resolucao, telefones, email, site, whatsapp, nome_fantasia, codigo_inep, mantenedora, logo_path, secretario_nome, secretario_cargo, diretor_nome, diretor_cargo, coordenacao_nome, coordenacao_cargo, financeiro_nome, financeiro_cargo, created_at, updated_at"
     )
     .eq("id", id)
     .maybeSingle();
