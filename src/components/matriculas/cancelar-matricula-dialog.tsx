@@ -8,6 +8,16 @@ import { MOTIVOS_CANCELAMENTO, MOTIVO_CANCELAMENTO_LABEL, type MotivoCancelament
 import { useConfirm } from "@/components/ui/confirm-dialog";
 import type { CobrancaParaCancelamento } from "@/lib/data/cancelamento";
 
+/** Data local (YYYY-MM-DD) do dia de hoje — `toISOString()` usa UTC e pode
+ * voltar um dia em fusos negativos (ex.: 23h59 local vira o dia seguinte em UTC). */
+function dataLocalHoje(): string {
+  const hoje = new Date();
+  const ano = hoje.getFullYear();
+  const mes = String(hoje.getMonth() + 1).padStart(2, "0");
+  const dia = String(hoje.getDate()).padStart(2, "0");
+  return `${ano}-${mes}-${dia}`;
+}
+
 type Props = {
   matriculaId: string;
   alunoId: string;
@@ -32,7 +42,7 @@ export function CancelarMatriculaDialog({
   onSuccess,
 }: Props) {
   const confirm = useConfirm();
-  const [data, setData] = useState(() => new Date().toISOString().slice(0, 10));
+  const [data, setData] = useState(() => dataLocalHoje());
   const [motivo, setMotivo] = useState<MotivoCancelamento>("transferencia");
   const [obs, setObs] = useState("");
   const [cienteCoordenacao, setCienteCoordenacao] = useState(false);
@@ -47,7 +57,7 @@ export function CancelarMatriculaDialog({
 
   // Recarrega a lista de cobrancas toda vez que o dialogo abre ou a data muda -
   // a pre-selecao depende da data de cancelamento escolhida. O endpoint
-  // (/api/cancelamento/cobrancas) e infraestrutura leve criada em task futura;
+  // /api/cancelamento/cobrancas ja existe (src/app/api/cancelamento/cobrancas/route.ts);
   // aqui tratamos falha/ausencia como lista vazia (best-effort, nao bloqueia o form).
   useEffect(() => {
     if (!open) return;
@@ -101,7 +111,11 @@ export function CancelarMatriculaDialog({
     fd.set("obs", obs);
     if (cienteCoordenacao) fd.set("cienteCoordenacao", "on");
     if (cienteDiretoria) fd.set("cienteDiretoria", "on");
-    if (temCobrancaIsaac) fd.set("isaacCanceladoConfirmado", isaacConfirmado ? "on" : "");
+    // O switch do isaac só existe visualmente quando há cobrança isaac — nesse
+    // caso, manda sempre um valor explícito ("on"/"off") em vez de omitir o
+    // campo, para a action distinguir "não marcado" (false) de "não aplicável"
+    // (null, quando não há switch nenhum na tela).
+    if (temCobrancaIsaac) fd.set("isaacCanceladoConfirmado", isaacConfirmado ? "on" : "off");
     Array.from(cobrancaIdsSelecionadas).forEach((id) => fd.append("cobrancaIds", id));
 
     const result = await cancelarMatriculaAction(fd);
@@ -140,7 +154,7 @@ export function CancelarMatriculaDialog({
           <div className="mt-4 grid gap-3">
             <p className="text-sm text-ink">Matrícula cancelada com sucesso.</p>
             <a
-              href={`/declaracoes/emitir?aluno=${alunoId}`}
+              href={`/declaracoes/emitir?aluno=${alunoId}&ano=${anoLetivo}`}
               className="ds-button ds-button-primary text-xs w-fit"
             >
               Emitir Declaração de Transferência — Não Concluído
@@ -188,6 +202,11 @@ export function CancelarMatriculaDialog({
                       />
                       <span className="flex-1">{c.descricao} — {c.competencia} — R$ {c.valorFinal.toFixed(2)}</span>
                       {c.origem === "isaac" ? <span className="ds-badge">isaac</span> : null}
+                      {c.temPixAtivo ? (
+                        <span className="text-xs font-semibold text-warning">
+                          PIX ativo — cancele manualmente no Sicoob
+                        </span>
+                      ) : null}
                     </label>
                   ))}
                 </div>

@@ -8,12 +8,17 @@ export type CobrancaParaCancelamento = {
   dataVencimento: string;
   origem: "manual" | "isaac";
   preSelecionada: boolean;
+  temPixAtivo: boolean;
 };
 
 /**
  * Cobranças em aberto/parciais do aluno, para o passo de selecionar quais
  * cancelar junto com a matrícula. Pré-marca as que vencem DEPOIS da data de
  * cancelamento (spec: "pré-marcadas as que vencem depois da data").
+ *
+ * `temPixAtivo` vem de uma segunda consulta em `pix_cobranca` (mesmos ids de
+ * cobrança, `origem_tipo = 'cobranca'`, `status = 'ativa'`) resolvida em
+ * memória — evita N+1 (uma query por cobrança).
  */
 export async function listarCobrancasAbertasParaCancelamento(
   alunoId: string,
@@ -29,6 +34,20 @@ export async function listarCobrancasAbertasParaCancelamento(
 
   if (error) throw new Error("Não foi possível carregar as cobranças do aluno.");
 
+  const cobrancaIds = (data ?? []).map((row) => row.id as string);
+  const idsComPixAtivo = new Set<string>();
+  if (cobrancaIds.length > 0) {
+    const { data: pixAtivos, error: erroPix } = await supabase
+      .from("pix_cobranca")
+      .select("origem_id")
+      .eq("origem_tipo", "cobranca")
+      .eq("status", "ativa")
+      .in("origem_id", cobrancaIds);
+
+    if (erroPix) throw new Error("Não foi possível carregar o status de PIX das cobranças.");
+    for (const row of pixAtivos ?? []) idsComPixAtivo.add(row.origem_id as string);
+  }
+
   return (data ?? []).map((row) => ({
     id: row.id as string,
     descricao: row.descricao as string,
@@ -37,5 +56,6 @@ export async function listarCobrancasAbertasParaCancelamento(
     dataVencimento: row.data_vencimento as string,
     origem: row.origem as "manual" | "isaac",
     preSelecionada: (row.data_vencimento as string) > dataCancelamento,
+    temPixAtivo: idsComPixAtivo.has(row.id as string),
   }));
 }

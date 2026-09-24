@@ -103,5 +103,32 @@ describe("CancelarMatriculaDialog", () => {
     fireEvent.click(screen.getByRole("button", { name: /confirmar/i }));
 
     await waitFor(() => expect(screen.getByRole("link", { name: /emitir declaração/i })).toBeInTheDocument());
+    expect(screen.getByRole("link", { name: /emitir declaração/i })).toHaveAttribute(
+      "href",
+      "/declaracoes/emitir?aluno=22222222-2222-2222-2222-222222222222&ano=2026",
+    );
+  });
+
+  it("mostra aviso de PIX ativo ao lado da cobranca marcada com temPixAtivo", async () => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn().mockResolvedValue({
+        json: () =>
+          Promise.resolve([
+            {
+              id: "c1",
+              descricao: "Mensalidade",
+              competencia: "2026-09",
+              valorFinal: 500,
+              dataVencimento: "2026-10-05",
+              origem: "manual",
+              preSelecionada: true,
+              temPixAtivo: true,
+            },
+          ]),
+      }),
+    );
+    renderDialog();
+    expect(await screen.findByText(/pix ativo/i)).toBeInTheDocument();
   });
 });
