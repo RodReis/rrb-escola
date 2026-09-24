@@ -19,7 +19,7 @@ vi.mock("@/lib/supabase/server", () => ({
 vi.mock("next/navigation", () => ({ redirect: vi.fn((url: string) => { throw new Error(`REDIRECT:${url}`); }) }));
 vi.mock("next/cache", () => ({ revalidatePath: vi.fn() }));
 
-import { uploadCompanyLogoAction } from "./rh";
+import { uploadCompanyLogoAction, removeCompanyLogoAction } from "./rh";
 
 describe("uploadCompanyLogoAction", () => {
   beforeEach(() => {
@@ -45,5 +45,20 @@ describe("uploadCompanyLogoAction", () => {
 
     await expect(uploadCompanyLogoAction(fd)).rejects.toThrow("REDIRECT:/rh/empresas/company-1/editar?erro=tipo_invalido");
     expect(mockUpload).not.toHaveBeenCalled();
+  });
+});
+
+describe("removeCompanyLogoAction", () => {
+  beforeEach(() => {
+    mockUpdate.mockClear();
+  });
+
+  it("chama update com logo_path: null para o id correto", async () => {
+    const fd = new FormData();
+    fd.set("id", "company-42");
+
+    await expect(removeCompanyLogoAction(fd)).rejects.toThrow("REDIRECT:/rh/empresas/company-42/editar?logo_removida=1");
+    expect(mockUpdate).toHaveBeenCalledWith({ logo_path: null });
+    expect(mockUpdate().eq).toHaveBeenCalledWith("id", "company-42");
   });
 });

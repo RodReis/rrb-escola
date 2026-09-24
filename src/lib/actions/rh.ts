@@ -109,6 +109,13 @@ export async function toggleCompanyAction(formData: FormData) {
 
 const IMG_TYPES = new Set(["image/jpeg", "image/png", "image/webp", "image/svg+xml"]);
 
+const EXT_BY_TYPE: Record<string, string> = {
+  "image/jpeg": "jpg",
+  "image/png": "png",
+  "image/webp": "webp",
+  "image/svg+xml": "svg"
+};
+
 export async function uploadCompanyLogoAction(formData: FormData) {
   await requirePermission("rh.empresas", "update");
   const id = String(formData.get("id") ?? "");
@@ -126,7 +133,7 @@ export async function uploadCompanyLogoAction(formData: FormData) {
   }
 
   const supabase = await createServerClient();
-  const ext = file.name.split(".").pop()?.toLowerCase() ?? "png";
+  const ext = EXT_BY_TYPE[file.type] ?? "png";
   const path = `companies/${id}/${Date.now()}.${ext}`;
   const bytes = Buffer.from(await file.arrayBuffer());
 
