@@ -1,9 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { Pencil, UserCheck, UserX, FileText } from "lucide-react";
-import { toggleStudentAction } from "@/lib/actions/students";
-import { RowActionButton } from "@/components/ui/row-action-button";
+import { Pencil, FileText } from "lucide-react";
 
 type Props = {
   alunoId: string;
@@ -20,51 +18,18 @@ export function AlunoRowActions({ alunoId, alunoNome, ativo }: Props) {
         href={`/alunos/${alunoId}/editar`}
         title="Editar"
         aria-label="Editar"
-        className="inline-flex h-8 w-8 items-center justify-center rounded-md text-brand hover:bg-brand/10"
+        className="inline-flex h-9 w-9 items-center justify-center rounded-md text-brand hover:bg-brand/10"
       >
-        <Pencil size={15} />
+        <Pencil size={18} />
       </Link>
-
-      {ativo ? (
-        <RowActionButton
-          action={toggleStudentAction}
-          args={{ aluno_id: alunoId, ativo: "" }}
-          icon={UserX}
-          label="Desativar"
-          tone="warning"
-          confirm={{
-            title: "Desativar aluno",
-            message: `Tem certeza que quer desativar o aluno "${alunoNome}"?`,
-            confirmLabel: "Desativar",
-            variant: "warning",
-          }}
-          success="Aluno desativado."
-          error="Falha ao alterar status."
-        />
-      ) : (
-        <RowActionButton
-          action={toggleStudentAction}
-          args={{ aluno_id: alunoId, ativo: "on" }}
-          icon={UserCheck}
-          label="Ativar"
-          tone="success"
-          confirm={{
-            title: "Ativar aluno",
-            message: `Tem certeza que quer ativar o aluno "${alunoNome}"?`,
-            confirmLabel: "Ativar",
-          }}
-          success="Aluno ativado."
-          error="Falha ao alterar status."
-        />
-      )}
 
       <Link
         href={`/alunos/${alunoId}/boletim`}
         title="Boletim"
         aria-label="Boletim"
-        className="inline-flex h-8 w-8 items-center justify-center rounded-md text-brand hover:bg-brand/10"
+        className="inline-flex h-9 w-9 items-center justify-center rounded-md text-ink/60 hover:bg-ink/10"
       >
-        <FileText size={15} />
+        <FileText size={18} />
       </Link>
     </div>
   );

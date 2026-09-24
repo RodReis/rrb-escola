@@ -365,23 +365,6 @@ export async function updateStudentAction(formData: FormData): Promise<ActionRes
   };
 }
 
-export async function toggleStudentAction(formData: FormData) {
-  await requirePermission("alunos", "update");
-  const alunoId = formText(formData, "aluno_id");
-  const ativo = formBoolean(formData, "ativo");
-  if (!alunoId) return;
-
-  const supabase = await createServerClient();
-  await supabase
-    .from("alunos")
-    .update({ ativo })
-    .eq("id", alunoId)
-    .eq("escola_id", DEFAULT_SCHOOL_ID);
-
-  revalidatePath("/alunos");
-  revalidatePath(`/alunos/${alunoId}`);
-}
-
 export async function addStudentAddressAction(formData: FormData) {
   await requirePermission("alunos", "update");
   const alunoId = formText(formData, "aluno_id");
