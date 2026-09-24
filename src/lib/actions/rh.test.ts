@@ -62,3 +62,48 @@ describe("removeCompanyLogoAction", () => {
     expect(mockUpdate().eq).toHaveBeenCalledWith("id", "company-42");
   });
 });
+
+describe("updateCompanyAction", () => {
+  beforeEach(() => {
+    mockUpdate.mockClear();
+    mockRequirePermission.mockClear();
+  });
+
+  it("aplica o default de cargo quando o campo vem vazio", async () => {
+    const fd = new FormData();
+    // Campos obrigatórios
+    fd.set("id", "123e4567-e89b-12d3-a456-426614174000");
+    fd.set("name", "Escola Teste Ltda");
+    fd.set("cnpj", "11.222.333/0001-44");
+    fd.set("ativo", "on");
+    // Campos opcionais de cargo: vazios para testar defaults
+    fd.set("secretarioCargo", "");
+    fd.set("diretorCargo", "");
+    fd.set("coordenacaoCargo", "");
+    fd.set("financeiroCargo", "");
+    // Outros campos opcionais: não setados (serão undefined no FormData)
+
+    const { updateCompanyAction } = await import("./rh");
+    let redirectError: unknown;
+    try {
+      await updateCompanyAction(fd);
+    } catch (e: unknown) {
+      redirectError = e;
+    }
+
+    // Se chegou aqui sem error, o teste falha
+    if (!redirectError) {
+      throw new Error("Expected redirect error but none was thrown");
+    }
+
+    // Verifica que update foi chamado com os defaults de cargo
+    expect(mockUpdate).toHaveBeenCalledWith(
+      expect.objectContaining({
+        secretario_cargo: "Secretário(a)",
+        diretor_cargo: "Diretor(a)",
+        coordenacao_cargo: "Coordenador(a)",
+        financeiro_cargo: "Financeiro"
+      })
+    );
+  });
+});
