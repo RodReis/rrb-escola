@@ -33,6 +33,8 @@ describe("classificarDebitos — ordem do pipeline", () => {
     expect(r.transferenciasInternas.map((t) => t.debitoId)).toEqual(["d1"]);
     expect(r.sugestoes).toEqual([]);
     expect(r.aClassificar).toEqual([]);
+    expect(r.contaPropriaSemPar).toEqual([]);
+    expect(r.ambiguos).toEqual([]);
   });
 
   it("débito para CNPJ próprio SEM par vira transferência para conta própria, não despesa", () => {
@@ -86,20 +88,43 @@ describe("classificarDebitos — ordem do pipeline", () => {
       { id: "d2", contaId: "A", data: "2026-08-05", valor: 48000, tipo: "debito" },
       { id: "d3", contaId: "A", data: "2026-08-06", valor: 1200, tipo: "debito" },
       { id: "d4", contaId: "A", data: "2026-08-07", valor: 300, tipo: "debito" },
+      // Ambíguo: dois créditos do mesmo valor no mesmo dia, em contas distintas
+      // ("B" e "C"). Documento próprio + regra batendo também — para provar que
+      // ele só cai em `ambiguos`, mesmo tendo condição de cair nos outros baldes.
+      { id: "d5", contaId: "A", data: "2026-08-05", valor: 500, tipo: "debito" },
     ];
     const r = classificarDebitos({
       debitos,
-      creditos: [{ id: "c1", contaId: "B", data: "2026-08-05", valor: 10000, tipo: "credito" }],
-      documentos: { d1: "11714876000116", d2: "35027047000123", d3: "01816875000129", d4: null },
-      descricoes: { d1: "DÉB.TRANSF", d2: "PIX MESMA TIT.", d3: "PIX EMITIDO", d4: "DÉB.TIT.COMPE" },
-      regras: [{ ...regraDoPinguinho, id: "r1", documento: "01816875000129", categoriaId: "cat-ok" }],
+      creditos: [
+        { id: "c1", contaId: "B", data: "2026-08-05", valor: 10000, tipo: "credito" },
+        { id: "c2", contaId: "B", data: "2026-08-05", valor: 500, tipo: "credito" },
+        { id: "c3", contaId: "C", data: "2026-08-05", valor: 500, tipo: "credito" },
+      ],
+      documentos: {
+        d1: "11714876000116", d2: "35027047000123", d3: "01816875000129", d4: null,
+        d5: "11714876000116",
+      },
+      descricoes: {
+        d1: "DÉB.TRANSF", d2: "PIX MESMA TIT.", d3: "PIX EMITIDO", d4: "DÉB.TIT.COMPE",
+        d5: "PIX EMITIDO OUTRA IF",
+      },
+      regras: [
+        { ...regraDoPinguinho, id: "r1", documento: "01816875000129", categoriaId: "cat-ok" },
+        { ...regraDoPinguinho, id: "r2", documento: "11714876000116", categoriaId: "cat-erro-d5" },
+      ],
       contasProprias: CONTAS_PROPRIAS,
       documentosProprios: DOCS_PROPRIOS,
     });
 
-    const total =
-      r.transferenciasInternas.length + r.contaPropriaSemPar.length +
-      r.sugestoes.length + r.aClassificar.length + r.ambiguos.length;
-    expect(total).toBe(debitos.length);
+    expect(r.ambiguos.map((a) => a.debitoId)).toEqual(["d5"]);
+
+    const idsClassificados = [
+      ...r.transferenciasInternas.map((p) => p.debitoId),
+      ...r.contaPropriaSemPar.map((x) => x.debitoId),
+      ...r.sugestoes.map((s) => s.debitoId),
+      ...r.aClassificar,
+      ...r.ambiguos.map((a) => a.debitoId),
+    ].sort();
+    expect(idsClassificados).toEqual(debitos.map((d) => d.id).sort());
   });
 });
