@@ -18,7 +18,7 @@ export default async function NovoModeloDeclaracaoPage({
       <PageHeader
         breadcrumb={[
           { label: "Acadêmico" },
-          { label: "Declarações", href: "/declaracoes" },
+          { label: "Declarações", href: "/declaracoes/modelos" },
           { label: "Modelos", href: "/declaracoes/modelos" },
           { label: "Novo" }
         ]}

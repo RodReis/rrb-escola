@@ -1,5 +1,5 @@
 import jsPDF from "jspdf";
-import { medirAlturaCorpo, renderCorpo } from "./pdf-paragrafo";
+import { renderCorpo } from "./pdf-paragrafo";
 import { imgFitInBox } from "./pdf-utils";
 import type { Segmento } from "./certificado-texto";
 import type { HistoricoCredenciamento } from "@/lib/historico/tipos";

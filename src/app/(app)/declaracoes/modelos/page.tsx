@@ -13,7 +13,7 @@ export default async function ModelosDeclaracaoPage() {
   return (
     <div className="grid gap-8">
       <PageHeader
-        breadcrumb={[{ label: "Acadêmico" }, { label: "Declarações", href: "/declaracoes" }, { label: "Modelos" }]}
+        breadcrumb={[{ label: "Acadêmico" }, { label: "Declarações", href: "/declaracoes/modelos" }, { label: "Modelos" }]}
         title="Modelos de declaração"
         counter={String(modelos.length)}
       />
