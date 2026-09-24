@@ -42,6 +42,7 @@ const SECRETARIA_ITEMS: DropdownItem[] = [
     children: [
       { href: "/alunos", label: "Alunos", iconName: "UsersRound" },
       { href: "/matriculas", label: "Matrículas", iconName: "FileText" },
+      { href: "/matriculas/saidas", label: "Saídas do ano", iconName: "FileOutput" },
       { href: "/bolsistas", label: "Bolsistas", iconName: "HandHeart" },
       { href: "/avaliacoes", label: "Avaliações", iconName: "ClipboardCheck" },
       { href: "/frequencias", label: "Frequência", iconName: "CalendarCheck" },
