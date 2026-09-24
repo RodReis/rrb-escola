@@ -4,10 +4,15 @@ import { Panel } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { AtualizarExtratoButton } from "@/components/finance/atualizar-extrato-button";
 import { getConciliacaoData, getTransferenciasIsaacPendentes } from "@/lib/data/conciliacao";
+import { getDebitosData } from "@/lib/data/debitos";
 import { JANELA_DIAS } from "@/lib/conciliacao/casar-transferencia-isaac";
 import { conciliarExtratoAction, ignorarExtratoAction } from "@/lib/actions/conciliacao";
 import { requirePermission } from "@/lib/auth/session";
 import { money } from "@/lib/constants";
+import { DebitosTabs, parseDebitosTab } from "@/components/finance/debitos-tabs";
+import { DebitosAClassificar } from "@/components/finance/debitos-a-classificar";
+import { DebitosSugestoes } from "@/components/finance/debitos-sugestoes";
+import { DebitosTransferencias } from "@/components/finance/debitos-transferencias";
 
 function dateText(value: string) {
   return new Date(`${value}T00:00:00`).toLocaleDateString("pt-BR");
@@ -16,12 +21,13 @@ function dateText(value: string) {
 export default async function ConciliacaoPage({
   searchParams,
 }: {
-  searchParams: Promise<{ status?: string; conta?: string; de?: string; ate?: string }>;
+  searchParams: Promise<{ status?: string; conta?: string; de?: string; ate?: string; debitos?: string }>;
 }) {
   await requirePermission("financeiro.conciliacao", "read");
   const params = await searchParams;
   const status = params.status ?? "pendente";
-  const [data, transferenciasIsaac] = await Promise.all([
+  const abaDebitos = parseDebitosTab(params.debitos);
+  const [data, transferenciasIsaac, debitosData] = await Promise.all([
     getConciliacaoData({
       status,
       contaId: params.conta || undefined,
@@ -29,6 +35,7 @@ export default async function ConciliacaoPage({
       ate: params.ate || undefined,
     }),
     getTransferenciasIsaacPendentes(),
+    getDebitosData(),
   ]);
 
   // Vencida sem crédito é dinheiro que deveria ter entrado. O resto ainda está
@@ -94,6 +101,20 @@ export default async function ConciliacaoPage({
           </div>
         </Panel>
       ) : null}
+
+      <Panel className="grid gap-4">
+        <DebitosTabs
+          active={abaDebitos}
+          counts={{
+            "a-classificar": debitosData.aClassificar.reduce((n, g) => n + g.movimentos.length, 0),
+            sugestoes: debitosData.sugestoes.length,
+            transferencias: debitosData.transferenciasAuto.length + debitosData.transferenciasAmbiguas.length,
+          }}
+        />
+        {abaDebitos === "a-classificar" ? <DebitosAClassificar data={debitosData} /> : null}
+        {abaDebitos === "sugestoes" ? <DebitosSugestoes data={debitosData} /> : null}
+        {abaDebitos === "transferencias" ? <DebitosTransferencias data={debitosData} /> : null}
+      </Panel>
 
       <Panel>
         <div className="mb-3 flex items-center gap-2 text-xs font-bold uppercase tracking-kicker text-ink/60">
