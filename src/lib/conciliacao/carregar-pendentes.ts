@@ -30,6 +30,13 @@ export type LinhaPendente = {
  *
  * Pagina de verdade em loop com `.range()` até a página vir menor que o
  * tamanho pedido (ou vazia) — não confia em nenhum total prévio.
+ *
+ * `.order("id")` é obrigatório: sem ordem explícita, o Postgres não garante
+ * a mesma ordem de varredura entre duas chamadas .range() consecutivas —
+ * um UPDATE concorrente em extrato_bancario entre as duas páginas (o sync
+ * rodando, outro usuário classificando) pode mover uma linha de lugar e
+ * pulá-la. Achado da revisão final: sem isso, a paginação corrige o corte
+ * de 1000 linhas mas reabre o mesmo risco por outra porta.
  */
 const TAMANHO_PAGINA = 1000;
 
@@ -47,6 +54,7 @@ export async function carregarPendentes(
       .select("id, conta_id, data, valor, tipo, descricao, contraparte_doc, status_conciliacao, pareamento_recusado")
       .eq("escola_id", escolaId)
       .in("status_conciliacao", status)
+      .order("id")
       .range(offset, offset + TAMANHO_PAGINA - 1);
 
     if (error) throw error;

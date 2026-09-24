@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { money } from "@/lib/constants";
 import { classificarDebitoAction } from "@/lib/actions/debitos";
 import { useAction } from "@/lib/hooks/use-action";
+import { IgnorarDebitoForm } from "@/components/finance/ignorar-debito-form";
 import type { DebitosData, SugestaoDebito } from "@/lib/data/debitos";
 
 function dateText(value: string) {
@@ -13,6 +14,10 @@ function dateText(value: string) {
 }
 
 type Grupo = {
+  /** regraId + empresa resolvida — uma regra sem company_id casa débitos de
+   * contas (logo empresas) diferentes; agrupar só por regraId gravaria
+   * company_id=null em massa. Achado da revisão final (HIGH #3). */
+  chave: string;
   regraId: string;
   categoriaNome: string;
   categoriaId: string;
@@ -50,21 +55,27 @@ function GrupoSugestoes({ grupo }: { grupo: Grupo }) {
     <Panel className="grid gap-3">
       <div className="flex flex-wrap items-center justify-between gap-2">
         <span className="text-xs font-semibold text-brand">Sugestão: {grupo.categoriaNome}</span>
+        {grupo.companyId === null && <span className="text-xs text-ink/50">empresa da conta</span>}
         <strong className="tabular-nums text-clay">{money.format(grupo.total)}</strong>
       </div>
 
       <div className="grid gap-1">
         {grupo.sugestoes.map((s) => (
-          <label key={s.id} className="flex items-center gap-3 text-sm">
-            <input
-              type="checkbox"
-              checked={selecionados.has(s.id)}
-              onChange={() => toggle(s.id)}
-            />
-            <span className="w-24 shrink-0 text-ink/60">{dateText(s.data)}</span>
-            <span className="flex-1 truncate text-ink/70">{s.descricao}</span>
-            <strong className="tabular-nums text-clay">{money.format(s.valor)}</strong>
-          </label>
+          <div key={s.id} className="flex items-center gap-3 text-sm">
+            <label className="flex flex-1 items-center gap-3">
+              <input
+                type="checkbox"
+                checked={selecionados.has(s.id)}
+                onChange={() => toggle(s.id)}
+              />
+              <span className="w-24 shrink-0 text-ink/60">{dateText(s.data)}</span>
+              <span className="flex-1 truncate text-ink/70">{s.descricao}</span>
+              <strong className="tabular-nums text-clay">{money.format(s.valor)}</strong>
+            </label>
+            {/* Sugestão errada não pode ficar presa sem saída (HIGH #4) —
+                ignorar com motivo tira o movimento da fila permanentemente. */}
+            <IgnorarDebitoForm extratoId={s.id} />
+          </div>
         ))}
       </div>
 
@@ -90,26 +101,33 @@ function GrupoSugestoes({ grupo }: { grupo: Grupo }) {
 /** O que a regra de contraparte já reconheceu. Confirmar cria o lançamento; a sugestão nunca lança sozinha (D1). */
 export function DebitosSugestoes({ data }: { data: DebitosData }) {
   const grupos = useMemo(() => {
-    const porRegra = new Map<string, Grupo>();
+    const companyPorConta = new Map(data.contas.map((c) => [c.id, c.companyId]));
+    const porChave = new Map<string, Grupo>();
     for (const s of data.sugestoes) {
-      const existente = porRegra.get(s.regraId);
+      // Regra sem company_id casa débitos de contas diferentes (logo
+      // empresas diferentes) — resolve por movimento (empresa da própria
+      // conta), nunca grava company_id=null em massa (HIGH #3).
+      const companyResolvido = s.companyId ?? companyPorConta.get(s.contaId) ?? null;
+      const chave = `${s.regraId}:${companyResolvido ?? "—"}`;
+      const existente = porChave.get(chave);
       if (existente) {
         existente.sugestoes.push(s);
         existente.total += s.valor;
       } else {
-        porRegra.set(s.regraId, {
+        porChave.set(chave, {
+          chave,
           regraId: s.regraId,
           categoriaNome: s.categoriaNome,
           categoriaId: s.categoriaId,
-          companyId: s.companyId,
+          companyId: companyResolvido,
           classeDespesa: s.classeDespesa,
           sugestoes: [s],
           total: s.valor,
         });
       }
     }
-    return Array.from(porRegra.values()).sort((a, b) => b.total - a.total);
-  }, [data.sugestoes]);
+    return Array.from(porChave.values()).sort((a, b) => b.total - a.total);
+  }, [data.sugestoes, data.contas]);
 
   if (grupos.length === 0) {
     return (
@@ -122,7 +140,7 @@ export function DebitosSugestoes({ data }: { data: DebitosData }) {
   return (
     <section className="grid gap-3">
       {grupos.map((grupo) => (
-        <GrupoSugestoes key={grupo.regraId} grupo={grupo} />
+        <GrupoSugestoes key={grupo.chave} grupo={grupo} />
       ))}
     </section>
   );

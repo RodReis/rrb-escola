@@ -20,6 +20,9 @@ function fakeSupabase(todasAsLinhas: { id: string; status_conciliacao: string }[
           this._status = status;
           return this;
         },
+        order() {
+          return this;
+        },
         async range(offset: number, until: number) {
           const filtradas = todasAsLinhas.filter((l) => this._status.includes(l.status_conciliacao));
           return { data: filtradas.slice(offset, until + 1), error: null };
@@ -59,6 +62,7 @@ describe("carregarPendentes", () => {
         select() { return this; },
         eq() { return this; },
         in() { return this; },
+        order() { return this; },
         range: async () => ({ data: null, error: { message: "boom" } }),
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
       }),

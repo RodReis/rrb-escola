@@ -36,9 +36,11 @@ export async function aplicarPipelineDebitos(escolaId: string) {
   const linhas = await carregarPendentes(supabase, escolaId, ["pendente"]);
 
   // pareamento_recusado: usuário já desfez este débito como transferência
-  // interna antes — não tenta parear de novo (I1). Só entra na conta do
-  // pipeline como débito; segue disponível como CRÉDITO candidato de outro
-  // par (a recusa é sobre a decisão daquele débito específico).
+  // interna antes — não tenta parear de novo (I1). A marca é só sobre o
+  // lado DÉBITO da decisão; este módulo grava só transferência_interna,
+  // nunca sugestão/despesa — quem precisa reclassificar o recusado noutro
+  // balde (sugestão, fila, conta própria) é a tela (src/lib/data/debitos.ts),
+  // não o sync.
   const debitos: MovimentoConta[] = linhas
     .filter((l) => l.tipo === "debito" && !l.pareamento_recusado)
     .map((l) => ({ id: l.id as string, contaId: l.conta_id as string, data: l.data as string, valor: Number(l.valor), tipo: "debito" }));

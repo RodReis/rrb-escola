@@ -138,32 +138,55 @@ export async function getDebitosData(): Promise<DebitosData> {
 
   // O pipeline só olha "pendente" (é o que ainda não tem decisão); "auto" já
   // resolvido entra só para renderizar os pares de transferência automáticos.
-  // pareamento_recusado: usuário já desfez este par antes — não reclassifica
-  // como transferência de novo (I1); segue disponível como crédito de outro par.
-  const pendentesSemDecisao = linhas.filter((l) => l.status_conciliacao === "pendente" && !l.pareamento_recusado);
-  const debitos: MovimentoConta[] = pendentesSemDecisao
-    .filter((l) => l.tipo === "debito")
-    .map((l) => ({ id: l.id as string, contaId: l.conta_id as string, data: l.data as string, valor: Number(l.valor), tipo: "debito" }));
-  const creditos: MovimentoConta[] = pendentesSemDecisao
-    .filter((l) => l.tipo === "credito")
-    .map((l) => ({ id: l.id as string, contaId: l.conta_id as string, data: l.data as string, valor: Number(l.valor), tipo: "credito" }));
+  const pendentes_ = linhas.filter((l) => l.status_conciliacao === "pendente");
+  const pendentesSemDecisao = pendentes_.filter((l) => !l.pareamento_recusado);
+  // Débitos com pareamento recusado (I1): não devem voltar a casar como
+  // transferência interna, mas continuam precisando de estado final —
+  // rodam o mesmo pipeline puro numa segunda passada, SEM créditos (não há
+  // como virar transferência), então caem em sugestão/fila/conta própria.
+  // Achado da revisão final: filtrá-los antes do pipeline sem essa segunda
+  // passada os deixava pendentes e invisíveis em toda tela para sempre.
+  const recusados = pendentes_.filter((l) => l.pareamento_recusado && l.tipo === "debito");
 
-  const documentos: Record<string, string | null> = {};
-  const descricoes: Record<string, string> = {};
-  for (const l of pendentesSemDecisao) {
-    documentos[l.id as string] = (l.contraparte_doc as string | null) ?? null;
-    descricoes[l.id as string] = String(l.descricao ?? "");
-  }
+  const montarEntrada = (fonte: typeof pendentesSemDecisao) => {
+    const debitos: MovimentoConta[] = fonte
+      .filter((l) => l.tipo === "debito")
+      .map((l) => ({ id: l.id as string, contaId: l.conta_id as string, data: l.data as string, valor: Number(l.valor), tipo: "debito" }));
+    const creditos: MovimentoConta[] = fonte
+      .filter((l) => l.tipo === "credito")
+      .map((l) => ({ id: l.id as string, contaId: l.conta_id as string, data: l.data as string, valor: Number(l.valor), tipo: "credito" }));
+    const documentos: Record<string, string | null> = {};
+    const descricoes: Record<string, string> = {};
+    for (const l of fonte) {
+      documentos[l.id as string] = (l.contraparte_doc as string | null) ?? null;
+      descricoes[l.id as string] = String(l.descricao ?? "");
+    }
+    return { debitos, creditos, documentos, descricoes };
+  };
 
+  const entradaPrincipal = montarEntrada(pendentesSemDecisao);
   const resultado = classificarDebitos({
-    debitos,
-    creditos,
-    documentos,
-    descricoes,
+    ...entradaPrincipal,
     regras,
     contasProprias,
     documentosProprios,
   });
+
+  if (recusados.length > 0) {
+    const entradaRecusados = montarEntrada(recusados);
+    const resultadoRecusados = classificarDebitos({
+      ...entradaRecusados,
+      creditos: [], // sem crédito, nunca vira par — só sugestão, conta própria ou fila
+      regras,
+      contasProprias,
+      documentosProprios,
+    });
+    resultado.aClassificar.push(...resultadoRecusados.aClassificar);
+    resultado.sugestoes.push(...resultadoRecusados.sugestoes);
+    resultado.contaPropriaSemPar.push(...resultadoRecusados.contaPropriaSemPar);
+    // resultadoRecusados.ambiguos/transferenciasInternas ficam sempre vazios
+    // (sem crédito na entrada), então não há nada a juntar ali.
+  }
 
   // A classificar, agrupado por contraparte_doc (ou descrição quando não há documento).
   const grupos = new Map<string, GrupoAClassificar>();
