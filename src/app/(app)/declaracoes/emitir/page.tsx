@@ -10,11 +10,11 @@ import { requirePermission } from "@/lib/auth/session";
 export default async function EmitirDeclaracaoPage({
   searchParams
 }: {
-  searchParams: Promise<{ serie?: string; turma?: string; aluno?: string; modelo?: string }>;
+  searchParams: Promise<{ ano?: string; serie?: string; turma?: string; aluno?: string; modelo?: string }>;
 }) {
   await requirePermission("historico", "read");
   const sp = await searchParams;
-  const anoLetivo = new Date().getFullYear();
+  const anoLetivo = sp.ano ? Number(sp.ano) : new Date().getFullYear();
 
   const supabase = await createServerClient();
   const [{ data: series }, { data: turmas }, modelos, alunosElegiveis] = await Promise.all([
@@ -32,7 +32,7 @@ export default async function EmitirDeclaracaoPage({
   return (
     <div className="grid gap-8">
       <PageHeader
-        breadcrumb={[{ label: "Acadêmico" }, { label: "Declarações", href: "/declaracoes" }, { label: "Emitir" }]}
+        breadcrumb={[{ label: "Acadêmico" }, { label: "Declarações", href: "/declaracoes/modelos" }, { label: "Emitir" }]}
         title="Emissão de declaração pedagógica"
       />
       <Panel className="p-6">
