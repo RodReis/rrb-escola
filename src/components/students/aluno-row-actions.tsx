@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { Pencil, FileText, UserPlus, XCircle } from "lucide-react";
+import { Pencil, FileText, ScrollText, UserPlus, XCircle } from "lucide-react";
 import { CancelarMatriculaDialog } from "@/components/matriculas/cancelar-matricula-dialog";
 import { derivarIconeAcao } from "@/lib/students/icone-acao";
 
@@ -73,6 +73,15 @@ export function AlunoRowActions({
         className="inline-flex h-9 w-9 items-center justify-center rounded-md text-ink/60 hover:bg-ink/10"
       >
         <FileText size={18} />
+      </Link>
+
+      <Link
+        href={`/declaracoes/emitir?aluno=${alunoId}`}
+        title="Emitir declaração"
+        aria-label="Emitir declaração"
+        className="inline-flex h-9 w-9 items-center justify-center rounded-md text-ink/60 hover:bg-ink/10"
+      >
+        <ScrollText size={18} />
       </Link>
 
       {icone === "cancelar" ? (

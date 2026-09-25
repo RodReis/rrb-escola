@@ -64,4 +64,10 @@ describe("AlunoRowActions", () => {
     expect(screen.getByLabelText("Editar")).toBeInTheDocument();
     expect(screen.getByLabelText("Boletim")).toBeInTheDocument();
   });
+
+  it("mostra icone de Emitir declaração apontando para a tela de emissao com o aluno pre-selecionado", () => {
+    renderComponent();
+    const link = screen.getByLabelText("Emitir declaração") as HTMLAnchorElement;
+    expect(link.getAttribute("href")).toBe("/declaracoes/emitir?aluno=aluno-1");
+  });
 });
