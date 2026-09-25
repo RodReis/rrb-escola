@@ -295,7 +295,7 @@ export async function syncExtratoSicoob(input?: { mes?: number; ano?: number }) 
   const repasses = await conciliarTransferenciasIsaac(supabase);
 
   const escolaIds = Array.from(new Set((contas ?? []).map((c) => c.escola_id as string)));
-  let debitosResumo = { transferencias: 0, sugestoes: 0, aClassificar: 0, ambiguos: 0 };
+  let debitosResumo = { transferencias: 0, sugestoes: 0, aClassificar: 0, ambiguos: 0, baixas: 0 };
   for (const escolaId of escolaIds) {
     const r = await aplicarPipelineDebitos(escolaId);
     debitosResumo = {
@@ -303,6 +303,7 @@ export async function syncExtratoSicoob(input?: { mes?: number; ano?: number }) 
       sugestoes: debitosResumo.sugestoes + r.sugestoes,
       aClassificar: debitosResumo.aClassificar + r.aClassificar,
       ambiguos: debitosResumo.ambiguos + r.ambiguos,
+      baixas: debitosResumo.baixas + r.baixas,
     };
   }
 
