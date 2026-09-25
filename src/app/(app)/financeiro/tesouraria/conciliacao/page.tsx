@@ -12,6 +12,7 @@ import { money } from "@/lib/constants";
 import { DebitosTabs, parseDebitosTab } from "@/components/finance/debitos-tabs";
 import { DebitosAClassificar } from "@/components/finance/debitos-a-classificar";
 import { DebitosSugestoes } from "@/components/finance/debitos-sugestoes";
+import { DebitosPrevistos } from "@/components/finance/debitos-previstos";
 import { DebitosTransferencias } from "@/components/finance/debitos-transferencias";
 
 function dateText(value: string) {
@@ -108,6 +109,7 @@ export default async function ConciliacaoPage({
           counts={{
             "a-classificar": debitosData.aClassificar.reduce((n, g) => n + g.movimentos.length, 0),
             sugestoes: debitosData.sugestoes.length,
+            previstos: debitosData.baixasUnicas.length + debitosData.baixasAmbiguas.length,
             transferencias:
               debitosData.transferenciasAuto.length +
               debitosData.transferenciasAmbiguas.length +
@@ -116,6 +118,7 @@ export default async function ConciliacaoPage({
         />
         {abaDebitos === "a-classificar" ? <DebitosAClassificar data={debitosData} /> : null}
         {abaDebitos === "sugestoes" ? <DebitosSugestoes data={debitosData} /> : null}
+        {abaDebitos === "previstos" ? <DebitosPrevistos data={debitosData} /> : null}
         {abaDebitos === "transferencias" ? <DebitosTransferencias data={debitosData} /> : null}
       </Panel>
 

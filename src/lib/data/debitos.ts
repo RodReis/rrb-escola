@@ -2,6 +2,7 @@ import { DEFAULT_SCHOOL_ID } from "@/lib/constants";
 import { createServerClient } from "@/lib/supabase/server";
 import { classificarDebitos } from "@/lib/conciliacao/pipeline-debitos";
 import { carregarPendentes } from "@/lib/conciliacao/carregar-pendentes";
+import { carregarPrevistosAbertos } from "@/lib/conciliacao/carregar-previstos";
 import type { MovimentoConta } from "@/lib/conciliacao/transferencia-interna";
 import type { Regra } from "@/lib/conciliacao/classificar-regra";
 
@@ -50,6 +51,10 @@ export type ParAmbiguoResolvido = {
 
 export type ContaPropriaSemParResolvido = MovimentoExtrato;
 
+export type PrevistoBasico = { id: string; descricao: string; valor: number; dataVencimento: string };
+export type BaixaSugerida = { debito: MovimentoExtrato; previsto: PrevistoBasico };
+export type BaixaAmbiguaResolvida = { debito: MovimentoExtrato; candidatos: PrevistoBasico[] };
+
 export type DebitosData = {
   aClassificar: GrupoAClassificar[];
   sugestoes: SugestaoDebito[];
@@ -57,6 +62,9 @@ export type DebitosData = {
   transferenciasAmbiguas: ParAmbiguoResolvido[];
   /** Débitos para CNPJ próprio sem par de crédito casado (D2, ex.: Caixa). */
   contaPropriaSemPar: ContaPropriaSemParResolvido[];
+  /** Débito com um único título a pagar compatível, ainda não baixado (o sync baixa; a tela permite adiantar). */
+  baixasUnicas: BaixaSugerida[];
+  baixasAmbiguas: BaixaAmbiguaResolvida[];
   categorias: { id: string; nome: string }[];
   companies: { id: string; nome: string }[];
   contas: { id: string; companyId: string | null }[];
@@ -85,6 +93,10 @@ export async function getDebitosData(): Promise<DebitosData> {
   const pendentes = [...linhasSemOrdem].sort((a, b) => Number(b.valor) - Number(a.valor));
 
   const contas = contasRes.data ?? [];
+  const companyPorConta: Record<string, string | null> = {};
+  for (const c of contas) companyPorConta[c.id as string] = (c.company_id as string | null) ?? null;
+  const previstos = await carregarPrevistosAbertos(supabase, DEFAULT_SCHOOL_ID);
+  const previstoPorId = new Map(previstos.map((p) => [p.id, p]));
   const contasProprias = new Set(contas.map((c) => c.id as string));
   const documentosProprios = new Set(
     contas
@@ -170,6 +182,8 @@ export async function getDebitosData(): Promise<DebitosData> {
     regras,
     contasProprias,
     documentosProprios,
+    previstos,
+    companyPorConta,
   });
 
   if (recusados.length > 0) {
@@ -180,10 +194,14 @@ export async function getDebitosData(): Promise<DebitosData> {
       regras,
       contasProprias,
       documentosProprios,
+      previstos,
+      companyPorConta,
     });
     resultado.aClassificar.push(...resultadoRecusados.aClassificar);
     resultado.sugestoes.push(...resultadoRecusados.sugestoes);
     resultado.contaPropriaSemPar.push(...resultadoRecusados.contaPropriaSemPar);
+    resultado.baixasUnicas.push(...resultadoRecusados.baixasUnicas);
+    resultado.baixasAmbiguas.push(...resultadoRecusados.baixasAmbiguas);
     // resultadoRecusados.ambiguos/transferenciasInternas ficam sempre vazios
     // (sem crédito na entrada), então não há nada a juntar ali.
   }
@@ -259,12 +277,35 @@ export async function getDebitosData(): Promise<DebitosData> {
     return mov ? [mov] : [];
   });
 
+  const paraBasico = (id: string): PrevistoBasico | null => {
+    const p = previstoPorId.get(id);
+    return p ? { id: p.id, descricao: p.descricao, valor: p.valor, dataVencimento: p.dataVencimento } : null;
+  };
+
+  const baixasUnicas: BaixaSugerida[] = resultado.baixasUnicas.flatMap((b) => {
+    const debito = toMovimento(b.debitoId);
+    const previsto = paraBasico(b.lancamentoId);
+    return debito && previsto ? [{ debito, previsto }] : [];
+  });
+
+  const baixasAmbiguas: BaixaAmbiguaResolvida[] = resultado.baixasAmbiguas.flatMap((b) => {
+    const debito = toMovimento(b.debitoId);
+    if (!debito) return [];
+    const candidatos = b.candidatos.flatMap((id) => {
+      const p = paraBasico(id);
+      return p ? [p] : [];
+    });
+    return [{ debito, candidatos }];
+  });
+
   return {
     aClassificar,
     sugestoes,
     transferenciasAuto,
     transferenciasAmbiguas,
     contaPropriaSemPar,
+    baixasUnicas,
+    baixasAmbiguas,
     categorias: (categoriasRes.data ?? []).map((c) => ({ id: c.id as string, nome: c.nome as string })),
     companies: (companiesRes.data ?? []).map((c) => ({ id: c.id as string, nome: c.name as string })),
     contas: contas.map((c) => ({ id: c.id as string, companyId: (c.company_id as string | null) ?? null })),

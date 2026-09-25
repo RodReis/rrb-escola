@@ -1,11 +1,12 @@
 import Link from "next/link";
-import { ListChecks, Sparkles, ArrowLeftRight, type LucideIcon } from "lucide-react";
+import { ListChecks, Sparkles, ArrowLeftRight, CalendarCheck, type LucideIcon } from "lucide-react";
 
-export type DebitosTab = "a-classificar" | "sugestoes" | "transferencias";
+export type DebitosTab = "a-classificar" | "sugestoes" | "previstos" | "transferencias";
 
 const TABS: Array<{ id: DebitosTab; label: string; icon: LucideIcon }> = [
   { id: "a-classificar", label: "A classificar", icon: ListChecks },
   { id: "sugestoes", label: "Sugestões", icon: Sparkles },
+  { id: "previstos", label: "Previsto casado", icon: CalendarCheck },
   { id: "transferencias", label: "Transferências internas", icon: ArrowLeftRight },
 ];
 
@@ -36,6 +37,6 @@ export function DebitosTabs({ active, counts }: { active: DebitosTab; counts: Re
 }
 
 export function parseDebitosTab(value: string | undefined): DebitosTab {
-  if (value === "sugestoes" || value === "transferencias") return value;
+  if (value === "sugestoes" || value === "previstos" || value === "transferencias") return value;
   return "a-classificar";
 }
