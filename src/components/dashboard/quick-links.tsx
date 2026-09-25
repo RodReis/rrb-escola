@@ -5,7 +5,7 @@ import Link from "next/link";
 import {
   AlertCircle, Award, BarChart3, BellRing, Building2, Cake, CalendarCheck,
   CalendarDays, CalendarHeart, ClipboardCheck, ClipboardList,
-  CreditCard, DoorOpen, FileText, GraduationCap, HandHeart, Inbox,
+  CreditCard, DoorOpen, FileOutput, FileText, GraduationCap, HandHeart, Inbox,
   Kanban, Layers3, Link2, Megaphone, Network, Pencil, PenLine, Plus, Receipt, ReceiptText,
   School, ScrollText, Settings2, ShieldCheck, SlidersHorizontal, Tags, UserCheck,
   UsersRound, Wallet, Webhook, X,
@@ -33,6 +33,8 @@ const ALL_ROUTES: RouteItem[] = [
   { href: "/professores/atribuicoes",      label: "Atribuições",           group: "Secretaria",    Icon: UserCheck },
   { href: "/historico/notas",              label: "Entrada de Notas",      group: "Secretaria",    Icon: PenLine },
   { href: "/historico/emissao",            label: "Histórico Escolar",     group: "Secretaria",    Icon: ScrollText },
+  { href: "/declaracoes/modelos",          label: "Declarações",           group: "Secretaria",    Icon: FileText },
+  { href: "/declaracoes/emitir",           label: "Emitir Declaração",     group: "Secretaria",    Icon: FileOutput },
   { href: "/historico/certificado",        label: "Certificado",           group: "Secretaria",    Icon: Award },
   { href: "/historico/associacoes",        label: "Assoc. Histórico",      group: "Secretaria",    Icon: Link2 },
   { href: "/pipeline",                     label: "Pipeline",              group: "Secretaria",    Icon: Kanban },
