@@ -32,6 +32,9 @@ const RELATORIOS_ITEMS: DropdownItem[] = [
   { href: "/relatorios/inadimplencia", label: "Inadimplência", iconName: "AlertCircle" },
   { href: "/relatorios/comercial", label: "Rel. Comercial", iconName: "BarChart3" },
   { href: "/relatorios/dre", label: "DRE / Resultado", iconName: "BarChart3" },
+  { href: "/relatorios/dinamico/alunos", label: "Etiquetas/Rel. Dinâmico — Alunos", iconName: "Tags" },
+  { href: "/relatorios/dinamico/funcionarios", label: "Etiquetas/Rel. Dinâmico — Funcionários", iconName: "Tags" },
+  { href: "/relatorios/dinamico/professores", label: "Etiquetas/Rel. Dinâmico — Professores", iconName: "Tags" },
 ];
 
 const SECRETARIA_ITEMS: DropdownItem[] = [
