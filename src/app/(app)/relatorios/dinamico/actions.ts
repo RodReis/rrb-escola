@@ -13,6 +13,7 @@ import { montarDados } from "@/lib/relatorio-dinamico/montar";
 import { ordenarLinhas } from "@/lib/relatorio-dinamico/ordenar";
 import { carregarCtxAlunos, listarRegistrosAluno } from "@/lib/relatorio-dinamico/dados/aluno";
 import { carregarCtxFuncionarios, listarRegistrosRh } from "@/lib/relatorio-dinamico/dados/rh";
+import { mensagemDeErro } from "@/lib/relatorio-dinamico/erro";
 
 type Falha = { ok: false; error: string };
 const EntidadeSchema = z.enum(ENTIDADES);
@@ -23,8 +24,7 @@ const ROTA: Record<Entidade, string> = {
 };
 
 function erro(e: unknown): Falha {
-  const msg = e instanceof Error ? e.message : "Erro inesperado ao gerar o relatório.";
-  return { ok: false, error: msg };
+  return { ok: false, error: mensagemDeErro(e) };
 }
 
 export async function listarRegistrosAction(input: { entidade: Entidade; filtros: unknown }): Promise<{ ok: true; registros: RegistroResumo[] } | Falha> {

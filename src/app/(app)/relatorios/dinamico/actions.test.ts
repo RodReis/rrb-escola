@@ -53,4 +53,9 @@ describe("gerarDadosRelatorioAction", () => {
     const r = await gerarDadosRelatorioAction({ entidade: "x" as never, ids: [ID], colunas: [], ordenacao: [], filtros: null });
     expect(r.ok).toBe(false);
   });
+  it("propaga a mensagem real de um erro do Supabase (não instância de Error), não o texto genérico", async () => {
+    carregarFuncMock.mockRejectedValueOnce({ message: "permission denied for table employees", code: "42501" });
+    const r = await gerarDadosRelatorioAction({ entidade: "professor", ids: [ID], colunas: ["func.nome"], ordenacao: [], filtros: null });
+    expect(r).toEqual({ ok: false, error: "permission denied for table employees" });
+  });
 });
