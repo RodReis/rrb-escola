@@ -1,8 +1,8 @@
 import jsPDF from "jspdf";
 import type { DadosRelatorio, ModeloEtiqueta } from "../tipos";
-import { MODELOS_ETIQUETA, posicaoEtiqueta } from "./modelos-etiqueta";
+import { MODELOS_ETIQUETA, type ModeloEtiquetaDef, posicaoEtiqueta } from "./modelos-etiqueta";
 
-const PADDING_MM = 1.5;
+export const PADDING_MM = 1.5;
 const PT_EM_MM = 0.3528;
 const ENTRELINHA = 1.15;
 
@@ -10,12 +10,40 @@ export function linhasEtiqueta(dados: DadosRelatorio, linha: string[], rotulos: 
   return dados.colunas.map((c, i) => (rotulos ? `${c.label}: ${linha[i] ?? ""}` : linha[i] ?? ""));
 }
 
-/** Corta o texto (sem quebra de linha) até caber em `largura`, como no Escolar Manager. */
-export function truncarParaLargura(medir: (s: string) => number, texto: string, largura: number): string {
+/** Quantas linhas de texto cabem na altura útil da etiqueta, numa fonte
+ * dada — mesmo cálculo usado para desenhar e para avisar na UI quando o
+ * usuário escolheu mais colunas do que cabem fisicamente na etiqueta. */
+export function linhasQueCabem(modelo: ModeloEtiquetaDef, fonte: number): number {
+  const alturaLinha = fonte * PT_EM_MM * ENTRELINHA;
+  return Math.max(1, Math.floor((modelo.altura - PADDING_MM * 2) / alturaLinha));
+}
+
+const RETICENCIAS = "…";
+
+/**
+ * Corta o texto (sem quebra de linha) até caber em `largura`, como no Escolar
+ * Manager. Com `reticencias: true`, sinaliza o corte com "…" sem estourar a
+ * largura (reserva o espaço do indicador antes de medir o restante) — usado
+ * no corpo da etiqueta, onde um nome cortado sem aviso lê como o nome
+ * completo (ex.: "Carlos Antônio Ca" parece ser o nome inteiro).
+ */
+export function truncarParaLargura(
+  medir: (s: string) => number,
+  texto: string,
+  largura: number,
+  opts?: { reticencias?: boolean }
+): string {
   if (medir(texto) <= largura) return texto;
+  if (!opts?.reticencias) {
+    let fim = texto.length;
+    while (fim > 0 && medir(texto.slice(0, fim)) > largura) fim -= 1;
+    return texto.slice(0, fim);
+  }
+  const larguraReticencias = medir(RETICENCIAS);
+  if (larguraReticencias > largura) return ""; // nem o indicador cabe
   let fim = texto.length;
-  while (fim > 0 && medir(texto.slice(0, fim)) > largura) fim -= 1;
-  return texto.slice(0, fim);
+  while (fim > 0 && medir(texto.slice(0, fim)) + larguraReticencias > largura) fim -= 1;
+  return fim > 0 ? texto.slice(0, fim) + RETICENCIAS : RETICENCIAS;
 }
 
 export function renderEtiquetas(
@@ -28,7 +56,7 @@ export function renderEtiquetas(
   doc.setFontSize(opts.fonte);
   const alturaLinha = opts.fonte * PT_EM_MM * ENTRELINHA;
   const larguraUtil = m.largura - PADDING_MM * 2;
-  const maxLinhas = Math.max(1, Math.floor((m.altura - PADDING_MM * 2) / alturaLinha));
+  const maxLinhas = linhasQueCabem(m, opts.fonte);
   const medir = (s: string) => doc.getTextWidth(s);
   const descricao = opts.descricao?.trim();
 
@@ -51,7 +79,7 @@ export function renderEtiquetas(
       .slice(0, maxLinhas)
       .forEach((texto, l) => {
         const y = pos.y + PADDING_MM + alturaLinha * (l + 1) - alturaLinha * 0.25;
-        doc.text(truncarParaLargura(medir, texto, larguraUtil), pos.x + PADDING_MM, y);
+        doc.text(truncarParaLargura(medir, texto, larguraUtil, { reticencias: true }), pos.x + PADDING_MM, y);
       });
   });
   rodape();

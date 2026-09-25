@@ -1,6 +1,6 @@
 import { describe, it, expect } from "vitest";
-import { sanearConfig, selecionarEmpresas } from "./emitir";
-import { configPadrao } from "../tipos";
+import { avisoColunasNaoCabem, sanearConfig, selecionarEmpresas } from "./emitir";
+import { configPadrao, type DadosRelatorio } from "../tipos";
 
 const empresas = [
   { id: "11111111-1111-1111-1111-111111111111", nomeFantasia: "A", resolucao: null, logoUrl: null },
@@ -25,6 +25,27 @@ describe("selecionarEmpresas", () => {
   it("exibirLogos=false → sem logos; nenhuma empresa → tudo vazio", () => {
     expect(selecionarEmpresas({ ...configPadrao("aluno"), exibirLogos: false }, empresas).logos).toEqual([]);
     expect(selecionarEmpresas(configPadrao("aluno"), [])).toEqual({ cabecalho: null, logos: [] });
+  });
+});
+
+function dadosCom(nColunas: number): DadosRelatorio {
+  return {
+    colunas: Array.from({ length: nColunas }, (_, i) => ({ key: `k${i}`, label: `Coluna ${i}`, grupo: "g", tipo: "texto" as const })),
+    linhas: [],
+  };
+}
+
+describe("avisoColunasNaoCabem", () => {
+  it("null quando as colunas cabem na etiqueta (regressão: 7 colunas cabem em 6180/7,5pt)", () => {
+    const cfg = { ...configPadrao("aluno"), formato: "etiqueta" as const, modeloEtiqueta: "6180" as const, fonte: 7.5 };
+    expect(avisoColunasNaoCabem(dadosCom(7), cfg)).toBeNull();
+  });
+  it("avisa e nomeia as colunas cortadas quando não cabem (regressão do print: 15 colunas, só 7 saíram)", () => {
+    const cfg = { ...configPadrao("aluno"), formato: "etiqueta" as const, modeloEtiqueta: "6180" as const, fonte: 7.5 };
+    const aviso = avisoColunasNaoCabem(dadosCom(15), cfg);
+    expect(aviso).toContain("Cabem 7 de 15 colunas");
+    expect(aviso).toContain("8 últimas");
+    expect(aviso).toContain("Coluna 7, Coluna 8");
   });
 });
 
