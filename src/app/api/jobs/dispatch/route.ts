@@ -11,6 +11,7 @@ import {
 } from "@/lib/actions/folha-jobs";
 import { jobPipelineAutomacoes } from "@/lib/actions/pipeline-jobs";
 import { syncExtratoSicoob } from "@/lib/conciliacao/sync-extrato";
+import { gerarRecorrentes, competenciaDe } from "@/lib/previsto/gerar-recorrentes";
 
 export const dynamic = "force-dynamic";
 export const maxDuration = 60;
@@ -40,6 +41,7 @@ export async function GET(req: Request) {
     ["folha_ferias", () => jobGerarFerias(hoje)],
     ["folha_aquisitivos", () => jobAlertasAquisitivo(hoje)],
     ["pipeline_automacoes", () => jobPipelineAutomacoes(hoje)],
+    ["recorrentes", () => gerarRecorrentes(supabase, competenciaDe(hoje))],
     ["sicoob_extrato", () => syncExtratoSicoob()],
   ];
 
