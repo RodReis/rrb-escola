@@ -10,24 +10,31 @@ const opcoes = {
 };
 
 describe("FiltrosAlunoForm", () => {
-  it("emite filtro inicial com ano mais recente e status ativa", () => {
+  it("não emite nada até o usuário clicar em Aplicar filtros", () => {
     const onChange = vi.fn();
     render(<FiltrosAlunoForm opcoes={opcoes} onChange={onChange} />);
+    expect(onChange).not.toHaveBeenCalled();
+    fireEvent.click(screen.getByRole("button", { name: "Aplicar filtros" }));
     expect(onChange).toHaveBeenCalledWith({ ano: 2026, filtrarPor: "serie", valores: [], status: ["ativa"] });
   });
-  it("trocar para turma mostra só turmas do ano e limpa valores", () => {
+
+  it("trocar para turma mostra só turmas do ano e limpa o valor escolhido", () => {
     const onChange = vi.fn();
     render(<FiltrosAlunoForm opcoes={opcoes} onChange={onChange} />);
     fireEvent.change(screen.getByLabelText("Filtrar por"), { target: { value: "turma" } });
-    expect(screen.getByRole("checkbox", { name: "3º ANO A" })).toBeInTheDocument();
-    expect(screen.queryByRole("checkbox", { name: "3º ANO B" })).toBeNull();
-    fireEvent.click(screen.getByRole("checkbox", { name: "3º ANO A" }));
+    fireEvent.click(screen.getByRole("button", { name: /^Turma:/ }));
+    expect(screen.getByRole("button", { name: "3º ANO A" })).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "3º ANO B" })).toBeNull();
+    fireEvent.click(screen.getByRole("button", { name: "3º ANO A" }));
+    fireEvent.click(screen.getByRole("button", { name: "Aplicar filtros" }));
     expect(onChange).toHaveBeenLastCalledWith({ ano: 2026, filtrarPor: "turma", valores: ["t1"], status: ["ativa"] });
   });
-  it("não deixa desmarcar o último status", () => {
+
+  it("não deixa desmarcar o último status de matrícula", () => {
     const onChange = vi.fn();
     render(<FiltrosAlunoForm opcoes={opcoes} onChange={onChange} />);
-    fireEvent.click(screen.getByRole("checkbox", { name: "Ativa" }));
-    expect(screen.getByRole("checkbox", { name: "Ativa" })).toBeChecked();
+    fireEvent.click(screen.getByRole("button", { name: "Ativa" }));
+    fireEvent.click(screen.getByRole("button", { name: "Aplicar filtros" }));
+    expect(onChange).toHaveBeenLastCalledWith(expect.objectContaining({ status: ["ativa"] }));
   });
 });

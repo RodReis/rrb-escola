@@ -29,6 +29,7 @@ export function RelatorioDinamicoPage({ entidade, colunas, templates: iniciais, 
   const [config, setConfig] = useState<TemplateConfig>(() => sanearConfig(configPadrao(entidade), colunas).config);
   const [registros, setRegistros] = useState<RegistroResumo[]>([]);
   const [selecionados, setSelecionados] = useState<Set<string>>(new Set());
+  const [filtrouAoMenosUmaVez, setFiltrouAoMenosUmaVez] = useState(false);
   const filtrosAtuais = useRef<unknown>(null);
   const reqAtual = useRef(0);
   const [carregando, iniciarCarga] = useTransition();
@@ -36,6 +37,7 @@ export function RelatorioDinamicoPage({ entidade, colunas, templates: iniciais, 
 
   const aoFiltrar = useCallback((f: unknown) => {
     filtrosAtuais.current = f;
+    setFiltrouAoMenosUmaVez(true);
     const req = ++reqAtual.current;
     iniciarCarga(async () => {
       const r = await listarRegistrosAction({ entidade, filtros: f });
@@ -71,13 +73,13 @@ export function RelatorioDinamicoPage({ entidade, colunas, templates: iniciais, 
 
   return (
     <div className="grid gap-4">
-      <div className="flex flex-wrap items-center justify-end gap-2 rounded-ui bg-muted px-4 py-3">
-        {bloqueio ? <span className="mr-auto text-sm text-ink/60">{bloqueio}</span> : null}
+      <div className="flex flex-wrap items-center justify-end gap-3 border-b border-line pb-4">
+        {bloqueio ? <span className="mr-auto text-sm text-ink/55">{bloqueio}</span> : <span className="mr-auto" />}
         <Button type="button" variant="secondary" onClick={() => carregarTemplate(templateId)}>
-          <X size={14} className="mr-1.5" /> Cancelar
+          <X size={14} /> Cancelar
         </Button>
         <Button type="button" loading={emitindo} disabled={Boolean(bloqueio) || carregando} onClick={emitir}>
-          <Printer size={14} className="mr-1.5" /> Emitir
+          <Printer size={14} /> Emitir
         </Button>
       </div>
       <Tabs
@@ -89,7 +91,14 @@ export function RelatorioDinamicoPage({ entidade, colunas, templates: iniciais, 
             content: (
               <div className="grid gap-4">
                 {filtros(aoFiltrar)}
-                <RegistrosLista registros={registros} selecionados={selecionados} onChange={setSelecionados} carregando={carregando} />
+                {filtrouAoMenosUmaVez ? (
+                  <RegistrosLista registros={registros} selecionados={selecionados} onChange={setSelecionados} carregando={carregando} />
+                ) : (
+                  <div className="grid place-items-center gap-2 rounded-ui border border-dashed border-line bg-muted/40 px-6 py-14 text-center">
+                    <p className="text-sm font-medium text-ink/70">Defina os filtros acima e clique em "Aplicar filtros" para listar os registros.</p>
+                    <p className="text-xs text-ink/50">Nenhum dado é carregado automaticamente ao abrir esta tela.</p>
+                  </div>
+                )}
               </div>
             ),
           },

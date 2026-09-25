@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { ArrowDown, ArrowUp, X } from "lucide-react";
+import { Button } from "@/components/ui/button";
 import type { ColunaMeta, Ordenacao } from "@/lib/relatorio-dinamico/tipos";
 
 type Props = { colunas: ColunaMeta[]; valor: Ordenacao[]; onChange: (o: Ordenacao[]) => void };
@@ -29,23 +30,23 @@ export function OrdenacaoEditor({ colunas, valor, onChange }: Props) {
             {livres.map((c) => <option key={c.key} value={c.key}>{c.label}</option>)}
           </select>
         </label>
-        <button type="button" className="ds-button ds-button-secondary" aria-label="Adicionar ordenação" disabled={!escolhida}
+        <Button type="button" variant="secondary" className="rb-btn sm" aria-label="Adicionar ordenação" disabled={!escolhida}
           onClick={() => { onChange([...valor, { key: escolhida, dir: "asc" }]); setEscolhida(""); }}>
           Adicionar
-        </button>
+        </Button>
       </div>
       <ol className="grid gap-1">
         {valor.map((o, i) => (
           <li key={o.key} className="flex items-center gap-2 rounded-ui border border-line bg-surface px-3 py-2 text-sm text-ink">
-            <span className="w-6 text-ink/45">{i + 1}º</span>
-            <span className="flex-1 truncate">{label(o.key)}</span>
-            <button type="button" className="ds-button ds-button-secondary" aria-label={`${label(o.key)}: ${o.dir === "asc" ? "crescente" : "decrescente"}`}
+            <span className="w-6 shrink-0 text-ink/45">{i + 1}º</span>
+            <span className="flex-1 truncate" title={label(o.key)}>{label(o.key)}</span>
+            <button type="button" className="rb-btn sm rb-btn-ghost" aria-label={`${label(o.key)}: ${o.dir === "asc" ? "crescente" : "decrescente"}`}
               onClick={() => onChange(valor.map((x) => (x.key === o.key ? { ...x, dir: x.dir === "asc" ? "desc" : "asc" } : x)))}>
               {o.dir === "asc" ? "A → Z" : "Z → A"}
             </button>
-            <button type="button" aria-label={`Subir ${label(o.key)}`} disabled={i === 0} onClick={() => mover(i, -1)}><ArrowUp size={14} /></button>
-            <button type="button" aria-label={`Descer ${label(o.key)}`} disabled={i === valor.length - 1} onClick={() => mover(i, 1)}><ArrowDown size={14} /></button>
-            <button type="button" aria-label={`Remover ${label(o.key)}`} onClick={() => onChange(valor.filter((x) => x.key !== o.key))}><X size={14} /></button>
+            <button type="button" className="row-action" aria-label={`Subir ${label(o.key)}`} disabled={i === 0} onClick={() => mover(i, -1)}><ArrowUp size={14} /></button>
+            <button type="button" className="row-action" aria-label={`Descer ${label(o.key)}`} disabled={i === valor.length - 1} onClick={() => mover(i, 1)}><ArrowDown size={14} /></button>
+            <button type="button" className="row-action" style={{ "--c": "var(--bad)" } as React.CSSProperties} aria-label={`Remover ${label(o.key)}`} onClick={() => onChange(valor.filter((x) => x.key !== o.key))}><X size={14} /></button>
           </li>
         ))}
       </ol>

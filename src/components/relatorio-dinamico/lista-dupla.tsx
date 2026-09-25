@@ -26,42 +26,46 @@ function Painel({ titulo, busca, onBusca, itens, marcados, onMarcados, onDuplo, 
     if (s.has(key)) s.delete(key); else s.add(key);
     onMarcados(s);
   };
+  const colsGrid = ordenavel ? "grid-cols-[16px_16px_1fr]" : "grid-cols-[16px_1fr_96px]";
   return (
     <div className="grid min-w-0 gap-2">
-      <label className="flex items-center gap-3 rounded-ui bg-brand px-4 py-3 text-sm font-semibold text-white">
-        <input type="checkbox" checked={todos} onChange={() => onMarcados(todos ? new Set() : new Set(itens.map((i) => i.key)))} aria-label={`Marcar todos: ${titulo}`} />
-        {titulo}
-      </label>
-      <input aria-label={rotuloBusca} placeholder="Pesquisar" value={busca} onChange={(e) => onBusca(e.target.value)} />
-      <ul className="h-64 overflow-y-auto rounded-ui border border-line bg-muted/40 p-1">
+      <div className="flex items-center justify-between gap-3 rounded-t-ui border border-b-0 border-line bg-muted px-3 py-2.5">
+        <label className="flex items-center gap-2.5 text-xs font-semibold uppercase tracking-wide text-ink/60">
+          <input type="checkbox" className="h-4 w-4 shrink-0 accent-brand" checked={todos} onChange={() => onMarcados(todos ? new Set() : new Set(itens.map((i) => i.key)))} aria-label={`Marcar todos: ${titulo}`} />
+          {titulo}
+        </label>
+        <span className="shrink-0 text-xs font-medium text-ink/50">{contagem(marcados.size)}</span>
+      </div>
+      <input aria-label={rotuloBusca} placeholder="Pesquisar" value={busca} onChange={(e) => onBusca(e.target.value)} className="-mt-2" />
+      <ul className="h-64 overflow-y-auto rounded-b-ui border border-line">
         {itens.length === 0 ? <li className="p-4 text-center text-sm text-ink/55">Não há nada para mostrar aqui</li> : null}
         {itens.map((item) =>
           ordenavel ? (
-            <ItemOrdenavel key={item.key} item={item} marcado={marcados.has(item.key)} onToggle={alternar} onDuplo={onDuplo} />
+            <ItemOrdenavel key={item.key} item={item} marcado={marcados.has(item.key)} onToggle={alternar} onDuplo={onDuplo} colsGrid={colsGrid} />
           ) : (
-            <li key={item.key} onDoubleClick={() => onDuplo(item.key)} className="mb-1 flex items-center gap-3 rounded-ui bg-surface px-3 py-2 text-sm text-ink odd:bg-muted">
-              <input type="checkbox" aria-label={item.label} checked={marcados.has(item.key)} onChange={() => alternar(item.key)} />
-              <span className="truncate">{item.label}</span>
-              <span className="ml-auto shrink-0 text-xs text-ink/45">{item.grupo}</span>
+            <li key={item.key} onDoubleClick={() => onDuplo(item.key)}
+              className={`grid ${colsGrid} items-center gap-3 border-b border-line/60 px-3 py-2 text-sm text-ink last:border-b-0 hover:bg-muted/60`}>
+              <input type="checkbox" className="h-4 w-4 shrink-0 accent-brand" aria-label={item.label} checked={marcados.has(item.key)} onChange={() => alternar(item.key)} />
+              <span className="truncate" title={item.label}>{item.label}</span>
+              <span className="shrink-0 text-right text-xs text-ink/45">{item.grupo}</span>
             </li>
           )
         )}
       </ul>
-      <p className="text-right text-xs font-medium text-ink/55">{contagem(marcados.size)}</p>
     </div>
   );
 }
 
-function ItemOrdenavel({ item, marcado, onToggle, onDuplo }: { item: ColunaMeta; marcado: boolean; onToggle: (k: string) => void; onDuplo: (k: string) => void }) {
+function ItemOrdenavel({ item, marcado, onToggle, onDuplo, colsGrid }: { item: ColunaMeta; marcado: boolean; onToggle: (k: string) => void; onDuplo: (k: string) => void; colsGrid: string }) {
   const { attributes, listeners, setNodeRef, transform, transition } = useSortable({ id: item.key });
   return (
     <li ref={setNodeRef} style={{ transform: CSS.Transform.toString(transform), transition }} onDoubleClick={() => onDuplo(item.key)}
-      className="mb-1 flex items-center gap-3 rounded-ui bg-surface px-3 py-2 text-sm text-ink odd:bg-muted">
+      className={`grid ${colsGrid} items-center gap-3 border-b border-line/60 bg-surface px-3 py-2 text-sm text-ink last:border-b-0 hover:bg-muted/60`}>
       <button type="button" aria-label={`Arrastar ${item.label}`} className="cursor-grab text-ink/40" {...attributes} {...listeners}>
         <GripVertical size={14} />
       </button>
-      <input type="checkbox" aria-label={item.label} checked={marcado} onChange={() => onToggle(item.key)} />
-      <span className="truncate">{item.label}</span>
+      <input type="checkbox" className="h-4 w-4 shrink-0 accent-brand" aria-label={item.label} checked={marcado} onChange={() => onToggle(item.key)} />
+      <span className="truncate" title={item.label}>{item.label}</span>
     </li>
   );
 }
@@ -98,10 +102,10 @@ export function ListaDupla({ disponiveis, selecionadas, onChange }: Props) {
       <Painel titulo="Dados Disponíveis" rotuloBusca="Pesquisar dados disponíveis" busca={buscaEsq} onBusca={setBuscaEsq}
         itens={esquerda} marcados={marcEsq} onMarcados={setMarcEsq} onDuplo={(k) => adicionar([k])} />
       <div className="flex flex-row items-center justify-center gap-2 md:flex-col">
-        <button type="button" aria-label="Adicionar selecionados" className="ds-button ds-button-secondary w-24" disabled={marcEsq.size === 0} onClick={() => adicionar(Array.from(marcEsq))}>
+        <button type="button" aria-label="Adicionar selecionados" className="row-action" disabled={marcEsq.size === 0} onClick={() => adicionar(Array.from(marcEsq))}>
           <ArrowRight size={16} />
         </button>
-        <button type="button" aria-label="Remover selecionados" className="ds-button ds-button-secondary w-24" disabled={marcDir.size === 0} onClick={() => remover(Array.from(marcDir))}>
+        <button type="button" aria-label="Remover selecionados" className="row-action" disabled={marcDir.size === 0} onClick={() => remover(Array.from(marcDir))}>
           <ArrowLeft size={16} />
         </button>
       </div>
