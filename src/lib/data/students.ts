@@ -2,6 +2,7 @@ import { createServerClient } from "@/lib/supabase/server";
 import { DEFAULT_SCHOOL_ID } from "@/lib/constants";
 import type { StudentSheet } from "@/lib/types";
 import { normalizeNome } from "@/lib/format/normalize-nome";
+import { derivarStatusFinanceiroMes, type StatusFinanceiroMes } from "@/lib/finance/status-mes-corrente";
 import {
   alunoSemMatriculaAtivaNoAno,
   montarFiltroAlunosAtivos,
@@ -11,6 +12,8 @@ import {
 /** "ativos" (padrao) | "inativos" | "todos" — ver `situacao` em runStudentsQuery. */
 export type SituacaoAluno = "ativos" | "inativos" | "todos";
 
+export type StatusFinanceiroFiltro = NonNullable<StatusFinanceiroMes>;
+
 export type StudentFilters = {
   nome?: string;
   serieId?: string;
@@ -18,6 +21,7 @@ export type StudentFilters = {
   segmento?: string;
   anoLetivo?: number;
   situacao?: SituacaoAluno;
+  financeiro?: StatusFinanceiroFiltro;
   page?: number;
   pageSize?: number;
 };
@@ -88,10 +92,82 @@ function runStudentsQuery(
   return query;
 }
 
+/**
+ * Status financeiro do mês corrente para um lote de alunos (a página atual
+ * da lista), numa única consulta — nunca uma por aluno. Alunos sem nenhuma
+ * cobrança relevante no mês simplesmente não aparecem no mapa (a UI trata
+ * ausência como "—").
+ */
+export async function getFinanceiroMesCorrentePorAluno(
+  alunoIds: string[]
+): Promise<Map<string, StatusFinanceiroMes>> {
+  const resultado = new Map<string, StatusFinanceiroMes>();
+  if (alunoIds.length === 0) return resultado;
+
+  const hoje = new Date().toISOString().slice(0, 10);
+  const inicioMes = `${hoje.slice(0, 7)}-01`;
+  const [ano, mes] = hoje.split("-").map(Number);
+  const fimMes = new Date(ano, mes, 0).toISOString().slice(0, 10); // dia 0 do mês seguinte = último dia deste mês
+
+  const supabase = await createServerClient();
+  const { data, error } = await supabase
+    .from("cobrancas")
+    .select("aluno_id, origem, status, data_vencimento")
+    .in("aluno_id", alunoIds)
+    .gte("data_vencimento", inicioMes)
+    .lte("data_vencimento", fimMes);
+
+  if (error) throw error;
+
+  const porAluno = new Map<string, { origem: string; status: string; data_vencimento: string }[]>();
+  for (const row of data ?? []) {
+    const lista = porAluno.get(row.aluno_id as string) ?? [];
+    lista.push({
+      origem: row.origem as string,
+      status: row.status as string,
+      data_vencimento: row.data_vencimento as string,
+    });
+    porAluno.set(row.aluno_id as string, lista);
+  }
+
+  for (const [alunoId, cobrancas] of Array.from(porAluno)) {
+    const status = derivarStatusFinanceiroMes(cobrancas, hoje);
+    if (status !== null) resultado.set(alunoId, status);
+  }
+
+  return resultado;
+}
+
 export async function listStudents(filters?: StudentFilters): Promise<PaginatedStudents> {
   const supabase = await createServerClient();
   const page = Math.max(1, filters?.page ?? 1);
   const pageSize = filters?.pageSize ?? STUDENTS_PAGE_SIZE;
+
+  if (filters?.financeiro) {
+    // Filtro por status financeiro não é uma coluna — precisa resolver o
+    // status derivado de TODOS os alunos que passam nos demais filtros antes
+    // de paginar, senão a paginação corta o conjunto errado (mostraria linhas
+    // onde só algumas batem o filtro, com contagem total errada).
+    const { data: todosIds, error: idsError } = await runStudentsQuery(
+      supabase,
+      { ...filters, financeiro: undefined },
+      0,
+      100000 // sem paginação nesta primeira passada — lote pequeno o suficiente para uma escola
+    );
+    if (idsError) throw idsError;
+
+    const idsCandidatos = (todosIds ?? []).map((r) => r.id as string);
+    const statusPorAluno = await getFinanceiroMesCorrentePorAluno(idsCandidatos);
+    const idsFiltrados = idsCandidatos.filter((id) => statusPorAluno.get(id) === filters.financeiro);
+
+    const from = (page - 1) * pageSize;
+    const to = from + pageSize;
+    const idsDaPagina = new Set(idsFiltrados.slice(from, to));
+
+    const rows = (todosIds ?? []).filter((r) => idsDaPagina.has(r.id as string));
+    return { rows, total: idsFiltrados.length, page, pageSize };
+  }
+
   const from = (page - 1) * pageSize;
   const to = from + pageSize - 1;
 
