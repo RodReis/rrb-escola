@@ -91,8 +91,14 @@ function digitosDocumento(v: unknown): string | null {
   return digitos.length === 6 || digitos.length === 11 || digitos.length === 14 ? digitos : null;
 }
 
-function ehLinhaDeTotal(v: unknown): boolean {
-  return typeof v === "object" && v !== null && "formula" in v;
+/**
+ * Recebe o valor BRUTO da célula (antes de `celula()` desembrulhar `{formula, result}`
+ * para o `result` puro) — senão a fórmula já virou número e a checagem nunca vê o objeto.
+ * Linha 46 real: c6="FORNECEDORES ", c7="Total ", c8={formula, result} — total com
+ * nome/rótulo preenchidos, não só total "solto".
+ */
+function ehLinhaDeTotal(vBruto: ExcelJS.CellValue): boolean {
+  return typeof vBruto === "object" && vBruto !== null && !(vBruto instanceof Date) && "formula" in vBruto;
 }
 
 /**
@@ -114,12 +120,12 @@ export async function lerPlanilha(buffer: Buffer, dataArquivo?: string): Promise
   let secaoAtual: string | null = null;
 
   ws.eachRow((row, numero) => {
+    if (ehLinhaDeTotal(row.getCell(8).value)) return; // total, nunca é dado — checar ANTES de celula() desembrulhar
+
     const c6 = textoOuNull(celula(row.getCell(6).value));
     const c7 = celula(row.getCell(7).value);
     const c8raw = celula(row.getCell(8).value);
     const c9 = textoOuNull(celula(row.getCell(9).value));
-
-    if (ehLinhaDeTotal(c8raw)) return; // total, nunca é dado
 
     const valor = parseValor(c8raw);
     const c7vazio = c7 === null || c7 === undefined || c7 === "";

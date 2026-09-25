@@ -99,6 +99,17 @@ describe("lerPlanilha (formato real: seções, sem cabeçalho)", () => {
     expect(r.linhas[1]).toMatchObject({ descricao: "ISS", empresa: "COLÉGIO", categoria: "Impostos" });
   });
 
+  it("linha de total com nome da seção e rótulo 'Total' preenchidos (caso real, linha 46) também é ignorada", async () => {
+    const buf = await planilhaSecoes([
+      { 6: "FORNECEDORES" },
+      { 6: "ICARUS", 7: new Date(Date.UTC(2026, 8, 10)), 8: 295.41 },
+      { 6: "FORNECEDORES ", 7: "Total ", 8: { formula: "SUM(H18,H23,H44)", result: 28992.76 } },
+    ]);
+    const r = await lerPlanilha(buf);
+    expect(r.linhas).toHaveLength(1);
+    expect(r.linhas[0]).toMatchObject({ descricao: "ICARUS", valor: 295.41 });
+  });
+
   it("fora de IMPOSTOS, empresa é sempre null (sem pista no formato real)", async () => {
     const buf = await planilhaSecoes([
       { 6: "PIX  15/09" },
