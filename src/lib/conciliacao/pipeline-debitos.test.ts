@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import { classificarDebitos } from "@/lib/conciliacao/pipeline-debitos";
 import type { Regra } from "@/lib/conciliacao/classificar-regra";
 import type { MovimentoConta } from "@/lib/conciliacao/transferencia-interna";
+import type { PrevistoAberto } from "@/lib/conciliacao/baixa-previsto";
 
 const CONTAS_PROPRIAS = new Set(["A", "B"]);
 const DOCS_PROPRIOS = new Set(["11714876000116", "35027047000123"]);
@@ -126,5 +127,70 @@ describe("classificarDebitos — ordem do pipeline", () => {
       ...r.ambiguos.map((a) => a.debitoId),
     ].sort();
     expect(idsClassificados).toEqual(debitos.map((d) => d.id).sort());
+  });
+});
+
+describe("classificarDebitos — etapa 3: baixa de previsto", () => {
+  const previsto: PrevistoAberto = {
+    id: "p1", valor: 5000, dataVencimento: "2026-08-05", documento: null, companyId: null,
+  };
+  const debitoSimples: MovimentoConta[] = [
+    { id: "d1", contaId: "A", data: "2026-08-05", valor: 5000, tipo: "debito" },
+  ];
+  const base = {
+    debitos: debitoSimples,
+    creditos: [] as MovimentoConta[],
+    documentos: { d1: null },
+    descricoes: { d1: "DÉB.CONV.TRIBUTOS FEDERAIS" },
+    regras: [] as Regra[],
+    contasProprias: CONTAS_PROPRIAS,
+    documentosProprios: DOCS_PROPRIOS,
+  };
+
+  it("título casado sai da fila e vira baixa única", () => {
+    const r = classificarDebitos({ ...base, previstos: [previsto] });
+    expect(r.baixasUnicas).toEqual([{ debitoId: "d1", lancamentoId: "p1" }]);
+    expect(r.aClassificar).toEqual([]);
+    expect(r.sugestoes).toEqual([]);
+  });
+
+  it("a baixa vence a regra: com título casado a regra não sugere", () => {
+    const regra: Regra = { ...regraDoPinguinho, id: "r-x", documento: "99999999000199" };
+    const r = classificarDebitos({ ...base, documentos: { d1: "99999999000199" }, regras: [regra], previstos: [previsto] });
+    expect(r.baixasUnicas).toHaveLength(1);
+    expect(r.sugestoes).toEqual([]);
+  });
+
+  it("transferência interna continua ANTES da baixa", () => {
+    const r = classificarDebitos({
+      ...base,
+      creditos: [{ id: "c1", contaId: "B", data: "2026-08-05", valor: 5000, tipo: "credito" }],
+      previstos: [previsto],
+    });
+    expect(r.transferenciasInternas.map((t) => t.debitoId)).toEqual(["d1"]);
+    expect(r.baixasUnicas).toEqual([]);
+  });
+
+  it("empate vira baixa ambígua e não cai na fila", () => {
+    const r = classificarDebitos({ ...base, previstos: [previsto, { ...previsto, id: "p2" }] });
+    expect(r.baixasAmbiguas).toEqual([{ debitoId: "d1", candidatos: ["p1", "p2"] }]);
+    expect(r.aClassificar).toEqual([]);
+  });
+
+  it("empresa da conta impede casar com título de outra empresa", () => {
+    const r = classificarDebitos({
+      ...base,
+      companyPorConta: { A: "emp-1" },
+      previstos: [{ ...previsto, companyId: "emp-2" }],
+    });
+    expect(r.baixasUnicas).toEqual([]);
+    expect(r.aClassificar).toEqual(["d1"]);
+  });
+
+  it("sem previstos, o comportamento anterior não muda", () => {
+    const r = classificarDebitos(base);
+    expect(r.baixasUnicas).toEqual([]);
+    expect(r.baixasAmbiguas).toEqual([]);
+    expect(r.aClassificar).toEqual(["d1"]);
   });
 });

@@ -2,6 +2,7 @@ import "server-only";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { classificarDebitos } from "@/lib/conciliacao/pipeline-debitos";
 import { carregarPendentes } from "@/lib/conciliacao/carregar-pendentes";
+import { carregarPrevistosAbertos } from "@/lib/conciliacao/carregar-previstos";
 import type { MovimentoConta } from "@/lib/conciliacao/transferencia-interna";
 import type { Regra } from "@/lib/conciliacao/classificar-regra";
 
@@ -48,7 +49,7 @@ export async function aplicarPipelineDebitos(escolaId: string) {
     .filter((l) => l.tipo === "credito")
     .map((l) => ({ id: l.id as string, contaId: l.conta_id as string, data: l.data as string, valor: Number(l.valor), tipo: "credito" }));
 
-  if (debitos.length === 0) return { transferencias: 0, sugestoes: 0, aClassificar: 0, ambiguos: 0 };
+  if (debitos.length === 0) return { transferencias: 0, sugestoes: 0, aClassificar: 0, ambiguos: 0, baixas: 0 };
 
   const documentos: Record<string, string | null> = {};
   const descricoes: Record<string, string> = {};
@@ -77,8 +78,14 @@ export async function aplicarPipelineDebitos(escolaId: string) {
     classeDespesa: (r.classe_despesa as "fixa" | "variavel" | null) ?? null,
   }));
 
+  const companyPorConta: Record<string, string | null> = {};
+  for (const c of contas ?? []) companyPorConta[c.id as string] = (c.company_id as string | null) ?? null;
+
+  const previstos = await carregarPrevistosAbertos(supabase, escolaId);
+
   const resultado = classificarDebitos({
     debitos, creditos, documentos, descricoes, regras, contasProprias, documentosProprios,
+    previstos, companyPorConta,
   });
 
   // Só a transferência interna é gravada sozinha.
@@ -101,10 +108,25 @@ export async function aplicarPipelineDebitos(escolaId: string) {
       .in("id", [par.debitoId, par.creditoId]);
   }
 
+  // Baixa de título: só o candidato ÚNICO. Não cria lançamento — muda um título
+  // existente para 'paga' e liga o extrato a ele (por isso não fere a D1). O
+  // empate fica para a tela. A RPC revalida tudo na transação; `ok:false` aqui é
+  // corrida (outro usuário baixou antes), não erro — segue para o próximo.
+  let baixas = 0;
+  for (const b of resultado.baixasUnicas) {
+    const { data, error } = await supabase.rpc("baixar_previsto_auto", {
+      p_extrato_id: b.debitoId,
+      p_lancamento_id: b.lancamentoId,
+    });
+    if (error) throw error;
+    if ((data as { ok: boolean } | null)?.ok) baixas += 1;
+  }
+
   return {
     transferencias: resultado.transferenciasInternas.length,
     sugestoes: resultado.sugestoes.length,
     aClassificar: resultado.aClassificar.length,
     ambiguos: resultado.ambiguos.length,
+    baixas,
   };
 }

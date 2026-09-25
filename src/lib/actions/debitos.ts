@@ -199,6 +199,29 @@ export async function ignorarDebitoAction(formData: FormData) {
 }
 
 /**
+ * Baixa um título a pagar com um débito do extrato, pela RPC `baixar_previsto`
+ * (atômica: título -> paga, vínculo, status do extrato). Não cria lançamento.
+ */
+export async function baixarPrevistoAction(formData: FormData) {
+  await requirePermission("financeiro.conciliacao", "update");
+  const supabase = await createServerClient();
+  const extratoId = String(formData.get("extrato_id") ?? "");
+  const lancamentoId = String(formData.get("lancamento_id") ?? "");
+  if (!extratoId || !lancamentoId) throw new Error("Selecione o título a baixar");
+
+  const { data, error } = await supabase.rpc("baixar_previsto", {
+    p_extrato_id: extratoId,
+    p_lancamento_id: lancamentoId,
+  });
+  if (error) throw new Error(error.message);
+  const r = data as { ok: boolean; error?: string } | null;
+  if (!r?.ok) throw new Error(r?.error ?? "Não foi possível baixar o título");
+
+  revalidatePath(CAMINHO);
+  revalidatePath("/financeiro/previsto-realizado");
+}
+
+/**
  * Desfaz um par de transferência interna detectado automaticamente.
  *
  * Volta os dois movimentos para "pendente" não basta (I1): sem mais nada, o
