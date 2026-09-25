@@ -1,6 +1,6 @@
 import { describe, it, expect } from "vitest";
 import { MODELOS_ETIQUETA, posicaoEtiqueta, descricaoModelo } from "./modelos-etiqueta";
-import { linhasEtiqueta, renderEtiquetas, truncarParaLargura } from "./etiqueta";
+import { linhasEtiqueta, linhasQueCabem, renderEtiquetas, truncarParaLargura } from "./etiqueta";
 import type { DadosRelatorio } from "../tipos";
 
 describe("modelos de etiqueta", () => {
@@ -40,6 +40,22 @@ describe("etiqueta", () => {
     const medir = (s: string) => s.length; // 1 unidade por caractere
     expect(truncarParaLargura(medir, "ABCDEFGHIJ", 4)).toBe("ABCD");
     expect(truncarParaLargura(medir, "ABC", 4)).toBe("ABC");
+  });
+  it("com reticências, sinaliza corte sem estourar a largura", () => {
+    const medir = (s: string) => s.length; // 1 unidade por caractere
+    expect(truncarParaLargura(medir, "ABCDEFGHIJ", 4, { reticencias: true })).toBe("ABC…");
+    expect(medir(truncarParaLargura(medir, "ABCDEFGHIJ", 4, { reticencias: true }))).toBeLessThanOrEqual(4);
+    // não estoura texto que já cabe: sem reticências mesmo pedindo o modo
+    expect(truncarParaLargura(medir, "ABC", 4, { reticencias: true })).toBe("ABC");
+    // largura insuficiente até para "…" sozinho: cai para o corte simples (sem reticências)
+    expect(truncarParaLargura(medir, "ABCDEFGHIJ", 0, { reticencias: true })).toBe("");
+  });
+  it("linhasQueCabem: 6180 em fonte 7,5pt cabe 7 linhas (regressão do print do usuário: 15 colunas escolhidas, só 7 saíram)", () => {
+    expect(linhasQueCabem(MODELOS_ETIQUETA["6180"], 7.5)).toBe(7);
+  });
+  it("linhasQueCabem cresce com etiqueta maior e encolhe com fonte maior", () => {
+    expect(linhasQueCabem(MODELOS_ETIQUETA["A4362"], 7.5)).toBeGreaterThan(linhasQueCabem(MODELOS_ETIQUETA["6180"], 7.5));
+    expect(linhasQueCabem(MODELOS_ETIQUETA["6180"], 12)).toBeLessThan(linhasQueCabem(MODELOS_ETIQUETA["6180"], 6));
   });
   it("31 registros em 6180 geram 2 páginas; texto nunca passa da etiqueta", () => {
     const doc = renderEtiquetas(dados, { modelo: "6180", fonte: 7.5, rotulos: true });

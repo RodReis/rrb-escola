@@ -2,6 +2,7 @@
 
 import { FORMATOS, FORMATO_LABEL, MODELOS_ETIQUETA_CODIGOS, type ColunaMeta, type EmpresaRelatorio, type Formato, type ModeloEtiqueta, type TemplateConfig } from "@/lib/relatorio-dinamico/tipos";
 import { MODELOS_ETIQUETA, descricaoModelo } from "@/lib/relatorio-dinamico/render/modelos-etiqueta";
+import { linhasQueCabem } from "@/lib/relatorio-dinamico/render/etiqueta";
 import { Acordeao } from "./acordeao";
 import { ListaDupla } from "./lista-dupla";
 import { OrdenacaoEditor } from "./ordenacao-editor";
@@ -17,6 +18,8 @@ export function LeiauteForm({ config, onChange, colunas, empresas }: Props) {
   const comLogo = empresas.filter((e) => e.logoUrl);
   const selecionadasMeta = config.colunas.map((k) => colunas.find((c) => c.key === k)).filter((c): c is ColunaMeta => Boolean(c));
   const modelo = MODELOS_ETIQUETA[config.modeloEtiqueta ?? "6180"];
+  const cabemNaEtiqueta = linhasQueCabem(modelo, config.fonte ?? 7.5);
+  const colunasQueSobram = config.formato === "etiqueta" ? Math.max(0, config.colunas.length - cabemNaEtiqueta) : 0;
 
   const alternarLogo = (id: string) => {
     const atual = config.logosEmpresas ?? [];
@@ -45,6 +48,11 @@ export function LeiauteForm({ config, onChange, colunas, empresas }: Props) {
             <div>
               <span className="mb-1 block text-sm font-medium text-ink">Fonte</span>
               <Stepper value={config.fonte ?? 7.5} onChange={(v) => set("fonte", v)} min={6} max={12} step={0.5} decimais={1} ariaLabel="Fonte" />
+              <p className={`mt-1 text-xs ${colunasQueSobram > 0 ? "font-medium text-warning" : "text-ink/50"}`}>
+                {colunasQueSobram > 0
+                  ? `Cabem ${cabemNaEtiqueta} de ${config.colunas.length} colunas nesta etiqueta — as ${colunasQueSobram} últimas não saem. Diminua colunas, a fonte ou use uma etiqueta maior.`
+                  : `Cabem até ${cabemNaEtiqueta} colunas nesta etiqueta.`}
+              </p>
             </div>
             <div>
               <span className="mb-1 block text-sm font-medium text-ink">Rótulos dos campos</span>
@@ -108,7 +116,10 @@ export function LeiauteForm({ config, onChange, colunas, empresas }: Props) {
         ) : null}
       </div>
 
-      <Acordeao titulo={`Colunas · ${config.colunas.length} selecionada${config.colunas.length === 1 ? "" : "s"}`} defaultOpen>
+      <Acordeao
+        titulo={`Colunas · ${config.colunas.length} selecionada${config.colunas.length === 1 ? "" : "s"}${colunasQueSobram > 0 ? ` (${colunasQueSobram} não cabem na etiqueta)` : ""}`}
+        defaultOpen
+      >
         <ListaDupla disponiveis={colunas} selecionadas={config.colunas} onChange={setColunas} />
       </Acordeao>
       <Acordeao titulo={`Ordenação${config.ordenacao.length ? ` · ${config.ordenacao.length}` : ""}`}>

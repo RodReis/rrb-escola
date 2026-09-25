@@ -1,6 +1,9 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
+import { Search } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { MultiFilterDropdown } from "@/components/ui/filter-dropdown";
 import type { OpcoesRh } from "@/lib/relatorio-dinamico/dados/opcoes";
 import type { FiltrosRh } from "@/lib/relatorio-dinamico/tipos";
 
@@ -9,34 +12,30 @@ type Props = { opcoes: OpcoesRh; professor: boolean; onChange: (f: FiltrosRh) =>
 export function FiltrosRhForm({ opcoes, professor, onChange }: Props) {
   const [f, setF] = useState<FiltrosRh>({ companyId: null, situacao: "ativo", categoria: null, cargo: null, turmaIds: [], disciplinaIds: [] });
 
-  // Carga inicial da lista de registros (uma vez).
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  useEffect(() => onChange(f), []);
-
-  const atualizar = (novo: FiltrosRh) => { setF(novo); onChange(novo); };
-  const alternar = (lista: string[], v: string) => (lista.includes(v) ? lista.filter((x) => x !== v) : [...lista, v]);
+  const turmasOpcoes = opcoes.turmas.map((t) => ({ value: t.id, label: `${t.nome} (${t.ano_letivo})` }));
+  const disciplinasOpcoes = opcoes.disciplinas.map((d) => ({ value: d.id, label: `${d.nome} — ${d.serie}`, group: d.serie }));
 
   return (
     <div className="grid gap-4">
-      <div className="grid gap-4 md:grid-cols-4">
-        <label>
+      <div className="flex flex-wrap items-end gap-3">
+        <label className="min-w-40 flex-1">
           Empresa
-          <select value={f.companyId ?? ""} onChange={(e) => atualizar({ ...f, companyId: e.target.value || null })}>
+          <select value={f.companyId ?? ""} onChange={(e) => setF({ ...f, companyId: e.target.value || null })}>
             <option value="">Todas</option>
             {opcoes.empresas.map((e) => <option key={e.id} value={e.id}>{e.nome}</option>)}
           </select>
         </label>
-        <label>
+        <label className="w-32">
           Situação
-          <select value={f.situacao} onChange={(e) => atualizar({ ...f, situacao: e.target.value as FiltrosRh["situacao"] })}>
+          <select value={f.situacao} onChange={(e) => setF({ ...f, situacao: e.target.value as FiltrosRh["situacao"] })}>
             <option value="ativo">Ativos</option>
             <option value="inativo">Inativos</option>
             <option value="todos">Todos</option>
           </select>
         </label>
-        <label>
+        <label className="min-w-36 flex-1">
           Categoria
-          <select value={f.categoria ?? ""} onChange={(e) => atualizar({ ...f, categoria: (e.target.value || null) as FiltrosRh["categoria"] })}>
+          <select value={f.categoria ?? ""} onChange={(e) => setF({ ...f, categoria: (e.target.value || null) as FiltrosRh["categoria"] })}>
             <option value="">Todas</option>
             <option value="admin">Administrativo</option>
             <option value="fund1">Fundamental I</option>
@@ -44,49 +43,27 @@ export function FiltrosRhForm({ opcoes, professor, onChange }: Props) {
             <option value="medio">Ensino Médio</option>
           </select>
         </label>
-        <label>
+        <label className="min-w-32 flex-1">
           Cargo
-          <select value={f.cargo ?? ""} onChange={(e) => atualizar({ ...f, cargo: e.target.value || null })}>
+          <select value={f.cargo ?? ""} onChange={(e) => setF({ ...f, cargo: e.target.value || null })}>
             <option value="">Todos</option>
             {opcoes.cargos.map((c) => <option key={c} value={c}>{c}</option>)}
           </select>
         </label>
+        {professor ? (
+          <>
+            <MultiFilterDropdown label="Turmas" value={f.turmaIds} options={turmasOpcoes} onChange={(v) => setF({ ...f, turmaIds: v })} />
+            <MultiFilterDropdown label="Disciplinas" value={f.disciplinaIds} options={disciplinasOpcoes} onChange={(v) => setF({ ...f, disciplinaIds: v })} />
+          </>
+        ) : null}
+        <Button type="button" onClick={() => onChange(f)} className="ml-auto">
+          <Search size={14} /> Aplicar filtros
+        </Button>
       </div>
-
       {professor ? (
-        <div className="grid gap-4 md:grid-cols-2">
-          <fieldset>
-            <legend className="mb-1 text-sm font-medium text-ink">Turmas <span className="text-ink/50">(nenhuma = todas)</span></legend>
-            <div className="flex max-h-32 flex-wrap gap-2 overflow-y-auto">
-              {opcoes.turmas.map((t) => {
-                const rotulo = `${t.nome} (${t.ano_letivo})`;
-                return (
-                  <label key={t.id} className="flex items-center gap-1.5 rounded-ui border border-line px-2.5 py-1.5 text-sm">
-                    <input type="checkbox" aria-label={rotulo} checked={f.turmaIds.includes(t.id)} onChange={() => atualizar({ ...f, turmaIds: alternar(f.turmaIds, t.id) })} />
-                    {rotulo}
-                  </label>
-                );
-              })}
-            </div>
-          </fieldset>
-          <fieldset>
-            <legend className="mb-1 text-sm font-medium text-ink">Disciplinas <span className="text-ink/50">(nenhuma = todas)</span></legend>
-            <div className="flex max-h-32 flex-wrap gap-2 overflow-y-auto">
-              {opcoes.disciplinas.map((d) => {
-                const rotulo = `${d.nome} — ${d.serie}`;
-                return (
-                  <label key={d.id} className="flex items-center gap-1.5 rounded-ui border border-line px-2.5 py-1.5 text-sm">
-                    <input type="checkbox" aria-label={rotulo} checked={f.disciplinaIds.includes(d.id)} onChange={() => atualizar({ ...f, disciplinaIds: alternar(f.disciplinaIds, d.id) })} />
-                    {rotulo}
-                  </label>
-                );
-              })}
-            </div>
-          </fieldset>
-          <p className="md:col-span-2 text-xs text-ink/55">
-            Turma/disciplina usa o vínculo "Usuário do sistema (professor)" do cadastro do funcionário em RH › Funcionários. Funcionário sem vínculo não aparece quando esses filtros estão marcados.
-          </p>
-        </div>
+        <p className="text-xs text-ink/55">
+          Turma/disciplina usa o vínculo "Usuário do sistema (professor)" do cadastro do funcionário em RH › Funcionários. Funcionário sem vínculo não aparece quando esses filtros estão marcados.
+        </p>
       ) : null}
     </div>
   );

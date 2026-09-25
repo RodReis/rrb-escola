@@ -5,7 +5,8 @@ import type { ColunaMeta, DadosRelatorio, EmpresaRelatorio, TemplateConfig } fro
 import { repetirCopias } from "../ordenar";
 import { gerarCsv } from "./csv";
 import { baixarBlob, nomeArquivo } from "./baixar";
-import { renderEtiquetas } from "./etiqueta";
+import { linhasQueCabem, renderEtiquetas } from "./etiqueta";
+import { MODELOS_ETIQUETA } from "./modelos-etiqueta";
 import { renderGrade } from "./grade";
 import { renderTabular } from "./tabular";
 import type { ImagemPdf } from "./cabecalho";
@@ -18,6 +19,16 @@ export function selecionarEmpresas(config: TemplateConfig, empresas: EmpresaRela
   if (config.exibirLogos === false) return { cabecalho, logos: [] };
   const base = escolhidas.length > 0 ? escolhidas : empresas.filter((e) => e.logoUrl).slice(0, 1);
   return { cabecalho, logos: base.filter((e) => e.logoUrl).slice(0, 4) };
+}
+
+/** Aviso quando as colunas escolhidas não cabem fisicamente na etiqueta (modelo × fonte), ou null se couberem. */
+export function avisoColunasNaoCabem(dados: DadosRelatorio, config: TemplateConfig): string | null {
+  const modelo = MODELOS_ETIQUETA[config.modeloEtiqueta ?? "6180"];
+  const cabem = linhasQueCabem(modelo, config.fonte ?? 7.5);
+  if (dados.colunas.length <= cabem) return null;
+  const sobram = dados.colunas.length - cabem;
+  const nomes = dados.colunas.slice(cabem).map((c) => c.label).join(", ");
+  return `Cabem ${cabem} de ${dados.colunas.length} colunas nesta etiqueta — as ${sobram} última${sobram === 1 ? "" : "s"} (${nomes}) não saíram. Diminua colunas, a fonte ou use uma etiqueta maior.`;
 }
 
 /** Template salvo pode citar coluna que saiu do catálogo ou que o usuário não pode ver. */
@@ -40,6 +51,8 @@ export async function emitirArquivo(
     return { avisos };
   }
   if (config.formato === "etiqueta") {
+    const aviso = avisoColunasNaoCabem(dados, config);
+    if (aviso) avisos.push(aviso);
     renderEtiquetas(comCopias, {
       modelo: config.modeloEtiqueta ?? "6180", fonte: config.fonte ?? 7.5, rotulos: config.rotulos ?? true, descricao: config.descricaoImpressao,
     }).save(nomeArquivo(nomeBase, "pdf"));
