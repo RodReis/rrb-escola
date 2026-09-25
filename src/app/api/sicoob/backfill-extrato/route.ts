@@ -45,6 +45,7 @@ export async function GET(req: Request) {
       falhas: resultado.falhas,
       repassesCasados: resultado.repasses.casadas,
       alertasRepasse: resultado.repasses.alertas,
+      debitos: resultado.debitos,
     });
   } catch (err) {
     const erro = err as { message?: string; code?: string; details?: string; hint?: string };

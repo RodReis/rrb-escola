@@ -61,6 +61,18 @@ describe("detectarTransferenciasInternas", () => {
     expect(r.ambiguos).toEqual([{ debitoId: "d1", candidatos: ["c1", "c2"] }]);
   });
 
+  it("um crédito com dois débitos candidatos vira ambíguo dos dois lados", () => {
+    const r = detectarTransferenciasInternas(
+      [deb("d1", "B", "2026-01-07", 500), deb("d2", "C", "2026-01-07", 500)],
+      [cred("c1", "D", "2026-01-07", 500)],
+    );
+    expect(r.pares).toEqual([]);
+    expect(r.ambiguos).toEqual([
+      { debitoId: "d1", candidatos: ["c1"] },
+      { debitoId: "d2", candidatos: ["c1"] },
+    ]);
+  });
+
   it("compara em centavos inteiros: 0,01 de diferença não casa", () => {
     const r = detectarTransferenciasInternas(
       [deb("d1", "A", "2026-01-07", 125479.02)],
