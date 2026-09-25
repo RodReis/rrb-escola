@@ -10,11 +10,19 @@ type Props = {
   action: (formData: FormData) => void | Promise<void>;
   employee?: Employee;
   companies: Company[];
+  professores: { id: string; nome: string; email: string }[];
   defaultCompanyId?: string;
   submitLabel?: string;
 };
 
-export function EmployeeForm({ action, employee, companies, defaultCompanyId, submitLabel = "Salvar" }: Props) {
+export function EmployeeForm({
+  action,
+  employee,
+  companies,
+  professores,
+  defaultCompanyId,
+  submitLabel = "Salvar"
+}: Props) {
   const [cpf, setCpf] = useState(employee?.cpf ?? "");
   const [telefone, setTelefone] = useState(employee?.telefone ?? "");
 
@@ -87,6 +95,16 @@ export function EmployeeForm({ action, employee, companies, defaultCompanyId, su
           <option value="PJ">PJ</option>
           <option value="Estagio">Estágio</option>
           <option value="Temporario">Temporário</option>
+        </select>
+      </label>
+
+      <label>
+        Usuário do sistema (professor)
+        <select name="perfil_id" defaultValue={employee?.perfil_id ?? ""}>
+          <option value="">— Sem vínculo —</option>
+          {professores.map((p) => (
+            <option key={p.id} value={p.id}>{p.nome} ({p.email})</option>
+          ))}
         </select>
       </label>
 

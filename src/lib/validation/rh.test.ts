@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { CompanyUpdateSchema } from "./rh";
+import { CompanyUpdateSchema, EmployeeSchema } from "./rh";
 
 const base = {
   id: "123e4567-e89b-12d3-a456-426614174000",
@@ -38,5 +38,25 @@ describe("CompanyUpdateSchema — campos novos", () => {
 
   it("schema conhece o campo nomeFantasia", () => {
     expect(CompanyUpdateSchema.shape).toHaveProperty("nomeFantasia");
+  });
+});
+
+const employeeBase = {
+  company_id: "11111111-1111-1111-1111-111111111111",
+  name: "Maria Souza",
+  cpf: "123.456.789-00"
+};
+
+describe("EmployeeSchema.perfil_id", () => {
+  it("vazio vira undefined", () => {
+    const r = EmployeeSchema.safeParse({ ...employeeBase, perfil_id: "" });
+    expect(r.success && r.data.perfil_id).toBeUndefined();
+  });
+  it("aceita uuid", () => {
+    const r = EmployeeSchema.safeParse({ ...employeeBase, perfil_id: "22222222-2222-2222-2222-222222222222" });
+    expect(r.success).toBe(true);
+  });
+  it("recusa texto que não é uuid", () => {
+    expect(EmployeeSchema.safeParse({ ...employeeBase, perfil_id: "abc" }).success).toBe(false);
   });
 });

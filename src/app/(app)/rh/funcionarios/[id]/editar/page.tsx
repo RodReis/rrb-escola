@@ -4,7 +4,7 @@ import { PageHeader } from "@/components/ui/page-header";
 import { Panel } from "@/components/ui/card";
 import { EmployeeForm } from "@/components/rh/employee-form";
 import { updateEmployeeAction } from "@/lib/actions/rh";
-import { listCompanies, getEmployeeById } from "@/lib/data/rh";
+import { listCompanies, getEmployeeById, listProfessoresVinculaveis } from "@/lib/data/rh";
 import { requirePermission } from "@/lib/auth/session";
 
 export default async function EditarFuncionarioPage({
@@ -18,9 +18,10 @@ export default async function EditarFuncionarioPage({
   const { id } = await params;
   const sp = await searchParams;
 
-  const [employee, companies] = await Promise.all([
+  const [employee, companies, professores] = await Promise.all([
     getEmployeeById(id),
-    listCompanies({ includeInactive: true })
+    listCompanies({ includeInactive: true }),
+    listProfessoresVinculaveis(id)
   ]);
 
   if (!employee) notFound();
@@ -49,6 +50,7 @@ export default async function EditarFuncionarioPage({
           action={updateEmployeeAction}
           employee={employee}
           companies={companies}
+          professores={professores}
           submitLabel="Salvar alterações"
         />
       </Panel>

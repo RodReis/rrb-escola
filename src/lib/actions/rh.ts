@@ -206,7 +206,8 @@ function readEmployeeForm(formData: FormData) {
     school_category: String(formData.get("school_category") ?? "").trim(),
     status_contrato: String(formData.get("status_contrato") ?? "").trim(),
     birth_date: String(formData.get("birth_date") ?? "").trim(),
-    hire_date: String(formData.get("hire_date") ?? "").trim()
+    hire_date: String(formData.get("hire_date") ?? "").trim(),
+    perfil_id: String(formData.get("perfil_id") ?? "").trim()
   };
 }
 
@@ -229,11 +230,14 @@ export async function createEmployeeAction(formData: FormData) {
     school_category: parsed.data.school_category ?? null,
     status_contrato: parsed.data.status_contrato ?? null,
     birth_date: parsed.data.birth_date || null,
-    hire_date: parsed.data.hire_date || null
+    hire_date: parsed.data.hire_date || null,
+    perfil_id: parsed.data.perfil_id ?? null
   });
 
   if (error) {
-    const msg = error.code === "23505" ? "CPF já cadastrado" : error.message;
+    const msg = error.code === "23505"
+      ? (error.message.includes("perfil_id") ? "Esse usuário já está vinculado a outro funcionário" : "CPF já cadastrado")
+      : error.message;
     redirect(`/rh/funcionarios/novo?erro=${encodeURIComponent(msg)}`);
   }
 
@@ -269,12 +273,15 @@ export async function updateEmployeeAction(formData: FormData) {
       status_contrato: parsed.data.status_contrato ?? null,
       birth_date: parsed.data.birth_date || null,
       hire_date: parsed.data.hire_date || null,
+      perfil_id: parsed.data.perfil_id ?? null,
       ativo: parsed.data.ativo
     })
     .eq("id", parsed.data.id);
 
   if (error) {
-    const msg = error.code === "23505" ? "CPF já cadastrado" : error.message;
+    const msg = error.code === "23505"
+      ? (error.message.includes("perfil_id") ? "Esse usuário já está vinculado a outro funcionário" : "CPF já cadastrado")
+      : error.message;
     redirect(`/rh/funcionarios/${parsed.data.id}/editar?erro=${encodeURIComponent(msg)}`);
   }
 
