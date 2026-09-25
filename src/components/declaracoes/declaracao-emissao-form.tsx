@@ -192,16 +192,25 @@ export function DeclaracaoEmissaoForm({ anoLetivo, series, turmas, alunosElegive
         </label>
         <label className={campoLabel}>
           Modelo de Declaração
-          <select
-            value={modeloSelecionado}
-            onChange={(e) => atualizar({ modelo: e.target.value })}
-            className={campoInput}
-          >
-            <option value="">Selecione</option>
-            {modelos.map((m) => (
-              <option key={m.id} value={m.id}>{m.nome}</option>
-            ))}
-          </select>
+          <span className="relative">
+            <select
+              value={modeloSelecionado}
+              onChange={(e) => atualizar({ modelo: e.target.value })}
+              disabled={carregandoPreview}
+              className={`${campoInput} w-full ${carregandoPreview ? "pr-9" : ""}`}
+            >
+              <option value="">Selecione</option>
+              {modelos.map((m) => (
+                <option key={m.id} value={m.id}>{m.nome}</option>
+              ))}
+            </select>
+            {carregandoPreview ? (
+              <span
+                aria-hidden
+                className="pointer-events-none absolute right-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 animate-spin rounded-full border-2 border-ink/20 border-t-brand"
+              />
+            ) : null}
+          </span>
         </label>
       </div>
 
