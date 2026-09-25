@@ -52,3 +52,4 @@ backup-prod-*.json
 
 # Extrações pontuais com dados pessoais (CPF/nome/matrícula)
 ref.json
+.worktrees/
