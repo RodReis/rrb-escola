@@ -214,6 +214,23 @@ textarea {
     background-color 160ms var(--ease);
 }
 
+/* Checkbox/radio não são campo de texto: sem a regra acima eles herdam
+   width:100% e disputam espaço com o rótulo ao lado (causa raiz do "grid
+   desalinhado" em telas com listas de itens marcáveis — relatorio-dinamico,
+   entre outras). Dimensão fixa + accent-color no token de marca; ainda
+   herdam o anel de foco abaixo. */
+input[type="checkbox"],
+input[type="radio"] {
+  width: 1rem;
+  height: 1rem;
+  min-width: 0;
+  flex-shrink: 0;
+  padding: 0;
+  border: none;
+  accent-color: var(--brand-600);
+  cursor: pointer;
+}
+
 input::placeholder,
 textarea::placeholder {
   color: var(--text-faint);
@@ -224,6 +241,12 @@ select:focus,
 textarea:focus {
   border-color: var(--brand-500);
   box-shadow: 0 0 0 4px color-mix(in oklab, var(--brand-500) 18%, transparent);
+}
+
+input[type="checkbox"]:focus-visible,
+input[type="radio"]:focus-visible {
+  outline: 2px solid var(--brand-500);
+  outline-offset: 2px;
 }
 
 label {
