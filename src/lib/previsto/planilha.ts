@@ -93,6 +93,7 @@ export function hashImport(p: { competencia: string; descricao: string; valor: n
 function celula(v: ExcelJS.CellValue): unknown {
   if (v && typeof v === "object" && !(v instanceof Date)) {
     if ("result" in v) return (v as { result: unknown }).result;
+    if ("richText" in v) return (v as { richText: Array<{ text: string }> }).richText.map((r) => r.text).join("");
     if ("text" in v) return (v as { text: unknown }).text;
   }
   return v;

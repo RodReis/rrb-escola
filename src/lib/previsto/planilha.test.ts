@@ -86,4 +86,28 @@ describe("lerPlanilha", () => {
     const r = await lerPlanilha(buf);
     expect(r.linhas.map((l) => l.linha)).toEqual([3]);
   });
+
+  it("desembrulha valor de fórmula (cell.value com .result)", async () => {
+    const wb = new ExcelJS.Workbook();
+    const ws = wb.addWorksheet("contas");
+    ws.addRow(["DESCRIÇÃO", "VALOR", "VENCE EM"]);
+    ws.addRow(["Aluguel", null, "10/10/2026"]);
+    ws.getCell("B2").value = { formula: "800*1", result: 800 } as unknown as ExcelJS.CellValue;
+    const buf = Buffer.from(await wb.xlsx.writeBuffer());
+    const r = await lerPlanilha(buf);
+    expect(r.linhas[0]).toMatchObject({ descricao: "Aluguel", valor: 800, dataVencimento: "2026-10-10" });
+  });
+
+  it("desembrulha texto de rich text (cell.value com .richText)", async () => {
+    const wb = new ExcelJS.Workbook();
+    const ws = wb.addWorksheet("contas");
+    ws.addRow(["DESCRIÇÃO", "VALOR", "VENCE EM"]);
+    ws.addRow([null, 10, "10/10/2026"]);
+    ws.getCell("A2").value = {
+      richText: [{ text: "Água " }, { text: "Sabesp" }],
+    } as unknown as ExcelJS.CellValue;
+    const buf = Buffer.from(await wb.xlsx.writeBuffer());
+    const r = await lerPlanilha(buf);
+    expect(r.linhas[0]).toMatchObject({ descricao: "Água Sabesp", valor: 10, dataVencimento: "2026-10-10" });
+  });
 });
