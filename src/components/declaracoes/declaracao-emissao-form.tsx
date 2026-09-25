@@ -115,7 +115,19 @@ export function DeclaracaoEmissaoForm({ anoLetivo, series, turmas, alunosElegive
       }
       const logoPaths = paginas.map((p) => p.credenciamento.logoPath ?? "/historico/logo-epg.png");
       const imagens = await carregarImagens(Array.from(new Set([...logoPaths, "/historico/logo-epg.png"])));
-      renderDeclaracoes(paginas, imagens).save(`declaracoes-${anoLetivo}.pdf`);
+      // Emissão individual: nome do arquivo carrega o nome do aluno, pra quem
+      // baixa várias declarações não ficar com "declaracoes-2026 (1).pdf",
+      // "(2).pdf"... Em lote mantém o nome genérico por ano (não há um único
+      // aluno pra nomear o arquivo).
+      const slugNome = alunosElegiveis[0]?.nome
+        .normalize("NFD")
+        .replace(/[̀-ͯ]/g, "")
+        .replace(/[^a-zA-Z0-9]+/g, "-")
+        .replace(/^-+|-+$/g, "")
+        .toUpperCase();
+      const nomeArquivo =
+        emitindoParaUmAluno && slugNome ? `${slugNome}-declaracoes-${anoLetivo}.pdf` : `declaracoes-${anoLetivo}.pdf`;
+      renderDeclaracoes(paginas, imagens).save(nomeArquivo);
     } catch (e) {
       setErro(e instanceof Error ? e.message : "Falha ao emitir as declarações.");
     } finally {
@@ -123,47 +135,68 @@ export function DeclaracaoEmissaoForm({ anoLetivo, series, turmas, alunosElegive
     }
   }
 
+  const campoLabel = "grid gap-1.5 text-sm font-medium text-ink";
+  const campoInput =
+    "rounded-ui border border-line bg-surface px-3 py-2 text-sm text-ink shadow-sm transition-colors focus:border-brand focus:outline-none focus:ring-2 focus:ring-brand/20 disabled:cursor-not-allowed disabled:bg-surface-2 disabled:text-ink/50";
+
   return (
     <div className="grid gap-6">
       <div className="grid gap-4 md:grid-cols-4">
-        <label>
+        <label className={campoLabel}>
           Ano Letivo
           <input
             type="number"
             value={anoLetivo}
             onChange={(e) => atualizar({ ano: e.target.value })}
+            className={campoInput}
           />
         </label>
-        <label>
+        <label className={campoLabel}>
           Série
-          <select value={serieSelecionada} onChange={(e) => atualizar({ serie: e.target.value, turma: null, aluno: null })}>
+          <select
+            value={serieSelecionada}
+            onChange={(e) => atualizar({ serie: e.target.value, turma: null, aluno: null })}
+            className={campoInput}
+          >
             <option value="">Todas</option>
             {series.map((s) => (
               <option key={s.id} value={s.id}>{s.nome}</option>
             ))}
           </select>
         </label>
-        <label>
+        <label className={campoLabel}>
           Turma
-          <select value={turmaSelecionada} onChange={(e) => atualizar({ turma: e.target.value, aluno: null })}>
+          <select
+            value={turmaSelecionada}
+            onChange={(e) => atualizar({ turma: e.target.value, aluno: null })}
+            className={campoInput}
+          >
             <option value="">Todas</option>
             {turmasDaSerie.map((t) => (
               <option key={t.id} value={t.id}>{t.nome}</option>
             ))}
           </select>
         </label>
-        <label>
+        <label className={campoLabel}>
           Aluno
-          <select value={alunoSelecionado} onChange={(e) => atualizar({ aluno: e.target.value })}>
+          <select
+            value={alunoSelecionado}
+            onChange={(e) => atualizar({ aluno: e.target.value })}
+            className={campoInput}
+          >
             <option value="">Todos ({alunosElegiveis.length})</option>
             {alunosElegiveis.map((a) => (
               <option key={a.alunoId} value={a.alunoId}>{a.nome}</option>
             ))}
           </select>
         </label>
-        <label>
+        <label className={campoLabel}>
           Modelo de Declaração
-          <select value={modeloSelecionado} onChange={(e) => atualizar({ modelo: e.target.value })}>
+          <select
+            value={modeloSelecionado}
+            onChange={(e) => atualizar({ modelo: e.target.value })}
+            className={campoInput}
+          >
             <option value="">Selecione</option>
             {modelos.map((m) => (
               <option key={m.id} value={m.id}>{m.nome}</option>
@@ -173,7 +206,7 @@ export function DeclaracaoEmissaoForm({ anoLetivo, series, turmas, alunosElegive
       </div>
 
       {modeloSelecionado ? (
-        <div className="grid gap-3 rounded-ui border border-line p-4">
+        <div className="grid gap-4 rounded-panel border border-line bg-surface p-5 shadow-soft">
           <p className="text-xs font-medium text-ink/60">
             {emitindoParaUmAluno
               ? "Visualização do modelo (edições aqui valem só para esta emissão — o modelo salvo não muda)"
@@ -183,30 +216,33 @@ export function DeclaracaoEmissaoForm({ anoLetivo, series, turmas, alunosElegive
             <p className="text-sm text-ink/60">Carregando pré-visualização...</p>
           ) : preview ? (
             <>
-              <label>
+              <label className={campoLabel}>
                 Título da declaração
                 <input
                   value={preview.titulo}
                   readOnly={!emitindoParaUmAluno}
                   onChange={(e) => emitindoParaUmAluno && setPreview({ ...preview, titulo: e.target.value })}
+                  className={campoInput}
                 />
               </label>
-              <label>
+              <label className={campoLabel}>
                 Texto (pré-visualização)
                 <textarea
                   value={preview.texto}
                   readOnly={!emitindoParaUmAluno}
                   onChange={(e) => emitindoParaUmAluno && setPreview({ ...preview, texto: e.target.value })}
                   rows={5}
+                  className={`${campoInput} resize-y font-normal`}
                 />
               </label>
-              <label>
+              <label className={campoLabel}>
                 Fecho (pré-visualização)
                 <textarea
                   value={preview.fecho}
                   readOnly={!emitindoParaUmAluno}
                   onChange={(e) => emitindoParaUmAluno && setPreview({ ...preview, fecho: e.target.value })}
                   rows={2}
+                  className={`${campoInput} resize-y font-normal`}
                 />
               </label>
             </>

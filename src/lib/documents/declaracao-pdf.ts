@@ -44,9 +44,13 @@ function renderCabecalho(doc: jsPDF, yInicial: number, c: HistoricoCredenciament
   const centro = doc.internal.pageSize.getWidth() / 2;
   let y = yInicial;
 
+  // c.logoPath vem de `companies.logo_path` (cadastro em /rh/empresas) — a
+  // logo trocada em /configuracoes/escola NÃO alimenta este PDF (cadastros
+  // diferentes). Caixa quadrada (32x32mm) em vez da antiga 70x28: logos
+  // verticais/quadradas paravam minúsculas, limitadas pela altura baixa.
   const logo = imagens.get(c.logoPath ?? LOGO_PADRAO_PATH) ?? imagens.get(LOGO_PADRAO_PATH);
   if (logo) {
-    y = renderImagemCentralizada(doc, centro, y, logo, mm(70), mm(28)) + 8;
+    y = renderImagemCentralizada(doc, centro, y, logo, mm(48), mm(32)) + 8;
   }
 
   doc.setTextColor(0, 0, 0);
@@ -82,14 +86,18 @@ function renderTitulo(doc: jsPDF, yInicial: number, titulo: string): number {
   return yInicial + 24;
 }
 
+/** Fecho ("Cidade, data por extenso") alinhado à direita, padrão de
+ * declaração formal — antes ficava à esquerda, o que lia como fora de
+ * lugar num documento com corpo justificado e assinaturas centralizadas. */
 function renderFecho(doc: jsPDF, yInicial: number, fecho: string, margemPt: number): number {
   doc.setFont(FONTE, "normal");
   doc.setFontSize(11);
-  const util = doc.internal.pageSize.getWidth() - margemPt * 2;
+  const largura = doc.internal.pageSize.getWidth();
+  const util = largura - margemPt * 2;
   const linhas = doc.splitTextToSize(fecho, util) as string[];
   let y = yInicial;
   for (const linha of linhas) {
-    doc.text(linha, margemPt, y);
+    doc.text(linha, largura - margemPt, y, { align: "right" });
     y += 15;
   }
   return y;
