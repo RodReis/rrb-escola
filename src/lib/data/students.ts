@@ -52,8 +52,8 @@ function runStudentsQuery(
   const hasEnrollmentFilter =
     !querInativos && Boolean(filters?.serieId || filters?.turmaId || filters?.segmento);
   const matriculaSelect = hasEnrollmentFilter
-    ? "matriculas!inner(status, serie_id, turma_id, ano_letivo, series!inner(id, nome, segmento), turmas(id, nome), planos(nome))"
-    : "matriculas(status, serie_id, turma_id, ano_letivo, series(id, nome, segmento), turmas(id, nome), planos(nome))";
+    ? "matriculas!inner(id, status, serie_id, turma_id, ano_letivo, series!inner(id, nome, segmento), turmas(id, nome), planos(nome))"
+    : "matriculas(id, status, serie_id, turma_id, ano_letivo, series(id, nome, segmento), turmas(id, nome), planos(nome))";
 
   let query = supabase
     .from("alunos")

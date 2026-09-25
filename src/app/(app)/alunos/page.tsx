@@ -20,6 +20,7 @@ import { getSignedFotoUrls } from "@/lib/storage/photos";
 import { requirePermission } from "@/lib/auth/session";
 
 type EnrollmentRef = {
+  id?: string | null;
   status?: string | null;
   ano_letivo?: number | null;
   series?: { nome?: string | null } | { nome?: string | null }[] | null;
@@ -306,6 +307,11 @@ export default async function StudentsPage({
                       alunoId={student.id}
                       alunoNome={student.nome}
                       ativo={student.ativo ?? false}
+                      matriculaAtivaNoAno={enrollment?.status === "ativa"}
+                      matriculaId={enrollment?.id ?? ""}
+                      serieNome={series?.nome ?? ""}
+                      turmaNome={turma?.nome ?? ""}
+                      anoLetivo={anoLetivo}
                     />
                   </td>
                 </tr>
