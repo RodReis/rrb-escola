@@ -47,7 +47,7 @@ describe("gerarDadosRelatorioAction", () => {
   it("pede permissão de leitura do módulo da entidade e só as relações necessárias", async () => {
     await gerarDadosRelatorioAction({ entidade: "aluno", ids: [ID], colunas: ["aluno.nome", "mae.nome"], ordenacao: [], filtros: filtrosAluno });
     expect(requirePermissionMock).toHaveBeenCalledWith("relatorios.dinamico-aluno", "read");
-    expect(carregarAlunosMock).toHaveBeenCalledWith([ID], 2026, new Set(["responsaveis"]));
+    expect(carregarAlunosMock).toHaveBeenCalledWith([ID], 2026, new Set(["responsaveis"]), ["ativa"]);
   });
   it("entidade inválida é recusada", async () => {
     const r = await gerarDadosRelatorioAction({ entidade: "x" as never, ids: [ID], colunas: [], ordenacao: [], filtros: null });

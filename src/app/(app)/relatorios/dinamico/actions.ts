@@ -69,7 +69,7 @@ export async function gerarDadosRelatorioAction(input: {
       if (!f.success) return { ok: false, error: "Informe o ano de referência." };
       const catalogo = filtrarColunasPorPermissao(getCatalogo("aluno"), session.permissions, isAdmin);
       montarDados(catalogo, [], colunas); // valida keys antes de consultar o banco
-      const ctxs = await carregarCtxAlunos(ids, f.data.ano, relacoesNecessarias(catalogo, colunas));
+      const ctxs = await carregarCtxAlunos(ids, f.data.ano, relacoesNecessarias(catalogo, colunas), f.data.status);
       return { ok: true, dados: ordenarLinhas(montarDados(catalogo, ctxs, colunas), ordenacao) };
     }
     const catalogo = filtrarColunasPorPermissao(getCatalogo(entidade), session.permissions, isAdmin);

@@ -11,7 +11,7 @@ export async function listarRegistrosAluno(f: FiltrosAluno): Promise<RegistroRes
   const supabase = await createServerClient();
   let q = supabase
     .from("matriculas")
-    .select("aluno_id, alunos!inner(nome), series!inner(nome, segmento), turmas(nome)")
+    .select("aluno_id, status, alunos!inner(nome), series!inner(nome, segmento), turmas(nome)")
     .eq("ano_letivo", f.ano)
     .in("status", f.status);
   if (f.valores.length > 0) {
@@ -21,7 +21,8 @@ export async function listarRegistrosAluno(f: FiltrosAluno): Promise<RegistroRes
   }
   const { data, error } = await q;
   if (error) throw error;
-  return (data ?? [])
+  const linhas = deduplicarPorAluno((data ?? []) as { aluno_id: string; status: string }[]) as typeof data;
+  return (linhas ?? [])
     .map((m) => {
       const serie = um(m.series as { nome: string } | { nome: string }[]);
       const turma = um(m.turmas as { nome: string } | { nome: string }[] | null);
@@ -75,17 +76,28 @@ async function numerosDeChamada(turmaIds: string[], ano: number): Promise<Map<st
   return mapa;
 }
 
-export async function carregarCtxAlunos(ids: string[], ano: number, relacoes: Set<string>): Promise<AlunoCtx[]> {
+/** Remove matrículas duplicadas do mesmo aluno (ex: ativa + cancelada no mesmo ano), preferindo a ativa. */
+function deduplicarPorAluno<T extends { aluno_id: string; status: string }>(linhas: T[]): T[] {
+  const porAluno = new Map<string, T>();
+  for (const linha of linhas) {
+    const atual = porAluno.get(linha.aluno_id);
+    if (!atual || atual.status !== "ativa") porAluno.set(linha.aluno_id, linha);
+  }
+  return Array.from(porAluno.values());
+}
+
+export async function carregarCtxAlunos(ids: string[], ano: number, relacoes: Set<string>, status: string[]): Promise<AlunoCtx[]> {
   const supabase = await createServerClient();
   const extras = Object.entries(FRAGMENTO).filter(([rel]) => relacoes.has(rel)).map(([, frag]) => frag);
   const select = `aluno_id, turma_id, codigo, ano_letivo, status, data_matricula, series(nome, segmento), turmas(nome, turno), alunos!inner(${[SELECT_ALUNO, ...extras].join(", ")})`;
 
-  const linhas: LinhaMatricula[] = [];
+  const brutas: LinhaMatricula[] = [];
   for (const lote of emLotes(ids)) {
-    const { data, error } = await supabase.from("matriculas").select(select).eq("ano_letivo", ano).in("aluno_id", lote);
+    const { data, error } = await supabase.from("matriculas").select(select).eq("ano_letivo", ano).in("aluno_id", lote).in("status", status);
     if (error) throw error;
-    linhas.push(...((data ?? []) as unknown as LinhaMatricula[]));
+    brutas.push(...((data ?? []) as unknown as LinhaMatricula[]));
   }
+  const linhas = deduplicarPorAluno(brutas);
 
   const chamada = relacoes.has("chamada")
     ? await numerosDeChamada(Array.from(new Set(linhas.map((l) => l.turma_id))), ano)
