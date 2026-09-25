@@ -11,7 +11,11 @@
  * despesa X", e toda transferência interna viraria despesa nos dois CNPJs.
  *
  * Empate não casa: dois créditos do mesmo valor na janela viram ambíguo, para
- * não ligar dinheiro ao CNPJ errado.
+ * não ligar dinheiro ao CNPJ errado. A guarda vale para os dois lados: um
+ * crédito único disputado por dois débitos (cada um vendo só aquele crédito
+ * como candidato) também é ambíguo — sem isso, o primeiro débito na ordem
+ * ficava com o par e o segundo sumia silenciosamente na fila "a classificar",
+ * sem sinal nenhum de que os dois competiram pelo mesmo dinheiro.
  */
 
 export type MovimentoConta = {
@@ -58,23 +62,28 @@ export function detectarTransferenciasInternas(
 ): ResultadoInterno {
   const pares: ParInterno[] = [];
   const ambiguos: ParAmbiguo[] = [];
-  const usados = new Set<string>();
+  const creditosUsados = new Set<string>();
+  const debitosResolvidos = new Set<string>();
 
   // Data crescente: quando dois débitos iguais disputam créditos, o mais antigo escolhe antes.
   const ordenados = [...debitos].sort((a, b) => a.data.localeCompare(b.data) || a.id.localeCompare(b.id));
 
-  for (const debito of ordenados) {
-    const candidatos = creditos.filter(
+  const candidatosDe = (debito: MovimentoConta) =>
+    creditos.filter(
       (c) =>
-        !usados.has(c.id) &&
+        !creditosUsados.has(c.id) &&
         c.contaId !== debito.contaId &&
         centavos(c.valor) === centavos(debito.valor) &&
         Math.abs(dias(c.data, debito.data)) <= JANELA_DIAS_INTERNA,
     );
 
+  for (const debito of ordenados) {
+    if (debitosResolvidos.has(debito.id)) continue;
+
+    const candidatos = candidatosDe(debito);
     if (candidatos.length === 0) continue;
 
-    // Ambíguo só quando os candidatos estão em contas DIFERENTES: dois créditos
+    // Ambíguo do lado débito: candidatos em contas DIFERENTES. Dois créditos
     // iguais na mesma conta de destino dão no mesmo, e aí o primeiro serve.
     const contasDistintas = new Set(candidatos.map((c) => c.contaId));
     if (contasDistintas.size > 1) {
@@ -82,9 +91,29 @@ export function detectarTransferenciasInternas(
       continue;
     }
 
-    const escolhido = candidatos[0];
-    usados.add(escolhido.id);
-    pares.push({ debitoId: debito.id, creditoId: escolhido.id, contaDestinoId: escolhido.contaId });
+    const credito = candidatos[0];
+
+    // Ambíguo do lado crédito: outro débito, ainda não resolvido, cujo ÚNICO
+    // candidato também é este crédito. Sem essa checagem, o primeiro débito
+    // da ordem levava o par e o rival sumia na fila manual sem aviso.
+    const debitosRivais = ordenados.filter((d) => {
+      if (d.id === debito.id || debitosResolvidos.has(d.id)) return false;
+      const cs = candidatosDe(d);
+      return cs.length === 1 && cs[0].id === credito.id;
+    });
+
+    if (debitosRivais.length > 0) {
+      ambiguos.push({ debitoId: debito.id, candidatos: [credito.id] });
+      for (const rival of debitosRivais) {
+        ambiguos.push({ debitoId: rival.id, candidatos: [credito.id] });
+        debitosResolvidos.add(rival.id);
+      }
+      continue;
+    }
+
+    creditosUsados.add(credito.id);
+    debitosResolvidos.add(debito.id);
+    pares.push({ debitoId: debito.id, creditoId: credito.id, contaDestinoId: credito.contaId });
   }
 
   return { pares, ambiguos };
