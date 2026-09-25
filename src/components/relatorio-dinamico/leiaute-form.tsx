@@ -27,14 +27,13 @@ export function LeiauteForm({ config, onChange, colunas, empresas }: Props) {
 
   return (
     <div className="grid gap-5">
-      <label>
-        Formato de emissão
-        <select value={config.formato} onChange={(e) => set("formato", e.target.value as Formato)}>
-          {FORMATOS.map((f) => <option key={f} value={f}>{FORMATO_LABEL[f]}</option>)}
-        </select>
-      </label>
-
       <div className="grid gap-4 md:grid-cols-4">
+        <label>
+          Formato de emissão
+          <select value={config.formato} onChange={(e) => set("formato", e.target.value as Formato)}>
+            {FORMATOS.map((f) => <option key={f} value={f}>{FORMATO_LABEL[f]}</option>)}
+          </select>
+        </label>
         {config.formato === "etiqueta" ? (
           <>
             <label>
@@ -80,10 +79,7 @@ export function LeiauteForm({ config, onChange, colunas, empresas }: Props) {
         </div>
 
         {config.formato === "etiqueta" ? (
-          <div className="md:col-span-3">
-            <span className="mb-1 block text-sm font-medium text-ink">Descrição</span>
-            <p className="rounded-ui bg-muted px-3 py-2.5 text-sm text-ink/80">{descricaoModelo(modelo)}</p>
-          </div>
+          <p className="md:col-span-3 self-end text-xs text-ink/55">{descricaoModelo(modelo)}</p>
         ) : null}
 
         {pdfRelatorio ? (
@@ -93,14 +89,14 @@ export function LeiauteForm({ config, onChange, colunas, empresas }: Props) {
               <div className="w-40"><Segmentado value={config.exibirLogos ?? true} onChange={(v) => set("exibirLogos", v)} ariaLabel="Exibir logos" /></div>
             </div>
             {config.exibirLogos !== false ? (
-              <fieldset className="flex flex-wrap gap-3">
+              <fieldset className="flex flex-wrap items-center gap-3">
                 <legend className="mb-1 text-xs text-ink/60">Logos das empresas (até 4, na ordem de marcação; nenhuma = logo padrão)</legend>
                 {comLogo.length === 0 ? <p className="text-sm text-ink/55">Nenhuma empresa com logo cadastrada em RH › Empresas.</p> : null}
                 {comLogo.map((e) => {
                   const pos = (config.logosEmpresas ?? []).indexOf(e.id);
                   return (
                     <label key={e.id} className="flex items-center gap-2 rounded-ui border border-line px-3 py-2 text-sm">
-                      <input type="checkbox" checked={pos >= 0} onChange={() => alternarLogo(e.id)} disabled={pos < 0 && (config.logosEmpresas ?? []).length >= 4} />
+                      <input type="checkbox" className="h-4 w-4 shrink-0 accent-brand" checked={pos >= 0} onChange={() => alternarLogo(e.id)} disabled={pos < 0 && (config.logosEmpresas ?? []).length >= 4} />
                       {pos >= 0 ? <span className="text-xs font-semibold text-brand">{pos + 1}º</span> : null}
                       {e.nomeFantasia}
                     </label>
@@ -112,10 +108,10 @@ export function LeiauteForm({ config, onChange, colunas, empresas }: Props) {
         ) : null}
       </div>
 
-      <Acordeao titulo="Colunas" defaultOpen>
+      <Acordeao titulo={`Colunas · ${config.colunas.length} selecionada${config.colunas.length === 1 ? "" : "s"}`} defaultOpen>
         <ListaDupla disponiveis={colunas} selecionadas={config.colunas} onChange={setColunas} />
       </Acordeao>
-      <Acordeao titulo="Ordenação">
+      <Acordeao titulo={`Ordenação${config.ordenacao.length ? ` · ${config.ordenacao.length}` : ""}`}>
         <OrdenacaoEditor colunas={selecionadasMeta} valor={config.ordenacao} onChange={(o) => set("ordenacao", o)} />
       </Acordeao>
     </div>

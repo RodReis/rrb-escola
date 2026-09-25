@@ -55,8 +55,8 @@ export function TemplateBar({ entidade, templates, selecionadoId, config, permis
   };
 
   return (
-    <div className="grid gap-3 md:grid-cols-[2fr_1fr_1fr_1fr] md:items-end">
-      <label>
+    <div className="flex flex-wrap items-end gap-3">
+      <label className="min-w-56 flex-1">
         Template
         <select value={selecionadoId ?? ""} onChange={(e) => onSelecionar(e.target.value || null)}>
           <option value="">— Sem template —</option>
@@ -64,13 +64,13 @@ export function TemplateBar({ entidade, templates, selecionadoId, config, permis
         </select>
       </label>
       <Button type="button" variant="secondary" loading={pendente} disabled={!(permissoes.criar || (atual && permissoes.editar))} onClick={aoSalvar}>
-        <Save size={14} className="mr-1.5" /> Salvar
+        <Save size={14} /> Salvar
       </Button>
       <Button type="button" variant="secondary" onClick={() => onSelecionar(null)}>
-        <FilePlus2 size={14} className="mr-1.5" /> Novo
+        <FilePlus2 size={14} /> Novo
       </Button>
-      <Button type="button" variant="secondary" disabled={!atual || !permissoes.excluir || pendente} onClick={aoExcluir}>
-        <Trash2 size={14} className="mr-1.5" /> Excluir
+      <Button type="button" variant="warn" disabled={!atual || !permissoes.excluir || pendente} onClick={aoExcluir}>
+        <Trash2 size={14} /> Excluir
       </Button>
 
       <Dialog open={dialogo} title="Salvar template" onClose={() => setDialogo(false)}>
