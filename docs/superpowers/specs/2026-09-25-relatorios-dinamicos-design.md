@@ -97,6 +97,9 @@ interface TemplateConfig {
   rotulos?: boolean;                               // etiqueta: "Label: valor" vs "valor" (default true)
   titulo?: string;                                 // grade/tabular (obrigatório nesses formatos)
   subtitulo?: string;                              // grade/tabular
+  exibirLogos?: boolean;                           // grade/tabular: default true
+  logosEmpresas?: string[];                        // grade/tabular: companies.id na ordem de exibição;
+                                                   // vazio = empresa do credenciamento vigente
 }
 ```
 Keys de coluna desconhecidas (ex.: coluna removida do catálogo) são descartadas ao carregar o template, com aviso em toast.
@@ -151,8 +154,10 @@ Todos os relatórios: lista de registros resultantes com checkbox, busca, marcar
 | Formato | Campos visíveis |
 |---|---|
 | Etiqueta | Formato da etiqueta, Fonte (stepper), Rótulos dos campos (Sim/Não), Descrição para impressão, Qtd de cópias, Descrição do modelo (somente leitura) |
-| Grade PDF | Título, Subtítulo, Descrição para impressão, Qtd de cópias |
-| Tabular PDF | Título, Subtítulo, Descrição para impressão, Qtd de cópias |
+| Grade PDF | Título, Subtítulo, Descrição para impressão, Qtd de cópias, Exibir logos (Sim/Não), Logos das empresas |
+| Tabular PDF | Título, Subtítulo, Descrição para impressão, Qtd de cópias, Exibir logos (Sim/Não), Logos das empresas |
+
+**Logos das empresas** (opcional): multisseleção de `companies` que têm `logo_path`, reordenável, visível só quando "Exibir logos" = Sim. Nenhuma selecionada usa a logo da empresa do credenciamento vigente. Empresa sem logo não aparece na lista.
 | CSV | Qtd de cópias |
 
 - **Colunas** (acordeão): lista dupla "Dados Disponíveis" ⇄ "Dados Selecionados", cada lado com busca, checkbox por item, marcar todos, contador; botões mover →/←; duplo clique move; lado selecionado reordenável por arrastar (@dnd-kit/sortable, com suporte a teclado).
@@ -172,6 +177,9 @@ Todos os relatórios: lista de registros resultantes com checkbox, busca, marcar
 
 ### 9.1 Renderizadores
 - **Cabeçalho institucional compartilhado** (`cabecalho.ts`): extrair de `renderCabecalho` (`src/lib/documents/declaracao-pdf.ts`) — logo, nome, resolução (de `companies` via credenciamento vigente), data/hora de emissão, título, subtítulo. Declaração passa a usar o helper extraído (sem mudar o resultado visual).
+  - Logos: quando `exibirLogos`, carrega as logos (`logo_path` no storage → data URL via `urlToDataUrl`/`carregarImagens` de `pdf-utils.ts`) e as desenha lado a lado, à esquerda do cabeçalho, com altura fixa (~18 mm), largura proporcional (`imgFitInBox`) e 3 mm de espaço entre elas, até no máximo 4 logos. O texto institucional fica à direita, como no exemplo do Escolar Manager.
+  - Falha ao carregar uma logo: ela é omitida, o PDF é gerado e aparece um toast de aviso. Com `exibirLogos = false`, o cabeçalho sai só com texto.
+  - A server action devolve os `logo_path` assinados das empresas pedidas junto com os dados. Só entram empresas da escola do usuário.
 - **Etiqueta:** geometria por modelo (página, margens, tamanho da etiqueta, pitch H/V, colunas×linhas) em tabela de constantes; fonte monoespaçada no tamanho escolhido; uma linha por coluna selecionada; texto cortado (clip) na largura da etiqueta sem quebra; linhas excedentes à altura cortadas; nova página quando cheia; descrição para impressão no rodapé da página, se preenchida.
 
   | Modelo | Papel | Col×Lin | Etiqueta (mm) |
@@ -230,7 +238,8 @@ Seguir `docs/design_system/REGRAS-CLAUDE-CODE.md`: cor só via token, sem serifa
 - Etiqueta: posição x/y por índice nos 4 modelos, quebra de página, cópias em sequência, clip de texto.
 - CSV: escape de `;`, `"`, quebra de linha; BOM; `\r\n`.
 - Ordenação multi-chave, acentos pt-BR, asc/desc.
-- zod de `TemplateConfig` (formato × campos obrigatórios, limites de cópias/fonte).
+- zod de `TemplateConfig` (formato × campos obrigatórios, limites de cópias/fonte, máx. 4 logos).
+- Cabeçalho: layout de N logos (0–4) com posições/larguras proporcionais; logo que falha é omitida sem quebrar.
 - `gerarDadosRelatorio` rejeita entidade/coluna desconhecida e usuário sem permissão; coluna salarial oculta sem permissão RH.
 - `npm run typecheck && npm run build` verdes a cada fase; `npm run test` antes do PR.
 
