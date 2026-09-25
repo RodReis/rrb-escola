@@ -46,6 +46,9 @@ export async function previewPlanilhaAction(formData: FormData): Promise<Resulta
 
   const lido = await lerPlanilha(Buffer.from(await arquivo.arrayBuffer()), new Date().toISOString().slice(0, 10));
   if (lido.erro) return { erro: lido.erro };
+  if (lido.linhas.length === 0) {
+    return { erro: "Nenhuma linha reconhecida nesta planilha. Confira se o arquivo está no formato esperado (seções com nome, contato/data e valor)." };
+  }
 
   const supabase = await createServerClient();
   const [companiesRes, categoriasRes] = await Promise.all([
@@ -57,7 +60,15 @@ export async function previewPlanilhaAction(formData: FormData): Promise<Resulta
 
   const hashes = lido.linhas.flatMap((l) =>
     l.valor !== null && l.dataVencimento !== null && l.descricao
-      ? [hashImport({ competencia: competenciaDe(l.dataVencimento), descricao: l.descricao, valor: l.valor, dataVencimento: l.dataVencimento })]
+      ? [
+          hashImport({
+            competencia: competenciaDe(l.dataVencimento),
+            descricao: l.descricao,
+            valor: l.valor,
+            dataVencimento: l.dataVencimento,
+            empresaId: sugerirEmpresa(l.empresa, empresas),
+          }),
+        ]
       : [],
   );
   const { data: existentes } = await supabase
@@ -79,7 +90,13 @@ export async function previewPlanilhaAction(formData: FormData): Promise<Resulta
       const falta = !l.descricao ? "descrição" : l.valor === null ? "valor" : "data de vencimento";
       return { ...base, situacao: "invalida", motivoInvalida: `${falta} ilegível` };
     }
-    const h = hashImport({ competencia: competenciaDe(l.dataVencimento), descricao: l.descricao, valor: l.valor, dataVencimento: l.dataVencimento });
+    const h = hashImport({
+      competencia: competenciaDe(l.dataVencimento),
+      descricao: l.descricao,
+      valor: l.valor,
+      dataVencimento: l.dataVencimento,
+      empresaId: base.empresaId,
+    });
     if (jaNoBanco.has(h)) return { ...base, situacao: "duplicado", motivoInvalida: null };
     if (vistos.has(h)) return { ...base, situacao: "repetida", motivoInvalida: null };
     vistos.add(h);
@@ -126,7 +143,13 @@ export async function confirmarImportacaoAction(linhasJson: string): Promise<{ c
     data_vencimento: l.dataVencimento,
     status: "aberta" as const,
     origem_tipo: "manual" as const,
-    import_hash: hashImport({ competencia: competenciaDe(l.dataVencimento), descricao: l.descricao, valor: l.valor, dataVencimento: l.dataVencimento }),
+    import_hash: hashImport({
+      competencia: competenciaDe(l.dataVencimento),
+      descricao: l.descricao,
+      valor: l.valor,
+      dataVencimento: l.dataVencimento,
+      empresaId: l.empresaId,
+    }),
     criado_por: session.profile.id,
   }));
 

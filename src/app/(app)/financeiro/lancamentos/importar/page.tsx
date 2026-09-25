@@ -10,7 +10,7 @@ export default async function ImportarPrevistoPage() {
       <PageHeader
         breadcrumb={[{ label: "Livro-Razão", href: "/financeiro/lancamentos" }, { label: "Importar previsto" }]}
         title="Importar planilha de contas a pagar"
-        description="Colunas: DESCRICAO, VALOR, VENCE_EM (obrigatórias); EMPRESA, CATEGORIA, CLASSE (fixa/variável), DOCUMENTO (opcionais). Cada linha vira um título em aberto; reenviar o mesmo arquivo não duplica."
+        description="A planilha é organizada em seções (ex.: FORNECEDORES, IMPOSTOS) com o nome do item, contato ou data, e o valor. Cada linha vira um título em aberto; reenviar o mesmo arquivo não duplica."
       />
       <Panel>
         <ImportarPrevistoForm />

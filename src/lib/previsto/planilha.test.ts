@@ -51,6 +51,16 @@ describe("hashImport", () => {
     const b = hashImport({ competencia: "2026-09", descricao: "x", valor: 1.01, dataVencimento: "2026-09-10" });
     expect(a).not.toBe(b);
   });
+  it("muda com a empresa (FGTS ESCOLA x FGTS COLÉGIO não colidem)", () => {
+    const escola = hashImport({ competencia: "2026-09", descricao: "FGTS", valor: 100, dataVencimento: "2026-09-10", empresaId: "empresa-escola" });
+    const colegio = hashImport({ competencia: "2026-09", descricao: "FGTS", valor: 100, dataVencimento: "2026-09-10", empresaId: "empresa-colegio" });
+    expect(escola).not.toBe(colegio);
+  });
+  it("empresaId omitido e null explícito dão o mesmo hash (tratamento estável)", () => {
+    const semParametro = hashImport({ competencia: "2026-09", descricao: "x", valor: 1, dataVencimento: "2026-09-10" });
+    const comNullExplicito = hashImport({ competencia: "2026-09", descricao: "x", valor: 1, dataVencimento: "2026-09-10", empresaId: null });
+    expect(semParametro).toBe(comNullExplicito);
+  });
 });
 
 describe("lerPlanilha (formato real: seções, sem cabeçalho)", () => {
@@ -151,5 +161,23 @@ describe("lerPlanilha (formato real: seções, sem cabeçalho)", () => {
     const r = await lerPlanilha(buf);
     expect(r.erro).toBeNull();
     expect(r.linhas).toEqual([]);
+  });
+
+  it("reenvio da mesma planilha (seção PIX) em dia diferente não muda a data nem o hash", async () => {
+    const buf = await planilhaSecoes([
+      { 6: "PIX  15/09" },
+      { 6: "João Oliveira da Costa", 7: "62 98647-8123", 8: 441 },
+    ]);
+    const dia1 = await lerPlanilha(buf, "2026-09-15");
+    const dia2 = await lerPlanilha(buf, "2026-09-16");
+
+    expect(dia1.linhas[0].dataVencimento).toBe("2026-09-15");
+    expect(dia2.linhas[0].dataVencimento).toBe("2026-09-15"); // vem do título "15/09", não do dia do upload
+
+    const linha1 = dia1.linhas[0]!;
+    const linha2 = dia2.linhas[0]!;
+    const h1 = hashImport({ competencia: linha1.dataVencimento!.slice(0, 7), descricao: linha1.descricao, valor: linha1.valor!, dataVencimento: linha1.dataVencimento! });
+    const h2 = hashImport({ competencia: linha2.dataVencimento!.slice(0, 7), descricao: linha2.descricao, valor: linha2.valor!, dataVencimento: linha2.dataVencimento! });
+    expect(h1).toBe(h2);
   });
 });

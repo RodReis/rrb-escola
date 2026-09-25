@@ -55,9 +55,13 @@ function textoOuNull(v: unknown): string | null {
   return t === "" ? null : t;
 }
 
-/** Chave de idempotência do reenvio. A descrição entra normalizada. */
-export function hashImport(p: { competencia: string; descricao: string; valor: number; dataVencimento: string }): string {
-  const base = [p.competencia, normalizarTexto(p.descricao), Math.round(p.valor * 100), p.dataVencimento].join("|");
+/**
+ * Chave de idempotência do reenvio. A descrição entra normalizada.
+ * `empresaId` entra na chave para não confundir "FGTS ESCOLA" com "FGTS COLÉGIO"
+ * (mesmo valor/data, empresas diferentes) — achado da revisão final.
+ */
+export function hashImport(p: { competencia: string; descricao: string; valor: number; dataVencimento: string; empresaId?: string | null }): string {
+  const base = [p.competencia, normalizarTexto(p.descricao), Math.round(p.valor * 100), p.dataVencimento, p.empresaId ?? ""].join("|");
   return createHash("sha256").update(base).digest("hex");
 }
 
@@ -101,14 +105,26 @@ function ehLinhaDeTotal(vBruto: ExcelJS.CellValue): boolean {
   return typeof vBruto === "object" && vBruto !== null && !(vBruto instanceof Date) && "formula" in vBruto;
 }
 
+/** Extrai dd/mm do título da seção (ex.: "PIX  15/09" -> "09-15"). Sem ano — combina com o ano de dataArquivo. */
+function dataDoTitulo(titulo: string, dataArquivo?: string): string | null {
+  const m = titulo.match(/(\d{1,2})\/(\d{1,2})/);
+  if (!m) return null;
+  const dia = Number(m[1]);
+  const mes = Number(m[2]);
+  const anoRef = dataArquivo ? Number(dataArquivo.slice(0, 4)) : new Date().getFullYear();
+  return isoValida(anoRef, mes, dia) ? `${String(mes).padStart(2, "0")}-${String(dia).padStart(2, "0")}` : null;
+}
+
 /**
  * Planilha real da secretária: sem cabeçalho de coluna, seções tituladas
  * ("PIX  15/09", "FORNECEDORES", "IMPOSTOS"), dados nas colunas 6-9, totais em
  * fórmula intercalados. Ver Task 13 do plano para o achado completo.
  *
- * `dataArquivo` (formato "AAAA-MM-DD") é o fallback de vencimento para seções
- * como PIX, que não trazem data própria — o item já foi pago na data em que a
- * planilha foi feita (E1 da Task 13: decisão do Rodrigo, 25/09).
+ * `dataArquivo` (formato "AAAA-MM-DD") fornece o ANO para seções como PIX, cujo
+ * título já traz o dd/mm ("PIX  15/09") — o vencimento vem do título da seção,
+ * não do dia do upload, senão reenviar a mesma planilha em dias diferentes muda
+ * o hash e duplica (achado da revisão final). Só cai no dataArquivo inteiro
+ * quando a seção não tem data no título.
  */
 export async function lerPlanilha(buffer: Buffer, dataArquivo?: string): Promise<ResultadoLeitura> {
   const wb = new ExcelJS.Workbook();
@@ -118,6 +134,7 @@ export async function lerPlanilha(buffer: Buffer, dataArquivo?: string): Promise
 
   const linhas: LinhaPlanilha[] = [];
   let secaoAtual: string | null = null;
+  let dataDaSecao: string | null = null;
 
   ws.eachRow((row, numero) => {
     if (ehLinhaDeTotal(row.getCell(8).value)) return; // total, nunca é dado — checar ANTES de celula() desembrulhar
@@ -132,6 +149,7 @@ export async function lerPlanilha(buffer: Buffer, dataArquivo?: string): Promise
 
     if (c6 !== null && valor === null && c7vazio && !c9) {
       secaoAtual = c6; // título de seção
+      dataDaSecao = dataDoTitulo(c6, dataArquivo);
       return;
     }
 
@@ -142,7 +160,8 @@ export async function lerPlanilha(buffer: Buffer, dataArquivo?: string): Promise
     const categoria = categoriaChave ? SECAO_PARA_CATEGORIA[categoriaChave] ?? null : null;
 
     const dataParseada = parseData(c7);
-    const dataVencimento = dataParseada ?? dataArquivo ?? null;
+    const anoArquivo = dataArquivo ? dataArquivo.slice(0, 4) : null;
+    const dataVencimento = dataParseada ?? (dataDaSecao && anoArquivo ? `${anoArquivo}-${dataDaSecao}` : dataArquivo ?? null);
 
     linhas.push({
       linha: numero,
