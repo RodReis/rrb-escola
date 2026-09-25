@@ -53,6 +53,7 @@ export async function getPrevistoRealizado(competencia: string, companyId: strin
 
   // Truncar em silêncio faria o dashboard mentir; melhor quebrar alto.
   if ((mesRes.data?.length ?? 0) >= LIMITE) throw new Error("Resultado truncado: mais de 1000 lançamentos no mês.");
+  if ((atrasadosRes.data?.length ?? 0) >= LIMITE) throw new Error("Resultado truncado: mais de 1000 títulos vencidos.");
 
   return {
     doMes: ((mesRes.data ?? []) as unknown as Bruta[]).map(paraLinha),
