@@ -44,7 +44,7 @@ export async function previewPlanilhaAction(formData: FormData): Promise<Resulta
   if (!(arquivo instanceof File) || arquivo.size === 0) return { erro: "Selecione o arquivo .xlsx." };
   if (arquivo.size > MAX_BYTES) return { erro: "Arquivo maior que 2MB." };
 
-  const lido = await lerPlanilha(Buffer.from(await arquivo.arrayBuffer()));
+  const lido = await lerPlanilha(Buffer.from(await arquivo.arrayBuffer()), new Date().toISOString().slice(0, 10));
   if (lido.erro) return { erro: lido.erro };
 
   const supabase = await createServerClient();

@@ -24,27 +24,6 @@ export function normalizarTexto(v: string): string {
     .trim();
 }
 
-// Cabeçalho normalizado -> campo. Ajustar aqui quando a planilha real divergir.
-const ALIASES: Record<string, keyof Omit<LinhaPlanilha, "linha">> = {
-  descricao: "descricao", despesa: "descricao", nome: "descricao", historico: "descricao",
-  valor: "valor",
-  vence_em: "dataVencimento", vencimento: "dataVencimento", data_vencimento: "dataVencimento",
-  empresa: "empresa", cnpj_empresa: "empresa",
-  categoria: "categoria", tipo_despesa: "categoria",
-  classe: "classe", fixo_variavel: "classe", fixo_vairavel: "classe", tipo: "classe",
-  documento: "documento", cpf_cnpj: "documento", cpf_cnpj_fornecedor: "documento",
-};
-
-const OBRIGATORIOS: Array<[keyof Omit<LinhaPlanilha, "linha">, string]> = [
-  ["descricao", "DESCRICAO"],
-  ["valor", "VALOR"],
-  ["dataVencimento", "VENCE_EM"],
-];
-
-function chaveDeCabecalho(v: unknown): string {
-  return normalizarTexto(String(v ?? "")).replace(/[^a-z0-9]+/g, "_").replace(/^_|_$/g, "");
-}
-
 export function parseValor(v: unknown): number | null {
   if (typeof v === "number") return Number.isFinite(v) && v > 0 ? v : null;
   if (typeof v !== "string") return null;
@@ -71,14 +50,6 @@ export function parseData(v: unknown): string | null {
   return null;
 }
 
-/** "VAIRAVEL" (typo real da planilha de setembro) entra como variável. */
-function parseClasse(v: unknown): "fixa" | "variavel" | null {
-  const t = normalizarTexto(String(v ?? ""));
-  if (t.startsWith("fix")) return "fixa";
-  if (t.startsWith("var") || t.startsWith("vai")) return "variavel";
-  return null;
-}
-
 function textoOuNull(v: unknown): string | null {
   const t = String(v ?? "").trim();
   return t === "" ? null : t;
@@ -99,45 +70,83 @@ function celula(v: ExcelJS.CellValue): unknown {
   return v;
 }
 
-export async function lerPlanilha(buffer: Buffer): Promise<ResultadoLeitura> {
+/** Seção da planilha -> nome de categoria conhecida. Título sem correspondência (ex.: "PIX  15/09") não sugere. */
+const SECAO_PARA_CATEGORIA: Record<string, string> = {
+  fornecedores: "Fornecedores",
+  impostos: "Impostos",
+};
+
+/** Sufixo de empresa colado no nome, só existe na seção IMPOSTOS da planilha real (E4). */
+const SUFIXO_EMPRESA = /\s+(ESCOLA|COL[ÉE]GIO)\s*$/i;
+
+function extrairEmpresaDoNome(nome: string): { nome: string; empresa: string | null } {
+  const m = nome.match(SUFIXO_EMPRESA);
+  if (!m) return { nome, empresa: null };
+  return { nome: nome.slice(0, m.index).trim(), empresa: m[1].toUpperCase() };
+}
+
+function digitosDocumento(v: unknown): string | null {
+  if (typeof v !== "string") return null;
+  const digitos = v.replace(/\D/g, "");
+  return digitos.length === 6 || digitos.length === 11 || digitos.length === 14 ? digitos : null;
+}
+
+function ehLinhaDeTotal(v: unknown): boolean {
+  return typeof v === "object" && v !== null && "formula" in v;
+}
+
+/**
+ * Planilha real da secretária: sem cabeçalho de coluna, seções tituladas
+ * ("PIX  15/09", "FORNECEDORES", "IMPOSTOS"), dados nas colunas 6-9, totais em
+ * fórmula intercalados. Ver Task 13 do plano para o achado completo.
+ *
+ * `dataArquivo` (formato "AAAA-MM-DD") é o fallback de vencimento para seções
+ * como PIX, que não trazem data própria — o item já foi pago na data em que a
+ * planilha foi feita (E1 da Task 13: decisão do Rodrigo, 25/09).
+ */
+export async function lerPlanilha(buffer: Buffer, dataArquivo?: string): Promise<ResultadoLeitura> {
   const wb = new ExcelJS.Workbook();
   await wb.xlsx.load(buffer as unknown as ExcelJS.Buffer);
   const ws = wb.worksheets[0];
   if (!ws) return { linhas: [], erro: "A planilha não tem nenhuma aba." };
 
-  const colunas = new Map<keyof Omit<LinhaPlanilha, "linha">, number>();
-  ws.getRow(1).eachCell((cell, col) => {
-    const campo = ALIASES[chaveDeCabecalho(celula(cell.value))];
-    if (campo && !colunas.has(campo)) colunas.set(campo, col);
-  });
-
-  const faltando = OBRIGATORIOS.filter(([campo]) => !colunas.has(campo)).map(([, nome]) => nome);
-  if (faltando.length > 0) {
-    return { linhas: [], erro: `Colunas obrigatórias ausentes: ${faltando.join(", ")}. Confira a linha 1 da planilha.` };
-  }
-
-  const pega = (row: ExcelJS.Row, campo: keyof Omit<LinhaPlanilha, "linha">) => {
-    const col = colunas.get(campo);
-    return col ? celula(row.getCell(col).value) : null;
-  };
-
   const linhas: LinhaPlanilha[] = [];
+  let secaoAtual: string | null = null;
+
   ws.eachRow((row, numero) => {
-    if (numero === 1) return;
-    const descricao = textoOuNull(pega(row, "descricao"));
-    const valorBruto = pega(row, "valor");
-    const dataBruta = pega(row, "dataVencimento");
-    if (!descricao && (valorBruto === null || valorBruto === "") && (dataBruta === null || dataBruta === "")) return;
+    const c6 = textoOuNull(celula(row.getCell(6).value));
+    const c7 = celula(row.getCell(7).value);
+    const c8raw = celula(row.getCell(8).value);
+    const c9 = textoOuNull(celula(row.getCell(9).value));
+
+    if (ehLinhaDeTotal(c8raw)) return; // total, nunca é dado
+
+    const valor = parseValor(c8raw);
+    const c7vazio = c7 === null || c7 === undefined || c7 === "";
+
+    if (c6 !== null && valor === null && c7vazio && !c9) {
+      secaoAtual = c6; // título de seção
+      return;
+    }
+
+    if (c6 === null || valor === null) return; // linha de continuação/vazia — fora de escopo (Step 4 do design)
+
+    const { nome, empresa } = extrairEmpresaDoNome(c6);
+    const categoriaChave = secaoAtual ? normalizarTexto(secaoAtual).replace(/[^a-z]/g, "") : null;
+    const categoria = categoriaChave ? SECAO_PARA_CATEGORIA[categoriaChave] ?? null : null;
+
+    const dataParseada = parseData(c7);
+    const dataVencimento = dataParseada ?? dataArquivo ?? null;
 
     linhas.push({
       linha: numero,
-      descricao: descricao ?? "",
-      valor: parseValor(valorBruto),
-      dataVencimento: parseData(dataBruta),
-      empresa: textoOuNull(pega(row, "empresa")),
-      categoria: textoOuNull(pega(row, "categoria")),
-      classe: parseClasse(pega(row, "classe")),
-      documento: textoOuNull(pega(row, "documento")),
+      descricao: nome,
+      valor,
+      dataVencimento,
+      empresa,
+      categoria,
+      classe: null, // a planilha real não marca fixa/variável — preenchimento manual
+      documento: digitosDocumento(c7),
     });
   });
 

@@ -53,61 +53,92 @@ describe("hashImport", () => {
   });
 });
 
-describe("lerPlanilha", () => {
-  it("lê cabeçalhos com apelido e devolve linhas normalizadas", async () => {
-    const buf = await planilha([
-      ["DESCRIÇÃO", "VALOR", "VENCE EM", "EMPRESA", "TIPO-DESPESA", "FIXO/VAIRAVEL", "CPF/CNPJ"],
-      ["FGTS", 1234.5, "18/09/2026", "ESCOLA", "Impostos", "FIXO", ""],
-      ["MARK COLLOR", "R$ 800,00", new Date(Date.UTC(2026, 9, 2)), "", "Outros", "VAIRAVEL", "246.701.123-45"],
+describe("lerPlanilha (formato real: seções, sem cabeçalho)", () => {
+  async function planilhaSecoes(linhas: Array<Record<number, unknown>>): Promise<Buffer> {
+    const wb = new ExcelJS.Workbook();
+    const ws = wb.addWorksheet("Plan1");
+    ws.addRow([]); // linha 1 vazia
+    ws.addRow([]); // linha 2 vazia
+    for (const linha of linhas) {
+      const row = ws.addRow([]);
+      for (const [col, val] of Object.entries(linha)) row.getCell(Number(col)).value = val as ExcelJS.CellValue;
+    }
+    return Buffer.from(await wb.xlsx.writeBuffer());
+  }
+
+  it("linha de seção não vira dado; linhas seguintes herdam a categoria dela", async () => {
+    const buf = await planilhaSecoes([
+      { 6: "FORNECEDORES" },
+      { 6: "ICARUS", 7: new Date(Date.UTC(2026, 8, 10)), 8: 295.41 },
     ]);
     const r = await lerPlanilha(buf);
     expect(r.erro).toBeNull();
     expect(r.linhas).toEqual([
-      { linha: 2, descricao: "FGTS", valor: 1234.5, dataVencimento: "2026-09-18", empresa: "ESCOLA", categoria: "Impostos", classe: "fixa", documento: null },
-      { linha: 3, descricao: "MARK COLLOR", valor: 800, dataVencimento: "2026-10-02", empresa: null, categoria: "Outros", classe: "variavel", documento: "246.701.123-45" },
+      { linha: 4, descricao: "ICARUS", valor: 295.41, dataVencimento: "2026-09-10", empresa: null, categoria: "Fornecedores", classe: null, documento: null },
     ]);
   });
 
-  it("falta coluna obrigatória: erro claro listando o que faltou", async () => {
-    const buf = await planilha([["DESCRIÇÃO", "VALOR"], ["x", 1]]);
+  it("linha de total (fórmula em c8) nunca vira dado", async () => {
+    const buf = await planilhaSecoes([
+      { 6: "FORNECEDORES" },
+      { 6: "ICARUS", 7: new Date(Date.UTC(2026, 8, 10)), 8: 295.41 },
+      { 8: { formula: "SUM(H4:H4)", result: 295.41 } },
+    ]);
     const r = await lerPlanilha(buf);
+    expect(r.linhas).toHaveLength(1);
+  });
+
+  it("ESCOLA/COLÉGIO coladas no nome (seção IMPOSTOS) viram empresa e saem do nome", async () => {
+    const buf = await planilhaSecoes([
+      { 6: "IMPOSTOS" },
+      { 6: "FGTS ESCOLA", 7: new Date(Date.UTC(2026, 8, 18)), 8: 8450.9 },
+      { 6: "ISS COLÉGIO", 7: new Date(Date.UTC(2026, 8, 21)), 8: 840.3 },
+    ]);
+    const r = await lerPlanilha(buf);
+    expect(r.linhas[0]).toMatchObject({ descricao: "FGTS", empresa: "ESCOLA", categoria: "Impostos" });
+    expect(r.linhas[1]).toMatchObject({ descricao: "ISS", empresa: "COLÉGIO", categoria: "Impostos" });
+  });
+
+  it("fora de IMPOSTOS, empresa é sempre null (sem pista no formato real)", async () => {
+    const buf = await planilhaSecoes([
+      { 6: "PIX  15/09" },
+      { 6: "Celso Aparecido Borges Ltda", 7: "pix CNPJ 49.584.483/0001-08", 8: 800, 9: "1/2 PASTAS" },
+    ]);
+    const r = await lerPlanilha(buf);
+    expect(r.linhas[0].empresa).toBeNull();
+  });
+
+  it("documento é reconhecido dentro de texto livre em c7 (CNPJ/CPF misturado com rótulo)", async () => {
+    const buf = await planilhaSecoes([
+      { 6: "PIX  15/09" },
+      { 6: "Celso Aparecido Borges Ltda", 7: "pix CNPJ 49.584.483/0001-08", 8: 800 },
+    ]);
+    const r = await lerPlanilha(buf);
+    expect(r.linhas[0].documento).toBe("49584483000108");
+  });
+
+  it("c7 sem data reconhecível (contato/telefone) usa a data do arquivo, não null", async () => {
+    const buf = await planilhaSecoes([
+      { 6: "PIX  15/09" },
+      { 6: "João Oliveira da Costa", 7: "62 98647-8123", 8: 441 },
+    ]);
+    const r = await lerPlanilha(buf, "2026-09-15");
+    expect(r.linhas[0].dataVencimento).toBe("2026-09-15");
+  });
+
+  it("linha sem nome (c6 vazio) ou sem valor (c8 vazio) não vira dado (linha de continuação rara)", async () => {
+    const buf = await planilhaSecoes([
+      { 6: "PIX  15/09" },
+      { 7: "2026-09-20T00:00:00.000Z", 8: 1296.8 }, // c6 ausente — linha 21 do arquivo real
+    ]);
+    const r = await lerPlanilha(buf);
+    expect(r.linhas).toHaveLength(0);
+  });
+
+  it("nenhuma seção reconhecida (arquivo vazio de verdade) devolve lista vazia, não erro", async () => {
+    const buf = await planilhaSecoes([]);
+    const r = await lerPlanilha(buf);
+    expect(r.erro).toBeNull();
     expect(r.linhas).toEqual([]);
-    expect(r.erro).toContain("VENCE_EM");
-  });
-
-  it("linha com valor ou data ilegíveis vem marcada, não some", async () => {
-    const buf = await planilha([["DESCRIÇÃO", "VALOR", "VENCE EM"], ["Luz", "abc", "10/10/2026"]]);
-    const r = await lerPlanilha(buf);
-    expect(r.linhas[0]).toMatchObject({ linha: 2, descricao: "Luz", valor: null, dataVencimento: "2026-10-10" });
-  });
-
-  it("ignora linhas totalmente vazias", async () => {
-    const buf = await planilha([["DESCRIÇÃO", "VALOR", "VENCE EM"], [null, null, null], ["Luz", 10, "10/10/2026"]]);
-    const r = await lerPlanilha(buf);
-    expect(r.linhas.map((l) => l.linha)).toEqual([3]);
-  });
-
-  it("desembrulha valor de fórmula (cell.value com .result)", async () => {
-    const wb = new ExcelJS.Workbook();
-    const ws = wb.addWorksheet("contas");
-    ws.addRow(["DESCRIÇÃO", "VALOR", "VENCE EM"]);
-    ws.addRow(["Aluguel", null, "10/10/2026"]);
-    ws.getCell("B2").value = { formula: "800*1", result: 800 } as unknown as ExcelJS.CellValue;
-    const buf = Buffer.from(await wb.xlsx.writeBuffer());
-    const r = await lerPlanilha(buf);
-    expect(r.linhas[0]).toMatchObject({ descricao: "Aluguel", valor: 800, dataVencimento: "2026-10-10" });
-  });
-
-  it("desembrulha texto de rich text (cell.value com .richText)", async () => {
-    const wb = new ExcelJS.Workbook();
-    const ws = wb.addWorksheet("contas");
-    ws.addRow(["DESCRIÇÃO", "VALOR", "VENCE EM"]);
-    ws.addRow([null, 10, "10/10/2026"]);
-    ws.getCell("A2").value = {
-      richText: [{ text: "Água " }, { text: "Sabesp" }],
-    } as unknown as ExcelJS.CellValue;
-    const buf = Buffer.from(await wb.xlsx.writeBuffer());
-    const r = await lerPlanilha(buf);
-    expect(r.linhas[0]).toMatchObject({ descricao: "Água Sabesp", valor: 10, dataVencimento: "2026-10-10" });
   });
 });
