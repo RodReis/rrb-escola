@@ -2,6 +2,7 @@ import { createServerClient } from "@/lib/supabase/server";
 import { DEFAULT_SCHOOL_ID } from "@/lib/constants";
 import type { StudentSheet } from "@/lib/types";
 import { normalizeNome } from "@/lib/format/normalize-nome";
+import { derivarStatusFinanceiroMes, type StatusFinanceiroMes } from "@/lib/finance/status-mes-corrente";
 import {
   alunoSemMatriculaAtivaNoAno,
   montarFiltroAlunosAtivos,
@@ -11,6 +12,8 @@ import {
 /** "ativos" (padrao) | "inativos" | "todos" — ver `situacao` em runStudentsQuery. */
 export type SituacaoAluno = "ativos" | "inativos" | "todos";
 
+export type StatusFinanceiroFiltro = NonNullable<StatusFinanceiroMes>;
+
 export type StudentFilters = {
   nome?: string;
   serieId?: string;
@@ -18,6 +21,7 @@ export type StudentFilters = {
   segmento?: string;
   anoLetivo?: number;
   situacao?: SituacaoAluno;
+  financeiro?: StatusFinanceiroFiltro;
   page?: number;
   pageSize?: number;
 };
@@ -52,8 +56,8 @@ function runStudentsQuery(
   const hasEnrollmentFilter =
     !querInativos && Boolean(filters?.serieId || filters?.turmaId || filters?.segmento);
   const matriculaSelect = hasEnrollmentFilter
-    ? "matriculas!inner(status, serie_id, turma_id, ano_letivo, series!inner(id, nome, segmento), turmas(id, nome), planos(nome))"
-    : "matriculas(status, serie_id, turma_id, ano_letivo, series(id, nome, segmento), turmas(id, nome), planos(nome))";
+    ? "matriculas!inner(id, status, serie_id, turma_id, ano_letivo, series!inner(id, nome, segmento), turmas(id, nome), planos(nome))"
+    : "matriculas(id, status, serie_id, turma_id, ano_letivo, series(id, nome, segmento), turmas(id, nome), planos(nome))";
 
   let query = supabase
     .from("alunos")
@@ -88,10 +92,132 @@ function runStudentsQuery(
   return query;
 }
 
+// Lote máximo de ids por `.in()` nesta consulta. Smoke test real (2026-09-24,
+// local, 509 alunos) confirmou 414 "URI Too Long" do PostgREST/gateway com
+// todos os ids candidatos numa única query (~19KB de query string); 150 ids
+// por lote (~5,7KB) respondeu 200 no mesmo ambiente.
+const LOTE_IDS_FINANCEIRO = 150;
+
+function emLotes<T>(itens: T[], tamanho: number): T[][] {
+  const lotes: T[][] = [];
+  for (let i = 0; i < itens.length; i += tamanho) {
+    lotes.push(itens.slice(i, i + tamanho));
+  }
+  return lotes;
+}
+
+/**
+ * Status financeiro do mês corrente para um lote de alunos (a página atual
+ * da lista), numa única consulta — nunca uma por aluno. Alunos sem nenhuma
+ * cobrança relevante no mês simplesmente não aparecem no mapa (a UI trata
+ * ausência como "—").
+ *
+ * Fatia os ids em lotes de `LOTE_IDS_FINANCEIRO` — uma escola com centenas de
+ * alunos cadastrados no total (não só os da página atual, quando chamada
+ * pelo filtro financeiro) pode gerar um `.in()` grande demais para a URL do
+ * gateway.
+ */
+export async function getFinanceiroMesCorrentePorAluno(
+  alunoIds: string[]
+): Promise<Map<string, StatusFinanceiroMes>> {
+  const resultado = new Map<string, StatusFinanceiroMes>();
+  if (alunoIds.length === 0) return resultado;
+
+  const hoje = new Date().toISOString().slice(0, 10);
+  const inicioMes = `${hoje.slice(0, 7)}-01`;
+  const [ano, mes] = hoje.split("-").map(Number);
+  const fimMes = new Date(ano, mes, 0).toISOString().slice(0, 10); // dia 0 do mês seguinte = último dia deste mês
+
+  const supabase = await createServerClient();
+
+  const porAluno = new Map<string, { origem: string; status: string; data_vencimento: string }[]>();
+  for (const lote of emLotes(alunoIds, LOTE_IDS_FINANCEIRO)) {
+    const { data, error } = await supabase
+      .from("cobrancas")
+      .select("aluno_id, origem, status, data_vencimento")
+      .in("aluno_id", lote)
+      .gte("data_vencimento", inicioMes)
+      .lte("data_vencimento", fimMes);
+
+    if (error) throw error;
+
+    for (const row of data ?? []) {
+      const lista = porAluno.get(row.aluno_id as string) ?? [];
+      lista.push({
+        origem: row.origem as string,
+        status: row.status as string,
+        data_vencimento: row.data_vencimento as string,
+      });
+      porAluno.set(row.aluno_id as string, lista);
+    }
+  }
+
+  for (const [alunoId, cobrancas] of Array.from(porAluno)) {
+    const status = derivarStatusFinanceiroMes(cobrancas, hoje);
+    if (status !== null) resultado.set(alunoId, status);
+  }
+
+  return resultado;
+}
+
+// PostgREST corta em max_rows=1000 por padrão (supabase/config.toml) —
+// range(0, 100000) NUNCA de fato traz mais que 1000 linhas, então uma escola
+// com mais de 1000 alunos cadastrados no total perderia gente silenciosamente
+// no filtro financeiro. Pagina de verdade em loop, mesmo padrão de
+// `carregarPendentes` (src/lib/conciliacao/carregar-pendentes.ts): concatena
+// páginas de `LOTE` até uma vir vazia ou menor que o lote.
+const LOTE_CANDIDATOS = 1000;
+
+async function buscarTodosCandidatos(
+  supabase: Awaited<ReturnType<typeof createServerClient>>,
+  filters: StudentFilters | undefined
+): Promise<NonNullable<Awaited<ReturnType<typeof runStudentsQuery>>["data"]>> {
+  const todos: NonNullable<Awaited<ReturnType<typeof runStudentsQuery>>["data"]> = [];
+  let offset = 0;
+
+  for (;;) {
+    const { data, error } = await runStudentsQuery(
+      supabase,
+      { ...filters, financeiro: undefined },
+      offset,
+      offset + LOTE_CANDIDATOS - 1
+    );
+    if (error) throw error;
+
+    const pagina = data ?? [];
+    todos.push(...pagina);
+
+    if (pagina.length < LOTE_CANDIDATOS) break;
+    offset += LOTE_CANDIDATOS;
+  }
+
+  return todos;
+}
+
 export async function listStudents(filters?: StudentFilters): Promise<PaginatedStudents> {
   const supabase = await createServerClient();
   const page = Math.max(1, filters?.page ?? 1);
   const pageSize = filters?.pageSize ?? STUDENTS_PAGE_SIZE;
+
+  if (filters?.financeiro) {
+    // Filtro por status financeiro não é uma coluna — precisa resolver o
+    // status derivado de TODOS os alunos que passam nos demais filtros antes
+    // de paginar, senão a paginação corta o conjunto errado (mostraria linhas
+    // onde só algumas batem o filtro, com contagem total errada).
+    const todosIds = await buscarTodosCandidatos(supabase, filters);
+
+    const idsCandidatos = todosIds.map((r) => r.id as string);
+    const statusPorAluno = await getFinanceiroMesCorrentePorAluno(idsCandidatos);
+    const idsFiltrados = idsCandidatos.filter((id) => statusPorAluno.get(id) === filters.financeiro);
+
+    const from = (page - 1) * pageSize;
+    const to = from + pageSize;
+    const idsDaPagina = new Set(idsFiltrados.slice(from, to));
+
+    const rows = todosIds.filter((r) => idsDaPagina.has(r.id as string));
+    return { rows, total: idsFiltrados.length, page, pageSize };
+  }
+
   const from = (page - 1) * pageSize;
   const to = from + pageSize - 1;
 
