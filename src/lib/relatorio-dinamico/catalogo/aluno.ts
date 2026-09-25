@@ -54,7 +54,9 @@ function celulares(c: AlunoCtx): string {
   const vistos = new Set<string>();
   const itens: string[] = [];
   for (const p of [...c.responsaveis, ...c.contatos]) {
-    const cel = txt(p.celular);
+    // Cai para "telefone" quando "celular" está vazio: mesmo erro de cadastro
+    // tratado nas colunas de pai/mãe/responsável (colsPessoa).
+    const cel = txt(p.celular) || txt(p.telefone);
     if (!cel || vistos.has(digitos(cel))) continue;
     vistos.add(digitos(cel));
     itens.push([cel, primeiroNome(p.nome), p.parentesco ? `(${txt(p.parentesco)})` : ""].filter(Boolean).join(" - "));
@@ -79,7 +81,9 @@ function colsPessoa(prefixo: string, sufixo: string, grupo: string, pegar: (c: A
   return [
     col(`${prefixo}.nome`, `Nome ${sufixo}`, grupo, r, (c) => txt(pegar(c)?.nome)),
     col(`${prefixo}.cpf`, `CPF ${sufixo}`, grupo, r, (c) => txt(pegar(c)?.cpf)),
-    col(`${prefixo}.celular`, `Celular ${sufixo}`, grupo, r, (c) => txt(pegar(c)?.celular)),
+    // Cai para "telefone" quando "celular" está vazio: erro de cadastro comum
+    // (número de celular digitado no campo Telefone da ficha do responsável).
+    col(`${prefixo}.celular`, `Celular ${sufixo}`, grupo, r, (c) => txt(pegar(c)?.celular) || txt(pegar(c)?.telefone)),
     col(`${prefixo}.telefone`, `Telefone ${sufixo}`, grupo, r, (c) => txt(pegar(c)?.telefone)),
     col(`${prefixo}.email`, `E-mail ${sufixo}`, grupo, r, (c) => txt(pegar(c)?.email)),
   ];
@@ -133,8 +137,11 @@ export const COLUNAS_ALUNO: ColunaDef<AlunoCtx>[] = [
   }),
   ...colsPessoa("pai", "do Pai", "Pai", (c) => porParentesco(c, "pai")),
   ...colsPessoa("mae", "da Mãe", "Mãe", (c) => porParentesco(c, "mae")),
-  ...colsPessoa("rf", "do Responsável Financeiro", "Responsável Financeiro", financeiro),
-  ...colsPessoa("rp", "do Responsável Pedagógico", "Responsável Pedagógico", pedagogico),
+  // Sufixo abreviado ("Resp. Financeiro" em vez de "do Responsável Financeiro"):
+  // rótulo cheio (33 caracteres) não cabia na largura da etiqueta antes do
+  // valor, cortando o número de telefone. Grupo mantém o nome completo.
+  ...colsPessoa("rf", "Resp. Financeiro", "Responsável Financeiro", financeiro),
+  ...colsPessoa("rp", "Resp. Pedagógico", "Responsável Pedagógico", pedagogico),
   col("cont.celulares", "Celulares", CT, ["responsaveis", "contatos"], celulares),
   col("cont.telefones", "Telefones", CT, ["responsaveis", "contatos"], telefones),
   col("med.alergia", "Alergias", MD, MED, (c) => txt(c.medico?.alergia_descricao)),

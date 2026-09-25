@@ -49,11 +49,48 @@ describe("catálogo de aluno", () => {
     expect(col("rf.nome").resolve(ctx())).toBe("FRANÇOISA SILVA");
     expect(col("rp.nome").resolve(ctx())).toBe("MARTIUS AQUINO");
   });
+  it("Celular de pai/mãe/responsável cai para Telefone quando celular está vazio (erro comum de cadastro)", () => {
+    const c = ctx({
+      responsaveis: [
+        { nome: "MARTIUS AQUINO", cpf: null, telefone: "(62)98522-0812", celular: null, parentesco: "Pai", email: null, responsavel_financeiro: false, responsavel_pedagogico: false },
+        { nome: "FRANÇOISA SILVA", cpf: "111", telefone: "(62)98481-8104", celular: null, parentesco: "Mãe", email: "f@x.com", responsavel_financeiro: true, responsavel_pedagogico: true },
+      ],
+    });
+    expect(col("pai.celular").resolve(c)).toBe("(62)98522-0812");
+    expect(col("mae.celular").resolve(c)).toBe("(62)98481-8104");
+    expect(col("rf.celular").resolve(c)).toBe("(62)98481-8104");
+    expect(col("rp.celular").resolve(c)).toBe("(62)98481-8104");
+  });
+  it("Celular usa o valor da própria coluna quando preenchido, mesmo com Telefone também preenchido", () => {
+    const c = ctx({
+      responsaveis: [
+        { nome: "MARTIUS AQUINO", cpf: null, telefone: "(62)3333-3333", celular: "(62)98522-0812", parentesco: "Pai", email: null, responsavel_financeiro: false, responsavel_pedagogico: false },
+      ],
+    });
+    expect(col("pai.celular").resolve(c)).toBe("(62)98522-0812");
+  });
+  it("Celular fica vazio quando nem celular nem telefone estão preenchidos", () => {
+    const c = ctx({
+      responsaveis: [
+        { nome: "MARTIUS AQUINO", cpf: null, telefone: null, celular: null, parentesco: "Pai", email: null, responsavel_financeiro: false, responsavel_pedagogico: false },
+      ],
+    });
+    expect(col("pai.celular").resolve(c)).toBe("");
+  });
   it("Celulares concatena responsáveis e contatos sem duplicar número", () => {
     const c = ctx({ contatos: [...ctx().contatos, { nome: "X", telefone: null, celular: "(62) 98481-8104", parentesco: null, principal: false }] });
     expect(col("cont.celulares").resolve(c)).toBe(
       "(62)98522-0812 - MARTIUS - (Pai) / (62)98481-8104 - FRANÇOISA - (Mãe) / (62)98416-7273 - MARGARETE - (Avó)"
     );
+  });
+  it("Celulares inclui quem só tem Telefone preenchido (erro comum de cadastro)", () => {
+    const c = ctx({
+      responsaveis: [
+        { nome: "MARTIUS AQUINO", cpf: null, telefone: "(62)98522-0812", celular: null, parentesco: "Pai", email: null, responsavel_financeiro: false, responsavel_pedagogico: false },
+      ],
+      contatos: [],
+    });
+    expect(col("cont.celulares").resolve(c)).toBe("(62)98522-0812 - MARTIUS - (Pai)");
   });
   it("endereço principal e Cidade Endereço", () => {
     expect(col("end.cidadeUf").resolve(ctx())).toBe("TRINDADE - GO");

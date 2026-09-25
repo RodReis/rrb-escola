@@ -223,7 +223,7 @@ export default async function StudentsPage({
           <thead>
             <tr>
               <th className="w-[42px]"></th>
-              <th>Aluno</th>
+              <th className="min-w-[240px]">Aluno</th>
               <th className="w-[170px]">Turma</th>
               <th className="w-[170px]">Plano</th>
               <th className="w-[200px]">Responsável</th>
@@ -267,11 +267,13 @@ export default async function StudentsPage({
                   <td className="pl-4">
                     <input type="checkbox" className="h-4 w-4 cursor-pointer accent-brand" />
                   </td>
-                  <td>
+                  <td className="min-w-[240px]">
                     <Link href={`/alunos/${student.id}`} className="flex items-center gap-3 group">
-                      <Avatar name={student.nome} src={fotoUrl} size={36} />
-                      <span className="flex flex-col leading-tight">
-                        <span className="font-semibold text-ink group-hover:text-brand">{student.nome}</span>
+                      <Avatar name={student.nome} src={fotoUrl} size={36} className="shrink-0" />
+                      <span className="flex min-w-0 flex-col justify-center leading-snug">
+                        <span className="line-clamp-2 font-semibold text-ink group-hover:text-brand" title={student.nome}>
+                          {student.nome}
+                        </span>
                         <span className="text-xs text-ink/60 font-medium">
                           #{student.matricula_codigo}
                           {student.cpf ? <> · <span>{student.cpf}</span></> : null}
