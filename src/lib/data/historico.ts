@@ -137,7 +137,23 @@ export async function getCredenciamentoVigente(
     .limit(1);
   if (erroRecente) throw erroRecente;
   const fallback = recente?.[0]?.companies as unknown as Record<string, unknown> | null;
-  return fallback ? mapCredenciamento(fallback) : null;
+  if (fallback) return mapCredenciamento(fallback);
+
+  // Série sem NENHUM vínculo em historico_niveis_ensino (ex.: Infantil, que
+  // nunca precisou de histórico escolar) — diferente do caso acima, que é
+  // "vínculo existe mas não pro ano pedido". O sistema tem uma única escola
+  // (DEFAULT_SCHOOL_ID); cai pra empresa ativa mais recente, senão a
+  // declaração pedagógica (e qualquer emissão futura para essas séries)
+  // nunca sai por falta de linha numa tabela pensada só para Fund/Médio.
+  const { data: empresaPadrao, error: erroEmpresa } = await supabase
+    .from("companies")
+    .select("*")
+    .eq("ativo", true)
+    .order("updated_at", { ascending: false })
+    .limit(1)
+    .maybeSingle();
+  if (erroEmpresa) throw erroEmpresa;
+  return empresaPadrao ? mapCredenciamento(empresaPadrao) : null;
 }
 
 /** Médias ao vivo de um ano interno, calculadas de notas_consolidadas. */
