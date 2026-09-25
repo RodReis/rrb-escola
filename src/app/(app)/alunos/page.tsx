@@ -8,12 +8,14 @@ import { StatusPill } from "@/components/ui/status-pill";
 import { ExportStudentsReportButton } from "@/components/pdf/export-students-report-button";
 import { StudentFilters } from "@/components/students/student-filters";
 import { AlunoRowActions } from "@/components/students/aluno-row-actions";
+import { FinanceiroStatusBadge } from "@/components/students/financeiro-status-badge";
 import {
   getStudentsReport,
   listStudents,
   getStudentSegmentCounts,
   getStudentFilterOptions,
   getStudentAvailableYears,
+  getFinanceiroMesCorrentePorAluno,
   contarAlunosAtivos
 } from "@/lib/data/students";
 import { getSignedFotoUrls } from "@/lib/storage/photos";
@@ -56,6 +58,7 @@ export default async function StudentsPage({
     turmaId:   params.turma    || undefined,
     segmento:  params.segmento || undefined,
     situacao:  (params.situacao as "ativos" | "inativos" | "todos") || undefined,
+    financeiro: (params.financeiro as "pago_isaac" | "pago_manual" | "aberto" | "vencido") || undefined,
     anoLetivo,
     page:      Number.isNaN(pageParam) ? 1 : pageParam
   };
@@ -100,6 +103,8 @@ export default async function StudentsPage({
   const signedFotos = await getSignedFotoUrls(
     students.map((s) => ("foto_url" in s ? (s.foto_url as string | null) : null))
   );
+
+  const financeiroPorAluno = await getFinanceiroMesCorrentePorAluno(students.map((s) => s.id));
 
   const firstRow = total === 0 ? 0 : (page - 1) * pageSize + 1;
   const lastRow = (page - 1) * pageSize + students.length;
@@ -220,13 +225,14 @@ export default async function StudentsPage({
               <th className="w-[170px]">Plano</th>
               <th className="w-[200px]">Responsável</th>
               <th className="w-[160px]">Status</th>
+              <th className="w-[140px]">Financeiro</th>
               <th className="w-[132px] text-right">Ação</th>
             </tr>
           </thead>
           <tbody>
             {students.length === 0 ? (
               <tr>
-                <td colSpan={7} className="px-5 py-12">
+                <td colSpan={8} className="px-5 py-12">
                   <div className="flex flex-col items-center justify-center gap-2 text-ink/60">
                     <Users size={28} />
                     <p className="text-sm font-medium">
@@ -301,6 +307,9 @@ export default async function StudentsPage({
                     <StatusPill tone={student.ativo ? "success" : "neutral"}>
                       {student.ativo ? "Ativo" : "Inativo"}
                     </StatusPill>
+                  </td>
+                  <td>
+                    <FinanceiroStatusBadge status={financeiroPorAluno.get(student.id) ?? null} />
                   </td>
                   <td className="pr-4 text-right">
                     <AlunoRowActions
