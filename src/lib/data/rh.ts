@@ -103,6 +103,7 @@ export type Employee = {
   cargo: string | null;
   status_contrato: string | null;
   ativo: boolean;
+  perfil_id: string | null;
   companies?: { id: string; name: string; cnpj: string } | null;
 };
 
@@ -118,7 +119,7 @@ export async function listEmployees(filters: EmployeeFilters = {}): Promise<Empl
   const supabase = await createServerClient();
   let query = supabase
     .from("employees")
-    .select("id, company_id, cpf, name, birth_date, hire_date, school_category, email, telefone, cargo, status_contrato, ativo, companies(id, name, cnpj)")
+    .select("id, company_id, cpf, name, birth_date, hire_date, school_category, email, telefone, cargo, status_contrato, ativo, perfil_id, companies(id, name, cnpj)")
     .order("name");
 
   if (!filters.includeInactive) query = query.eq("ativo", true);
@@ -142,7 +143,7 @@ export async function getEmployeeById(id: string): Promise<Employee | null> {
   const supabase = await createServerClient();
   const { data, error } = await supabase
     .from("employees")
-    .select("id, company_id, cpf, name, birth_date, hire_date, school_category, email, telefone, cargo, status_contrato, ativo, companies(id, name, cnpj)")
+    .select("id, company_id, cpf, name, birth_date, hire_date, school_category, email, telefone, cargo, status_contrato, ativo, perfil_id, companies(id, name, cnpj)")
     .eq("id", id)
     .maybeSingle();
   if (error) throw error;
@@ -187,4 +188,24 @@ export async function getEmployeeSegmentCounts(
     if (cat && cat in counts) counts[cat] += 1;
   }
   return counts;
+}
+
+/** Usuários com perfil professor que ainda não estão ligados a um funcionário
+ * (mais o já ligado a `employeeId`, para a edição mostrar o valor atual). */
+export async function listProfessoresVinculaveis(
+  employeeId?: string
+): Promise<{ id: string; nome: string; email: string }[]> {
+  const supabase = await createServerClient();
+  const [perfisRes, ligadosRes] = await Promise.all([
+    supabase.from("perfis").select("id, nome, email").eq("perfil", "professor").eq("ativo", true).order("nome"),
+    supabase.from("employees").select("id, perfil_id").not("perfil_id", "is", null)
+  ]);
+  if (perfisRes.error) throw perfisRes.error;
+  if (ligadosRes.error) throw ligadosRes.error;
+  const ocupados = new Set(
+    (ligadosRes.data ?? []).filter((e) => e.id !== employeeId).map((e) => e.perfil_id as string)
+  );
+  return (perfisRes.data ?? [])
+    .filter((p) => !ocupados.has(p.id as string))
+    .map((p) => ({ id: p.id as string, nome: p.nome as string, email: (p.email as string) ?? "" }));
 }

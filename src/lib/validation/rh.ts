@@ -67,7 +67,11 @@ export const EmployeeSchema = z.object({
     StatusContratoEnum.optional()
   ),
   birth_date: optionalString,
-  hire_date: optionalString
+  hire_date: optionalString,
+  perfil_id: z.preprocess(
+    (v) => (typeof v === "string" && v.trim() === "" ? undefined : v),
+    z.string().uuid("Usuário inválido").optional()
+  )
 });
 
 export const EmployeeUpdateSchema = EmployeeSchema.extend({

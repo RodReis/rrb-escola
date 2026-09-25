@@ -3,7 +3,7 @@ import { PageHeader } from "@/components/ui/page-header";
 import { Panel } from "@/components/ui/card";
 import { EmployeeForm } from "@/components/rh/employee-form";
 import { createEmployeeAction } from "@/lib/actions/rh";
-import { listCompanies } from "@/lib/data/rh";
+import { listCompanies, listProfessoresVinculaveis } from "@/lib/data/rh";
 import { requirePermission } from "@/lib/auth/session";
 
 export default async function NovoFuncionarioPage({
@@ -13,7 +13,10 @@ export default async function NovoFuncionarioPage({
 }) {
   await requirePermission("rh.funcionarios", "create");
   const params = await searchParams;
-  const companies = await listCompanies({ includeInactive: false });
+  const [companies, professores] = await Promise.all([
+    listCompanies({ includeInactive: false }),
+    listProfessoresVinculaveis()
+  ]);
 
   return (
     <div className="grid gap-8">
@@ -34,6 +37,7 @@ export default async function NovoFuncionarioPage({
         <EmployeeForm
           action={createEmployeeAction}
           companies={companies}
+          professores={professores}
           defaultCompanyId={params.company}
           submitLabel="Cadastrar funcionário"
         />
