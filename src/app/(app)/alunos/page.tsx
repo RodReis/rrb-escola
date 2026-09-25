@@ -9,6 +9,7 @@ import { ExportStudentsReportButton } from "@/components/pdf/export-students-rep
 import { StudentFilters } from "@/components/students/student-filters";
 import { AlunoRowActions } from "@/components/students/aluno-row-actions";
 import { FinanceiroStatusBadge } from "@/components/students/financeiro-status-badge";
+import { matriculaEhDoAnoFiltrado } from "@/lib/students/icone-acao";
 import {
   getStudentsReport,
   listStudents,
@@ -97,7 +98,7 @@ export default async function StudentsPage({
   // onde o número precisa bater com o organograma e o dashboard.
   const listaFiltrada =
     filters.situacao !== "ativos" ||
-    Boolean(filters.nome || filters.serieId || filters.turmaId || filters.segmento);
+    Boolean(filters.nome || filters.serieId || filters.turmaId || filters.segmento || filters.financeiro);
   const contadorTitulo = listaFiltrada ? total : matriculadosNoAno;
 
   const signedFotos = await getSignedFotoUrls(
@@ -117,6 +118,8 @@ export default async function StudentsPage({
     if (params.turma) sp.set("turma", params.turma);
     if (filters.segmento) sp.set("segmento", filters.segmento);
     if (params.ano) sp.set("ano", params.ano);
+    if (filters.financeiro) sp.set("financeiro", filters.financeiro);
+    if (filters.situacao) sp.set("situacao", filters.situacao);
     if (target > 1) sp.set("page", String(target));
     const qs = sp.toString();
     return qs ? `/alunos?${qs}` : "/alunos";
@@ -236,11 +239,11 @@ export default async function StudentsPage({
                   <div className="flex flex-col items-center justify-center gap-2 text-ink/60">
                     <Users size={28} />
                     <p className="text-sm font-medium">
-                      {filters.nome || filters.segmento || filters.serieId || filters.turmaId
+                      {filters.nome || filters.segmento || filters.serieId || filters.turmaId || filters.financeiro
                         ? "Nenhum aluno corresponde aos filtros."
                         : "Nenhum aluno cadastrado."}
                     </p>
-                    {filters.nome || filters.segmento || filters.serieId || filters.turmaId ? (
+                    {filters.nome || filters.segmento || filters.serieId || filters.turmaId || filters.financeiro ? (
                       <ButtonLink href="/alunos" variant="secondary" className="rb-btn sm mt-1">
                         Limpar filtros
                       </ButtonLink>
@@ -316,11 +319,11 @@ export default async function StudentsPage({
                       alunoId={student.id}
                       alunoNome={student.nome}
                       ativo={student.ativo ?? false}
-                      matriculaAtivaNoAno={enrollment?.status === "ativa"}
+                      matriculaAtivaNoAno={matriculaEhDoAnoFiltrado(enrollment, anoLetivo)}
                       matriculaId={enrollment?.id ?? ""}
                       serieNome={series?.nome ?? ""}
                       turmaNome={turma?.nome ?? ""}
-                      anoLetivo={anoLetivo}
+                      anoLetivo={enrollment?.ano_letivo ?? anoLetivo}
                     />
                   </td>
                 </tr>

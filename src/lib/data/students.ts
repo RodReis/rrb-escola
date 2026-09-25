@@ -92,11 +92,30 @@ function runStudentsQuery(
   return query;
 }
 
+// Lote máximo de ids por `.in()` nesta consulta. Smoke test real (2026-09-24,
+// local, 509 alunos) confirmou 414 "URI Too Long" do PostgREST/gateway com
+// todos os ids candidatos numa única query (~19KB de query string); 150 ids
+// por lote (~5,7KB) respondeu 200 no mesmo ambiente.
+const LOTE_IDS_FINANCEIRO = 150;
+
+function emLotes<T>(itens: T[], tamanho: number): T[][] {
+  const lotes: T[][] = [];
+  for (let i = 0; i < itens.length; i += tamanho) {
+    lotes.push(itens.slice(i, i + tamanho));
+  }
+  return lotes;
+}
+
 /**
  * Status financeiro do mês corrente para um lote de alunos (a página atual
  * da lista), numa única consulta — nunca uma por aluno. Alunos sem nenhuma
  * cobrança relevante no mês simplesmente não aparecem no mapa (a UI trata
  * ausência como "—").
+ *
+ * Fatia os ids em lotes de `LOTE_IDS_FINANCEIRO` — uma escola com centenas de
+ * alunos cadastrados no total (não só os da página atual, quando chamada
+ * pelo filtro financeiro) pode gerar um `.in()` grande demais para a URL do
+ * gateway.
  */
 export async function getFinanceiroMesCorrentePorAluno(
   alunoIds: string[]
@@ -110,24 +129,27 @@ export async function getFinanceiroMesCorrentePorAluno(
   const fimMes = new Date(ano, mes, 0).toISOString().slice(0, 10); // dia 0 do mês seguinte = último dia deste mês
 
   const supabase = await createServerClient();
-  const { data, error } = await supabase
-    .from("cobrancas")
-    .select("aluno_id, origem, status, data_vencimento")
-    .in("aluno_id", alunoIds)
-    .gte("data_vencimento", inicioMes)
-    .lte("data_vencimento", fimMes);
-
-  if (error) throw error;
 
   const porAluno = new Map<string, { origem: string; status: string; data_vencimento: string }[]>();
-  for (const row of data ?? []) {
-    const lista = porAluno.get(row.aluno_id as string) ?? [];
-    lista.push({
-      origem: row.origem as string,
-      status: row.status as string,
-      data_vencimento: row.data_vencimento as string,
-    });
-    porAluno.set(row.aluno_id as string, lista);
+  for (const lote of emLotes(alunoIds, LOTE_IDS_FINANCEIRO)) {
+    const { data, error } = await supabase
+      .from("cobrancas")
+      .select("aluno_id, origem, status, data_vencimento")
+      .in("aluno_id", lote)
+      .gte("data_vencimento", inicioMes)
+      .lte("data_vencimento", fimMes);
+
+    if (error) throw error;
+
+    for (const row of data ?? []) {
+      const lista = porAluno.get(row.aluno_id as string) ?? [];
+      lista.push({
+        origem: row.origem as string,
+        status: row.status as string,
+        data_vencimento: row.data_vencimento as string,
+      });
+      porAluno.set(row.aluno_id as string, lista);
+    }
   }
 
   for (const [alunoId, cobrancas] of Array.from(porAluno)) {
@@ -136,6 +158,40 @@ export async function getFinanceiroMesCorrentePorAluno(
   }
 
   return resultado;
+}
+
+// PostgREST corta em max_rows=1000 por padrão (supabase/config.toml) —
+// range(0, 100000) NUNCA de fato traz mais que 1000 linhas, então uma escola
+// com mais de 1000 alunos cadastrados no total perderia gente silenciosamente
+// no filtro financeiro. Pagina de verdade em loop, mesmo padrão de
+// `carregarPendentes` (src/lib/conciliacao/carregar-pendentes.ts): concatena
+// páginas de `LOTE` até uma vir vazia ou menor que o lote.
+const LOTE_CANDIDATOS = 1000;
+
+async function buscarTodosCandidatos(
+  supabase: Awaited<ReturnType<typeof createServerClient>>,
+  filters: StudentFilters | undefined
+): Promise<NonNullable<Awaited<ReturnType<typeof runStudentsQuery>>["data"]>> {
+  const todos: NonNullable<Awaited<ReturnType<typeof runStudentsQuery>>["data"]> = [];
+  let offset = 0;
+
+  for (;;) {
+    const { data, error } = await runStudentsQuery(
+      supabase,
+      { ...filters, financeiro: undefined },
+      offset,
+      offset + LOTE_CANDIDATOS - 1
+    );
+    if (error) throw error;
+
+    const pagina = data ?? [];
+    todos.push(...pagina);
+
+    if (pagina.length < LOTE_CANDIDATOS) break;
+    offset += LOTE_CANDIDATOS;
+  }
+
+  return todos;
 }
 
 export async function listStudents(filters?: StudentFilters): Promise<PaginatedStudents> {
@@ -148,15 +204,9 @@ export async function listStudents(filters?: StudentFilters): Promise<PaginatedS
     // status derivado de TODOS os alunos que passam nos demais filtros antes
     // de paginar, senão a paginação corta o conjunto errado (mostraria linhas
     // onde só algumas batem o filtro, com contagem total errada).
-    const { data: todosIds, error: idsError } = await runStudentsQuery(
-      supabase,
-      { ...filters, financeiro: undefined },
-      0,
-      100000 // sem paginação nesta primeira passada — lote pequeno o suficiente para uma escola
-    );
-    if (idsError) throw idsError;
+    const todosIds = await buscarTodosCandidatos(supabase, filters);
 
-    const idsCandidatos = (todosIds ?? []).map((r) => r.id as string);
+    const idsCandidatos = todosIds.map((r) => r.id as string);
     const statusPorAluno = await getFinanceiroMesCorrentePorAluno(idsCandidatos);
     const idsFiltrados = idsCandidatos.filter((id) => statusPorAluno.get(id) === filters.financeiro);
 
@@ -164,7 +214,7 @@ export async function listStudents(filters?: StudentFilters): Promise<PaginatedS
     const to = from + pageSize;
     const idsDaPagina = new Set(idsFiltrados.slice(from, to));
 
-    const rows = (todosIds ?? []).filter((r) => idsDaPagina.has(r.id as string));
+    const rows = todosIds.filter((r) => idsDaPagina.has(r.id as string));
     return { rows, total: idsFiltrados.length, page, pageSize };
   }
 

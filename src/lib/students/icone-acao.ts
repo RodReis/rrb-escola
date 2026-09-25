@@ -1,5 +1,19 @@
 export type IconeAcao = "matricular" | "cancelar";
 
+type MatriculaAnoRef = { status?: string | null; ano_letivo?: number | null } | null | undefined;
+
+/**
+ * Confere se a matrícula resolvida por `activeEnrollment` (que tem fallback
+ * para qualquer matrícula ativa de QUALQUER ano quando nenhuma bate o ano
+ * filtrado — bom para exibição de série/turma, errado para decidir a ação)
+ * é de fato do ano filtrado e está ativa. Sem essa checagem, um aluno cuja
+ * única matrícula ativa é de um ano anterior aparece com o ícone Cancelar
+ * (e abre o diálogo) sobre a matrícula errada.
+ */
+export function matriculaEhDoAnoFiltrado(enrollment: MatriculaAnoRef, anoLetivo: number): boolean {
+  return enrollment?.status === "ativa" && enrollment?.ano_letivo === anoLetivo;
+}
+
 /**
  * Decide qual ícone de ação de negócio mostrar na lista de alunos:
  * "cancelar" só quando o aluno está ativo E tem matrícula ativa no ano
