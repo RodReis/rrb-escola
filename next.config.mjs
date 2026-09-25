@@ -44,6 +44,8 @@ const nextConfig = {
     // Marcar como externo faz o Node carregá-lo direto de node_modules.
     // Afeta tanto a importação de repasse isaac quanto a de alunos por PDF.
     serverComponentsExternalPackages: ["pdf-parse", "pdfjs-dist"],
+    // Padrão do Next 14 é 1mb; upload de logo de empresa promete até 2mb.
+    serverActions: { bodySizeLimit: "2mb" },
   },
   images: {
     remotePatterns: [

@@ -20,6 +20,7 @@ const MOTIVO_LABEL: Record<string, string> = {
   sem_aluno: "Aluno não encontrado",
   tipo_vaga_incompativel: "Bolsista/isento com mensalidade",
   permuta_manual: "Permuta — revisar valor",
+  aluno_cancelado: "Aluno cancelado",
 };
 
 export function ImportarRepasseForm({ unidades }: { unidades: UnidadeIsaac[] }) {

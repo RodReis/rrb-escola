@@ -1,6 +1,11 @@
 import { DEFAULT_SCHOOL_ID } from "@/lib/constants";
 import { createServerClient } from "@/lib/supabase/server";
-import type { AlunoCadastro, TipoVaga } from "@/lib/isaac/preparar-importacao";
+import {
+  escolherMatriculaParaCasamento,
+  type AlunoCadastro,
+  type MatriculaParaCasamento,
+  type TipoVaga,
+} from "@/lib/isaac/preparar-importacao";
 
 export type UnidadeIsaac = {
   id: string;
@@ -67,31 +72,43 @@ export async function getUnidadesIsaac(): Promise<UnidadeIsaac[]> {
  * NÃO colapsa espaço — o lado do isaac faz o mesmo em `normalizarNomeIsaac`.
  * Comparar sem isso faria um "Ana  Silva" do isaac não casar em silêncio.
  *
- * Traz o tipo_vaga da matrícula ATIVA mais recente, que é o que decide se a
- * parcela de mensalidade é legítima.
+ * Traz o tipo_vaga da matrícula preferida (ativa OU cancelada — cancelada
+ * entra para o import enxergar `cancelamento_data`; outros status como
+ * transferida/concluida seguem de fora, não são o caso desta trava). Uma
+ * matrícula `ativa` é SEMPRE preferida sobre uma `cancelada`, mesmo que a
+ * cancelada seja de ano letivo mais recente (ver `escolherMatriculaParaCasamento`) —
+ * evita que um aluno com matrícula cancelada e ativa simultâneas (ex.: cancelada
+ * em 2026, rematriculado em 2026 de novo, ou concluída 2026 → ativa 2027) trave
+ * a mensalidade da matrícula corrente por engano.
  */
 export async function getAlunosParaCasamento(): Promise<AlunoCadastro[]> {
   const supabase = await createServerClient();
   const { data, error } = await supabase
     .from("alunos")
-    .select("id, nome_normalizado, matriculas(tipo_vaga, valor_mensalidade_praticado, ano_letivo, status)")
+    .select(
+      "id, nome_normalizado, matriculas(tipo_vaga, valor_mensalidade_praticado, ano_letivo, status, cancelamento_data)",
+    )
     .eq("escola_id", DEFAULT_SCHOOL_ID);
 
   if (error) throw error;
 
   return (data ?? []).map((row) => {
-    const matriculas = (Array.isArray(row.matriculas) ? row.matriculas : [row.matriculas])
-      .filter((m): m is NonNullable<typeof m> => Boolean(m) && m.status === "ativa")
-      .sort((a, b) => Number(b.ano_letivo ?? 0) - Number(a.ano_letivo ?? 0));
-    const ativa = matriculas[0];
+    const matriculas = (Array.isArray(row.matriculas) ? row.matriculas : [row.matriculas]).filter(
+      (m): m is MatriculaParaCasamento =>
+        Boolean(m) && (m.status === "ativa" || m.status === "cancelada"),
+    );
+    const escolhida = escolherMatriculaParaCasamento(matriculas);
     return {
       id: row.id as string,
       nomeNormalizado: String(row.nome_normalizado ?? "").replace(/\s+/g, " ").trim(),
-      tipoVaga: (ativa?.tipo_vaga as TipoVaga | undefined) ?? null,
+      tipoVaga: (escolhida?.tipo_vaga as TipoVaga | undefined) ?? null,
       valorMensalidadePraticado:
-        ativa?.valor_mensalidade_praticado === null || ativa?.valor_mensalidade_praticado === undefined
+        escolhida?.valor_mensalidade_praticado === null || escolhida?.valor_mensalidade_praticado === undefined
           ? null
-          : Number(ativa.valor_mensalidade_praticado),
+          : Number(escolhida.valor_mensalidade_praticado),
+      matriculaCanceladaEm:
+        escolhida?.status === "cancelada" ? ((escolhida.cancelamento_data as string | null) ?? null) : null,
+      matriculaAnoLetivo: escolhida?.ano_letivo ?? null,
     };
   });
 }

@@ -37,7 +37,19 @@ export async function StudentStatementSection({ alunoId, searchParams }: {
             <strong className="text-ink">{c.descricao}</strong>
             <span>Vence {new Date(`${c.data_vencimento}T00:00:00`).toLocaleDateString("pt-BR")}</span>
             <span className="font-bold">{Number(c.valor_final).toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}</span>
-            <span className="text-muted">{displayStatus(c.status, c.data_vencimento)}</span>
+            <span className="text-muted">
+              {displayStatus(c.status, c.data_vencimento)}
+              {" "}
+              <span
+                className={
+                  c.origem === "isaac"
+                    ? "rounded px-1.5 py-0.5 text-[10px] font-semibold uppercase bg-brand/10 text-brand"
+                    : "rounded px-1.5 py-0.5 text-[10px] font-semibold uppercase bg-ink/10 text-ink/60"
+                }
+              >
+                {c.origem === "isaac" ? "isaac" : "manual"}
+              </span>
+            </span>
             <span>
               {c.status !== "paga" && c.status !== "cancelada" ? (
                 <GerarBoletoButton cobrancaId={c.id} invoiceUrl={c.asaas_invoice_url ?? null} />

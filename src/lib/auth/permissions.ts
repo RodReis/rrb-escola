@@ -129,11 +129,17 @@ export const ROTA_PARA_MODULO: Record<string, ModuloCodigo> = {
   "/historico/notas": "historico",
   "/historico/emissao": "historico",
   "/historico/certificado": "historico",
+  // Declarações pedagógicas reaproveitam o módulo `historico` (mesma
+  // categoria de documento pedagógico da escola), sem módulo RBAC novo.
+  "/declaracoes": "historico",
+  "/declaracoes/modelos": "historico",
+  "/declaracoes/emitir": "historico",
   "/eventos": "eventos",
   "/comercial/produtos": "comercial.produtos",
   "/comercial/vendas": "comercial.vendas",
   "/comercial/estoque": "comercial.estoque",
   "/matriculas": "matriculas",
+  "/matriculas/saidas": "matriculas",
   "/importacoes": "importacoes",
   "/rh/folha-v2": "rh.folha-v2",
   "/financeiro/alunos-sem-valor": "relatorios",

@@ -48,6 +48,7 @@ export function StudentFilters({
   const nome     = searchParams.get("nome") ?? "";
   const segmento = searchParams.get("segmento") ?? "";
   const situacao = searchParams.get("situacao") ?? "ativos";
+  const financeiro = searchParams.get("financeiro") ?? "";
   const serie    = searchParams.get("serie") ?? "";
   const turma    = searchParams.get("turma") ?? "";
   const ano      = searchParams.get("ano") ?? String(anoAtual ?? new Date().getFullYear());
@@ -96,7 +97,7 @@ export function StudentFilters({
 
   const anoOptions: DropdownOption[] = anos.map((a) => ({ value: String(a), label: String(a) }));
 
-  const temFiltro = Boolean(nome || segmento || serie || turma || situacao !== "ativos");
+  const temFiltro = Boolean(nome || segmento || serie || turma || financeiro || situacao !== "ativos");
 
   return (
     <div className="flex w-full flex-col gap-3">
@@ -143,6 +144,19 @@ export function StudentFilters({
           emptyLabel="Todas"
           disabled={turmaOptions.length === 0}
           onChange={(v) => update("turma", v, ["page"])}
+        />
+
+        <FilterDropdown
+          label="Financeiro"
+          value={financeiro}
+          options={[
+            { value: "pago_isaac", label: "Pago (isaac)" },
+            { value: "pago_manual", label: "Pago (manual)" },
+            { value: "aberto", label: "Em aberto" },
+            { value: "vencido", label: "Vencido" },
+          ]}
+          emptyLabel="Todos"
+          onChange={(v) => update("financeiro", v, ["page"])}
         />
       </div>
 

@@ -9,12 +9,12 @@ import { TIPO_VAGA_LABEL } from "@/components/matriculas/tipo-vaga";
 
 const TIPOS = Object.entries(TIPO_VAGA_LABEL).map(([value, label]) => ({ value, label }));
 
-const STATUSES = [
+const STATUSES_BASE = [
   { value: "ativa", label: "Ativa" },
-  { value: "cancelada", label: "Cancelada" },
   { value: "transferida", label: "Transferida" },
   { value: "concluida", label: "Concluída" },
 ];
+const STATUS_CANCELADA = { value: "cancelada", label: "Cancelada" };
 
 type Option = { id: string; nome: string };
 type TurmaOption = { id: string; nome: string; serieId: string };
@@ -59,6 +59,13 @@ export function MatriculaFullEditDialog({
   });
 
   const turmasDaSerie = turmas.filter((t) => t.serieId === selSerie);
+  // Este diálogo manual não deve ser um atalho para cancelar ou reativar por
+  // fora dos fluxos dedicados (cancelamento: motivo/data/cientes/cobranças;
+  // reativação: limpa cancelamento_*/ciente_*/alunos.ativo). Ver achado I4(b)
+  // e o achado de reabertura da re-revisão: se já cancelada, só oferece
+  // "Cancelada" (edição de série/turma/plano/tipo_vaga continua liberada);
+  // reativação só pelo botão dedicado "Reativar" na lista de matrículas.
+  const statuses = status === "cancelada" ? [STATUS_CANCELADA] : STATUSES_BASE;
 
   function openDialog() {
     setSelSerie(serieId);
@@ -143,7 +150,7 @@ export function MatriculaFullEditDialog({
           <label className="text-xs font-medium text-ink/70">
             Status
             <select name="status" value={selStatus} onChange={(e) => setSelStatus(e.target.value)}>
-              {STATUSES.map((s) => (
+              {statuses.map((s) => (
                 <option key={s.value} value={s.value}>{s.label}</option>
               ))}
             </select>
