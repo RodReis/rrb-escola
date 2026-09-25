@@ -76,7 +76,7 @@ export function RelatorioDinamicoPage({ entidade, colunas, templates: iniciais, 
         <Button type="button" variant="secondary" onClick={() => carregarTemplate(templateId)}>
           <X size={14} className="mr-1.5" /> Cancelar
         </Button>
-        <Button type="button" loading={emitindo} disabled={Boolean(bloqueio)} onClick={emitir}>
+        <Button type="button" loading={emitindo} disabled={Boolean(bloqueio) || carregando} onClick={emitir}>
           <Printer size={14} className="mr-1.5" /> Emitir
         </Button>
       </div>
