@@ -94,12 +94,13 @@ já carregada.
   `revalidatePath`. Inclui `clonarQuestionarioAction`.
 - `src/lib/data/questionario.ts` — queries.
 - `src/components/questionario/` — componentes de lista/form.
-- Menu: `src/components/layout/topbar.tsx` (array hardcoded) → Acadêmico → "Questionário"
-  com filhos Grupo de Questão, Escala, Questão, Questionário.
+- Menu: `src/components/layout/topbar.tsx` (array hardcoded) → item "Questionário" irmão de
+  "Acadêmico" em `SECRETARIA_ITEMS` (o dropdown só suporta 2 níveis), com filhos Grupo de
+  Questão, Escala, Questão, Questionário.
 
 ## RBAC
 
-Módulos em `modulos` (grupo `operacional`): `questionario.grupo`, `questionario.escala`,
+Módulos em `modulos` (grupo `academico`): `questionario.grupo`, `questionario.escala`,
 `questionario.questao`, `questionario.questionario`. `role_permissoes`: admin e secretaria
 `true` nas 4 colunas; financeiro e professor `false`.
 
