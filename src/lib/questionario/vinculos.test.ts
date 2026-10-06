@@ -56,6 +56,30 @@ describe("diffVinculos", () => {
   });
 });
 
+describe("diffVinculos — casamento por questão", () => {
+  const atuais = [{ id: "v1", questaoId: "q1" }, { id: "v2", questaoId: "q2" }];
+
+  it("questão removida e re-adicionada (sem id) reaproveita o vínculo existente", () => {
+    const d = diffVinculos(atuais, [
+      { questaoId: "q2", escalaId: null, ordem: 1 },
+      { id: "v1", questaoId: "q1", escalaId: null, ordem: 2 },
+    ]);
+    expect(d.atualizar).toEqual([
+      { id: "v2", questaoId: "q2", escalaId: null, ordem: 1 },
+      { id: "v1", questaoId: "q1", escalaId: null, ordem: 2 },
+    ]);
+    expect(d.inserir).toEqual([]);
+    expect(d.remover).toEqual([]);
+  });
+
+  it("id existente com outra questão não troca a questão do vínculo (insere e remove)", () => {
+    const d = diffVinculos(atuais, [{ id: "v1", questaoId: "q9", escalaId: null, ordem: 1 }]);
+    expect(d.atualizar).toEqual([]);
+    expect(d.inserir).toEqual([{ id: undefined, questaoId: "q9", escalaId: null, ordem: 1 }]);
+    expect(d.remover).toEqual(["v1", "v2"]);
+  });
+});
+
 describe("questoesParaAdicionar", () => {
   const todas = [
     { id: "a", grupoId: "g1" },

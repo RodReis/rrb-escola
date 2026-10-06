@@ -29,21 +29,26 @@ export function normalizarVinculos(
 }
 
 /**
- * Compara o que está gravado com o que o formulário mandou. Só atualiza ids que
- * realmente pertencem ao questionário: id desconhecido vira inserção.
+ * Compara o que está gravado com o que o formulário mandou. O vínculo é casado
+ * pelo id (se pertence ao questionário E é da mesma questão) ou, na falta, pela
+ * questão: remover e re-adicionar a mesma questão reaproveita a linha em vez de
+ * violar a unicidade (questionario, questao). O id nunca troca de questão.
  */
 export function diffVinculos(
   atuais: Array<{ id: string; questaoId: string }>,
   novos: VinculoNormalizado[],
 ) {
-  const idsAtuais = new Set(atuais.map((a) => a.id));
+  const porId = new Map(atuais.map((a) => [a.id, a] as const));
+  const idPorQuestao = new Map(atuais.map((a) => [a.questaoId, a.id] as const));
   const mantidos = new Set<string>();
   const atualizar: Array<VinculoNormalizado & { id: string }> = [];
   const inserir: VinculoNormalizado[] = [];
   for (const n of novos) {
-    if (n.id && idsAtuais.has(n.id)) {
-      mantidos.add(n.id);
-      atualizar.push({ ...n, id: n.id });
+    const doId = n.id ? porId.get(n.id) : undefined;
+    const alvo = doId && doId.questaoId === n.questaoId ? doId.id : idPorQuestao.get(n.questaoId);
+    if (alvo && !mantidos.has(alvo)) {
+      mantidos.add(alvo);
+      atualizar.push({ ...n, id: alvo });
     } else {
       inserir.push({ ...n, id: undefined });
     }

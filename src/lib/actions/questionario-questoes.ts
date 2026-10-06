@@ -13,6 +13,8 @@ import { IdSchema, QuestaoSchema, type QuestaoInput } from "@/lib/validation/que
 
 const ROTA = "/questionario/questoes";
 
+type Cliente = Awaited<ReturnType<typeof createServerClient>>;
+
 function lerQuestao(formData: FormData) {
   return QuestaoSchema.safeParse({
     grupoId: lerTexto(formData, "grupoId"),
@@ -40,12 +42,26 @@ function colunas(q: QuestaoInput) {
   };
 }
 
+/** O grupo precisa existir NESTA escola (a RLS filtra a leitura) e estar ativo, salvo se já era o da questão. */
+async function validarGrupo(db: Cliente, grupoId: string, grupoAtual?: string): Promise<string | null> {
+  const grupo = assertOk(
+    await db.from("questao_grupos").select("id, ativo").eq("id", grupoId).maybeSingle(),
+    "Não foi possível ler o grupo",
+  ) as { id: string; ativo: boolean } | null;
+  if (!grupo) return "Grupo inválido.";
+  if (!grupo.ativo && grupo.id !== grupoAtual) return "Grupo inativo.";
+  return null;
+}
+
 export async function criarQuestaoAction(formData: FormData): Promise<ActionResult> {
   const session = await requirePermission("questionario.questao", "create");
   const parsed = lerQuestao(formData);
   if (!parsed.success) return { ok: false, error: primeiroErro(parsed.error) };
 
   const db = await createServerClient();
+  const grupoInvalido = await validarGrupo(db, parsed.data.grupoId);
+  if (grupoInvalido) return { ok: false, error: grupoInvalido };
+
   const nova = assertOk(
     await db
       .from("questoes")
@@ -77,10 +93,15 @@ export async function atualizarQuestaoAction(formData: FormData): Promise<Action
 
   const db = await createServerClient();
   const atual = assertOk(
-    await db.from("questoes").select("tipo").eq("id", id.data).eq("escola_id", session.profile.escola_id).maybeSingle(),
+    await db.from("questoes").select("tipo, grupo_id").eq("id", id.data).eq("escola_id", session.profile.escola_id).maybeSingle(),
     "Não foi possível ler a questão",
-  ) as { tipo: string } | null;
+  ) as { tipo: string; grupo_id: string } | null;
   if (!atual) return { ok: false, error: "Questão não encontrada." };
+
+  if (atual.grupo_id !== parsed.data.grupoId) {
+    const grupoInvalido = await validarGrupo(db, parsed.data.grupoId, atual.grupo_id);
+    if (grupoInvalido) return { ok: false, error: grupoInvalido };
+  }
 
   if (atual.tipo !== parsed.data.tipo) {
     const uso = await db

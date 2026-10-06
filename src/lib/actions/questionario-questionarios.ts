@@ -28,6 +28,7 @@ type Lido =
       dados: { descricao: string; observacoes: string | null; ativo: boolean };
       vinculos: VinculoNormalizado[];
       questoes: Map<string, QuestaoInfo>;
+      escalas: Map<string, { descricao: string; ativo: boolean }>;
     };
 
 /** Lê o form, valida o schema e cruza os vínculos com as questões reais do banco. */
@@ -62,12 +63,27 @@ async function lerQuestionario(db: Cliente, formData: FormData): Promise<Lido> {
   const normalizados = normalizarVinculos(parsed.data.vinculos, questoes);
   if (!normalizados.ok) return normalizados;
 
+  // As escalas escolhidas precisam existir NESTA escola (a RLS filtra a leitura).
+  const escalaIds = normalizados.vinculos
+    .map((v) => v.escalaId)
+    .filter((e): e is string => !!e)
+    .filter((e, i, todas) => todas.indexOf(e) === i);
+  const escalas = new Map<string, { descricao: string; ativo: boolean }>();
+  if (escalaIds.length > 0) {
+    const achadas = (assertOk(
+      await db.from("escalas").select("id, descricao, ativo").in("id", escalaIds),
+      "Não foi possível ler as escalas",
+    ) as Array<{ id: string; descricao: string; ativo: boolean }> | null) ?? [];
+    achadas.forEach((e) => escalas.set(e.id, { descricao: e.descricao, ativo: e.ativo }));
+    if (escalaIds.some((e) => !escalas.has(e))) return { ok: false, error: "Escala inválida." };
+  }
+
   const dados = {
     descricao: parsed.data.descricao,
     observacoes: parsed.data.observacoes,
     ativo: parsed.data.ativo,
   };
-  return { ok: true, dados, vinculos: normalizados.vinculos, questoes };
+  return { ok: true, dados, vinculos: normalizados.vinculos, questoes, escalas };
 }
 
 /** Só vínculos NOVOS precisam de questão ativa (questão inativada depois continua nos antigos). */
@@ -75,6 +91,24 @@ function questaoInativaEm(novos: VinculoNormalizado[], questoes: Map<string, Que
   for (const v of novos) {
     const info = questoes.get(v.questaoId);
     if (info && !info.ativa) return `A questão "${info.pergunta}" está inativa.`;
+  }
+  return null;
+}
+
+/**
+ * Escala inativa só passa onde já estava gravada (vínculo existente, mesma escala):
+ * novo vínculo ou troca de escala exigem escala ativa.
+ */
+function escalaInativaEm(
+  candidatos: VinculoNormalizado[],
+  escalas: Map<string, { descricao: string; ativo: boolean }>,
+  gravadas: Record<string, string | null>,
+): string | null {
+  for (const v of candidatos) {
+    const escala = v.escalaId ? escalas.get(v.escalaId) : undefined;
+    if (!escala || escala.ativo) continue;
+    if (v.id && gravadas[v.id] === v.escalaId) continue;
+    return `A escala "${escala.descricao}" está inativa.`;
   }
   return null;
 }
@@ -91,7 +125,8 @@ export async function criarQuestionarioAction(formData: FormData): Promise<Actio
   const db = await createServerClient();
   const lido = await lerQuestionario(db, formData);
   if (!lido.ok) return lido;
-  const inativa = questaoInativaEm(lido.vinculos, lido.questoes);
+  const inativa =
+    questaoInativaEm(lido.vinculos, lido.questoes) ?? escalaInativaEm(lido.vinculos, lido.escalas, {});
   if (inativa) return { ok: false, error: inativa };
 
   const novo = assertOk(
@@ -129,15 +164,24 @@ export async function atualizarQuestionarioAction(formData: FormData): Promise<A
   if (!lido.ok) return lido;
 
   const atuais = (assertOk(
-    await db.from("questionario_questoes").select("id, questao_id").eq("questionario_id", id.data),
+    await db
+      .from("questionario_questoes")
+      .select("id, questao_id, escala_id")
+      .eq("questionario_id", id.data),
     "Não foi possível ler as questões do questionário",
-  ) as Array<{ id: string; questao_id: string }> | null) ?? [];
+  ) as Array<{ id: string; questao_id: string; escala_id: string | null }> | null) ?? [];
   const diff = diffVinculos(
     atuais.map((a) => ({ id: a.id, questaoId: a.questao_id })),
     lido.vinculos,
   );
 
-  const inativa = questaoInativaEm(diff.inserir, lido.questoes);
+  const gravadas: Record<string, string | null> = {};
+  atuais.forEach((a) => {
+    gravadas[a.id] = a.escala_id;
+  });
+  const inativa =
+    questaoInativaEm(diff.inserir, lido.questoes) ??
+    escalaInativaEm(diff.inserir.concat(diff.atualizar), lido.escalas, gravadas);
   if (inativa) return { ok: false, error: inativa };
 
   assertOk(
@@ -149,11 +193,13 @@ export async function atualizarQuestionarioAction(formData: FormData): Promise<A
     "Não foi possível salvar o questionário",
   );
 
-  // Ordem importa: remover primeiro libera a unicidade (questionario, questao) para quem sai e volta.
-  if (diff.remover.length > 0) {
+  // Inserir/atualizar ANTES de remover: se um passo falhar, o questionário fica com
+  // vínculos a mais (o usuário refaz), nunca com questões perdidas. A unicidade
+  // (questionario, questao) não conflita: diffVinculos reaproveita a linha da mesma questão.
+  if (diff.inserir.length > 0) {
     assertOk(
-      await db.from("questionario_questoes").delete().in("id", diff.remover),
-      "Não foi possível remover questões do questionário",
+      await db.from("questionario_questoes").insert(diff.inserir.map((v) => linhaDe(id.data, v))),
+      "Não foi possível adicionar questões ao questionário",
     );
   }
   if (diff.atualizar.length > 0) {
@@ -164,10 +210,10 @@ export async function atualizarQuestionarioAction(formData: FormData): Promise<A
       "Não foi possível atualizar as questões do questionário",
     );
   }
-  if (diff.inserir.length > 0) {
+  if (diff.remover.length > 0) {
     assertOk(
-      await db.from("questionario_questoes").insert(diff.inserir.map((v) => linhaDe(id.data, v))),
-      "Não foi possível adicionar questões ao questionário",
+      await db.from("questionario_questoes").delete().in("id", diff.remover),
+      "Não foi possível remover questões do questionário",
     );
   }
 

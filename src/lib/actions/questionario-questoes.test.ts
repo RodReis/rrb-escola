@@ -15,6 +15,8 @@ import { alternarAtivoQuestaoAction, atualizarQuestaoAction, criarQuestaoAction 
 const ID = "11111111-1111-4111-8111-111111111111";
 const GRUPO = "22222222-2222-4222-8222-222222222222";
 
+const grupoAtivo = { "questao_grupos.select": [{ data: { id: GRUPO, ativo: true } }] };
+
 const campos = (extra: Record<string, string | string[]> = {}) =>
   formData({ grupoId: GRUPO, tipo: "subjetiva", pergunta: "Como foi?", ativa: "on", ...extra });
 
@@ -26,7 +28,7 @@ beforeEach(() => {
 
 describe("criarQuestaoAction", () => {
   it("grava questão subjetiva com limite de caracteres", async () => {
-    const db = fakeSupabase({ "questoes.insert": [{ data: { id: "q1" } }] });
+    const db = fakeSupabase({ ...grupoAtivo, "questoes.insert": [{ data: { id: "q1" } }] });
     h.client = db.client;
 
     const r = await criarQuestaoAction(
@@ -49,7 +51,7 @@ describe("criarQuestaoAction", () => {
   });
 
   it("única escolha grava as alternativas em ordem", async () => {
-    const db = fakeSupabase({ "questoes.insert": [{ data: { id: "q1" } }] });
+    const db = fakeSupabase({ ...grupoAtivo, "questoes.insert": [{ data: { id: "q1" } }] });
     h.client = db.client;
     await criarQuestaoAction(campos({ tipo: "objetiva_unica", alternativas: ["Sim", "", "Não"] }));
     expect(db.chamadas("questao_alternativas", "insert")[0].payload).toEqual([
@@ -68,6 +70,7 @@ describe("criarQuestaoAction", () => {
 
   it("se as alternativas falham, apaga a questão recém-criada (sem órfã)", async () => {
     const db = fakeSupabase({
+      ...grupoAtivo,
       "questoes.insert": [{ data: { id: "q1" } }],
       "questao_alternativas.insert": [{ error: { message: "boom" } }],
     });
@@ -77,10 +80,43 @@ describe("criarQuestaoAction", () => {
   });
 });
 
+describe("grupo da questão", () => {
+  it("recusa grupo inexistente (ou de outra escola) sem gravar", async () => {
+    const db = fakeSupabase({ "questao_grupos.select": [{ data: null }] });
+    h.client = db.client;
+    const r = await criarQuestaoAction(campos());
+    expect(r).toEqual({ ok: false, error: "Grupo inválido." });
+    expect(db.chamadas("questoes", "insert")).toHaveLength(0);
+  });
+
+  it("recusa grupo inativo em questão nova", async () => {
+    const db = fakeSupabase({ "questao_grupos.select": [{ data: { id: GRUPO, ativo: false } }] });
+    h.client = db.client;
+    const r = await criarQuestaoAction(campos());
+    expect(r).toEqual({ ok: false, error: "Grupo inativo." });
+    expect(db.chamadas("questoes", "insert")).toHaveLength(0);
+  });
+
+  it("ao editar, trocar para grupo inativo é recusado; manter o grupo atual (mesmo inativo) passa", async () => {
+    const OUTRO = "33333333-3333-4333-8333-333333333333";
+    const trocando = fakeSupabase({
+      "questoes.select": [{ data: { tipo: "subjetiva", grupo_id: OUTRO } }],
+      "questao_grupos.select": [{ data: { id: GRUPO, ativo: false } }],
+    });
+    h.client = trocando.client;
+    expect(await atualizarQuestaoAction(campos({ id: ID }))).toEqual({ ok: false, error: "Grupo inativo." });
+    expect(trocando.chamadas("questoes", "update")).toHaveLength(0);
+
+    const mantendo = fakeSupabase({ "questoes.select": [{ data: { tipo: "subjetiva", grupo_id: GRUPO } }] });
+    h.client = mantendo.client;
+    expect(await atualizarQuestaoAction(campos({ id: ID }))).toMatchObject({ ok: true });
+  });
+});
+
 describe("atualizarQuestaoAction", () => {
   it("recusa trocar o tipo de questão já usada em questionário", async () => {
     const db = fakeSupabase({
-      "questoes.select": [{ data: { tipo: "subjetiva" } }],
+      "questoes.select": [{ data: { tipo: "subjetiva", grupo_id: GRUPO } }],
       "questionario_questoes.select": [{ count: 2 }],
     });
     h.client = db.client;
@@ -97,7 +133,7 @@ describe("atualizarQuestaoAction", () => {
 
   it("permite editar o texto de questão em uso (tipo igual)", async () => {
     const db = fakeSupabase({
-      "questoes.select": [{ data: { tipo: "subjetiva" } }],
+      "questoes.select": [{ data: { tipo: "subjetiva", grupo_id: GRUPO } }],
       "questionario_questoes.select": [{ count: 3 }],
     });
     h.client = db.client;
@@ -108,7 +144,7 @@ describe("atualizarQuestaoAction", () => {
 
   it("permite trocar o tipo quando não está em uso e troca as alternativas", async () => {
     const db = fakeSupabase({
-      "questoes.select": [{ data: { tipo: "subjetiva" } }],
+      "questoes.select": [{ data: { tipo: "subjetiva", grupo_id: GRUPO } }],
       "questionario_questoes.select": [{ count: 0 }],
       "questao_alternativas.select": [{ data: [] }],
     });
