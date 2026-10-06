@@ -27,6 +27,9 @@ Uso pedagógico (ex.: "Quadro de objetivos de aprendizagem e desenvolvimento —
   Desenvolvido) cadastrado em tela própria. A escala é escolhida **ao adicionar a questão
   no questionário**, não na questão: a mesma pergunta pode ter escalas diferentes por
   questionário.
+- **Escala padrão na questão** (ajuste de 2026-10-06, `questoes.escala_id`, obrigatória em `objetiva_escala`): o cadastro da
+  questão escolhe a escala (e mostra as opções); ao adicionar a questão ao questionário ela já
+  vem preenchida e ainda pode ser trocada por questionário. A lista de questões mostra a escala.
 - Ativar/inativar com `ConfirmButton`/`useConfirm`; nunca `confirm()` nativo.
 - RBAC: admin e secretaria com acesso total; financeiro e professor sem acesso. O módulo
   `questionario.responder` (professor) nasce no ciclo de resposta.

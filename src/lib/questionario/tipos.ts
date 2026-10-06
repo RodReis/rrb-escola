@@ -18,6 +18,8 @@ export type QuestaoLinha = {
   ativa: boolean;
   grupoId: string;
   grupoDescricao: string;
+  escalaId: string | null;
+  escalaDescricao: string | null;
 };
 export type QuestaoDetalhe = {
   id: string;
@@ -30,6 +32,7 @@ export type QuestaoDetalhe = {
   qtdeCaracteres: number;
   qtdeLinhas: number;
   alternativas: string[];
+  escalaId: string | null;
   emUso: boolean;
 };
 export type QuestionarioRow = { id: string; descricao: string; ativo: boolean };

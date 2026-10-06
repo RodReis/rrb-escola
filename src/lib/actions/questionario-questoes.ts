@@ -26,6 +26,7 @@ function lerQuestao(formData: FormData) {
     qtdeCaracteres: formNumber(formData, "qtdeCaracteres") ?? 0,
     qtdeLinhas: formNumber(formData, "qtdeLinhas") ?? 0,
     alternativas: lerLista(formData, "alternativas"),
+    escalaId: lerTexto(formData, "escalaId") || null,
   });
 }
 
@@ -39,6 +40,7 @@ function colunas(q: QuestaoInput) {
     limitar_caracteres: q.limitarCaracteres,
     qtde_caracteres: q.qtdeCaracteres,
     qtde_linhas: q.qtdeLinhas,
+    escala_id: q.escalaId,
   };
 }
 
@@ -53,6 +55,17 @@ async function validarGrupo(db: Cliente, grupoId: string, grupoAtual?: string): 
   return null;
 }
 
+/** Escala padrão: existe NESTA escola (RLS) e está ativa, salvo se já era a da questão. */
+async function validarEscala(db: Cliente, escalaId: string, escalaAtual?: string | null): Promise<string | null> {
+  const escala = assertOk(
+    await db.from("escalas").select("id, ativo").eq("id", escalaId).maybeSingle(),
+    "Não foi possível ler a escala",
+  ) as { id: string; ativo: boolean } | null;
+  if (!escala) return "Escala inválida.";
+  if (!escala.ativo && escala.id !== escalaAtual) return "Escala inativa.";
+  return null;
+}
+
 export async function criarQuestaoAction(formData: FormData): Promise<ActionResult> {
   const session = await requirePermission("questionario.questao", "create");
   const parsed = lerQuestao(formData);
@@ -61,6 +74,10 @@ export async function criarQuestaoAction(formData: FormData): Promise<ActionResu
   const db = await createServerClient();
   const grupoInvalido = await validarGrupo(db, parsed.data.grupoId);
   if (grupoInvalido) return { ok: false, error: grupoInvalido };
+  if (parsed.data.escalaId) {
+    const escalaInvalida = await validarEscala(db, parsed.data.escalaId);
+    if (escalaInvalida) return { ok: false, error: escalaInvalida };
+  }
 
   const nova = assertOk(
     await db
@@ -93,9 +110,9 @@ export async function atualizarQuestaoAction(formData: FormData): Promise<Action
 
   const db = await createServerClient();
   const atual = assertOk(
-    await db.from("questoes").select("tipo, grupo_id").eq("id", id.data).eq("escola_id", session.profile.escola_id).maybeSingle(),
+    await db.from("questoes").select("tipo, grupo_id, escala_id").eq("id", id.data).eq("escola_id", session.profile.escola_id).maybeSingle(),
     "Não foi possível ler a questão",
-  ) as { tipo: string; grupo_id: string } | null;
+  ) as { tipo: string; grupo_id: string; escala_id: string | null } | null;
   if (!atual) return { ok: false, error: "Questão não encontrada." };
 
   if (atual.grupo_id !== parsed.data.grupoId) {
@@ -112,6 +129,11 @@ export async function atualizarQuestaoAction(formData: FormData): Promise<Action
     if ((uso.count ?? 0) > 0) {
       return { ok: false, error: "Questão em uso em questionário: não é possível trocar o tipo." };
     }
+  }
+
+  if (parsed.data.escalaId && atual.escala_id !== parsed.data.escalaId) {
+    const escalaInvalida = await validarEscala(db, parsed.data.escalaId, atual.escala_id);
+    if (escalaInvalida) return { ok: false, error: escalaInvalida };
   }
 
   assertOk(

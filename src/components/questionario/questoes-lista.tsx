@@ -18,7 +18,7 @@ export function QuestoesLista({ questoes, podeEditar }: Props) {
   const [busca, setBusca] = useState("");
   const termo = normalizarBusca(busca);
   const visiveis = questoes.filter((q) =>
-    normalizarBusca(`${QUESTAO_TIPO_LABEL[q.tipo]} ${q.grupoDescricao} ${q.pergunta}`).includes(termo),
+    normalizarBusca(`${QUESTAO_TIPO_LABEL[q.tipo]} ${q.grupoDescricao} ${q.pergunta} ${q.escalaDescricao ?? ""}`).includes(termo),
   );
 
   return (
@@ -31,6 +31,7 @@ export function QuestoesLista({ questoes, podeEditar }: Props) {
             <th className="w-[240px]">Tipo</th>
             <th className="w-[240px]">Grupo</th>
             <th>Pergunta</th>
+            <th className="w-[180px]">Escala</th>
             <th className="w-[110px]">Situação</th>
             <th className="w-[110px] text-right">Ação</th>
           </tr>
@@ -38,7 +39,7 @@ export function QuestoesLista({ questoes, podeEditar }: Props) {
         <tbody>
           {visiveis.length === 0 ? (
             <tr>
-              <td colSpan={5} className="px-5 py-10 text-center text-sm text-ink/60">
+              <td colSpan={6} className="px-5 py-10 text-center text-sm text-ink/60">
                 Nenhuma questão encontrada.
               </td>
             </tr>
@@ -48,6 +49,7 @@ export function QuestoesLista({ questoes, podeEditar }: Props) {
               <td className="pl-4 text-ink">{QUESTAO_TIPO_LABEL[q.tipo]}</td>
               <td className="text-ink/80">{q.grupoDescricao}</td>
               <td className="max-w-[28rem] truncate text-ink" title={q.pergunta}>{q.pergunta}</td>
+              <td className="text-ink/80">{q.escalaDescricao ?? "—"}</td>
               <td>
                 <StatusPill tone={q.ativa ? "success" : "neutral"}>{q.ativa ? "Ativa" : "Inativa"}</StatusPill>
               </td>

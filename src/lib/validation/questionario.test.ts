@@ -12,6 +12,7 @@ const base = {
   qtdeCaracteres: 0,
   qtdeLinhas: 0,
   alternativas: [] as string[],
+  escalaId: null as string | null,
 };
 
 describe("GrupoSchema", () => {
@@ -63,12 +64,22 @@ describe("QuestaoSchema", () => {
     expect(r).toMatchObject({ alternativas: ["A", "B"], limitarCaracteres: false, qtdeCaracteres: 0, qtdeLinhas: 0 });
   });
   it("tipos sem alternativas descartam as que vieram", () => {
-    const r = QuestaoSchema.parse({ ...base, tipo: "objetiva_escala", alternativas: ["X", "Y"] });
+    const r = QuestaoSchema.parse({ ...base, tipo: "objetiva_escala", alternativas: ["X", "Y"], escalaId: GRUPO });
     expect(r.alternativas).toEqual([]);
   });
   it("matriz descritiva salva só os campos base", () => {
     const r = QuestaoSchema.parse({ ...base, tipo: "matriz_descritiva" });
     expect(r).toMatchObject({ tipo: "matriz_descritiva", alternativas: [], qtdeLinhas: 0 });
+  });
+  it("questão com escala exige a escala padrão", () => {
+    const r = QuestaoSchema.safeParse({ ...base, tipo: "objetiva_escala" });
+    expect(r.success).toBe(false);
+    const ok = QuestaoSchema.parse({ ...base, tipo: "objetiva_escala", escalaId: GRUPO });
+    expect(ok.escalaId).toBe(GRUPO);
+  });
+  it("outros tipos descartam a escala que vier", () => {
+    const r = QuestaoSchema.parse({ ...base, tipo: "subjetiva", escalaId: GRUPO });
+    expect(r.escalaId).toBeNull();
   });
   it("recusa grupo que não é uuid", () => {
     expect(QuestaoSchema.safeParse({ ...base, grupoId: "" }).success).toBe(false);
