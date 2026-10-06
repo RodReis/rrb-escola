@@ -22,12 +22,15 @@ const GRUPOS: GrupoRow[] = [
   { id: "g2", codigo: 2, descricao: "CORPO", ativo: true },
 ];
 const QUESTOES: QuestaoLinha[] = [
-  { id: "q1", tipo: "subjetiva", pergunta: "Compartilha?", ativa: true, grupoId: "g1", grupoDescricao: "O EU" },
-  { id: "q2", tipo: "objetiva_escala", pergunta: "Respeita regras?", ativa: true, grupoId: "g1", grupoDescricao: "O EU" },
-  { id: "q3", tipo: "objetiva_escala", pergunta: "Desloca o corpo?", ativa: true, grupoId: "g2", grupoDescricao: "CORPO" },
-  { id: "q4", tipo: "subjetiva", pergunta: "Inativa", ativa: false, grupoId: "g2", grupoDescricao: "CORPO" },
+  { id: "q1", tipo: "subjetiva", pergunta: "Compartilha?", ativa: true, grupoId: "g1", grupoDescricao: "O EU", escalaId: null, escalaDescricao: null },
+  { id: "q2", tipo: "objetiva_escala", pergunta: "Respeita regras?", ativa: true, grupoId: "g1", grupoDescricao: "O EU", escalaId: "e1", escalaDescricao: "Desenv." },
+  { id: "q3", tipo: "objetiva_escala", pergunta: "Desloca o corpo?", ativa: true, grupoId: "g2", grupoDescricao: "CORPO", escalaId: "e2", escalaDescricao: "Antiga" },
+  { id: "q4", tipo: "subjetiva", pergunta: "Inativa", ativa: false, grupoId: "g2", grupoDescricao: "CORPO", escalaId: null, escalaDescricao: null },
 ];
-const ESCALAS: EscalaRow[] = [{ id: "e1", descricao: "Desenv.", ativo: true, opcoes: ["A", "B"] }];
+const ESCALAS: EscalaRow[] = [
+  { id: "e1", descricao: "Desenv.", ativo: true, opcoes: ["A", "B"] },
+  { id: "e2", descricao: "Antiga", ativo: false, opcoes: ["X", "Y"] },
+];
 
 const perguntasNaTabela = () =>
   screen.getAllByTestId("linha-vinculo").map((tr) => within(tr).getByTestId("pergunta").textContent);
@@ -58,6 +61,20 @@ describe("QuestionarioForm", () => {
     fireEvent.click(screen.getByRole("button", { name: /adicionar/i }));
     expect(screen.queryByLabelText("Escala de Compartilha?")).not.toBeInTheDocument();
     expect(screen.getByLabelText("Escala de Respeita regras?")).toBeInTheDocument();
+  });
+
+  it("questão com escala entra já com a escala padrão preenchida (se ainda ativa)", () => {
+    renderForm();
+    fireEvent.change(screen.getByLabelText("Grupo"), { target: { value: "g1" } });
+    fireEvent.click(screen.getByRole("button", { name: /adicionar/i }));
+    expect(screen.getByLabelText("Escala de Respeita regras?")).toHaveValue("e1");
+  });
+
+  it("escala padrão inativa não é pré-preenchida", () => {
+    renderForm();
+    fireEvent.change(screen.getByLabelText("Grupo"), { target: { value: "g2" } });
+    fireEvent.click(screen.getByRole("button", { name: /adicionar/i }));
+    expect(screen.getByLabelText("Escala de Desloca o corpo?")).toHaveValue("");
   });
 
   it("reordena e remove", () => {

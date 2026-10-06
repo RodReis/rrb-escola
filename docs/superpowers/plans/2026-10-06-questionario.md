@@ -3972,3 +3972,16 @@ git commit -m "feat(questionario): item de menu Questionario" -m "Co-Authored-By
 **Placeholders:** nenhum "TBD/TODO"; todo step de código traz o código.
 
 **Consistência de tipos:** `ActionResult`, `QuestaoInfo`, `VinculoInput/Normalizado`, `substituirFilhos(db, tabela, paiId, rotulos)`, `alternarAtivo(formData, tabela, escolaId)` usados com a mesma assinatura em T3–T7; campos de form (`grupoId`, `tipo`, `alternativas`, `opcoes`, `vinculos`) idênticos entre componentes e actions.
+
+---
+
+## Pós-implementação (registro)
+
+Este plano é o registro do que foi planejado para o PR #43; o estado final está em
+`docs/superpowers/specs/2026-10-06-questionario-design.md`. Divergências em relação ao texto acima:
+
+- `tsconfig` com `target: es5`: o código final não usa `\p{Diacritic}` com flag `u` nem `for…of` sobre `.entries()`/Map/Set.
+- `diffVinculos` casa o vínculo pelo id (e mesma questão) ou, na falta, pela questão; a gravação do questionário é inserir → atualizar → remover (a Task 7 acima descreve remover → atualizar → inserir).
+- `criarQuestionarioAction`/`atualizarQuestionarioAction` validam a escala escolhida (existe, está ativa); `criarQuestaoAction`/`atualizarQuestaoAction` validam o grupo (existe, ativo).
+- PR #44 acrescentou a **escala padrão na questão** (`questoes.escala_id`, migration `202610060002_questao_escala_padrao.sql`): campo no cadastro, coluna na lista e pré-preenchimento no questionário.
+- Minors adiados da revisão final: alternativa/opção em branco descartada em silêncio; questão ativa de grupo inativo ainda é oferecida no form do questionário; delete de rollback sem `logSeFalhou`.

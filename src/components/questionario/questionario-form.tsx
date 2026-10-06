@@ -46,10 +46,16 @@ export function QuestionarioForm({ grupos, questoes, escalas, questionario }: Pr
   const jaAdicionadas = new Set(linhas.map((l) => l.questaoId));
   const gruposAtivos = grupos.filter((g) => g.ativo);
 
+  /** Escala padrão da questão, só se ela ainda estiver ativa. */
+  function escalaPadrao(questaoId: string): string | null {
+    const padrao = questaoPorId.get(questaoId)?.escalaId ?? null;
+    return padrao && escalas.some((e) => e.id === padrao && e.ativo) ? padrao : null;
+  }
+
   function adicionar() {
     const novos = questoesParaAdicionar(ativas, jaAdicionadas, filtroGrupo || null, filtroQuestao || null);
     if (novos.length === 0) return;
-    setLinhas([...linhas, ...novos.map((questaoId) => ({ questaoId, escalaId: null }))]);
+    setLinhas([...linhas, ...novos.map((questaoId) => ({ questaoId, escalaId: escalaPadrao(questaoId) }))]);
     setFiltroQuestao("");
   }
 

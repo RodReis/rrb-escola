@@ -45,18 +45,21 @@ type QuestaoBruta = {
   pergunta: string;
   ativa: boolean;
   grupo_id: string;
+  escala_id: string | null;
   questao_grupos: { descricao: string } | Array<{ descricao: string }> | null;
+  escalas: { descricao: string } | Array<{ descricao: string }> | null;
 };
 
 export async function listarQuestoes(): Promise<QuestaoLinha[]> {
   const db = await createServerClient();
   const { data, error } = await db
     .from("questoes")
-    .select("id, tipo, pergunta, ativa, grupo_id, questao_grupos(descricao)")
+    .select("id, tipo, pergunta, ativa, grupo_id, escala_id, questao_grupos(descricao), escalas(descricao)")
     .order("created_at");
   if (error) throw error;
   return ((data ?? []) as QuestaoBruta[]).map((q) => {
     const grupo = Array.isArray(q.questao_grupos) ? q.questao_grupos[0] : q.questao_grupos;
+    const escala = Array.isArray(q.escalas) ? q.escalas[0] : q.escalas;
     return {
       id: q.id,
       tipo: q.tipo,
@@ -64,6 +67,8 @@ export async function listarQuestoes(): Promise<QuestaoLinha[]> {
       ativa: q.ativa,
       grupoId: q.grupo_id,
       grupoDescricao: grupo?.descricao ?? "",
+      escalaId: q.escala_id,
+      escalaDescricao: escala?.descricao ?? null,
     };
   });
 }
@@ -78,6 +83,7 @@ type QuestaoDetalheBruta = {
   limitar_caracteres: boolean;
   qtde_caracteres: number;
   qtde_linhas: number;
+  escala_id: string | null;
   questao_alternativas: Array<{ rotulo: string; ordem: number }> | null;
 };
 
@@ -86,7 +92,7 @@ export async function getQuestao(id: string): Promise<QuestaoDetalhe | null> {
   const { data, error } = await db
     .from("questoes")
     .select(
-      "id, grupo_id, tipo, pergunta, ativa, obrigatoria, limitar_caracteres, qtde_caracteres, qtde_linhas, questao_alternativas(rotulo, ordem)",
+      "id, grupo_id, tipo, pergunta, ativa, obrigatoria, limitar_caracteres, qtde_caracteres, qtde_linhas, escala_id, questao_alternativas(rotulo, ordem)",
     )
     .eq("id", id)
     .maybeSingle();
@@ -111,6 +117,7 @@ export async function getQuestao(id: string): Promise<QuestaoDetalhe | null> {
     qtdeCaracteres: q.qtde_caracteres,
     qtdeLinhas: q.qtde_linhas,
     alternativas: porOrdem(q.questao_alternativas).map((a) => a.rotulo),
+    escalaId: q.escala_id,
     emUso: (count ?? 0) > 0,
   };
 }

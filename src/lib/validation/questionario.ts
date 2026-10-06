@@ -53,8 +53,12 @@ export const QuestaoSchema = z
     qtdeCaracteres: z.number().int("Informe um número inteiro").min(0),
     qtdeLinhas: z.number().int("Informe um número inteiro").min(0),
     alternativas: z.array(z.string().trim()),
+    escalaId: z.string().uuid("Escala inválida").nullable(),
   })
   .superRefine((v, ctx) => {
+    if (v.tipo === "objetiva_escala" && !v.escalaId) {
+      ctx.addIssue({ code: z.ZodIssueCode.custom, path: ["escalaId"], message: "Escolha a escala da questão" });
+    }
     if (v.tipo === "subjetiva" && v.limitarCaracteres && v.qtdeCaracteres < 1) {
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
@@ -82,6 +86,7 @@ export const QuestaoSchema = z
       qtdeCaracteres: subjetiva && v.limitarCaracteres ? v.qtdeCaracteres : 0,
       qtdeLinhas: subjetiva ? v.qtdeLinhas : 0,
       alternativas: comAlternativas ? v.alternativas : [],
+      escalaId: v.tipo === "objetiva_escala" ? v.escalaId : null,
     };
   });
 export type QuestaoInput = z.output<typeof QuestaoSchema>;

@@ -2,14 +2,14 @@ import { notFound } from "next/navigation";
 import { PageHeader } from "@/components/ui/page-header";
 import { QuestaoForm } from "@/components/questionario/questao-form";
 import { requirePermission } from "@/lib/auth/session";
-import { getQuestao, listarGrupos } from "@/lib/data/questionario";
+import { getQuestao, listarEscalas, listarGrupos } from "@/lib/data/questionario";
 import { IdSchema } from "@/lib/validation/questionario";
 
 export default async function EditarQuestaoPage({ params }: { params: { id: string } }) {
   await requirePermission("questionario.questao", "update");
   if (!IdSchema.safeParse(params.id).success) notFound();
 
-  const [questao, grupos] = await Promise.all([getQuestao(params.id), listarGrupos()]);
+  const [questao, grupos, escalas] = await Promise.all([getQuestao(params.id), listarGrupos(), listarEscalas()]);
   if (!questao) notFound();
 
   return (
@@ -23,7 +23,7 @@ export default async function EditarQuestaoPage({ params }: { params: { id: stri
         ]}
         title="Cadastro de Questão"
       />
-      <QuestaoForm grupos={grupos} questao={questao} />
+      <QuestaoForm grupos={grupos} escalas={escalas} questao={questao} />
     </div>
   );
 }

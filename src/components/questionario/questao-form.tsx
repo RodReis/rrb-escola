@@ -8,17 +8,18 @@ import { Switch } from "@/components/ui/switch";
 import { ListaRotulos } from "@/components/questionario/lista-rotulos";
 import { atualizarQuestaoAction, criarQuestaoAction } from "@/lib/actions/questionario-questoes";
 import { useAction } from "@/lib/hooks/use-action";
-import type { GrupoRow, QuestaoDetalhe } from "@/lib/questionario/tipos";
+import type { EscalaRow, GrupoRow, QuestaoDetalhe } from "@/lib/questionario/tipos";
 import { QUESTAO_TIPOS, QUESTAO_TIPO_LABEL, type QuestaoTipo } from "@/lib/validation/questionario";
 
-type Props = { grupos: GrupoRow[]; questao?: QuestaoDetalhe };
+type Props = { grupos: GrupoRow[]; escalas: EscalaRow[]; questao?: QuestaoDetalhe };
 
 const ROTULO = "text-sm font-medium text-ink/80";
 
-export function QuestaoForm({ grupos, questao }: Props) {
+export function QuestaoForm({ grupos, escalas, questao }: Props) {
   const [tipo, setTipo] = useState<QuestaoTipo>(questao?.tipo ?? "subjetiva");
   const [ativa, setAtiva] = useState(questao?.ativa ?? true);
   const [obrigatoria, setObrigatoria] = useState(questao?.obrigatoria ?? false);
+  const [escalaId, setEscalaId] = useState(questao?.escalaId ?? "");
   const [limitar, setLimitar] = useState(questao?.limitarCaracteres ?? false);
   const [alternativas, setAlternativas] = useState<string[]>(
     questao && questao.alternativas.length > 0 ? questao.alternativas : ["", ""],
@@ -29,6 +30,8 @@ export function QuestaoForm({ grupos, questao }: Props) {
   const emUso = questao?.emUso ?? false;
   const subjetiva = tipo === "subjetiva";
   const comAlternativas = tipo === "objetiva_unica" || tipo === "objetiva_multipla";
+  const escalasDisponiveis = escalas.filter((e) => e.ativo || e.id === questao?.escalaId);
+  const escalaEscolhida = escalas.find((e) => e.id === escalaId);
   const gruposDisponiveis = grupos.filter((g) => g.ativo || g.id === questao?.grupoId);
 
   function enviar(e: FormEvent<HTMLFormElement>) {
@@ -85,6 +88,27 @@ export function QuestaoForm({ grupos, questao }: Props) {
           <label htmlFor="questao-pergunta" className={ROTULO}>Pergunta *</label>
           <textarea id="questao-pergunta" name="pergunta" required rows={3} defaultValue={questao?.pergunta ?? ""} />
         </div>
+
+        {tipo === "objetiva_escala" ? (
+          <div className="grid gap-1">
+            <label htmlFor="questao-escala" className={ROTULO}>Escala *</label>
+            <select
+              id="questao-escala"
+              name="escalaId"
+              required
+              value={escalaId}
+              onChange={(e) => setEscalaId(e.target.value)}
+            >
+              <option value="" disabled>Selecione</option>
+              {escalasDisponiveis.map((e) => (
+                <option key={e.id} value={e.id}>{e.descricao}</option>
+              ))}
+            </select>
+            {escalaEscolhida ? (
+              <p className="text-xs text-ink/60">{escalaEscolhida.opcoes.join(" · ")}</p>
+            ) : null}
+          </div>
+        ) : null}
 
         {subjetiva ? (
           <div className="grid gap-4 md:grid-cols-3">
