@@ -15,7 +15,8 @@ export function normalizarVinculos(
 ): ResultadoVinculos {
   const vistos = new Set<string>();
   const saida: VinculoNormalizado[] = [];
-  for (const [i, v] of vinculos.entries()) {
+  for (let i = 0; i < vinculos.length; i++) {
+    const v = vinculos[i];
     const info = questoes.get(v.questaoId);
     if (!info) return { ok: false, error: "Questão inexistente no questionário." };
     if (vistos.has(v.questaoId)) return { ok: false, error: `A questão "${info.pergunta}" está repetida.` };
