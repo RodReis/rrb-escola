@@ -8,6 +8,8 @@ const ROTAS = {
   "/questionario/escalas": "questionario.escala",
   "/questionario/questoes": "questionario.questao",
   "/questionario/questionarios": "questionario.questionario",
+  "/questionario/secoes": "questionario.secao",
+  "/questionario/associacoes": "questionario.associacao",
 } as const;
 
 describe("RBAC do módulo Questionário", () => {
