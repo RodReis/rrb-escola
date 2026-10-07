@@ -1,6 +1,6 @@
 import { createServerClient } from "@/lib/supabase/server";
 import type {
-  EscalaRow, GrupoRow, QuestaoDetalhe, QuestaoLinha, QuestionarioDetalhe, QuestionarioRow,
+  EscalaRow, GrupoRow, QuestaoDetalhe, QuestaoLinha, QuestionarioDetalhe, QuestionarioRow, SecaoRow,
 } from "@/lib/questionario/tipos";
 import type { QuestaoTipo } from "@/lib/validation/questionario";
 
@@ -158,4 +158,26 @@ export async function getQuestionario(id: string): Promise<QuestionarioDetalhe |
       escalaId: v.escala_id,
     })),
   };
+}
+
+export async function listarSecoes(): Promise<SecaoRow[]> {
+  const db = await createServerClient();
+  const { data, error } = await db
+    .from("ficha_secoes")
+    .select("id, codigo, descricao, permite_lancamento_coletivo, ativo")
+    .order("descricao");
+  if (error) throw error;
+  return ((data ?? []) as Array<{
+    id: string;
+    codigo: number;
+    descricao: string;
+    permite_lancamento_coletivo: boolean;
+    ativo: boolean;
+  }>).map((s) => ({
+    id: s.id,
+    codigo: s.codigo,
+    descricao: s.descricao,
+    permiteLancamentoColetivo: s.permite_lancamento_coletivo,
+    ativo: s.ativo,
+  }));
 }
