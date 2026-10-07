@@ -74,6 +74,8 @@ const SECRETARIA_ITEMS: DropdownItem[] = [
       { href: "/questionario/escalas", label: "Escala", iconName: "SlidersHorizontal" },
       { href: "/questionario/questoes", label: "Questão", iconName: "ClipboardList" },
       { href: "/questionario/questionarios", label: "Questionário", iconName: "FileText" },
+      { href: "/questionario/secoes", label: "Seção da Ficha", iconName: "ClipboardCheck" },
+      { href: "/questionario/associacoes", label: "Associação Série/Questionário", iconName: "UserCheck" },
     ],
   },
   {

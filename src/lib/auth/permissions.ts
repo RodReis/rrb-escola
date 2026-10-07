@@ -83,6 +83,8 @@ export const MODULOS = {
   "questionario.escala": { grupo: "academico", nome: "Questionário — Escalas" },
   "questionario.questao": { grupo: "academico", nome: "Questionário — Questões" },
   "questionario.questionario": { grupo: "academico", nome: "Questionário — Questionários" },
+  "questionario.secao": { grupo: "academico", nome: "Questionário — Seções da Ficha" },
+  "questionario.associacao": { grupo: "academico", nome: "Questionário — Associações" },
   // comunicacao
   whatsapp_inbox: { grupo: "comunicacao", nome: "WhatsApp Inbox" },
   // operacional
@@ -190,6 +192,8 @@ export const ROTA_PARA_MODULO: Record<string, ModuloCodigo> = {
   "/questionario/escalas": "questionario.escala",
   "/questionario/questoes": "questionario.questao",
   "/questionario/questionarios": "questionario.questionario",
+  "/questionario/secoes": "questionario.secao",
+  "/questionario/associacoes": "questionario.associacao",
   "/portaria": "portaria",
   "/relatorios/alunos": "relatorios",
   "/relatorios/frequencia": "relatorios",

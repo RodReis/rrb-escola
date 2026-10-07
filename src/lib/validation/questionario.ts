@@ -106,3 +106,29 @@ export const QuestionarioSchema = z.object({
   ativo: z.boolean(),
   vinculos: z.array(VinculoSchema),
 });
+
+export const SecaoSchema = z.object({
+  descricao: textoObrigatorio("Descrição é obrigatória"),
+  permiteLancamentoColetivo: z.boolean(),
+});
+
+const etapaSchema = z
+  .number({ invalid_type_error: "Etapa inválida" })
+  .int("Etapa inválida")
+  .min(1, "Etapa inválida")
+  .max(4, "Etapa inválida");
+
+export const AssociacaoLoteSchema = z.object({
+  questionarioId: z.string().uuid("Questionário é obrigatório"),
+  professorId: z.string().uuid("Professor é obrigatório"),
+  etapas: z.array(etapaSchema).min(1, "Marque ao menos uma etapa"),
+  turmaIds: z.array(z.string().uuid("Turma inválida")).min(1, "Marque ao menos uma turma"),
+});
+
+export const AssociacaoEdicaoSchema = z.object({
+  id: z.string().uuid("Registro inválido."),
+  questionarioId: z.string().uuid("Questionário é obrigatório"),
+  turmaId: z.string().uuid("Turma é obrigatória"),
+  professorId: z.string().uuid("Professor é obrigatório"),
+  etapa: etapaSchema,
+});

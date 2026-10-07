@@ -1,6 +1,7 @@
 import { createServerClient } from "@/lib/supabase/server";
 import type {
-  EscalaRow, GrupoRow, QuestaoDetalhe, QuestaoLinha, QuestionarioDetalhe, QuestionarioRow,
+  EscalaRow, GrupoRow, QuestaoDetalhe, QuestaoLinha, QuestionarioDetalhe, QuestionarioRow, SecaoRow,
+  AssociacaoRow, TurmaOpcao,
 } from "@/lib/questionario/tipos";
 import type { QuestaoTipo } from "@/lib/validation/questionario";
 
@@ -158,4 +159,110 @@ export async function getQuestionario(id: string): Promise<QuestionarioDetalhe |
       escalaId: v.escala_id,
     })),
   };
+}
+
+export async function listarSecoes(): Promise<SecaoRow[]> {
+  const db = await createServerClient();
+  const { data, error } = await db
+    .from("ficha_secoes")
+    .select("id, codigo, descricao, permite_lancamento_coletivo, ativo")
+    .order("descricao");
+  if (error) throw error;
+  return ((data ?? []) as Array<{
+    id: string;
+    codigo: number;
+    descricao: string;
+    permite_lancamento_coletivo: boolean;
+    ativo: boolean;
+  }>).map((s) => ({
+    id: s.id,
+    codigo: s.codigo,
+    descricao: s.descricao,
+    permiteLancamentoColetivo: s.permite_lancamento_coletivo,
+    ativo: s.ativo,
+  }));
+}
+
+type Um<T> = T | T[] | null;
+const um = <T>(v: Um<T>): T | null => (Array.isArray(v) ? v[0] ?? null : v);
+
+type TurmaBruta = {
+  id: string;
+  nome: string;
+  turno: string;
+  ano_letivo: number;
+  ativo: boolean;
+  serie_id: string;
+  series: Um<{ nome: string; ordem: number }>;
+};
+
+/** Turmas com a série, para o formulário e os filtros da Associação. */
+export async function listarTurmasOpcoes(): Promise<TurmaOpcao[]> {
+  const db = await createServerClient();
+  const { data, error } = await db
+    .from("turmas")
+    .select("id, nome, turno, ano_letivo, ativo, serie_id, series(nome, ordem)")
+    .order("ano_letivo", { ascending: false })
+    .order("nome");
+  if (error) throw error;
+  return ((data ?? []) as TurmaBruta[]).map((t) => {
+    const serie = um(t.series);
+    return {
+      id: t.id,
+      nome: t.nome,
+      turno: t.turno,
+      anoLetivo: t.ano_letivo,
+      ativo: t.ativo,
+      serieId: t.serie_id,
+      serieNome: serie?.nome ?? "",
+      serieOrdem: serie?.ordem ?? 0,
+    };
+  });
+}
+
+type AssociacaoBruta = {
+  id: string;
+  ativo: boolean;
+  etapa: number;
+  questionario_id: string;
+  turma_id: string;
+  professor_id: string;
+  questionarios: Um<{ descricao: string }>;
+  turmas: Um<{
+    nome: string;
+    turno: string;
+    ano_letivo: number;
+    serie_id: string;
+    series: Um<{ nome: string }>;
+  }>;
+  employees: Um<{ name: string }>;
+};
+
+export async function listarAssociacoes(): Promise<AssociacaoRow[]> {
+  const db = await createServerClient();
+  const { data, error } = await db
+    .from("questionario_associacoes")
+    .select(
+      "id, ativo, etapa, questionario_id, turma_id, professor_id, questionarios(descricao), turmas(nome, turno, ano_letivo, serie_id, series(nome)), employees(name)",
+    )
+    .order("created_at", { ascending: false });
+  if (error) throw error;
+  return ((data ?? []) as AssociacaoBruta[]).map((a) => {
+    const turma = um(a.turmas);
+    return {
+      id: a.id,
+      ativo: a.ativo,
+      etapa: a.etapa,
+      questionarioId: a.questionario_id,
+      questionarioDescricao: um(a.questionarios)?.descricao ?? "",
+      turmaId: a.turma_id,
+      turmaNome: turma?.nome ?? "",
+      turno: turma?.turno ?? "",
+      anoLetivo: turma?.ano_letivo ?? 0,
+      serieId: turma?.serie_id ?? "",
+      serieNome: um(turma?.series ?? null)?.nome ?? "",
+      professorId: a.professor_id,
+      professorNome: um(a.employees)?.name ?? "",
+    };
+  });
 }

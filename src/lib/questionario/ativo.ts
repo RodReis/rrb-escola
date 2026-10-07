@@ -4,7 +4,13 @@ import { IdSchema } from "@/lib/validation/questionario";
 import { lerTexto } from "./lista";
 import { primeiroErro, type ActionResult } from "./tipos";
 
-type Tabela = "questao_grupos" | "escalas" | "questoes" | "questionarios";
+type Tabela =
+  | "questao_grupos"
+  | "escalas"
+  | "questoes"
+  | "questionarios"
+  | "ficha_secoes"
+  | "questionario_associacoes";
 
 /** Ativar/inativar: nunca apaga. Campos do form: `id`, `ativo` ("true" | "false"). */
 export async function alternarAtivo(formData: FormData, tabela: Tabela, escolaId: string): Promise<ActionResult> {

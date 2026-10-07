@@ -40,3 +40,38 @@ export type QuestionarioDetalhe = QuestionarioRow & {
   observacoes: string | null;
   vinculos: Array<{ id: string; questaoId: string; escalaId: string | null }>;
 };
+
+export type SecaoRow = {
+  id: string;
+  codigo: number;
+  descricao: string;
+  permiteLancamentoColetivo: boolean;
+  ativo: boolean;
+};
+
+export type TurmaOpcao = {
+  id: string;
+  nome: string;
+  turno: string;
+  anoLetivo: number;
+  ativo: boolean;
+  serieId: string;
+  serieNome: string;
+  serieOrdem: number;
+};
+
+export type AssociacaoRow = {
+  id: string;
+  ativo: boolean;
+  etapa: number;
+  questionarioId: string;
+  questionarioDescricao: string;
+  turmaId: string;
+  turmaNome: string;
+  turno: string;
+  anoLetivo: number;
+  serieId: string;
+  serieNome: string;
+  professorId: string;
+  professorNome: string;
+};
