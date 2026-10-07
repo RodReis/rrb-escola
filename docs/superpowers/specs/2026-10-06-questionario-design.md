@@ -19,6 +19,7 @@ Uso pedagógico (ex.: "Quadro de objetivos de aprendizagem e desenvolvimento —
   (fase 2). Salva só os campos base.
 - Reordenação por drag-and-drop (usa botões ↑↓).
 - Exclusão física: ativar/inativar apenas (coluna `ativo`; em `questoes`, `ativa`).
+- Seções da Ficha Avaliativa e Associação da Série ao Questionário: ver `docs/superpowers/specs/2026-10-06-secoes-associacoes-questionario-design.md` (extensão deste módulo).
 
 ## Decisões
 
