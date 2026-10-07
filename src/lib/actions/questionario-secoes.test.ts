@@ -50,11 +50,15 @@ describe("criarSecaoAction", () => {
     expect(db.calls).toHaveLength(0);
   });
 
-  it("descrição duplicada vira mensagem amigável", async () => {
+  it("descrição duplicada devolve { ok: false } com mensagem amigável (não lança)", async () => {
     h.client = fakeSupabase({
       "ficha_secoes.insert": [{ error: { message: "duplicate key", code: "23505" } }],
     }).client;
-    await expect(criarSecaoAction(formData({ descricao: "Registro" }))).rejects.toThrow(/Já existe um registro/);
+    expect(await criarSecaoAction(formData({ descricao: "Registro" }))).toEqual({
+      ok: false,
+      error: "Já existe uma seção com essa descrição.",
+    });
+    expect(h.revalidatePath).not.toHaveBeenCalled();
   });
 });
 
@@ -69,6 +73,16 @@ describe("atualizarSecaoAction", () => {
     expect(upd.payload).toEqual({ descricao: "Novo", permite_lancamento_coletivo: true });
     expect(upd.filtros).toContainEqual(["eq", "id", ID]);
     expect(upd.filtros).toContainEqual(["eq", "escola_id", "escola-1"]);
+  });
+
+  it("renomear para descrição já usada devolve { ok: false } (não lança)", async () => {
+    h.client = fakeSupabase({
+      "ficha_secoes.update": [{ error: { message: "duplicate key", code: "23505" } }],
+    }).client;
+    expect(await atualizarSecaoAction(formData({ id: ID, descricao: "Registro" }))).toEqual({
+      ok: false,
+      error: "Já existe uma seção com essa descrição.",
+    });
   });
 
   it("recusa id inválido", async () => {

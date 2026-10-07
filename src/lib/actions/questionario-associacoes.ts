@@ -6,6 +6,7 @@ import { requirePermission } from "@/lib/auth/session";
 import { createServerClient } from "@/lib/supabase/server";
 import { alternarAtivo } from "@/lib/questionario/ativo";
 import { combinarAssociacoes, unicos } from "@/lib/questionario/associacoes";
+import { duplicado } from "@/lib/questionario/erros";
 import { lerLista, lerTexto } from "@/lib/questionario/lista";
 import { primeiroErro, type ActionResult } from "@/lib/questionario/tipos";
 import { AssociacaoEdicaoSchema, AssociacaoLoteSchema } from "@/lib/validation/questionario";
@@ -89,18 +90,19 @@ export async function criarAssociacoesAction(formData: FormData): Promise<Action
     return { ok: true, message: `Nenhuma associação nova: as ${ignoradas} já existiam.` };
   }
 
-  assertOk(
-    await db.from("questionario_associacoes").insert(
-      criar.map((c) => ({
-        escola_id: session.profile.escola_id,
-        questionario_id: questionarioId,
-        professor_id: professorId,
-        turma_id: c.turmaId,
-        etapa: c.etapa,
-      })),
-    ),
-    "Não foi possível criar as associações",
+  const resposta = await db.from("questionario_associacoes").insert(
+    criar.map((c) => ({
+      escola_id: session.profile.escola_id,
+      questionario_id: questionarioId,
+      professor_id: professorId,
+      turma_id: c.turmaId,
+      etapa: c.etapa,
+    })),
   );
+  // Corrida: outra pessoa criou uma das combinações entre a leitura e o insert (nada foi gravado).
+  const dup = duplicado(resposta, "Alguma dessas associações acabou de ser criada por outra pessoa. Repita o cadastro.");
+  if (dup) return dup;
+  assertOk(resposta, "Não foi possível criar as associações");
 
   revalidatePath(ROTA);
   const criadas = plural(criar.length, "associação criada", "associações criadas");
@@ -138,19 +140,19 @@ export async function atualizarAssociacaoAction(formData: FormData): Promise<Act
     (d.professorId !== atual.professor_id ? await validarProfessor(db, d.professorId) : null);
   if (invalido) return { ok: false, error: invalido };
 
-  assertOk(
-    await db
-      .from("questionario_associacoes")
-      .update({
-        questionario_id: d.questionarioId,
-        turma_id: d.turmaId,
-        professor_id: d.professorId,
-        etapa: d.etapa,
-      })
-      .eq("id", d.id)
-      .eq("escola_id", session.profile.escola_id),
-    "Não foi possível salvar a associação",
-  );
+  const resposta = await db
+    .from("questionario_associacoes")
+    .update({
+      questionario_id: d.questionarioId,
+      turma_id: d.turmaId,
+      professor_id: d.professorId,
+      etapa: d.etapa,
+    })
+    .eq("id", d.id)
+    .eq("escola_id", session.profile.escola_id);
+  const dup = duplicado(resposta, "Esta associação já existe (mesmo questionário, turma, etapa e professor).");
+  if (dup) return dup;
+  assertOk(resposta, "Não foi possível salvar a associação");
   revalidatePath(ROTA);
   return { ok: true, message: "Associação atualizada." };
 }

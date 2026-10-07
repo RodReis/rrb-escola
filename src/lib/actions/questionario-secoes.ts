@@ -5,12 +5,14 @@ import { assertOk } from "@/lib/actions/assert-ok";
 import { requirePermission } from "@/lib/auth/session";
 import { createServerClient } from "@/lib/supabase/server";
 import { alternarAtivo } from "@/lib/questionario/ativo";
+import { duplicado } from "@/lib/questionario/erros";
 import { lerTexto } from "@/lib/questionario/lista";
 import { primeiroErro, type ActionResult } from "@/lib/questionario/tipos";
 import { formBoolean } from "@/lib/utils";
 import { IdSchema, SecaoSchema } from "@/lib/validation/questionario";
 
 const ROTA = "/questionario/secoes";
+const MSG_DUPLICADA = "Já existe uma seção com essa descrição.";
 
 function lerSecao(formData: FormData) {
   return SecaoSchema.safeParse({
@@ -25,14 +27,14 @@ export async function criarSecaoAction(formData: FormData): Promise<ActionResult
   if (!parsed.success) return { ok: false, error: primeiroErro(parsed.error) };
 
   const db = await createServerClient();
-  assertOk(
-    await db.from("ficha_secoes").insert({
-      escola_id: session.profile.escola_id,
-      descricao: parsed.data.descricao,
-      permite_lancamento_coletivo: parsed.data.permiteLancamentoColetivo,
-    }),
-    "Não foi possível cadastrar a seção",
-  );
+  const resposta = await db.from("ficha_secoes").insert({
+    escola_id: session.profile.escola_id,
+    descricao: parsed.data.descricao,
+    permite_lancamento_coletivo: parsed.data.permiteLancamentoColetivo,
+  });
+  const dup = duplicado(resposta, MSG_DUPLICADA);
+  if (dup) return dup;
+  assertOk(resposta, "Não foi possível cadastrar a seção");
   revalidatePath(ROTA);
   return { ok: true, message: "Seção cadastrada." };
 }
@@ -45,17 +47,17 @@ export async function atualizarSecaoAction(formData: FormData): Promise<ActionRe
   if (!parsed.success) return { ok: false, error: primeiroErro(parsed.error) };
 
   const db = await createServerClient();
-  assertOk(
-    await db
-      .from("ficha_secoes")
-      .update({
-        descricao: parsed.data.descricao,
-        permite_lancamento_coletivo: parsed.data.permiteLancamentoColetivo,
-      })
-      .eq("id", id.data)
-      .eq("escola_id", session.profile.escola_id),
-    "Não foi possível salvar a seção",
-  );
+  const resposta = await db
+    .from("ficha_secoes")
+    .update({
+      descricao: parsed.data.descricao,
+      permite_lancamento_coletivo: parsed.data.permiteLancamentoColetivo,
+    })
+    .eq("id", id.data)
+    .eq("escola_id", session.profile.escola_id);
+  const dup = duplicado(resposta, MSG_DUPLICADA);
+  if (dup) return dup;
+  assertOk(resposta, "Não foi possível salvar a seção");
   revalidatePath(ROTA);
   return { ok: true, message: "Seção atualizada." };
 }

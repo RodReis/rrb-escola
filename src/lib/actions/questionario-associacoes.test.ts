@@ -140,6 +140,22 @@ describe("criarAssociacoesAction", () => {
     expect(filtros).toContainEqual(["eq", "ativo", true]);
   });
 
+  it("corrida: outra pessoa criou no meio (23505 no insert) devolve { ok: false } amigável", async () => {
+    const db = fakeSupabase({
+      ...questionarioAtivo,
+      ...turmasAtivas,
+      ...professorValido,
+      "questionario_associacoes.select": [{ data: [] }],
+      "questionario_associacoes.insert": [{ error: { message: "duplicate key", code: "23505" } }],
+    });
+    h.client = db.client;
+    expect(await criarAssociacoesAction(lote())).toEqual({
+      ok: false,
+      error: "Alguma dessas associações acabou de ser criada por outra pessoa. Repita o cadastro.",
+    });
+    expect(h.revalidatePath).not.toHaveBeenCalled();
+  });
+
   it("repetidos na entrada (turma/etapa) não duplicam linhas", async () => {
     const db = fakeSupabase({
       ...questionarioAtivo,
@@ -203,12 +219,15 @@ describe("atualizarAssociacaoAction", () => {
     });
   });
 
-  it("edição que duplica outra associação vira mensagem amigável", async () => {
+  it("edição que duplica outra associação devolve { ok: false } com mensagem amigável (não lança)", async () => {
     h.client = fakeSupabase({
       ...atual,
       "questionario_associacoes.update": [{ error: { message: "duplicate key", code: "23505" } }],
     }).client;
-    await expect(atualizarAssociacaoAction(edicao())).rejects.toThrow(/Já existe um registro/);
+    expect(await atualizarAssociacaoAction(edicao())).toEqual({
+      ok: false,
+      error: "Esta associação já existe (mesmo questionário, turma, etapa e professor).",
+    });
   });
 
   it("associação inexistente", async () => {
