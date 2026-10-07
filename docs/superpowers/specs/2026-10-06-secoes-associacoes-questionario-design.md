@@ -59,7 +59,7 @@ padrão do módulo (policy `service_role` + `authenticated` via `current_perfil(
 
 ### Regras (validadas no servidor)
 
-- Seção: descrição obrigatória (aparada); duplicada vira "Já existe um registro…".
+- Seção: descrição obrigatória (aparada); duplicada devolve `{ ok: false }` com "Já existe uma seção com essa descrição." (resultado, não exceção: em produção o Next oculta a mensagem de erros lançados em Server Actions).
 - Associação nova (e mudança de questionário, turma ou professor na edição): questionário
   **ativo**, turma **ativa**, professor **ativo** e da lista de candidatos acima, todos da
   mesma escola (leitura pela RLS). Etapa 1 a 4. Nada disso é exigido de associações já
@@ -69,7 +69,7 @@ padrão do módulo (policy `service_role` + `authenticated` via `current_perfil(
   existentes e devolve `criar` e `ignoradas`. A action grava `criar` com um único insert e
   responde "N criadas, M já existiam". Sem etapa ou sem turma marcada: erro, sem gravar.
 - Falha parcial: o insert único é atômico; ler as existentes e inserir não é transacional, e a
-  corrida entre duas secretarias cai na unique e vira a mensagem amigável (repetir completa).
+  corrida entre duas secretarias cai na unique e devolve `{ ok: false }` com mensagem amigável (repetir completa). Edição que duplica outra associação também devolve `{ ok: false }`.
 
 ## Telas
 
@@ -83,7 +83,7 @@ Rotas em `src/app/(app)/questionario/`:
 - Editar uma associação reabre o formulário em modo unitário (uma etapa, uma turma) e troca
   questionário, etapa, turma e professor, um de cada vez.
 - Filtros da lista: client-side sobre as associações carregadas (a escola tem poucas
-  centenas). Ano padrão = ano letivo mais recente com turmas.
+  centenas). Ano padrão = o ano atual, se há turmas nele; senão o ano letivo mais recente com turmas.
 - Menu: dois filhos novos no item "Questionário": "Seção da Ficha" e "Associação
   Série/Questionário".
 
