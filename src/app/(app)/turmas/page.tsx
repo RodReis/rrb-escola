@@ -6,12 +6,14 @@ import { getAcademicData } from "@/lib/data/lookups";
 import { requirePermission } from "@/lib/auth/session";
 import { TurmaCard } from "@/components/pedagogico/turma-card";
 import { NovaTurmaForm } from "@/components/pedagogico/nova-turma-form";
+import { getAnoReferenciaAtual } from "@/lib/escola/ano-referencia";
+import { createServerClient } from "@/lib/supabase/server";
 
 export default async function TurmasPage() {
-  await requirePermission("turmas", "read");
+  const session = await requirePermission("turmas", "read");
   const { series, turmas } = await getAcademicData();
   const activeClasses = turmas.filter((item) => item.ativo).length;
-  const currentYear = new Date().getFullYear();
+  const currentYear = await getAnoReferenciaAtual(await createServerClient(), session.profile.escola_id);
   const currentYearClasses = turmas.filter((item) => Number(item.ano_letivo) === currentYear).length;
 
   return (

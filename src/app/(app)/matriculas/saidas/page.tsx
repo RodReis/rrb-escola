@@ -1,6 +1,8 @@
 import { requirePermission } from "@/lib/auth/session";
 import { listarSaidasDoAno } from "@/lib/data/saidas-ano";
 import { Badge } from "@/components/ui/badge";
+import { getAnoReferenciaAtual } from "@/lib/escola/ano-referencia";
+import { createServerClient } from "@/lib/supabase/server";
 
 const ANOS_NO_FILTRO = 5;
 
@@ -9,9 +11,9 @@ export default async function SaidasAnoPage({
 }: {
   searchParams: Promise<Record<string, string>>;
 }) {
-  await requirePermission("matriculas", "read");
+  const session = await requirePermission("matriculas", "read");
   const { ano = "" } = await searchParams;
-  const anoAtual = new Date().getFullYear();
+  const anoAtual = await getAnoReferenciaAtual(await createServerClient(), session.profile.escola_id);
   const anoParseado = ano ? parseInt(ano, 10) : NaN;
   const anoLetivo = Number.isFinite(anoParseado) ? anoParseado : anoAtual;
   const saidas = await listarSaidasDoAno(anoLetivo);

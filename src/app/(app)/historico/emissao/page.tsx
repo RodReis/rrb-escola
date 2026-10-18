@@ -4,6 +4,8 @@ import { requirePermission } from "@/lib/auth/session";
 import { listarElegiveis } from "@/lib/data/historico-elegiveis";
 import { getAcademicData, getAnosLetivosDisponiveis } from "@/lib/data/lookups";
 import { SEGMENTO_PARA_NIVEL, type NivelEnsino, type SegmentoSerie } from "@/lib/historico/tipos";
+import { getAnoReferenciaAtual } from "@/lib/escola/ano-referencia";
+import { createServerClient } from "@/lib/supabase/server";
 
 type Props = {
   searchParams: Promise<{
@@ -16,14 +18,15 @@ type Props = {
 };
 
 export default async function EmissaoPage({ searchParams }: Props) {
-  await requirePermission("historico", "read");
+  const session = await requirePermission("historico", "read");
   const params = await searchParams;
-  const [{ series, turmas, alunos }, anosDisponiveis] = await Promise.all([
+  const [{ series, turmas, alunos }, anosDisponiveis, anoReferencia] = await Promise.all([
     getAcademicData(),
-    getAnosLetivosDisponiveis()
+    getAnosLetivosDisponiveis(),
+    getAnoReferenciaAtual(await createServerClient(), session.profile.escola_id)
   ]);
 
-  const anoLetivo = Number(params.ano ?? new Date().getFullYear());
+  const anoLetivo = Number(params.ano ?? anoReferencia);
   const temFiltro = Boolean(params.serie || params.turma || params.aluno);
 
   // Ao chegar pela ficha do aluno (link direto com ?aluno=<id>) não vem nível

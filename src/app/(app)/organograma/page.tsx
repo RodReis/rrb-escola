@@ -4,6 +4,8 @@ import { OrganogramaDrillPanel } from "@/components/organograma/drill-panel";
 import { PageHeader } from "@/components/ui/page-header";
 import { getOrganogramaTree, getOrganogramaDrill } from "@/lib/data/organograma";
 import { requirePermission } from "@/lib/auth/session";
+import { getAnoReferenciaAtual } from "@/lib/escola/ano-referencia";
+import { createServerClient } from "@/lib/supabase/server";
 
 function isValidAno(val: string | undefined): boolean {
   if (!val) return false;
@@ -16,10 +18,11 @@ export default async function OrganogramaPage({
 }: {
   searchParams: Promise<{ turma?: string; ano?: string }>;
 }) {
-  await requirePermission("organograma", "read");
+  const session = await requirePermission("organograma", "read");
   const params = await searchParams;
   const turmaId = params.turma ?? null;
-  const anoLetivo = isValidAno(params.ano) ? Number(params.ano) : new Date().getFullYear();
+  const anoReferencia = await getAnoReferenciaAtual(await createServerClient(), session.profile.escola_id);
+  const anoLetivo = isValidAno(params.ano) ? Number(params.ano) : anoReferencia;
 
   const [{ tree, totalAlunos }, drillData] = await Promise.all([
     getOrganogramaTree(anoLetivo),

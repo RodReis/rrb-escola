@@ -2,6 +2,7 @@ import { Topbar } from "@/components/layout/topbar";
 import { requireSession } from "@/lib/auth/session";
 import { runDailyNotifications } from "@/lib/server/notify-daily";
 import { createServerClient } from "@/lib/supabase/server";
+import { getAnoReferenciaAtual } from "@/lib/escola/ano-referencia";
 
 export const dynamic = "force-dynamic";
 
@@ -21,8 +22,9 @@ export default async function AppLayout({ children }: { children: React.ReactNod
   const anosLetivos: number[] = Array.from(
     new Set((anosData ?? []).map((r) => r.ano_letivo))
   );
-  if (!anosLetivos.includes(new Date().getFullYear())) {
-    anosLetivos.push(new Date().getFullYear());
+  const anoReferencia = await getAnoReferenciaAtual(supabase, session.profile.escola_id);
+  if (!anosLetivos.includes(anoReferencia)) {
+    anosLetivos.push(anoReferencia);
     anosLetivos.sort((a, b) => b - a);
   }
 

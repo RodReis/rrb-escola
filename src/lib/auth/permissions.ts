@@ -138,6 +138,9 @@ export const ROTA_PARA_MODULO: Record<string, ModuloCodigo> = {
   "/historico/notas": "historico",
   "/historico/emissao": "historico",
   "/historico/certificado": "historico",
+  // Requerimento de matrícula reaproveita o módulo `historico` (mesma
+  // categoria de documento pedagógico da escola), sem módulo RBAC novo.
+  "/matriculas/requerimento": "historico",
   // Declarações pedagógicas reaproveitam o módulo `historico` (mesma
   // categoria de documento pedagógico da escola), sem módulo RBAC novo.
   "/declaracoes": "historico",
@@ -200,6 +203,7 @@ export const ROTA_PARA_MODULO: Record<string, ModuloCodigo> = {
   "/relatorios/inadimplencia": "relatorios",
   "/usuarios": "usuarios",
   "/configuracoes/escola": "configuracoes.escola",
+  "/configuracoes/ano-referencia": "configuracoes.escola",
   "/configuracoes/webhook": "configuracoes.webhook",
   "/configuracoes/perfis": "configuracoes.perfis",
   "/configuracoes/lembretes": "financeiro.cobrancas",

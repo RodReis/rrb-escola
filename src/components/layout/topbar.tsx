@@ -96,6 +96,7 @@ const SECRETARIA_ITEMS: DropdownItem[] = [
       { href: "/historico/notas", label: "Entrada de Notas", iconName: "FileText" },
       { href: "/historico/emissao", label: "Emissão", iconName: "FileText" },
       { href: "/historico/certificado", label: "Certificado", iconName: "FileText" },
+      { href: "/matriculas/requerimento", label: "Requerimento de Matrícula", iconName: "FileText" },
     ],
   },
   { href: "/portaria", label: "Portaria", iconName: "DoorOpen" },
@@ -168,6 +169,7 @@ const FINANCEIRO_ITEMS: DropdownItem[] = [
 
 const CONFIG_ITEMS: DropdownItem[] = [
   { href: "/configuracoes/escola", label: "Dados da escola", iconName: "School" },
+  { href: "/configuracoes/ano-referencia", label: "Mudança do Ano de Referência", iconName: "CalendarClock" },
   { href: "/usuarios", label: "Usuários", iconName: "UsersRound" },
   { href: "/configuracoes/perfis", label: "Perfis e Permissões", iconName: "ShieldCheck" },
   { href: "/configuracoes/webhook", label: "Webhook", iconName: "Webhook" },

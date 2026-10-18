@@ -9,21 +9,26 @@ import { MatriculasTable } from "@/components/matriculas/matriculas-table";
 import { MatriculasFilters } from "@/components/matriculas/matriculas-filters";
 import { requirePermission } from "@/lib/auth/session";
 import { anoLetivoDaData } from "@/lib/matriculas/ano-letivo";
+import { getAnoReferenciaAtual } from "@/lib/escola/ano-referencia";
+import { createServerClient } from "@/lib/supabase/server";
 
 export default async function MatriculasPage({
   searchParams,
 }: {
   searchParams: Promise<Record<string, string>>;
 }) {
-  await requirePermission("matriculas", "read");
+  const session = await requirePermission("matriculas", "read");
   const { status = "", nome = "", aluno_id = "", sucesso = "", erro = "", tipo_vaga = "" } = await searchParams;
+
+  const supabase = await createServerClient();
+  const anoReferencia = await getAnoReferenciaAtual(supabase, session.profile.escola_id);
 
   const [{ alunos, series, turmas, planos }, alunosDisponiveis, all, filtered] = await Promise.all([
     getAcademicData(),
     // Mesmo ano que o formulário sugere (setembro em diante = ano seguinte),
     // senão o combo busca "sem matrícula" no ano errado e some com quem a
     // secretaria precisa achar para rematricular (Critical C1).
-    getAlunosSemMatriculaNoAno(anoLetivoDaData(new Date())),
+    getAlunosSemMatriculaNoAno(anoLetivoDaData(new Date(), anoReferencia)),
     getEnrollments(),
     getEnrollments({ status: status || undefined, nome: nome || undefined, tipoVaga: tipo_vaga || undefined }),
   ]);
@@ -76,6 +81,7 @@ export default async function MatriculasPage({
               turmas={turmas}
               planos={planos.map((p) => ({ id: p.id, nome: p.nome }))}
               alunoPre={alunoPre}
+              anoReferencia={anoReferencia}
               sucesso={Boolean(sucesso)}
               erro={Boolean(erro)}
             />

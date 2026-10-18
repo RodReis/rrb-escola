@@ -194,6 +194,7 @@ export async function updateStudentAction(formData: FormData): Promise<ActionRes
       email: formText(formData, "email"),
       codigo_inep: formText(formData, "codigo_inep"),
       etnia: formText(formData, "etnia"),
+      religiao: formText(formData, "religiao"),
       informacoes_adicionais: formText(formData, "informacoes_adicionais"),
       disciplina_eletiva: formText(formData, "disciplina_eletiva"),
     });
@@ -264,9 +265,16 @@ export async function updateStudentAction(formData: FormData): Promise<ActionRes
         nome: paiNome,
         rg: formText(formData, "pai_rg"),
         cpf: formText(formData, "pai_cpf"),
+        cnpj: formText(formData, "pai_cnpj"),
         telefone: formText(formData, "pai_telefone"),
         celular: formText(formData, "pai_celular"),
         email: formText(formData, "pai_email"),
+        data_nascimento: formText(formData, "pai_data_nascimento"),
+        estado_civil: formText(formData, "pai_estado_civil"),
+        escolaridade: formText(formData, "pai_escolaridade"),
+        endereco_trabalho: formText(formData, "pai_endereco_trabalho"),
+        profissao: formText(formData, "pai_profissao"),
+        telefone_trabalho: formText(formData, "pai_telefone_trabalho"),
         parentesco: "Pai",
       };
       ops.push(q(
@@ -283,9 +291,16 @@ export async function updateStudentAction(formData: FormData): Promise<ActionRes
         nome: maeNome,
         rg: formText(formData, "mae_rg"),
         cpf: formText(formData, "mae_cpf"),
+        cnpj: formText(formData, "mae_cnpj"),
         telefone: formText(formData, "mae_telefone"),
         celular: formText(formData, "mae_celular"),
         email: formText(formData, "mae_email"),
+        data_nascimento: formText(formData, "mae_data_nascimento"),
+        estado_civil: formText(formData, "mae_estado_civil"),
+        escolaridade: formText(formData, "mae_escolaridade"),
+        endereco_trabalho: formText(formData, "mae_endereco_trabalho"),
+        profissao: formText(formData, "mae_profissao"),
+        telefone_trabalho: formText(formData, "mae_telefone_trabalho"),
         parentesco: "Mãe",
       };
       ops.push(q(

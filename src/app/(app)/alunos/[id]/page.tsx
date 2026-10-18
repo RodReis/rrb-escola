@@ -11,8 +11,11 @@ import { getSignedFotoUrl } from "@/lib/storage/photos";
 import { requirePermission } from "@/lib/auth/session";
 import { getTemplatesAtivos } from "@/lib/data/templates";
 import { listarCobrancasAbertasParaCancelamento } from "@/lib/data/cancelamento";
+import { getAnoReferenciaAtual } from "@/lib/escola/ano-referencia";
+import { createServerClient } from "@/lib/supabase/server";
 
 export default async function StudentPage({ params, searchParams }: { params: { id: string }; searchParams: { ext_de?: string; ext_ate?: string } }) {
+  const session = await requirePermission("alunos", "read");
   const student = await getStudentSheet(params.id);
   const fotoSrc = await getSignedFotoUrl(student.foto_url);
   const activeEnrollment = student.matriculas.find((item) => item.status === "ativa") ?? student.matriculas[0];
@@ -29,11 +32,11 @@ export default async function StudentPage({ params, searchParams }: { params: { 
 
   // Emissão direta pelo id do aluno. As duas telas aceitam ?aluno= e derivam
   // série/nível da matrícula daquele ano letivo, então o link já cai filtrado.
-  const anoDoHistorico = activeEnrollment?.ano_letivo ?? new Date().getFullYear();
+  const anoReferencia = await getAnoReferenciaAtual(await createServerClient(), session.profile.escola_id);
+  const anoDoHistorico = activeEnrollment?.ano_letivo ?? anoReferencia;
   const historicoHref = `/historico/emissao?aluno=${student.id}&ano=${anoDoHistorico}`;
   const certificadoHref = `/historico/certificado?aluno=${student.id}&ano=${anoDoHistorico}`;
 
-  const session = await requirePermission("alunos", "read");
   const templatesAtivos = await getTemplatesAtivos(session.profile.escola_id);
   const templatesLite = templatesAtivos.map((t) => ({
     id: t.id,

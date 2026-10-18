@@ -2,6 +2,7 @@ import { PageHeader } from "@/components/ui/page-header";
 import { QuickLinks } from "@/components/dashboard/quick-links";
 import { requireSession } from "@/lib/auth/session";
 import { createServerClient } from "@/lib/supabase/server";
+import { getAnoReferenciaAtual } from "@/lib/escola/ano-referencia";
 import { can, ROTA_PARA_MODULO, type ModuloCodigo } from "@/lib/auth/permissions";
 import {
   currentCompetencia,
@@ -176,7 +177,8 @@ export default async function DashboardPage({
   if (tabPedagogicoVisible) tabsVisiveis.push("pedagogico");
 
   const competencia = isValidCompetencia(params.competencia) ? params.competencia : currentCompetencia();
-  const anoLetivo = isValidAno(params.ano) ? Number(params.ano) : new Date().getFullYear();
+  const anoReferencia = await getAnoReferenciaAtual(supabase, session.profile.escola_id);
+  const anoLetivo = isValidAno(params.ano) ? Number(params.ano) : anoReferencia;
 
   // Empty state when zero tabs available
   if (tabsVisiveis.length === 0) {

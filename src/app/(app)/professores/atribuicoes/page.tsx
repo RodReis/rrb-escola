@@ -11,16 +11,18 @@ import {
 import { deleteAtribuicaoAction } from "@/lib/actions/disciplinas";
 import { requirePermission } from "@/lib/auth/session";
 import { AtribuicaoLoteForm } from "@/components/professores/atribuicao-lote-form";
+import { getAnoReferenciaAtual } from "@/lib/escola/ano-referencia";
+import { createServerClient } from "@/lib/supabase/server";
 
 export default async function AtribuicoesPage() {
-  await requirePermission("professores", "read");
+  const session = await requirePermission("professores", "read");
   const [atribuicoes, disciplinas, professores, { turmas: turmasAll }] = await Promise.all([
     listAtribuicoes(),
     listDisciplinas(),
     listProfessores(),
     getAacademicDataSafe(),
   ]);
-  const anoAtual = new Date().getFullYear();
+  const anoAtual = await getAnoReferenciaAtual(await createServerClient(), session.profile.escola_id);
   const turmas = turmasAll.filter((t: { ano_letivo: number }) => t.ano_letivo === anoAtual);
 
   return (

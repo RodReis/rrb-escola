@@ -24,11 +24,12 @@ type Props = {
   turmas: Turma[];
   planos: Plano[];
   alunoPre: Aluno | null;
+  anoReferencia: number;
   sucesso: boolean;
   erro: boolean;
 };
 
-export function NovaMatriculaDialog({ alunos, series, turmas, planos, alunoPre, sucesso, erro }: Props) {
+export function NovaMatriculaDialog({ alunos, series, turmas, planos, alunoPre, anoReferencia, sucesso, erro }: Props) {
   const [open, setOpen] = useState(false);
 
   // Abre automaticamente quando a página chega de um redirect relevante:
@@ -57,7 +58,7 @@ export function NovaMatriculaDialog({ alunos, series, turmas, planos, alunoPre, 
         ) : null}
         <form action={createEnrollmentAction} className="grid gap-5">
           <div className="grid gap-4 sm:grid-cols-2">
-            <NovaMatriculaFields alunos={alunos} series={series} turmas={turmas} alunoPre={alunoPre} />
+            <NovaMatriculaFields alunos={alunos} series={series} turmas={turmas} alunoPre={alunoPre} anoReferencia={anoReferencia} />
             <label className="self-start">Plano
               <select name="plano_id">
                 <option value="">Sem plano</option>

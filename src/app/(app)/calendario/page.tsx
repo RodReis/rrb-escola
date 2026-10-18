@@ -11,6 +11,8 @@ import { CalendarioConfigForm } from "@/components/calendario/calendario-config-
 import { ExcecaoForm } from "@/components/calendario/excecao-form";
 import { ExcecoesList } from "@/components/calendario/excecoes-list";
 import { GradeAnual } from "@/components/calendario/grade-anual";
+import { getAnoReferenciaAtual } from "@/lib/escola/ano-referencia";
+import { createServerClient } from "@/lib/supabase/server";
 
 const DIAS_LETIVOS_MIN = 200;
 
@@ -29,11 +31,11 @@ export default async function CalendarioPage({
 }: {
   searchParams: Promise<{ ano?: string }>;
 }) {
-  await requirePermission("calendario", "read");
+  const session = await requirePermission("calendario", "read");
   const params = await searchParams;
 
   const anosCadastrados = await listAnosLetivos();
-  const anoAtual = new Date().getFullYear();
+  const anoAtual = await getAnoReferenciaAtual(await createServerClient(), session.profile.escola_id);
   const anoSelecionado = isValidAno(params.ano)
     ? Number(params.ano)
     : (anosCadastrados[0] ?? anoAtual);
