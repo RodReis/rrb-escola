@@ -16,6 +16,7 @@ export type StudentSheet = {
   email: string | null;
   codigo_inep: string | null;
   etnia: string | null;
+  religiao: string | null;
   informacoes_adicionais: string | null;
   foto_url: string | null;
   disciplina_eletiva: string | null;
@@ -40,10 +41,17 @@ export type StudentSheet = {
     id: string;
     nome: string;
     cpf: string | null;
+    cnpj: string | null;
     telefone: string | null;
     celular: string | null;
     parentesco: string | null;
     email: string | null;
+    data_nascimento: string | null;
+    estado_civil: string | null;
+    escolaridade: string | null;
+    endereco_trabalho: string | null;
+    profissao: string | null;
+    telefone_trabalho: string | null;
   }>;
   pessoas_autorizadas: Array<{
     id: string;

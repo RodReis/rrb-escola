@@ -111,6 +111,7 @@ export function StudentEditForm({ student }: { student: StudentSheet }) {
             <label>RG<input name="rg" defaultValue={student.rg ?? ""} /></label>
             <label>Cód. INEP<input name="codigo_inep" defaultValue={student.codigo_inep ?? ""} /></label>
             <label>Etnia<input name="etnia" defaultValue={student.etnia ?? ""} /></label>
+            <label>Religião<input name="religiao" defaultValue={student.religiao ?? ""} /></label>
             <label>Livro<input name="certidao_livro" defaultValue={student.certidao_livro ?? ""} /></label>
             <label>Folha<input name="certidao_folha" defaultValue={student.certidao_folha ?? ""} /></label>
             <label>Nº<input name="certidao_numero" defaultValue={student.certidao_numero ?? ""} /></label>
@@ -150,9 +151,16 @@ export function StudentEditForm({ student }: { student: StudentSheet }) {
               <label className="md:col-span-2">Nome<input name="pai_nome" defaultValue={pai?.nome ?? ""} required /></label>
               <label>RG <span className="text-clay">*</span><input name="pai_rg" defaultValue={(pai as any)?.rg ?? ""} required /></label>
               <label>CPF<input name="pai_cpf" defaultValue={pai?.cpf ?? ""} /></label>
+              <label>CNPJ<input name="pai_cnpj" defaultValue={pai?.cnpj ?? ""} /></label>
               <label>Telefone<input name="pai_telefone" defaultValue={pai?.telefone ?? ""} /></label>
               <label>Celular<input name="pai_celular" defaultValue={pai?.celular ?? ""} /></label>
               <label className="md:col-span-2">E-mail<input name="pai_email" type="email" defaultValue={pai?.email ?? ""} /></label>
+              <label>Data Nascimento<input name="pai_data_nascimento" type="date" defaultValue={dateValue(pai?.data_nascimento ?? null)} /></label>
+              <label>Estado Civil<input name="pai_estado_civil" defaultValue={pai?.estado_civil ?? ""} /></label>
+              <label>Escolaridade<input name="pai_escolaridade" defaultValue={pai?.escolaridade ?? ""} /></label>
+              <label>Profissão<input name="pai_profissao" defaultValue={pai?.profissao ?? ""} /></label>
+              <label className="md:col-span-2">Local de Trabalho<input name="pai_endereco_trabalho" defaultValue={pai?.endereco_trabalho ?? ""} /></label>
+              <label>Telefone do Trabalho<input name="pai_telefone_trabalho" defaultValue={pai?.telefone_trabalho ?? ""} /></label>
             </div>
             <div className="grid gap-4 md:grid-cols-4">
               <p className="ds-kicker md:col-span-4">Mãe / Responsável feminino</p>
@@ -160,9 +168,16 @@ export function StudentEditForm({ student }: { student: StudentSheet }) {
               <label className="md:col-span-2">Nome<input name="mae_nome" defaultValue={mae?.nome ?? ""} required /></label>
               <label>RG <span className="text-clay">*</span><input name="mae_rg" defaultValue={(mae as any)?.rg ?? ""} required /></label>
               <label>CPF<input name="mae_cpf" defaultValue={mae?.cpf ?? ""} /></label>
+              <label>CNPJ<input name="mae_cnpj" defaultValue={mae?.cnpj ?? ""} /></label>
               <label>Telefone<input name="mae_telefone" defaultValue={mae?.telefone ?? ""} /></label>
               <label>Celular<input name="mae_celular" defaultValue={mae?.celular ?? ""} /></label>
               <label className="md:col-span-2">E-mail<input name="mae_email" type="email" defaultValue={mae?.email ?? ""} /></label>
+              <label>Data Nascimento<input name="mae_data_nascimento" type="date" defaultValue={dateValue(mae?.data_nascimento ?? null)} /></label>
+              <label>Estado Civil<input name="mae_estado_civil" defaultValue={mae?.estado_civil ?? ""} /></label>
+              <label>Escolaridade<input name="mae_escolaridade" defaultValue={mae?.escolaridade ?? ""} /></label>
+              <label>Profissão<input name="mae_profissao" defaultValue={mae?.profissao ?? ""} /></label>
+              <label className="md:col-span-2">Local de Trabalho<input name="mae_endereco_trabalho" defaultValue={mae?.endereco_trabalho ?? ""} /></label>
+              <label>Telefone do Trabalho<input name="mae_telefone_trabalho" defaultValue={mae?.telefone_trabalho ?? ""} /></label>
             </div>
             <div className="grid gap-4 md:grid-cols-4">
               <p className="ds-kicker md:col-span-4">Responsável principal (financeiro)</p>
