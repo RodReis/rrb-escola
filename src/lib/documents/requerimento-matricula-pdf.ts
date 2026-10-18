@@ -23,10 +23,26 @@ export type RequerimentoPdfDados = {
   secretario: { nome: string | null; cargo: string };
 };
 
+/*
+ * Formulário em tabela, uma página A4 por aluno. Toda altura de linha é fixa
+ * (o valor encolhe a fonte ou quebra em até 2 linhas, nunca empurra a linha
+ * de baixo) — por isso o documento cabe em 1 página por construção, com
+ * qualquer dado.
+ */
 const PT_POR_MM = 72 / 25.4;
 const mm = (valor: number) => valor * PT_POR_MM;
-const MARGEM_MM = 18;
-const FONTE = "times";
+const FONTE = "helvetica";
+const MARGEM = mm(12);
+const MARGEM_TOPO = mm(10);
+
+const ALTURA_LINHA = 25;
+const ALTURA_BANDA = 15;
+const ALTURA_ENDERECO_NOVO = 40;
+const ALTURA_OBSERVACOES = 34;
+const PADDING = 3;
+
+const COR_BANDA = 222;
+const TAMANHOS_VALOR = [8.5, 8, 7.5, 7, 6.5, 6];
 
 const MESES = [
   "janeiro", "fevereiro", "março", "abril", "maio", "junho",
@@ -44,165 +60,260 @@ function formatDataExtenso(d: Date): string {
   return `${d.getDate()} de ${MESES[d.getMonth()]} de ${d.getFullYear()}`;
 }
 
-function renderCabecalho(doc: jsPDF, yInicial: number, escola: RequerimentoPdfDados["escola"], imagens: ImagemCache): number {
-  const centro = doc.internal.pageSize.getWidth() / 2;
-  let y = yInicial;
+function capitalizar(texto: string): string {
+  return texto ? texto.charAt(0).toUpperCase() + texto.slice(1).toLowerCase() : texto;
+}
 
-  const url = companyLogoUrl(escola.logoPath);
-  const logo = url ? imagens.get(url) : undefined;
-  if (logo) {
-    const caixa = imgFitInBox(logo, mm(40), mm(28));
-    const formato = logo.data.startsWith("data:image/jpeg") ? "JPEG" : "PNG";
-    doc.addImage(logo.data, formato, centro - caixa.w / 2, y, caixa.w, caixa.h, undefined, "FAST");
-    y += caixa.h + 8;
-  }
+const PREPOSICOES = new Set(["de", "da", "do", "das", "dos"]);
+
+/** "TRINDADE" → "Trindade", "SANTA CRUZ DE GOIÁS" → "Santa Cruz de Goiás". */
+function nomeProprio(texto: string): string {
+  return texto
+    .trim()
+    .toLowerCase()
+    .split(/\s+/)
+    .map((p) => (PREPOSICOES.has(p) ? p : p.charAt(0).toUpperCase() + p.slice(1)))
+    .join(" ");
+}
+
+function formatoImagem(data: string): "JPEG" | "PNG" | "WEBP" {
+  if (data.startsWith("data:image/jpeg") || data.startsWith("data:image/jpg")) return "JPEG";
+  if (data.startsWith("data:image/webp")) return "WEBP";
+  return "PNG";
+}
+
+type Campo = { label: string; valor: string | null | undefined };
+
+/** Rótulo pequeno no topo da célula e valor logo abaixo; o valor encolhe
+ * (8.5 → 6pt) e depois quebra para caber na célula, sem vazar. */
+function desenharCelula(doc: jsPDF, x: number, y: number, w: number, h: number, campo: Campo): void {
+  doc.setDrawColor(0, 0, 0);
+  doc.setLineWidth(0.5);
+  doc.rect(x, y, w, h);
 
   doc.setTextColor(0, 0, 0);
   doc.setFont(FONTE, "bold");
-  doc.setFontSize(12);
-  doc.text(escola.nome, centro, y, { align: "center" });
-  y += 13;
+  doc.setFontSize(6.5);
+  doc.text(campo.label, x + PADDING, y + 7.5);
+
+  const valor = campo.valor?.trim();
+  if (!valor) return;
 
   doc.setFont(FONTE, "normal");
-  doc.setFontSize(8);
-  const cidadeUf = escola.cidade && escola.uf ? `${escola.cidade} - ${escola.uf}` : escola.cidade ?? escola.uf;
-  const linhas = [
-    escola.cnpj ? `CNPJ: ${escola.cnpj}` : null,
-    escola.endereco,
-    [cidadeUf, escola.cep ? `CEP: ${escola.cep}` : null].filter(Boolean).join(" · "),
-    [escola.telefones, escola.email].filter(Boolean).join(" · ")
-  ].filter((l): l is string => Boolean(l && l.trim()));
+  const largura = w - PADDING * 2;
+  const topo = y + 9;
+  const disponivel = h - 10;
 
-  for (const linha of linhas) {
-    doc.text(linha, centro, y, { align: "center" });
-    y += 10;
-  }
-
-  return y + 10;
-}
-
-function renderTitulo(doc: jsPDF, yInicial: number, ano: string): number {
-  const centro = doc.internal.pageSize.getWidth() / 2;
-  doc.setFont(FONTE, "bold");
-  doc.setFontSize(14);
-  doc.text(`Requerimento de Matrícula - ${ano}`, centro, yInicial, { align: "center" });
-  return yInicial + 20;
-}
-
-type Campo = { label: string; valor: string | null };
-
-const CAMPOS_POR_LINHA = 3;
-const ALTURA_LINHA_VALOR = 9.5;
-
-function colLarguraTexto(doc: jsPDF, margemPt: number): number {
-  const util = doc.internal.pageSize.getWidth() - margemPt * 2;
-  return util / CAMPOS_POR_LINHA - 6;
-}
-
-/** Altura de uma "linha" de até `CAMPOS_POR_LINHA` campos lado a lado — o
- * maior número de linhas de valor entre os campos da linha decide a altura. */
-function alturaLinhaDeCampos(doc: jsPDF, campos: Campo[], larguraTexto: number): number {
-  let maxLinhas = 1;
-  for (const campo of campos) {
-    const valor = campo.valor?.trim() ? campo.valor : "—";
-    const linhas = (doc.splitTextToSize(valor, larguraTexto) as string[]).length;
-    maxLinhas = Math.max(maxLinhas, linhas);
-  }
-  return 9 + maxLinhas * ALTURA_LINHA_VALOR + 5;
-}
-
-/**
- * Altura total que `renderCampos` vai ocupar para esses campos, sem
- * desenhar nada — usada por `garantirEspaco` para decidir ANTES se precisa
- * quebrar página (bug C2 da revisão: antes a decisão usava um número fixo
- * "chutado" que não refletia blocos de pai/mãe com valor longo).
- */
-function alturaEstimadaCampos(doc: jsPDF, margemPt: number, campos: Campo[]): number {
-  const larguraTexto = colLarguraTexto(doc, margemPt);
-  let altura = 4;
-  for (let i = 0; i < campos.length; i += CAMPOS_POR_LINHA) {
-    altura += alturaLinhaDeCampos(doc, campos.slice(i, i + CAMPOS_POR_LINHA), larguraTexto);
-  }
-  return altura;
-}
-
-/**
- * 3 colunas (não 2): com os ~11 campos de pai/mãe do PDF, 2 colunas
- * ultrapassavam a altura da página antes de chegar nas assinaturas (bug C2
- * da revisão). `splitTextToSize` por coluna evita que um valor longo (ex.
- * endereço) invada a coluna vizinha (bug I2) — a altura de cada linha de
- * campo cresce com o número de linhas que o valor realmente ocupa.
- */
-function renderCampos(doc: jsPDF, yInicial: number, margemPt: number, campos: Campo[]): number {
-  const util = doc.internal.pageSize.getWidth() - margemPt * 2;
-  const colLargura = util / CAMPOS_POR_LINHA;
-  const larguraTexto = colLargura - 6;
-  let y = yInicial;
-  let col = 0;
-  let alturaLinhaAtual = 0;
-
-  for (const campo of campos) {
-    const valor = campo.valor?.trim() ? campo.valor : "—";
-    const x = margemPt + col * colLargura;
-
-    doc.setFont(FONTE, "bold");
-    doc.setFontSize(6.5);
-    doc.text(campo.label, x, y);
-
-    doc.setFont(FONTE, "normal");
-    doc.setFontSize(8);
-    const linhasValor = doc.splitTextToSize(valor, larguraTexto) as string[];
-    linhasValor.forEach((linha, i) => doc.text(linha, x, y + 9 + i * ALTURA_LINHA_VALOR));
-
-    const alturaCampo = 9 + linhasValor.length * ALTURA_LINHA_VALOR;
-    alturaLinhaAtual = Math.max(alturaLinhaAtual, alturaCampo);
-
-    col += 1;
-    if (col === CAMPOS_POR_LINHA) {
-      y += alturaLinhaAtual + 5;
-      col = 0;
-      alturaLinhaAtual = 0;
+  for (const tamanho of TAMANHOS_VALOR) {
+    doc.setFontSize(tamanho);
+    const linhas = doc.splitTextToSize(valor, largura) as string[];
+    const alturaLinha = tamanho + 0.8;
+    if (linhas.length * alturaLinha <= disponivel) {
+      linhas.forEach((linha, i) => doc.text(linha, x + PADDING, topo + tamanho + i * alturaLinha - 1));
+      return;
     }
   }
-  if (col !== 0) y += alturaLinhaAtual + 5;
-  return y + 4;
+
+  // Último recurso (valor absurdamente longo): corta em 6pt com reticências.
+  const tamanho = TAMANHOS_VALOR[TAMANHOS_VALOR.length - 1];
+  doc.setFontSize(tamanho);
+  const alturaLinha = tamanho + 0.8;
+  const maximo = Math.max(1, Math.floor(disponivel / alturaLinha));
+  const linhas = (doc.splitTextToSize(valor, largura) as string[]).slice(0, maximo);
+  const ultima = linhas.length - 1;
+  linhas[ultima] = `${linhas[ultima].replace(/\s+\S{0,3}$/, "").trimEnd()}…`;
+  linhas.forEach((linha, i) => doc.text(linha, x + PADDING, topo + tamanho + i * alturaLinha - 1));
 }
 
-function renderSecao(doc: jsPDF, yInicial: number, margemPt: number, titulo: string): number {
-  doc.setFont(FONTE, "bold");
-  doc.setFontSize(10);
-  doc.setFillColor(235, 235, 235);
-  const util = doc.internal.pageSize.getWidth() - margemPt * 2;
-  doc.rect(margemPt, yInicial - 10, util, 14, "F");
-  doc.text(titulo, margemPt + 4, yInicial);
-  return yInicial + 18;
-}
-
-function camposPessoa(p: PessoaResponsavel): Campo[] {
-  return [
-    { label: "Nome", valor: p.nome },
-    { label: "RG", valor: p.rg },
-    { label: "CPF/CNPJ", valor: p.cpfOuCnpj },
-    { label: "Telefones", valor: p.telefones },
-    { label: "E-mail", valor: p.email },
-    { label: "Data Nascimento", valor: formatDataBR(p.dataNascimento) || null },
-    { label: "Estado Civil", valor: p.estadoCivil },
-    { label: "Escolaridade", valor: p.escolaridade },
-    { label: "Local de Trabalho", valor: p.localTrabalho },
-    { label: "Profissão", valor: p.profissao },
-    { label: "Telefone do Trabalho", valor: p.telefoneTrabalho }
-  ];
-}
-
-/** Secretário + responsável financeiro — nome caixa-alta + cargo, sem imagem
- * de assinatura escaneada (fora de escopo, ver design doc). `null` em
- * qualquer um dos dois só omite aquela coluna, nunca lança. */
-function renderAssinaturas(
+/** Uma linha da tabela: células lado a lado, larguras em fração da largura útil. */
+function desenharLinha(
   doc: jsPDF,
-  yInicial: number,
-  margemPt: number,
+  x: number,
+  y: number,
+  larguraTotal: number,
+  altura: number,
+  fracoes: number[],
+  campos: Campo[]
+): number {
+  let cursor = x;
+  campos.forEach((campo, i) => {
+    const w = larguraTotal * fracoes[i];
+    desenharCelula(doc, cursor, y, w, altura, campo);
+    cursor += w;
+  });
+  return y + altura;
+}
+
+function desenharBanda(doc: jsPDF, x: number, y: number, w: number, titulo: string): number {
+  doc.setDrawColor(0, 0, 0);
+  doc.setLineWidth(0.5);
+  doc.setFillColor(COR_BANDA, COR_BANDA, COR_BANDA);
+  doc.rect(x, y, w, ALTURA_BANDA, "FD");
+  doc.setTextColor(0, 0, 0);
+  doc.setFont(FONTE, "bold");
+  doc.setFontSize(9);
+  doc.text(titulo, x + w / 2, y + 10.5, { align: "center" });
+  return y + ALTURA_BANDA;
+}
+
+function renderCabecalho(doc: jsPDF, escola: RequerimentoPdfDados["escola"], imagens: ImagemCache): number {
+  const larguraPagina = doc.internal.pageSize.getWidth();
+  const direita = larguraPagina - MARGEM;
+  let alturaLogo = 0;
+
+  // Logo à esquerda.
+  const url = companyLogoUrl(escola.logoPath);
+  const logo = url ? imagens.get(url) : undefined;
+  if (logo) {
+    const caixa = imgFitInBox(logo, mm(55), mm(22));
+    try {
+      doc.addImage(logo.data, formatoImagem(logo.data), MARGEM, MARGEM_TOPO, caixa.w, caixa.h, undefined, "FAST");
+      alturaLogo = caixa.h;
+    } catch {
+      alturaLogo = 0; // logo ilegível não derruba a emissão
+    }
+  }
+
+  // Dados da escola alinhados à direita.
+  const cidadeUf = escola.cidade && escola.uf ? `${escola.cidade} - ${escola.uf}` : escola.cidade ?? escola.uf;
+  const enderecoCompleto = [escola.endereco, cidadeUf, escola.cep ? `CEP: ${escola.cep}` : null]
+    .filter(Boolean)
+    .join(", ");
+  const larguraTexto = larguraPagina - MARGEM * 2 - (logo ? mm(58) : 0);
+
+  let y = MARGEM_TOPO + 9;
+  doc.setTextColor(0, 0, 0);
+  doc.setFont(FONTE, "bold");
+  doc.setFontSize(11);
+  for (const linha of doc.splitTextToSize(escola.nome.toUpperCase(), larguraTexto) as string[]) {
+    doc.text(linha, direita, y, { align: "right" });
+    y += 12.5;
+  }
+
+  doc.setFont(FONTE, "normal");
+  doc.setFontSize(7.5);
+  const detalhes = [
+    escola.cnpj ? `${escola.cnpj}` : null,
+    enderecoCompleto || null,
+    escola.email,
+    escola.telefones
+  ].filter((l): l is string => Boolean(l && l.trim()));
+  for (const detalhe of detalhes) {
+    for (const linha of doc.splitTextToSize(detalhe, larguraTexto) as string[]) {
+      doc.text(linha, direita, y, { align: "right" });
+      y += 10;
+    }
+  }
+
+  return Math.max(MARGEM_TOPO + alturaLogo, y) + 6;
+}
+
+function desenharFoto(
+  doc: jsPDF,
+  x: number,
+  y: number,
+  w: number,
+  h: number,
+  fotoUrl: string | null,
+  imagens: ImagemCache
+): void {
+  doc.setDrawColor(0, 0, 0);
+  doc.setLineWidth(0.5);
+  doc.rect(x, y, w, h);
+
+  const foto = fotoUrl ? imagens.get(fotoUrl) : undefined;
+  if (foto) {
+    const caixa = imgFitInBox(foto, w - 6, h - 6);
+    try {
+      doc.addImage(foto.data, formatoImagem(foto.data), x + (w - caixa.w) / 2, y + (h - caixa.h) / 2, caixa.w, caixa.h, undefined, "FAST");
+      return;
+    } catch {
+      // foto ilegível: cai no espaço "Foto" em branco abaixo
+    }
+  }
+
+  doc.setTextColor(0, 0, 0);
+  doc.setFont(FONTE, "normal");
+  doc.setFontSize(9);
+  doc.text("Foto", x + w / 2, y + h / 2 + 3, { align: "center" });
+}
+
+const COLUNAS_PESSOA = [0.4, 0.19, 0.41];
+const COLUNAS_40_60 = [0.4, 0.6];
+
+/** Bloco Pai/Mãe: sempre desenhado (em branco quando não há cadastro) para
+ * o formulário manter a mesma geometria e poder ser completado à caneta. */
+function desenharPessoa(doc: jsPDF, x: number, y: number, w: number, papel: string, p: PessoaResponsavel | null): number {
+  y = desenharLinha(doc, x, y, w, ALTURA_LINHA, [1], [{ label: papel, valor: p?.nome }]);
+  y = desenharLinha(doc, x, y, w, ALTURA_LINHA, COLUNAS_PESSOA, [
+    { label: "RG", valor: p?.rg },
+    { label: "CPF/CNPJ", valor: p?.cpfOuCnpj },
+    { label: "Telefones", valor: p?.telefones }
+  ]);
+  y = desenharLinha(doc, x, y, w, ALTURA_LINHA, [0.59, 0.41], [
+    { label: "E-mail", valor: p?.email },
+    { label: "Dt. Nascimento", valor: formatDataBR(p?.dataNascimento ?? null) }
+  ]);
+  y = desenharLinha(doc, x, y, w, ALTURA_LINHA, COLUNAS_PESSOA, [
+    { label: "Estado Civil", valor: p?.estadoCivil },
+    { label: "Escolaridade", valor: p?.escolaridade },
+    { label: "Local de Trabalho", valor: p?.localTrabalho }
+  ]);
+  return desenharLinha(doc, x, y, w, ALTURA_LINHA, [0.59, 0.41], [
+    { label: "Profissão", valor: p?.profissao },
+    { label: "Telefone do Trabalho", valor: p?.telefoneTrabalho }
+  ]);
+}
+
+function desenharAluno(
+  doc: jsPDF,
+  x: number,
+  y: number,
+  w: number,
+  aluno: DadosRequerimento["aluno"],
+  imagens: ImagemCache
+): number {
+  const larguraFoto = w * 0.17;
+  const larguraGrade = w - larguraFoto;
+  const xGrade = x + larguraFoto;
+  const linhasDaGrade = 6;
+
+  desenharFoto(doc, x, y, larguraFoto, ALTURA_LINHA * linhasDaGrade, aluno.fotoUrl, imagens);
+
+  // "Cidade" e "CEP" não existem separados no dado (o endereço vem montado);
+  // ficam como campos de preenchimento, como no formulário de referência.
+  let yg = y;
+  yg = desenharLinha(doc, xGrade, yg, larguraGrade, ALTURA_LINHA, COLUNAS_40_60, [
+    { label: "Matrícula", valor: aluno.matricula },
+    { label: "Nome", valor: aluno.nome }
+  ]);
+  yg = desenharLinha(doc, xGrade, yg, larguraGrade, ALTURA_LINHA, COLUNAS_40_60, [
+    { label: "Sexo", valor: aluno.sexo },
+    { label: "Dt. Nascimento", valor: formatDataBR(aluno.dataNascimento) }
+  ]);
+  yg = desenharLinha(doc, xGrade, yg, larguraGrade, ALTURA_LINHA, COLUNAS_40_60, [
+    { label: "Naturalidade", valor: aluno.naturalidade },
+    { label: "Telefones", valor: aluno.telefones }
+  ]);
+  yg = desenharLinha(doc, xGrade, yg, larguraGrade, ALTURA_LINHA, [1], [{ label: "Endereço", valor: aluno.endereco }]);
+  yg = desenharLinha(doc, xGrade, yg, larguraGrade, ALTURA_LINHA, COLUNAS_40_60, [
+    { label: "Cidade", valor: null },
+    { label: "CEP", valor: null }
+  ]);
+  yg = desenharLinha(doc, xGrade, yg, larguraGrade, ALTURA_LINHA, COLUNAS_40_60, [
+    { label: "CPF", valor: aluno.cpf },
+    { label: "RG", valor: aluno.rg }
+  ]);
+
+  y = desenharLinha(doc, x, yg, w, ALTURA_LINHA, [1], [{ label: "Etnia", valor: aluno.etnia }]);
+  return desenharLinha(doc, x, y, w, ALTURA_LINHA, [1], [{ label: "Religião", valor: aluno.religiao }]);
+}
+
+function desenharAssinaturas(
+  doc: jsPDF,
+  y: number,
   secretario: { nome: string | null; cargo: string },
-  responsavel: { nome: string; parentesco: string | null } | null
+  responsavel: { nome: string } | null
 ): void {
   const assinaturas = [
     secretario.nome?.trim() ? { nome: secretario.nome, cargo: secretario.cargo } : null,
@@ -210,131 +321,89 @@ function renderAssinaturas(
   ].filter((a): a is { nome: string; cargo: string } => a !== null);
   if (assinaturas.length === 0) return;
 
-  const util = doc.internal.pageSize.getWidth() - margemPt * 2;
+  const util = doc.internal.pageSize.getWidth() - MARGEM * 2;
   const larguraColuna = util / assinaturas.length;
   const larguraLinha = Math.min(larguraColuna - mm(8), mm(75));
 
   assinaturas.forEach((a, i) => {
-    const centro = margemPt + larguraColuna * i + larguraColuna / 2;
-
+    const centro = MARGEM + larguraColuna * i + larguraColuna / 2;
     doc.setDrawColor(0, 0, 0);
-    doc.setLineWidth(0.7);
-    doc.line(centro - larguraLinha / 2, yInicial, centro + larguraLinha / 2, yInicial);
+    doc.setLineWidth(0.6);
+    doc.line(centro - larguraLinha / 2, y, centro + larguraLinha / 2, y);
 
+    doc.setTextColor(0, 0, 0);
     doc.setFont(FONTE, "bold");
-    doc.setFontSize(9);
-    let y = yInicial + 11;
-    for (const linha of doc.splitTextToSize(a.nome.toUpperCase(), larguraLinha) as string[]) {
-      doc.text(linha, centro, y, { align: "center" });
-      y += 10;
-    }
-
-    doc.setFont(FONTE, "normal");
     doc.setFontSize(8.5);
-    doc.text(a.cargo, centro, y, { align: "center" });
+    let yTexto = y + 10;
+    // No máximo 2 linhas de nome: o rodapé não pode crescer e sair da página.
+    for (const linha of (doc.splitTextToSize(a.nome.toUpperCase(), larguraLinha) as string[]).slice(0, 2)) {
+      doc.text(linha, centro, yTexto, { align: "center" });
+      yTexto += 9.5;
+    }
+    doc.setFont(FONTE, "normal");
+    doc.setFontSize(8);
+    doc.text(a.cargo, centro, yTexto, { align: "center" });
   });
 }
 
-const ALTURA_SECAO = 18;
-const ALTURA_RODAPE = 70;
-
-/**
- * Quebra para uma nova página quando o próximo bloco (altura estimada
- * `alturaEstimativa`) não cabe mais acima do rodapé — sem isso, com aluno +
- * pai + mãe completos o conteúdo passava da altura da página e a data e as
- * assinaturas do secretário/responsável saíam fora da área visível (bug C2
- * da revisão: o documento oficial saía sem assinatura nenhuma).
- */
-function garantirEspaco(doc: jsPDF, y: number, alturaPagina: number, margem: number, alturaEstimativa: number): number {
-  if (y + alturaEstimativa <= alturaPagina - margem - ALTURA_RODAPE) return y;
-  doc.addPage("a4", "portrait");
-  return margem + 10;
-}
-
 function renderPagina(doc: jsPDF, pagina: RequerimentoPdfDados, imagens: ImagemCache): void {
-  const margem = mm(MARGEM_MM);
+  const larguraPagina = doc.internal.pageSize.getWidth();
   const alturaPagina = doc.internal.pageSize.getHeight();
+  const w = larguraPagina - MARGEM * 2;
+  const x = MARGEM;
   const { dados } = pagina;
 
-  let y = renderCabecalho(doc, margem + 10, pagina.escola, imagens);
-  y = renderTitulo(doc, y + 6, String(pagina.anoLetivo));
+  let y = renderCabecalho(doc, pagina.escola, imagens);
 
-  y = renderSecao(doc, y + 10, margem, "Dados do Aluno");
-  y = renderCampos(doc, y, margem, [
-    { label: "Matrícula", valor: dados.aluno.matricula },
-    { label: "Nome", valor: dados.aluno.nome },
-    { label: "Sexo", valor: dados.aluno.sexo },
-    { label: "Data Nascimento", valor: formatDataBR(dados.aluno.dataNascimento) || null },
-    { label: "Naturalidade", valor: dados.aluno.naturalidade },
-    { label: "Telefones", valor: dados.aluno.telefones },
-    { label: "Endereço", valor: dados.aluno.endereco },
-    { label: "CPF", valor: dados.aluno.cpf },
-    { label: "RG", valor: dados.aluno.rg },
-    { label: "Etnia", valor: dados.aluno.etnia },
-    { label: "Religião", valor: dados.aluno.religiao }
+  doc.setTextColor(0, 0, 0);
+  doc.setFont(FONTE, "bold");
+  doc.setFontSize(13);
+  doc.text(`Requerimento de Matrícula - ${pagina.anoLetivo}`, larguraPagina / 2, y + 12, { align: "center" });
+  y += 20;
+
+  y = desenharBanda(doc, x, y, w, "Dados do Aluno");
+  y = desenharAluno(doc, x, y, w, dados.aluno, imagens);
+  y = desenharPessoa(doc, x, y, w, "Pai", dados.pai);
+  y = desenharPessoa(doc, x, y, w, "Mãe", dados.mae);
+
+  // Campos de preenchimento à mão, como no formulário de referência.
+  y = desenharLinha(doc, x, y, w, ALTURA_LINHA, [1], [{ label: "Irmãos na Escola", valor: null }]);
+  y = desenharLinha(doc, x, y, w, ALTURA_ENDERECO_NOVO, [1], [{ label: "Novo Endereço", valor: null }]);
+
+  y = desenharBanda(doc, x, y, w, "Dados da Matrícula");
+  const turma = dados.matricula.turma.trim();
+  const turno = capitalizar(dados.matricula.turno.trim());
+  const turmaTurno = turma.toLowerCase() === turno.toLowerCase() ? turno : [turma, turno].filter(Boolean).join("/");
+  y = desenharLinha(doc, x, y, w, ALTURA_LINHA, [0.25, 0.25, 0.25, 0.25], [
+    { label: "Série", valor: dados.matricula.serie },
+    { label: "Turma/Turno", valor: turmaTurno },
+    { label: "Tipo Ensino", valor: dados.matricula.tipoEnsino },
+    { label: "Data Matrícula", valor: formatDataBR(dados.matricula.dataMatricula) }
   ]);
 
-  if (dados.pai) {
-    const campos = camposPessoa(dados.pai);
-    y = garantirEspaco(doc, y, alturaPagina, margem, ALTURA_SECAO + alturaEstimadaCampos(doc, margem, campos));
-    y = renderSecao(doc, y + 4, margem, "Pai");
-    y = renderCampos(doc, y, margem, campos);
-  }
-
-  if (dados.mae) {
-    const campos = camposPessoa(dados.mae);
-    y = garantirEspaco(doc, y, alturaPagina, margem, ALTURA_SECAO + alturaEstimadaCampos(doc, margem, campos));
-    y = renderSecao(doc, y + 4, margem, "Mãe");
-    y = renderCampos(doc, y, margem, campos);
-  }
-
-  const camposMatricula = [
-    { label: "Série", valor: dados.matricula.serie },
-    { label: "Turma/Turno", valor: [dados.matricula.turma, dados.matricula.turno].filter(Boolean).join("/") || null },
-    { label: "Tipo Ensino", valor: dados.matricula.tipoEnsino },
-    { label: "Data Matrícula", valor: formatDataBR(dados.matricula.dataMatricula) || null }
-  ];
-  y = garantirEspaco(doc, y, alturaPagina, margem, ALTURA_SECAO + alturaEstimadaCampos(doc, margem, camposMatricula));
-  y = renderSecao(doc, y + 4, margem, "Dados da Matrícula");
-  y = renderCampos(doc, y, margem, camposMatricula);
-
-  if (dados.responsavelFinanceiro) {
-    const camposFinanceiro = [
-      { label: "Responsável Financeiro", valor: dados.responsavelFinanceiro.nome },
-      { label: "CPF/CNPJ", valor: dados.responsavelFinanceiro.cpfOuCnpj },
-      { label: "Parentesco", valor: dados.responsavelFinanceiro.parentesco }
-    ];
-    y = garantirEspaco(doc, y, alturaPagina, margem, ALTURA_SECAO + alturaEstimadaCampos(doc, margem, camposFinanceiro));
-    y = renderSecao(doc, y + 4, margem, "Responsável Financeiro Principal");
-    y = renderCampos(doc, y, margem, camposFinanceiro);
-  }
+  y = desenharBanda(doc, x, y, w, "Responsável Financeiro Principal");
+  y = desenharLinha(doc, x, y, w, ALTURA_LINHA, [0.55, 0.2, 0.25], [
+    { label: "Responsável Financeiro", valor: dados.responsavelFinanceiro?.nome },
+    { label: "CPF/CNPJ", valor: dados.responsavelFinanceiro?.cpfOuCnpj },
+    { label: "Parentesco", valor: dados.responsavelFinanceiro?.parentesco }
+  ]);
 
   if (pagina.observacoes?.trim()) {
-    doc.setFont(FONTE, "normal");
-    doc.setFontSize(9);
-    const util = doc.internal.pageSize.getWidth() - margem * 2;
-    const linhas = doc.splitTextToSize(pagina.observacoes, util) as string[];
-    for (const linha of linhas) {
-      y = garantirEspaco(doc, y, alturaPagina, margem, 12);
-      doc.text(linha, margem, y);
-      y += 12;
-    }
-    y += 6;
+    y = desenharLinha(doc, x, y, w, ALTURA_OBSERVACOES, [1], [{ label: "Observações", valor: pagina.observacoes }]);
   }
 
-  // Data e assinaturas sempre visíveis: se o que já foi desenhado não deixa
-  // espaço pro bloco do rodapé, começa uma página nova só com o rodapé —
-  // nunca desenha fora da área visível.
-  y = garantirEspaco(doc, y, alturaPagina, margem, ALTURA_RODAPE);
-
+  // Rodapé: data + assinaturas logo abaixo da tabela, nunca além da margem.
+  const limite = alturaPagina - MARGEM_TOPO - 32;
+  const yData = Math.min(y + 16, limite - 36);
+  doc.setTextColor(0, 0, 0);
   doc.setFont(FONTE, "normal");
   doc.setFontSize(9);
-  doc.text(formatDataExtenso(new Date()) + ".", doc.internal.pageSize.getWidth() - margem, y + 20, { align: "right" });
-
-  renderAssinaturas(doc, y + 50, margem, pagina.secretario, dados.responsavelFinanceiro);
+  const cidade = pagina.escola.cidade?.trim() ? nomeProprio(pagina.escola.cidade) : null;
+  doc.text(`${[cidade, formatDataExtenso(new Date())].filter(Boolean).join(", ")}.`, larguraPagina - MARGEM, yData, { align: "right" });
+  desenharAssinaturas(doc, Math.min(yData + 34, limite), pagina.secretario, dados.responsavelFinanceiro);
 }
 
-/** Uma página (retrato) por item — um aluno por página, igual renderDeclaracoes. */
+/** Uma página A4 (retrato) por aluno. */
 export function renderRequerimentos(paginas: RequerimentoPdfDados[], imagens: ImagemCache): jsPDF {
   const doc = new jsPDF({ orientation: "portrait", unit: "pt", format: "a4" });
 

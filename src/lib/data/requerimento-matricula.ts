@@ -1,5 +1,6 @@
 import { DEFAULT_SCHOOL_ID } from "@/lib/constants";
 import { createServerClient } from "@/lib/supabase/server";
+import { getSignedFotoUrl } from "@/lib/storage/photos";
 
 export type AlunoParaRequerimento = { matriculaId: string; alunoId: string; nome: string };
 
@@ -73,6 +74,8 @@ export type DadosRequerimento = {
     rg: string | null;
     etnia: string | null;
     religiao: string | null;
+    /** URL assinada (1h) da foto — o cliente baixa para embutir no PDF. */
+    fotoUrl: string | null;
   };
   pai: PessoaResponsavel | null;
   mae: PessoaResponsavel | null;
@@ -153,7 +156,7 @@ export async function buscarDadosRequerimento(matriculaId: string): Promise<Dado
   const { data: matricula, error } = await supabase
     .from("matriculas")
     .select(
-      "codigo, ano_letivo, serie_id, data_matricula, series(nome, segmentos(nome)), turmas(nome, turno), alunos(matricula_codigo, nome, sexo, data_nascimento, naturalidade, celular, cpf, rg, etnia, religiao, enderecos_aluno(logradouro, numero, complemento, bairro, cidade, uf, cep, principal), responsaveis_aluno(nome, rg, cpf, cnpj, telefone, celular, email, data_nascimento, estado_civil, escolaridade, endereco_trabalho, profissao, telefone_trabalho, parentesco, responsavel_financeiro))"
+      "codigo, ano_letivo, serie_id, data_matricula, series(nome, segmentos(nome)), turmas(nome, turno), alunos(matricula_codigo, nome, foto_url, sexo, data_nascimento, naturalidade, celular, cpf, rg, etnia, religiao, enderecos_aluno(logradouro, numero, complemento, bairro, cidade, uf, cep, principal), responsaveis_aluno(nome, rg, cpf, cnpj, telefone, celular, email, data_nascimento, estado_civil, escolaridade, endereco_trabalho, profissao, telefone_trabalho, parentesco, responsavel_financeiro))"
     )
     .eq("id", matriculaId)
     .maybeSingle();
@@ -164,6 +167,7 @@ export async function buscarDadosRequerimento(matriculaId: string): Promise<Dado
   const aluno = matricula.alunos as {
     matricula_codigo?: string | null;
     nome?: string;
+    foto_url?: string | null;
     sexo?: string | null;
     data_nascimento?: string | null;
     naturalidade?: string | null;
@@ -206,7 +210,8 @@ export async function buscarDadosRequerimento(matriculaId: string): Promise<Dado
       cpf: aluno?.cpf ?? null,
       rg: aluno?.rg ?? null,
       etnia: aluno?.etnia ?? null,
-      religiao: aluno?.religiao ?? null
+      religiao: aluno?.religiao ?? null,
+      fotoUrl: await getSignedFotoUrl(aluno?.foto_url)
     },
     pai: pai ? montarPessoa(pai) : null,
     mae: mae ? montarPessoa(mae) : null,

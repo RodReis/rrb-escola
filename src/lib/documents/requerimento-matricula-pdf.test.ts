@@ -15,7 +15,8 @@ function dadosFake(): DadosRequerimento {
       cpf: null,
       rg: null,
       etnia: null,
-      religiao: null
+      religiao: null,
+      fotoUrl: null
     },
     pai: {
       nome: "Amauri Fidelis do Nascimento",
@@ -107,25 +108,46 @@ describe("renderRequerimentos", () => {
     expect(() => renderRequerimentos([pagina], new Map())).not.toThrow();
   });
 
-  it("com aluno + pai + mãe + matrícula + responsável financeiro, a data e as assinaturas cabem dentro da página (bug C2 da revisão)", () => {
-    const pagina = paginaFake();
-    const doc = renderRequerimentos([pagina], new Map());
-    const alturaPagina = doc.internal.pageSize.getHeight();
-    // getTextDimensions não expõe o y do cursor diretamente; em vez disso,
-    // provamos que o layout compacto cabe em 1 página mesmo com os 3 blocos
-    // de pessoa completos — se as assinaturas tivessem saído da página, o
-    // conteúdo teria exigido uma 2ª página (quebra automática) ou o teste de
-    // "quebra automática" abaixo detectaria o overflow.
+  it("com aluno + pai + mãe + matrícula + responsável financeiro, tudo cabe em 1 página A4", () => {
+    const doc = renderRequerimentos([paginaFake()], new Map());
     expect(doc.getNumberOfPages()).toBe(1);
-    expect(alturaPagina).toBeGreaterThan(0);
   });
 
-  it("quebra para uma nova página quando o conteúdo de uma única página não cabe", () => {
+  it("dados longos e observações enormes nunca geram 2ª página (altura de linha é fixa)", () => {
     const pagina = paginaFake();
-    // Observações bem longas forçam overflow de conteúdo — o renderer deve
-    // adicionar página em vez de desenhar assinatura fora da área visível.
+    const longo = "TEXTO MUITO LONGO ".repeat(40);
     pagina.observacoes = Array.from({ length: 80 }, (_, i) => `Linha de observação número ${i + 1}.`).join(" ");
+    pagina.dados.aluno.endereco = longo;
+    pagina.dados.aluno.nome = longo;
+    pagina.dados.mae = { ...pagina.dados.mae!, localTrabalho: longo, email: longo, profissao: longo };
+    pagina.escola.endereco = longo;
+    pagina.secretario.nome = longo;
     const doc = renderRequerimentos([pagina], new Map());
-    expect(doc.getNumberOfPages()).toBeGreaterThan(1);
+    expect(doc.getNumberOfPages()).toBe(1);
+  });
+
+  it("a data do rodapé leva o nome da cidade da escola (Trindade, ...)", () => {
+    const pagina = paginaFake();
+    pagina.escola.cidade = "TRINDADE";
+    const pdf = renderRequerimentos([pagina], new Map()).output();
+    expect(pdf).toMatch(/Trindade, \d{1,2} de \w+ de \d{4}\./);
+  });
+
+  it("embute a foto do aluno quando ela está no cache, e segue sem ela quando não está", () => {
+    const png =
+      "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==";
+    const pagina = paginaFake();
+    pagina.dados.aluno.fotoUrl = "https://signed.example/foto.png";
+    const comFoto = renderRequerimentos([pagina], new Map([[pagina.dados.aluno.fotoUrl, { data: png, w: 30, h: 40 }]]));
+    const semFoto = renderRequerimentos([pagina], new Map());
+    expect(comFoto.getNumberOfPages()).toBe(1);
+    expect(comFoto.output().length).toBeGreaterThan(semFoto.output().length);
+  });
+
+  it("não lança com foto ilegível no cache (cai no espaço 'Foto')", () => {
+    const pagina = paginaFake();
+    pagina.dados.aluno.fotoUrl = "https://signed.example/quebrada.png";
+    const imagens = new Map([[pagina.dados.aluno.fotoUrl, { data: "data:image/png;base64,@@@", w: 10, h: 10 }]]);
+    expect(() => renderRequerimentos([pagina], imagens)).not.toThrow();
   });
 });

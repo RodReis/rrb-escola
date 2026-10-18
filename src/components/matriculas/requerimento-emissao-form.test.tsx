@@ -55,7 +55,8 @@ const dadosFake = {
     cpf: null,
     rg: null,
     etnia: null,
-    religiao: null
+    religiao: null,
+    fotoUrl: null
   },
   pai: null,
   mae: null,
@@ -114,7 +115,7 @@ describe("RequerimentoEmissaoForm", () => {
   it("monta a URL pública da logo (companyLogoUrl) antes de carregarImagens, não o logo_path cru (bug I1 da revisão)", async () => {
     const { companyLogoUrl } = await import("@/lib/storage/company-logo-url");
     mockCarregar.mockResolvedValue({
-      paginas: [{ escola: { logoPath: "escola-1/logo.png" } }],
+      paginas: [{ escola: { logoPath: "escola-1/logo.png" }, dados: { aluno: { fotoUrl: "https://signed.example/foto.jpg" } } }],
       falhas: []
     });
     render(
@@ -134,6 +135,7 @@ describe("RequerimentoEmissaoForm", () => {
     const urlsCarregadas = mockCarregarImagens.mock.calls[0][0] as Array<string | null>;
     expect(urlsCarregadas).toContain(companyLogoUrl("escola-1/logo.png"));
     expect(urlsCarregadas).not.toContain("escola-1/logo.png");
+    expect(urlsCarregadas).toContain("https://signed.example/foto.jpg");
   });
 
   it("sem aluno selecionado, emite para todos os elegíveis (modo coletivo)", async () => {

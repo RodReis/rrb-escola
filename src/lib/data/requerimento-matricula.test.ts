@@ -1,9 +1,12 @@
-import { describe, it, expect, vi } from "vitest";
+import { beforeEach, describe, it, expect, vi } from "vitest";
 
 const { mockFrom } = vi.hoisted(() => ({ mockFrom: vi.fn() }));
 vi.mock("@/lib/supabase/server", () => ({
   createServerClient: vi.fn().mockResolvedValue({ from: mockFrom })
 }));
+
+const { mockGetSignedFotoUrl } = vi.hoisted(() => ({ mockGetSignedFotoUrl: vi.fn() }));
+vi.mock("@/lib/storage/photos", () => ({ getSignedFotoUrl: mockGetSignedFotoUrl }));
 
 import { buscarDadosRequerimento, listarAlunosParaRequerimento } from "./requerimento-matricula";
 
@@ -61,6 +64,7 @@ function alunoFake(responsaveis: Record<string, unknown>[]) {
     alunos: {
       matricula_codigo: "1754",
       nome: "Isabela Nunes Fidelis do Nascimento",
+      foto_url: "aluno-1/foto.jpg",
       sexo: "Feminino",
       data_nascimento: "2017-01-31",
       naturalidade: "GOIÂNIA-GO",
@@ -88,6 +92,20 @@ function mockMaybeSingle(data: unknown) {
 }
 
 describe("buscarDadosRequerimento", () => {
+  beforeEach(() => {
+    mockGetSignedFotoUrl.mockReset().mockResolvedValue("https://signed.example/foto.jpg");
+  });
+
+  it("devolve a URL assinada da foto do aluno, ou null quando não há foto", async () => {
+    mockMaybeSingle(alunoFake([]));
+    expect((await buscarDadosRequerimento("matricula-1")).aluno.fotoUrl).toBe("https://signed.example/foto.jpg");
+    expect(mockGetSignedFotoUrl).toHaveBeenCalledWith("aluno-1/foto.jpg");
+
+    mockGetSignedFotoUrl.mockResolvedValue(null);
+    mockMaybeSingle(alunoFake([]));
+    expect((await buscarDadosRequerimento("matricula-1")).aluno.fotoUrl).toBeNull();
+  });
+
   it("monta todos os campos quando aluno, pai, mãe e responsável financeiro existem", async () => {
     mockMaybeSingle(
       alunoFake([

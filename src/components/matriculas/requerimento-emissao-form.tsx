@@ -105,8 +105,11 @@ export function RequerimentoEmissaoForm({ anoLetivo, series, turmas, alunosElegi
       // companyLogoUrl converte o path cru salvo em companies.logo_path para
       // a URL pública do bucket — carregarImagens faz fetch da URL e indexa
       // o ImagemCache por ela, igual o renderer espera ao buscar a logo.
+      // As fotos dos alunos (URL assinada vinda do servidor) entram no mesmo
+      // cache; foto que falhar em baixar só deixa o espaço "Foto" em branco.
       const logoUrls = paginas.map((p) => companyLogoUrl(p.escola.logoPath));
-      const imagens = await carregarImagens(logoUrls);
+      const fotoUrls = paginas.map((p) => p.dados.aluno.fotoUrl);
+      const imagens = await carregarImagens([...logoUrls, ...fotoUrls]);
       const slugNome = alunosElegiveis.find((a) => a.alunoId === alunoSelecionado)?.nome
         ?.normalize("NFD")
         .replace(/[̀-ͯ]/g, "")

@@ -47,7 +47,8 @@ function dadosPara(nome: string, comResponsavelFinanceiro: boolean): DadosRequer
       cpf: null,
       rg: null,
       etnia: null,
-      religiao: null
+      religiao: null,
+      fotoUrl: null
     },
     pai: null,
     mae: null,
