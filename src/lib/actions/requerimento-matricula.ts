@@ -5,12 +5,6 @@ import { buscarDadosRequerimento, type DadosRequerimento } from "@/lib/data/requ
 import { getCredenciamentoVigente } from "@/lib/data/historico";
 import type { RequerimentoPdfDados } from "@/lib/documents/requerimento-matricula-pdf";
 
-function assertResponsavelFinanceiro(dados: DadosRequerimento): void {
-  if (!dados.responsavelFinanceiro) {
-    throw new Error("Responsável financeiro não cadastrado para este aluno.");
-  }
-}
-
 async function montarPagina(dados: DadosRequerimento, observacoes: string | null): Promise<RequerimentoPdfDados> {
   const credenciamento = dados.matricula.serieId
     ? await getCredenciamentoVigente(dados.matricula.serieId, dados.matricula.anoLetivo)
@@ -21,7 +15,13 @@ async function montarPagina(dados: DadosRequerimento, observacoes: string | null
     anoLetivo: dados.matricula.anoLetivo,
     observacoes,
     escola: {
-      nome: credenciamento?.nomeFantasia ?? "",
+      // Razão social em destaque e nome fantasia logo abaixo, como no
+      // formulário impresso da escola; sem razão social, o fantasia sobe.
+      nome: credenciamento?.razaoSocial || credenciamento?.nomeFantasia || "",
+      nomeFantasia:
+        credenciamento?.razaoSocial && credenciamento.nomeFantasia && credenciamento.nomeFantasia !== credenciamento.razaoSocial
+          ? credenciamento.nomeFantasia
+          : null,
       cnpj: credenciamento?.cnpj ?? null,
       endereco: credenciamento?.endereco ?? null,
       cidade: credenciamento?.cidade ?? null,
@@ -36,14 +36,6 @@ async function montarPagina(dados: DadosRequerimento, observacoes: string | null
       cargo: credenciamento?.secretarioCargo ?? "Secretário(a)"
     }
   };
-}
-
-export async function previsualizarRequerimentoAction(matriculaId: string): Promise<DadosRequerimento> {
-  await requirePermission("historico", "read");
-
-  const dados = await buscarDadosRequerimento(matriculaId);
-  assertResponsavelFinanceiro(dados);
-  return dados;
 }
 
 export async function carregarRequerimentosAction(

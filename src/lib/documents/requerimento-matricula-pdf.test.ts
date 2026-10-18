@@ -1,5 +1,8 @@
 import { describe, expect, it } from "vitest";
-import { renderRequerimentos, type RequerimentoPdfDados } from "./requerimento-matricula-pdf";
+import { medirRodapeRequerimento, renderRequerimentos, type RequerimentoPdfDados } from "./requerimento-matricula-pdf";
+
+// A4 = 842pt de altura; o rodapé precisa terminar antes da margem inferior.
+const LIMITE_RODAPE = 842 - 28;
 import type { DadosRequerimento } from "@/lib/data/requerimento-matricula";
 
 function dadosFake(): DadosRequerimento {
@@ -113,7 +116,7 @@ describe("renderRequerimentos", () => {
     expect(doc.getNumberOfPages()).toBe(1);
   });
 
-  it("dados longos e observações enormes nunca geram 2ª página (altura de linha é fixa)", () => {
+  it("dados longos e observações enormes: data e assinaturas terminam dentro da A4", () => {
     const pagina = paginaFake();
     const longo = "TEXTO MUITO LONGO ".repeat(40);
     pagina.observacoes = Array.from({ length: 80 }, (_, i) => `Linha de observação número ${i + 1}.`).join(" ");
@@ -122,8 +125,10 @@ describe("renderRequerimentos", () => {
     pagina.dados.mae = { ...pagina.dados.mae!, localTrabalho: longo, email: longo, profissao: longo };
     pagina.escola.endereco = longo;
     pagina.secretario.nome = longo;
+    pagina.escola.nomeFantasia = longo;
     const doc = renderRequerimentos([pagina], new Map());
     expect(doc.getNumberOfPages()).toBe(1);
+    expect(medirRodapeRequerimento(pagina, new Map())).toBeLessThanOrEqual(LIMITE_RODAPE);
   });
 
   it("a data do rodapé leva o nome da cidade da escola (Trindade, ...)", () => {

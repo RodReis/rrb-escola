@@ -2,15 +2,14 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { render, screen, fireEvent, waitFor } from "@testing-library/react";
 
-const mockPrevisualizar = vi.fn();
 const mockCarregar = vi.fn();
 vi.mock("@/lib/actions/requerimento-matricula", () => ({
-  carregarRequerimentosAction: (...args: unknown[]) => mockCarregar(...args),
-  previsualizarRequerimentoAction: (...args: unknown[]) => mockPrevisualizar(...args)
+  carregarRequerimentosAction: (...args: unknown[]) => mockCarregar(...args)
 }));
 
+const mockSave = vi.fn();
 vi.mock("@/lib/documents/requerimento-matricula-pdf", () => ({
-  renderRequerimentos: vi.fn(() => ({ save: vi.fn() }))
+  renderRequerimentos: vi.fn(() => ({ save: mockSave }))
 }));
 
 const mockCarregarImagens = vi.fn().mockResolvedValue(new Map());
@@ -43,179 +42,115 @@ vi.mock("next/navigation", async () => {
 
 import { RequerimentoEmissaoForm } from "./requerimento-emissao-form";
 
-const dadosFake = {
-  aluno: {
-    matricula: "1754",
-    nome: "Ana",
-    sexo: "Feminino",
-    dataNascimento: "2017-01-31",
-    naturalidade: "GOIÂNIA-GO",
-    telefones: null,
-    endereco: null,
-    cpf: null,
-    rg: null,
-    etnia: null,
-    religiao: null,
-    fotoUrl: null
-  },
-  pai: null,
-  mae: null,
-  matricula: {
-    anoLetivo: 2027,
-    serieId: "serie-1",
-    serie: "5º ANO",
-    turma: "A",
-    turno: "Matutino",
-    tipoEnsino: "Ensino Fundamental",
-    dataMatricula: "2026-10-16"
-  },
-  responsavelFinanceiro: { nome: "Ana Paula", cpfOuCnpj: "043", parentesco: "Mãe" }
-};
+const series = [
+  { id: "s1", nome: "5º ANO" },
+  { id: "s2", nome: "6º ANO" }
+];
+const turmas = [
+  { id: "t1", serieId: "s1", turno: "matutino" },
+  { id: "t2", serieId: "s1", turno: "vespertino" },
+  { id: "t3", serieId: "s2", turno: "matutino" }
+];
+const ana = { matriculaId: "m1", alunoId: "a1", nome: "Ana", temResponsavelFinanceiro: true };
+const beto = { matriculaId: "m2", alunoId: "a2", nome: "Beto", temResponsavelFinanceiro: false };
+const carla = { matriculaId: "m3", alunoId: "a3", nome: "Carla", temResponsavelFinanceiro: true };
+
+function renderForm(elegiveis = [ana, beto, carla]) {
+  return render(
+    <RequerimentoEmissaoForm
+      anoLetivo={2027}
+      anosDisponiveis={[2027, 2026]}
+      series={series}
+      turmas={turmas}
+      alunos={[]}
+      elegiveis={elegiveis}
+    />
+  );
+}
+
+function paginaDe(nome: string) {
+  return {
+    escola: { logoPath: "escola-1/logo.png" },
+    dados: { aluno: { nome, fotoUrl: `https://signed.example/${nome}.jpg` } }
+  };
+}
 
 describe("RequerimentoEmissaoForm", () => {
   beforeEach(() => {
-    mockPrevisualizar.mockReset();
     mockCarregar.mockReset();
+    mockSave.mockReset();
     mockCarregarImagens.mockClear().mockResolvedValue(new Map());
     mockSearchParams = new URLSearchParams();
     listeners.clear();
   });
 
-  describe("Turma depende da Série", () => {
-    const series = [{ id: "s1", nome: "5º ANO" }, { id: "s2", nome: "6º ANO" }];
-    const turmas = [
-      { id: "t1", nome: "A", serieId: "s1", turno: "matutino" },
-      { id: "t2", nome: "MAT", serieId: "s1", turno: "vespertino" },
-      { id: "t3", nome: "A", serieId: "s2", turno: "matutino" }
-    ];
-    const renderForm = () =>
-      render(<RequerimentoEmissaoForm anoLetivo={2027} series={series} turmas={turmas} alunosElegiveis={[]} />);
-
-    it("mantém a Turma desabilitada e sem opções até escolher a Série", () => {
-      renderForm();
-      const turma = screen.getByLabelText("Turma") as HTMLSelectElement;
-      expect(turma).toBeDisabled();
-      expect(Array.from(turma.options).map((o) => o.text)).toEqual(["Todas"]);
-    });
-
-    it("depois de escolher a Série, lista só as turmas dela, pelo turno em maiúsculas", () => {
-      renderForm();
-      fireEvent.change(screen.getByLabelText("Série"), { target: { value: "s1" } });
-      const turma = screen.getByLabelText("Turma") as HTMLSelectElement;
-      expect(turma).not.toBeDisabled();
-      expect(Array.from(turma.options).map((o) => o.text)).toEqual(["Todas", "MATUTINO", "VESPERTINO"]);
-    });
+  it("sem filtro: tabela pede uma série/turma e Emitir fica desabilitado", () => {
+    renderForm([]);
+    expect(screen.getByText("Selecione uma série ou turma para listar os alunos.")).toBeTruthy();
+    expect(screen.getByRole("button", { name: /emitir selecionados \(0\)/i })).toBeDisabled();
   });
 
-  it("mostra o botão Emitir desabilitado sem nenhum aluno elegível", () => {
-    render(<RequerimentoEmissaoForm anoLetivo={2027} series={[]} turmas={[]} alunosElegiveis={[]} />);
-    expect(screen.getByRole("button", { name: /emitir/i })).toBeDisabled();
+  it("Turma fica desabilitada até escolher a Série", () => {
+    renderForm();
+    expect(screen.getByRole("button", { name: /^Turma:/ })).toBeDisabled();
   });
 
-  it("monta a URL pública da logo (companyLogoUrl) antes de carregarImagens, não o logo_path cru (bug I1 da revisão)", async () => {
+  it("com Série escolhida, a Turma lista só as turmas dela, pelo turno em maiúsculas", () => {
+    mockSearchParams = new URLSearchParams("serie=s1");
+    renderForm();
+
+    fireEvent.click(screen.getByRole("button", { name: /^Turma:/ }));
+
+    expect(screen.getByRole("button", { name: "MATUTINO" })).toBeTruthy();
+    expect(screen.getByRole("button", { name: "VESPERTINO" })).toBeTruthy();
+    expect(screen.getAllByRole("button", { name: "MATUTINO" })).toHaveLength(1);
+  });
+
+  it("aluno sem responsável financeiro: checkbox bloqueado e aviso de pendência", () => {
+    renderForm();
+    expect(screen.getByLabelText("Selecionar Beto")).toBeDisabled();
+    expect(screen.getByText("Sem responsável financeiro (1)")).toBeTruthy();
+  });
+
+  it("Marcar todos seleciona só os prontos e emite com a mesma observação para o lote", async () => {
+    mockCarregar.mockResolvedValue({ paginas: [paginaDe("Ana"), paginaDe("Carla")], falhas: [] });
+    renderForm();
+
+    fireEvent.click(screen.getByLabelText("Marcar todos"));
+    fireEvent.change(screen.getByPlaceholderText(/sai igual em todos/i), { target: { value: "Conferido" } });
+    fireEvent.click(screen.getByRole("button", { name: /emitir selecionados \(2\)/i }));
+
+    await waitFor(() => expect(mockSave).toHaveBeenCalledWith("requerimentos-matricula-2027.pdf"));
+    expect(mockCarregar).toHaveBeenCalledWith(["m1", "m3"], "Conferido");
+  });
+
+  it("baixa a URL pública da logo e a foto de cada aluno antes de gerar o PDF", async () => {
     const { companyLogoUrl } = await import("@/lib/storage/company-logo-url");
+    mockCarregar.mockResolvedValue({ paginas: [paginaDe("Ana")], falhas: [] });
+    renderForm();
+
+    fireEvent.click(screen.getByLabelText("Selecionar Ana"));
+    fireEvent.click(screen.getByRole("button", { name: /emitir selecionados \(1\)/i }));
+
+    await waitFor(() => expect(mockCarregarImagens).toHaveBeenCalled());
+    const urls = mockCarregarImagens.mock.calls[0][0] as Array<string | null>;
+    expect(urls).toContain(companyLogoUrl("escola-1/logo.png"));
+    expect(urls).not.toContain("escola-1/logo.png");
+    expect(urls).toContain("https://signed.example/Ana.jpg");
+    await waitFor(() => expect(mockSave).toHaveBeenCalledWith("ANA-requerimento-2027.pdf"));
+  });
+
+  it("mostra os alunos que falharam na emissão sem perder os gerados", async () => {
     mockCarregar.mockResolvedValue({
-      paginas: [{ escola: { logoPath: "escola-1/logo.png" }, dados: { aluno: { fotoUrl: "https://signed.example/foto.jpg" } } }],
-      falhas: []
+      paginas: [paginaDe("Ana")],
+      falhas: [{ nome: "Carla", motivo: "Responsável financeiro não cadastrado." }]
     });
-    render(
-      <RequerimentoEmissaoForm
-        anoLetivo={2027}
-        series={[]}
-        turmas={[]}
-        alunosElegiveis={[{ matriculaId: "m1", alunoId: "a1", nome: "Ana" }]}
-      />
-    );
+    renderForm();
 
-    fireEvent.click(screen.getByRole("button", { name: /emitir/i }));
+    fireEvent.click(screen.getByLabelText("Marcar todos"));
+    fireEvent.click(screen.getByRole("button", { name: /emitir selecionados/i }));
 
-    await waitFor(() => {
-      expect(mockCarregarImagens).toHaveBeenCalled();
-    });
-    const urlsCarregadas = mockCarregarImagens.mock.calls[0][0] as Array<string | null>;
-    expect(urlsCarregadas).toContain(companyLogoUrl("escola-1/logo.png"));
-    expect(urlsCarregadas).not.toContain("escola-1/logo.png");
-    expect(urlsCarregadas).toContain("https://signed.example/foto.jpg");
-  });
-
-  it("sem aluno selecionado, emite para todos os elegíveis (modo coletivo)", async () => {
-    mockCarregar.mockResolvedValue({ paginas: [], falhas: [] });
-    render(
-      <RequerimentoEmissaoForm
-        anoLetivo={2027}
-        series={[]}
-        turmas={[]}
-        alunosElegiveis={[
-          { matriculaId: "m1", alunoId: "a1", nome: "Ana" },
-          { matriculaId: "m2", alunoId: "a2", nome: "Beto" }
-        ]}
-      />
-    );
-
-    fireEvent.click(screen.getByRole("button", { name: /emitir/i }));
-
-    await waitFor(() => {
-      expect(mockCarregar).toHaveBeenCalledWith(["m1", "m2"], null);
-    });
-    expect(mockPrevisualizar).not.toHaveBeenCalled();
-  });
-
-  it("com aluno selecionado, mostra preview antes de habilitar emitir (modo individual)", async () => {
-    mockPrevisualizar.mockResolvedValue(dadosFake);
-    render(
-      <RequerimentoEmissaoForm
-        anoLetivo={2027}
-        series={[]}
-        turmas={[]}
-        alunosElegiveis={[{ matriculaId: "m1", alunoId: "a1", nome: "Ana" }]}
-      />
-    );
-
-    fireEvent.change(screen.getByLabelText(/^aluno$/i), { target: { value: "a1" } });
-
-    await waitFor(() => {
-      expect(mockPrevisualizar).toHaveBeenCalledWith("m1");
-    });
-    await waitFor(() => {
-      expect(screen.getAllByText(dadosFake.aluno.nome).length).toBeGreaterThan(0);
-    });
-  });
-
-  it("observações preenchidas vão junto no payload de carregarRequerimentosAction", async () => {
-    mockCarregar.mockResolvedValue({ paginas: [], falhas: [] });
-    render(
-      <RequerimentoEmissaoForm
-        anoLetivo={2027}
-        series={[]}
-        turmas={[]}
-        alunosElegiveis={[{ matriculaId: "m1", alunoId: "a1", nome: "Ana" }]}
-      />
-    );
-
-    fireEvent.change(screen.getByLabelText(/observações/i), { target: { value: "Conferido na secretaria." } });
-    fireEvent.click(screen.getByRole("button", { name: /emitir/i }));
-
-    await waitFor(() => {
-      expect(mockCarregar).toHaveBeenCalledWith(["m1"], "Conferido na secretaria.");
-    });
-  });
-
-  it("preview bloqueado quando o aluno não tem responsável financeiro", async () => {
-    mockPrevisualizar.mockRejectedValue(new Error("Responsável financeiro não cadastrado para este aluno."));
-    render(
-      <RequerimentoEmissaoForm
-        anoLetivo={2027}
-        series={[]}
-        turmas={[]}
-        alunosElegiveis={[{ matriculaId: "m1", alunoId: "a1", nome: "Ana" }]}
-      />
-    );
-
-    fireEvent.change(screen.getByLabelText(/^aluno$/i), { target: { value: "a1" } });
-
-    await waitFor(() => {
-      expect(screen.getByText(/responsável financeiro/i)).toBeInTheDocument();
-    });
-    expect(screen.getByRole("button", { name: /emitir/i })).toBeDisabled();
+    await waitFor(() => expect(screen.getByText("Não gerados (1)")).toBeTruthy());
+    expect(mockSave).toHaveBeenCalled();
   });
 });

@@ -15,7 +15,7 @@ vi.mock("@/lib/data/historico", () => ({
   getCredenciamentoVigente: (...args: unknown[]) => mockGetCredenciamentoVigente(...args)
 }));
 
-import { carregarRequerimentosAction, previsualizarRequerimentoAction } from "./requerimento-matricula";
+import { carregarRequerimentosAction } from "./requerimento-matricula";
 import type { DadosRequerimento } from "@/lib/data/requerimento-matricula";
 
 const credenciamento = {
@@ -66,30 +66,6 @@ function dadosPara(nome: string, comResponsavelFinanceiro: boolean): DadosRequer
       : null
   };
 }
-
-describe("previsualizarRequerimentoAction", () => {
-  beforeEach(() => {
-    mockRequirePermission.mockClear();
-    mockGetCredenciamentoVigente.mockReset().mockResolvedValue(credenciamento);
-  });
-
-  it("checa a permissao historico/read antes de buscar os dados", async () => {
-    mockBuscarDadosRequerimento.mockResolvedValue(dadosPara("Ana", true));
-    await previsualizarRequerimentoAction("matricula-1");
-    expect(mockRequirePermission).toHaveBeenCalledWith("historico", "read");
-  });
-
-  it("lança quando o aluno não tem responsável financeiro cadastrado", async () => {
-    mockBuscarDadosRequerimento.mockResolvedValue(dadosPara("Ana", false));
-    await expect(previsualizarRequerimentoAction("matricula-1")).rejects.toThrow(/[Rr]esponsável financeiro/);
-  });
-
-  it("devolve os dados quando o responsável financeiro existe", async () => {
-    mockBuscarDadosRequerimento.mockResolvedValue(dadosPara("Ana", true));
-    const resultado = await previsualizarRequerimentoAction("matricula-1");
-    expect(resultado.aluno.nome).toBe("Ana");
-  });
-});
 
 describe("carregarRequerimentosAction", () => {
   beforeEach(() => {

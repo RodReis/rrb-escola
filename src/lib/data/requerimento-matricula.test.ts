@@ -13,7 +13,7 @@ import { buscarDadosRequerimento, listarAlunosParaRequerimento } from "./requeri
 describe("listarAlunosParaRequerimento", () => {
   it("filtra por ano letivo, série, turma e aluno quando informados, só matrícula ativa", async () => {
     const inFn = vi.fn().mockResolvedValue({
-      data: [{ id: "m1", aluno_id: "a1", alunos: { nome: "Ana" } }],
+      data: [{ id: "m1", aluno_id: "a1", alunos: { nome: "Ana", responsaveis_aluno: [{ responsavel_financeiro: false }, { responsavel_financeiro: true }] } }],
       error: null
     });
     const eqChain = { eq: vi.fn().mockReturnThis(), in: inFn };
@@ -32,7 +32,7 @@ describe("listarAlunosParaRequerimento", () => {
     expect(eqChain.eq).toHaveBeenCalledWith("serie_id", "serie-1");
     expect(eqChain.eq).toHaveBeenCalledWith("turma_id", "turma-1");
     expect(eqChain.eq).toHaveBeenCalledWith("aluno_id", "aluno-1");
-    expect(resultado).toEqual([{ matriculaId: "m1", alunoId: "a1", nome: "Ana" }]);
+    expect(resultado).toEqual([{ matriculaId: "m1", alunoId: "a1", nome: "Ana", temResponsavelFinanceiro: true }]);
   });
 
   it("ordena por nome (pt-BR)", async () => {
@@ -50,6 +50,19 @@ describe("listarAlunosParaRequerimento", () => {
     const resultado = await listarAlunosParaRequerimento({ anoLetivo: 2027 });
 
     expect(resultado.map((a) => a.nome)).toEqual(["Ana", "Éder", "Zeca"]);
+  });
+
+  it("aluno sem nenhum responsável marcado como financeiro sai como pendente", async () => {
+    const inFn = vi.fn().mockResolvedValue({
+      data: [{ id: "m1", aluno_id: "a1", alunos: { nome: "Ana", responsaveis_aluno: [{ responsavel_financeiro: false }] } }],
+      error: null
+    });
+    const eqChain = { eq: vi.fn().mockReturnThis(), in: inFn };
+    mockFrom.mockReturnValue({ select: vi.fn().mockReturnValue(eqChain) });
+
+    const [ana] = await listarAlunosParaRequerimento({ anoLetivo: 2027 });
+
+    expect(ana.temResponsavelFinanceiro).toBe(false);
   });
 });
 

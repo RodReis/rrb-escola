@@ -10,7 +10,10 @@ export type RequerimentoPdfDados = {
   anoLetivo: number;
   observacoes: string | null;
   escola: {
+    /** Razão social — primeira linha do cabeçalho. */
     nome: string;
+    /** Nome fantasia, segunda linha; omitido quando igual à razão social. */
+    nomeFantasia?: string | null;
     cnpj: string | null;
     endereco: string | null;
     cidade: string | null;
@@ -35,9 +38,9 @@ const FONTE = "helvetica";
 const MARGEM = mm(12);
 const MARGEM_TOPO = mm(10);
 
-const ALTURA_LINHA = 25;
+const ALTURA_LINHA = 22;
 const ALTURA_BANDA = 15;
-const ALTURA_ENDERECO_NOVO = 40;
+const ALTURA_ENDERECO_NOVO = 36;
 const ALTURA_OBSERVACOES = 34;
 const PADDING = 3;
 
@@ -185,9 +188,12 @@ function renderCabecalho(doc: jsPDF, escola: RequerimentoPdfDados["escola"], ima
   doc.setTextColor(0, 0, 0);
   doc.setFont(FONTE, "bold");
   doc.setFontSize(11);
-  for (const linha of doc.splitTextToSize(escola.nome.toUpperCase(), larguraTexto) as string[]) {
-    doc.text(linha, direita, y, { align: "right" });
-    y += 12.5;
+  const nomes = [escola.nome, escola.nomeFantasia].filter((n): n is string => Boolean(n?.trim()));
+  for (const nome of nomes) {
+    for (const linha of (doc.splitTextToSize(nome.toUpperCase(), larguraTexto) as string[]).slice(0, 2)) {
+      doc.text(linha, direita, y, { align: "right" });
+      y += 12.5;
+    }
   }
 
   doc.setFont(FONTE, "normal");
@@ -199,7 +205,7 @@ function renderCabecalho(doc: jsPDF, escola: RequerimentoPdfDados["escola"], ima
     escola.telefones
   ].filter((l): l is string => Boolean(l && l.trim()));
   for (const detalhe of detalhes) {
-    for (const linha of doc.splitTextToSize(detalhe, larguraTexto) as string[]) {
+    for (const linha of (doc.splitTextToSize(detalhe, larguraTexto) as string[]).slice(0, 2)) {
       doc.text(linha, direita, y, { align: "right" });
       y += 10;
     }
@@ -314,16 +320,17 @@ function desenharAssinaturas(
   y: number,
   secretario: { nome: string | null; cargo: string },
   responsavel: { nome: string } | null
-): void {
+): number {
   const assinaturas = [
     secretario.nome?.trim() ? { nome: secretario.nome, cargo: secretario.cargo } : null,
     responsavel ? { nome: responsavel.nome, cargo: "Responsável" } : null
   ].filter((a): a is { nome: string; cargo: string } => a !== null);
-  if (assinaturas.length === 0) return;
+  if (assinaturas.length === 0) return y;
 
   const util = doc.internal.pageSize.getWidth() - MARGEM * 2;
   const larguraColuna = util / assinaturas.length;
   const larguraLinha = Math.min(larguraColuna - mm(8), mm(75));
+  let fim = y;
 
   assinaturas.forEach((a, i) => {
     const centro = MARGEM + larguraColuna * i + larguraColuna / 2;
@@ -343,12 +350,14 @@ function desenharAssinaturas(
     doc.setFont(FONTE, "normal");
     doc.setFontSize(8);
     doc.text(a.cargo, centro, yTexto, { align: "center" });
+    fim = Math.max(fim, yTexto);
   });
+  return fim;
 }
 
-function renderPagina(doc: jsPDF, pagina: RequerimentoPdfDados, imagens: ImagemCache): void {
+/** Desenha a página e devolve o y final do rodapé (usado para provar que cabe na A4). */
+function renderPagina(doc: jsPDF, pagina: RequerimentoPdfDados, imagens: ImagemCache): number {
   const larguraPagina = doc.internal.pageSize.getWidth();
-  const alturaPagina = doc.internal.pageSize.getHeight();
   const w = larguraPagina - MARGEM * 2;
   const x = MARGEM;
   const { dados } = pagina;
@@ -392,15 +401,21 @@ function renderPagina(doc: jsPDF, pagina: RequerimentoPdfDados, imagens: ImagemC
     y = desenharLinha(doc, x, y, w, ALTURA_OBSERVACOES, [1], [{ label: "Observações", valor: pagina.observacoes }]);
   }
 
-  // Rodapé: data + assinaturas logo abaixo da tabela, nunca além da margem.
-  const limite = alturaPagina - MARGEM_TOPO - 32;
-  const yData = Math.min(y + 16, limite - 36);
+  // Rodapé logo abaixo da tabela. Toda altura acima é fixa (ou limitada a 2
+  // linhas), então a página nunca passa da A4 — o teste mede isso.
+  const yData = y + 16;
   doc.setTextColor(0, 0, 0);
   doc.setFont(FONTE, "normal");
   doc.setFontSize(9);
   const cidade = pagina.escola.cidade?.trim() ? nomeProprio(pagina.escola.cidade) : null;
   doc.text(`${[cidade, formatDataExtenso(new Date())].filter(Boolean).join(", ")}.`, larguraPagina - MARGEM, yData, { align: "right" });
-  desenharAssinaturas(doc, Math.min(yData + 34, limite), pagina.secretario, dados.responsavelFinanceiro);
+  return desenharAssinaturas(doc, yData + 34, pagina.secretario, dados.responsavelFinanceiro);
+}
+
+/** Onde o rodapé termina (pt) para esta página — só para verificar que cabe na A4. */
+export function medirRodapeRequerimento(pagina: RequerimentoPdfDados, imagens: ImagemCache): number {
+  const doc = new jsPDF({ orientation: "portrait", unit: "pt", format: "a4" });
+  return renderPagina(doc, pagina, imagens);
 }
 
 /** Uma página A4 (retrato) por aluno. */

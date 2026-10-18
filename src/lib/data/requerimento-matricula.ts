@@ -2,7 +2,13 @@ import { DEFAULT_SCHOOL_ID } from "@/lib/constants";
 import { createServerClient } from "@/lib/supabase/server";
 import { getSignedFotoUrl } from "@/lib/storage/photos";
 
-export type AlunoParaRequerimento = { matriculaId: string; alunoId: string; nome: string };
+export type AlunoParaRequerimento = {
+  matriculaId: string;
+  alunoId: string;
+  nome: string;
+  /** Sem responsável financeiro o requerimento não pode ser assinado — a tela mostra o aluno como pendente. */
+  temResponsavelFinanceiro: boolean;
+};
 
 export type FiltroRequerimento = {
   anoLetivo: number;
@@ -20,7 +26,7 @@ export async function listarAlunosParaRequerimento(filtro: FiltroRequerimento): 
 
   let query = supabase
     .from("matriculas")
-    .select("id, aluno_id, alunos(nome)")
+    .select("id, aluno_id, alunos(nome, responsaveis_aluno(responsavel_financeiro))")
     .eq("escola_id", DEFAULT_SCHOOL_ID)
     .eq("ano_letivo", filtro.anoLetivo);
 
@@ -33,9 +39,17 @@ export async function listarAlunosParaRequerimento(filtro: FiltroRequerimento): 
 
   return (data ?? [])
     .map((row) => {
-      const aluno = row.alunos as { nome?: string } | null;
+      const aluno = row.alunos as {
+        nome?: string;
+        responsaveis_aluno?: Array<{ responsavel_financeiro: boolean | null }>;
+      } | null;
       if (!aluno?.nome) return null;
-      return { matriculaId: row.id as string, alunoId: row.aluno_id as string, nome: aluno.nome };
+      return {
+        matriculaId: row.id as string,
+        alunoId: row.aluno_id as string,
+        nome: aluno.nome,
+        temResponsavelFinanceiro: (aluno.responsaveis_aluno ?? []).some((r) => r.responsavel_financeiro === true)
+      };
     })
     .filter((a): a is AlunoParaRequerimento => a !== null)
     .sort((a, b) => a.nome.localeCompare(b.nome, "pt-BR"));
