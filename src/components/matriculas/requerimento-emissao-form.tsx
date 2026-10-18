@@ -10,7 +10,7 @@ import { companyLogoUrl } from "@/lib/storage/company-logo-url";
 import type { AlunoParaRequerimento, DadosRequerimento } from "@/lib/data/requerimento-matricula";
 
 type Serie = { id: string; nome: string };
-type Turma = { id: string; nome: string; serieId: string };
+type Turma = { id: string; nome: string; serieId: string; turno: string };
 
 type Props = {
   anoLetivo: number;
@@ -34,7 +34,8 @@ export function RequerimentoEmissaoForm({ anoLetivo, series, turmas, alunosElegi
   const [carregandoPreview, setCarregandoPreview] = useState(false);
   const [falhas, setFalhas] = useState<Array<{ nome: string; motivo: string }>>([]);
 
-  const turmasDaSerie = serieSelecionada ? turmas.filter((t) => t.serieId === serieSelecionada) : turmas;
+  // A Turma só existe dentro de uma Série: sem Série escolhida a lista fica vazia.
+  const turmasDaSerie = serieSelecionada ? turmas.filter((t) => t.serieId === serieSelecionada) : [];
 
   // "Coletivo" ou "Individual" é só nome para o que já é a regra real:
   // aluno vazio emite para todos os elegíveis do filtro, aluno escolhido
@@ -148,10 +149,15 @@ export function RequerimentoEmissaoForm({ anoLetivo, series, turmas, alunosElegi
         </label>
         <label className={campoLabel}>
           Turma
-          <select value={turmaSelecionada} onChange={(e) => atualizar({ turma: e.target.value, aluno: null })} className={campoInput}>
+          <select
+            value={turmaSelecionada}
+            onChange={(e) => atualizar({ turma: e.target.value, aluno: null })}
+            disabled={!serieSelecionada}
+            className={campoInput}
+          >
             <option value="">Todas</option>
             {turmasDaSerie.map((t) => (
-              <option key={t.id} value={t.id}>{t.nome}</option>
+              <option key={t.id} value={t.id}>{t.turno.toUpperCase()}</option>
             ))}
           </select>
         </label>

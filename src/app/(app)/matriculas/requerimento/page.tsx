@@ -21,7 +21,7 @@ export default async function EmitirRequerimentoPage({
 
   const [{ data: series }, { data: turmas }, alunosElegiveis] = await Promise.all([
     supabase.from("series").select("id, nome").eq("escola_id", DEFAULT_SCHOOL_ID).eq("ativo", true).order("ordem"),
-    supabase.from("turmas").select("id, nome, serie_id").eq("escola_id", DEFAULT_SCHOOL_ID).eq("ano_letivo", anoLetivo),
+    supabase.from("turmas").select("id, nome, serie_id, turno").eq("escola_id", DEFAULT_SCHOOL_ID).eq("ano_letivo", anoLetivo).order("turno"),
     listarAlunosParaRequerimento({
       anoLetivo,
       serieId: sp.serie || undefined,
@@ -40,7 +40,7 @@ export default async function EmitirRequerimentoPage({
         <RequerimentoEmissaoForm
           anoLetivo={anoLetivo}
           series={(series ?? []).map((s) => ({ id: s.id as string, nome: s.nome as string }))}
-          turmas={(turmas ?? []).map((t) => ({ id: t.id as string, nome: t.nome as string, serieId: t.serie_id as string }))}
+          turmas={(turmas ?? []).map((t) => ({ id: t.id as string, nome: t.nome as string, serieId: t.serie_id as string, turno: String(t.turno) }))}
           alunosElegiveis={alunosElegiveis}
         />
       </Panel>

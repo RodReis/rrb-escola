@@ -80,6 +80,32 @@ describe("RequerimentoEmissaoForm", () => {
     listeners.clear();
   });
 
+  describe("Turma depende da Série", () => {
+    const series = [{ id: "s1", nome: "5º ANO" }, { id: "s2", nome: "6º ANO" }];
+    const turmas = [
+      { id: "t1", nome: "A", serieId: "s1", turno: "matutino" },
+      { id: "t2", nome: "MAT", serieId: "s1", turno: "vespertino" },
+      { id: "t3", nome: "A", serieId: "s2", turno: "matutino" }
+    ];
+    const renderForm = () =>
+      render(<RequerimentoEmissaoForm anoLetivo={2027} series={series} turmas={turmas} alunosElegiveis={[]} />);
+
+    it("mantém a Turma desabilitada e sem opções até escolher a Série", () => {
+      renderForm();
+      const turma = screen.getByLabelText("Turma") as HTMLSelectElement;
+      expect(turma).toBeDisabled();
+      expect(Array.from(turma.options).map((o) => o.text)).toEqual(["Todas"]);
+    });
+
+    it("depois de escolher a Série, lista só as turmas dela, pelo turno em maiúsculas", () => {
+      renderForm();
+      fireEvent.change(screen.getByLabelText("Série"), { target: { value: "s1" } });
+      const turma = screen.getByLabelText("Turma") as HTMLSelectElement;
+      expect(turma).not.toBeDisabled();
+      expect(Array.from(turma.options).map((o) => o.text)).toEqual(["Todas", "MATUTINO", "VESPERTINO"]);
+    });
+  });
+
   it("mostra o botão Emitir desabilitado sem nenhum aluno elegível", () => {
     render(<RequerimentoEmissaoForm anoLetivo={2027} series={[]} turmas={[]} alunosElegiveis={[]} />);
     expect(screen.getByRole("button", { name: /emitir/i })).toBeDisabled();
