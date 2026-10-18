@@ -6,6 +6,7 @@ import {
   type Mapping,
   type ComputedFn,
 } from "./schema-catalog";
+import { getAnoReferenciaAtual } from "@/lib/escola/ano-referencia";
 
 const MESES = [
   "janeiro","fevereiro","março","abril","maio","junho",
@@ -190,7 +191,7 @@ async function runComputed(
     case "data_hoje_extenso":
       return formatDataExtenso(now);
     case "ano_letivo_atual":
-      return String(now.getFullYear());
+      return String(await getAnoReferenciaAtual(supabase, ctx.escolaId));
     case "cidade_data_extenso": {
       const { data } = await supabase
         .from("escolas")
