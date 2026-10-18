@@ -5,15 +5,17 @@ import { getAcademicData } from "@/lib/data/lookups";
 import { listDisciplinas } from "@/lib/data/pedagogico";
 import { createAvaliacaoAction } from "@/lib/actions/avaliacoes";
 import { requirePermission } from "@/lib/auth/session";
+import { getAnoReferenciaAtual } from "@/lib/escola/ano-referencia";
+import { createServerClient } from "@/lib/supabase/server";
 
 export default async function NovaAvaliacaoPage() {
-  await requirePermission("avaliacoes", "read");
+  const session = await requirePermission("avaliacoes", "read");
   const [disciplinas, { turmas }] = await Promise.all([
     listDisciplinas(),
     getAcademicData(),
   ]);
 
-  const anoCorrente = new Date().getFullYear();
+  const anoCorrente = await getAnoReferenciaAtual(await createServerClient(), session.profile.escola_id);
 
   return (
     <div className="grid gap-6">

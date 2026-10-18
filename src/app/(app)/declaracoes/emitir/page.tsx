@@ -6,6 +6,7 @@ import { listarDeclaracaoModelos } from "@/lib/data/declaracoes";
 import { DEFAULT_SCHOOL_ID } from "@/lib/constants";
 import { createServerClient } from "@/lib/supabase/server";
 import { requirePermission } from "@/lib/auth/session";
+import { getAnoReferenciaAtual } from "@/lib/escola/ano-referencia";
 
 export default async function EmitirDeclaracaoPage({
   searchParams
@@ -14,9 +15,10 @@ export default async function EmitirDeclaracaoPage({
 }) {
   await requirePermission("historico", "read");
   const sp = await searchParams;
-  const anoLetivo = sp.ano ? Number(sp.ano) : new Date().getFullYear();
 
   const supabase = await createServerClient();
+  const anoReferencia = await getAnoReferenciaAtual(supabase, DEFAULT_SCHOOL_ID);
+  const anoLetivo = sp.ano ? Number(sp.ano) : anoReferencia;
   const [{ data: series }, { data: turmas }, modelos, alunosElegiveis] = await Promise.all([
     supabase.from("series").select("id, nome").eq("escola_id", DEFAULT_SCHOOL_ID).eq("ativo", true).order("ordem"),
     supabase.from("turmas").select("id, nome, serie_id").eq("escola_id", DEFAULT_SCHOOL_ID).eq("ano_letivo", anoLetivo),

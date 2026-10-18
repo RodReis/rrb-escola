@@ -10,6 +10,8 @@ import {
 import { FiltrosLancamento } from "@/components/avaliacoes/filtros-lancamento";
 import { DisciplinasCards } from "@/components/avaliacoes/disciplinas-cards";
 import { NotasBimestraisGrid } from "@/components/avaliacoes/notas-bimestrais-grid";
+import { getAnoReferenciaAtual } from "@/lib/escola/ano-referencia";
+import { createServerClient } from "@/lib/supabase/server";
 
 function isValidAno(v: string | undefined): boolean {
   if (!v) return false;
@@ -27,10 +29,11 @@ export default async function LancamentoNotasPage({
     ano?: string;
   }>;
 }) {
-  await requirePermission("avaliacoes", "read");
+  const session = await requirePermission("avaliacoes", "read");
   const sp = await searchParams;
 
-  const ano = isValidAno(sp.ano) ? Number(sp.ano) : new Date().getFullYear();
+  const anoReferencia = await getAnoReferenciaAtual(await createServerClient(), session.profile.escola_id);
+  const ano = isValidAno(sp.ano) ? Number(sp.ano) : anoReferencia;
   const serieSel = sp.serie || null;
   const turmaSel = sp.turma || null;
   const disciplinaSel = sp.disciplina || null;

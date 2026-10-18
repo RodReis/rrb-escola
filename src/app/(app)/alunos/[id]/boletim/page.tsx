@@ -9,6 +9,8 @@ import { getSignedFotoUrls } from "@/lib/storage/photos";
 import { getPublicUrl } from "@/lib/storage/public-urls";
 import { ExportBoletimButton } from "@/components/pdf/export-boletim-button";
 import { requirePermission } from "@/lib/auth/session";
+import { getAnoReferenciaAtual } from "@/lib/escola/ano-referencia";
+import { createServerClient } from "@/lib/supabase/server";
 
 function colorMedia(media: number | null): string {
   if (media === null) return "bg-muted text-ink/40";
@@ -25,10 +27,11 @@ export default async function BoletimPage({
   params: Promise<{ id: string }>;
   searchParams: Promise<{ ano?: string }>;
 }) {
-  await requirePermission("avaliacoes", "read");
+  const session = await requirePermission("avaliacoes", "read");
   const { id } = await params;
   const sp = await searchParams;
-  const ano = sp.ano ? Number(sp.ano) : new Date().getFullYear();
+  const anoReferencia = await getAnoReferenciaAtual(await createServerClient(), session.profile.escola_id);
+  const ano = sp.ano ? Number(sp.ano) : anoReferencia;
 
   const boletim = await getBoletim(id, ano);
   if (!boletim) notFound();

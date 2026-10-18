@@ -21,6 +21,8 @@ import {
 } from "@/lib/data/students";
 import { getSignedFotoUrls } from "@/lib/storage/photos";
 import { requirePermission } from "@/lib/auth/session";
+import { getAnoReferenciaAtual } from "@/lib/escola/ano-referencia";
+import { createServerClient } from "@/lib/supabase/server";
 
 type EnrollmentRef = {
   id?: string | null;
@@ -48,11 +50,12 @@ export default async function StudentsPage({
 }: {
   searchParams: Promise<Record<string, string>>;
 }) {
-  await requirePermission("alunos", "read");
+  const session = await requirePermission("alunos", "read");
   const params = await searchParams;
   const pageParam = Number.parseInt(params.page ?? "1", 10);
   const anoParam = Number.parseInt(params.ano ?? "", 10);
-  const anoLetivo = Number.isNaN(anoParam) ? new Date().getFullYear() : anoParam;
+  const anoReferencia = await getAnoReferenciaAtual(await createServerClient(), session.profile.escola_id);
+  const anoLetivo = Number.isNaN(anoParam) ? anoReferencia : anoParam;
   const filters = {
     nome:      params.nome     || undefined,
     serieId:   params.serie    || undefined,
