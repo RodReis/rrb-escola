@@ -55,14 +55,15 @@ export function NovaMatriculaFields({
   series,
   turmas,
   alunoPre,
+  anoReferencia,
 }: {
   alunos: Aluno[];
   series: Serie[];
   turmas: Turma[];
   alunoPre?: Aluno | null;
+  anoReferencia: number;
 }) {
   const hoje = useMemo(() => new Date(), []);
-  const anoAtual = hoje.getFullYear();
   const [aluno, setAluno] = useState<Aluno | null>(alunoPre ?? null);
   const [serieId, setSerieId] = useState(() => proximaSerieSugerida(alunoPre ?? null, series));
 
@@ -79,8 +80,8 @@ export function NovaMatriculaFields({
     const ocupados = (aluno?.matriculas ?? [])
       .filter((m) => m.status === "ativa" || m.status === "concluida")
       .map((m) => m.ano_letivo);
-    return anoLetivoSugerido(hoje, ocupados);
-  }, [aluno, hoje]);
+    return anoLetivoSugerido(hoje, ocupados, anoReferencia);
+  }, [aluno, hoje, anoReferencia]);
 
   const [anoLetivo, setAnoLetivo] = useState(anoSugerido);
   const [anoTocado, setAnoTocado] = useState(false);
@@ -146,7 +147,7 @@ export function NovaMatriculaFields({
           value={anoLetivo}
           onChange={(e) => { setAnoTocado(true); setAnoLetivo(Number(e.target.value)); }}
         />
-        {anoLetivo !== anoAtual ? (
+        {anoLetivo !== anoReferencia ? (
           <FieldNote>
             Matrícula a partir de setembro vale para {anoLetivo}.
           </FieldNote>
