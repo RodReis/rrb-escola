@@ -44,6 +44,8 @@ function dadosFake(): DadosRequerimento {
       telefoneTrabalho: null
     },
     matricula: {
+      anoLetivo: 2027,
+      serieId: "serie-1",
       serie: "5º ANO",
       turma: "A",
       turno: "Matutino",

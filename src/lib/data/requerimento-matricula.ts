@@ -77,6 +77,8 @@ export type DadosRequerimento = {
   pai: PessoaResponsavel | null;
   mae: PessoaResponsavel | null;
   matricula: {
+    anoLetivo: number;
+    serieId: string | null;
     serie: string;
     turma: string;
     turno: string;
@@ -208,6 +210,8 @@ export async function buscarDadosRequerimento(matriculaId: string): Promise<Dado
     pai: pai ? montarPessoa(pai) : null,
     mae: mae ? montarPessoa(mae) : null,
     matricula: {
+      anoLetivo: matricula.ano_letivo as number,
+      serieId: (matricula.serie_id as string | null) ?? null,
       serie: serie?.nome ?? "",
       turma: turma?.nome ?? "",
       turno: turma?.turno ?? "",
