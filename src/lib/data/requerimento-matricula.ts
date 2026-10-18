@@ -150,7 +150,7 @@ function montarEndereco(e: Record<string, unknown> | null): string | null {
 export async function buscarDadosRequerimento(matriculaId: string): Promise<DadosRequerimento> {
   const supabase = await createServerClient();
 
-  const { data: matricula } = await supabase
+  const { data: matricula, error } = await supabase
     .from("matriculas")
     .select(
       "codigo, ano_letivo, serie_id, data_matricula, series(nome, segmentos(nome)), turmas(nome, turno), alunos(matricula_codigo, nome, sexo, data_nascimento, naturalidade, celular, cpf, rg, etnia, religiao, enderecos_aluno(logradouro, numero, complemento, bairro, cidade, uf, cep, principal), responsaveis_aluno(nome, rg, cpf, cnpj, telefone, celular, email, data_nascimento, estado_civil, escolaridade, endereco_trabalho, profissao, telefone_trabalho, parentesco, responsavel_financeiro))"
@@ -158,6 +158,7 @@ export async function buscarDadosRequerimento(matriculaId: string): Promise<Dado
     .eq("id", matriculaId)
     .maybeSingle();
 
+  if (error) throw error;
   if (!matricula) throw new Error(`Matrícula não encontrada: ${matriculaId}`);
 
   const aluno = matricula.alunos as {

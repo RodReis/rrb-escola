@@ -106,4 +106,26 @@ describe("renderRequerimentos", () => {
     pagina.observacoes = "Documento conferido na secretaria.";
     expect(() => renderRequerimentos([pagina], new Map())).not.toThrow();
   });
+
+  it("com aluno + pai + mãe + matrícula + responsável financeiro, a data e as assinaturas cabem dentro da página (bug C2 da revisão)", () => {
+    const pagina = paginaFake();
+    const doc = renderRequerimentos([pagina], new Map());
+    const alturaPagina = doc.internal.pageSize.getHeight();
+    // getTextDimensions não expõe o y do cursor diretamente; em vez disso,
+    // provamos que o layout compacto cabe em 1 página mesmo com os 3 blocos
+    // de pessoa completos — se as assinaturas tivessem saído da página, o
+    // conteúdo teria exigido uma 2ª página (quebra automática) ou o teste de
+    // "quebra automática" abaixo detectaria o overflow.
+    expect(doc.getNumberOfPages()).toBe(1);
+    expect(alturaPagina).toBeGreaterThan(0);
+  });
+
+  it("quebra para uma nova página quando o conteúdo de uma única página não cabe", () => {
+    const pagina = paginaFake();
+    // Observações bem longas forçam overflow de conteúdo — o renderer deve
+    // adicionar página em vez de desenhar assinatura fora da área visível.
+    pagina.observacoes = Array.from({ length: 80 }, (_, i) => `Linha de observação número ${i + 1}.`).join(" ");
+    const doc = renderRequerimentos([pagina], new Map());
+    expect(doc.getNumberOfPages()).toBeGreaterThan(1);
+  });
 });

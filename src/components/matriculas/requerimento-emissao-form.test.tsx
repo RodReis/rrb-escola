@@ -13,8 +13,9 @@ vi.mock("@/lib/documents/requerimento-matricula-pdf", () => ({
   renderRequerimentos: vi.fn(() => ({ save: vi.fn() }))
 }));
 
+const mockCarregarImagens = vi.fn().mockResolvedValue(new Map());
 vi.mock("@/lib/documents/pdf-utils", () => ({
-  carregarImagens: vi.fn().mockResolvedValue(new Map())
+  carregarImagens: (...args: unknown[]) => mockCarregarImagens(...args)
 }));
 
 let mockSearchParams = new URLSearchParams();
@@ -74,6 +75,7 @@ describe("RequerimentoEmissaoForm", () => {
   beforeEach(() => {
     mockPrevisualizar.mockReset();
     mockCarregar.mockReset();
+    mockCarregarImagens.mockClear().mockResolvedValue(new Map());
     mockSearchParams = new URLSearchParams();
     listeners.clear();
   });
@@ -81,6 +83,31 @@ describe("RequerimentoEmissaoForm", () => {
   it("mostra o botão Emitir desabilitado sem nenhum aluno elegível", () => {
     render(<RequerimentoEmissaoForm anoLetivo={2027} series={[]} turmas={[]} alunosElegiveis={[]} />);
     expect(screen.getByRole("button", { name: /emitir/i })).toBeDisabled();
+  });
+
+  it("monta a URL pública da logo (companyLogoUrl) antes de carregarImagens, não o logo_path cru (bug I1 da revisão)", async () => {
+    const { companyLogoUrl } = await import("@/lib/storage/company-logo-url");
+    mockCarregar.mockResolvedValue({
+      paginas: [{ escola: { logoPath: "escola-1/logo.png" } }],
+      falhas: []
+    });
+    render(
+      <RequerimentoEmissaoForm
+        anoLetivo={2027}
+        series={[]}
+        turmas={[]}
+        alunosElegiveis={[{ matriculaId: "m1", alunoId: "a1", nome: "Ana" }]}
+      />
+    );
+
+    fireEvent.click(screen.getByRole("button", { name: /emitir/i }));
+
+    await waitFor(() => {
+      expect(mockCarregarImagens).toHaveBeenCalled();
+    });
+    const urlsCarregadas = mockCarregarImagens.mock.calls[0][0] as Array<string | null>;
+    expect(urlsCarregadas).toContain(companyLogoUrl("escola-1/logo.png"));
+    expect(urlsCarregadas).not.toContain("escola-1/logo.png");
   });
 
   it("sem aluno selecionado, emite para todos os elegíveis (modo coletivo)", async () => {

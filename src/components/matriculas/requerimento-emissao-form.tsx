@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { carregarRequerimentosAction, previsualizarRequerimentoAction } from "@/lib/actions/requerimento-matricula";
 import { renderRequerimentos } from "@/lib/documents/requerimento-matricula-pdf";
 import { carregarImagens } from "@/lib/documents/pdf-utils";
+import { companyLogoUrl } from "@/lib/storage/company-logo-url";
 import type { AlunoParaRequerimento, DadosRequerimento } from "@/lib/data/requerimento-matricula";
 
 type Serie = { id: string; nome: string };
@@ -100,8 +101,11 @@ export function RequerimentoEmissaoForm({ anoLetivo, series, turmas, alunosElegi
         setErro("Nenhum requerimento pôde ser gerado para os alunos selecionados.");
         return;
       }
-      const logoPaths = paginas.map((p) => p.escola.logoPath);
-      const imagens = await carregarImagens(logoPaths);
+      // companyLogoUrl converte o path cru salvo em companies.logo_path para
+      // a URL pública do bucket — carregarImagens faz fetch da URL e indexa
+      // o ImagemCache por ela, igual o renderer espera ao buscar a logo.
+      const logoUrls = paginas.map((p) => companyLogoUrl(p.escola.logoPath));
+      const imagens = await carregarImagens(logoUrls);
       const slugNome = alunosElegiveis.find((a) => a.alunoId === alunoSelecionado)?.nome
         ?.normalize("NFD")
         .replace(/[̀-ͯ]/g, "")

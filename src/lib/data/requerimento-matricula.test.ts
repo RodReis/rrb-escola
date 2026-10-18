@@ -155,4 +155,19 @@ describe("buscarDadosRequerimento", () => {
 
     await expect(buscarDadosRequerimento("matricula-inexistente")).rejects.toThrow();
   });
+
+  it("erro real de query (ex. coluna nova sem migration aplicada) propaga a mensagem real, não 'Matrícula não encontrada' (bug I3 da revisão)", async () => {
+    mockFrom.mockReturnValue({
+      select: vi.fn().mockReturnValue({
+        eq: vi.fn().mockReturnValue({
+          maybeSingle: vi.fn().mockResolvedValue({
+            data: null,
+            error: { message: 'column "religiao" does not exist' }
+          })
+        })
+      })
+    });
+
+    await expect(buscarDadosRequerimento("matricula-1")).rejects.toThrow(/religiao/);
+  });
 });
